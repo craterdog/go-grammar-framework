@@ -1,0 +1,189 @@
+/*******************************************************************************
+ *   Copyright (c) 2009-2022 Crater Dog Technologies™.  All Rights Reserved.   *
+ *******************************************************************************
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               *
+ *                                                                             *
+ * This code is free software; you can redistribute it and/or modify it under  *
+ * the terms of The MIT License (MIT), as published by the Open Source         *
+ * Initiative. (See http://opensource.org/licenses/MIT)                        *
+ *******************************************************************************/
+
+package grammar_test
+
+import (
+	fmt "fmt"
+	cds "github.com/craterdog/go-grammar-framework/v2"
+	ass "github.com/stretchr/testify/assert"
+	osx "os"
+	sts "strings"
+	tes "testing"
+)
+
+const grammarsDirectory = "./grammars/"
+
+func TestParsingRoundtrips(t *tes.T) {
+	var files, err = osx.ReadDir(grammarsDirectory)
+	if err != nil {
+		panic("Could not find the " + grammarsDirectory + " directory.")
+	}
+
+	for _, file := range files {
+		var parser = cds.Parser().Make()
+		var validator = cds.Validator().Make()
+		var formatter = cds.Formatter().Make()
+		var filename = grammarsDirectory + file.Name()
+		if sts.HasSuffix(filename, ".cdsn") {
+			fmt.Println(filename)
+			var bytes, _ = osx.ReadFile(filename)
+			var expected = string(bytes)
+			var grammar = parser.ParseSource(expected)
+			validator.ValidateGrammar(grammar)
+			var actual = formatter.FormatGrammar(grammar)
+			ass.Equal(t, expected, actual)
+		}
+	}
+}
+
+func TestRuleInTokenDefinition(t *tes.T) {
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
+	var source = `$BAD: rule
+$rule: "bad"
+`
+	defer func() {
+		if e := recover(); e != nil {
+			ass.Equal(
+				t,
+				"The definition for $BAD is invalid:\nA token definition cannot contain a rule name.\n",
+				e,
+			)
+		} else {
+			ass.Fail(t, "Test should result in recovered panic.")
+		}
+	}()
+
+	validator.ValidateGrammar(parser.ParseSource(source))
+}
+
+func TestDoubleInversion(t *tes.T) {
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
+	var source = `$BAD: ~~CONTROL
+`
+	defer func() {
+		if e := recover(); e != nil {
+			ass.Equal(
+				t,
+				"An unexpected token was received by the parser: Token [type: Delimiter, line: 1, position: 8]: \"~\"\n\x1b[36m0001: $BAD: ~~CONTROL\n \x1b[32m>>>─────────⌃\x1b[36m\n0002: \n\x1b[0m\nWas expecting 'assertion' from:\n  \x1b[32m$predicate: \x1b[33m\"~\"? assertion\x1b[0m\n\n  \x1b[32m$assertion: \x1b[33melement | glyph | precedence\x1b[0m\n\n",
+				e,
+			)
+		} else {
+			ass.Fail(t, "Test should result in recovered panic.")
+		}
+	}()
+
+	validator.ValidateGrammar(parser.ParseSource(source))
+}
+
+func TestInvertedString(t *tes.T) {
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
+	var source = `$BAD: ~"ow"
+`
+	defer func() {
+		if e := recover(); e != nil {
+			ass.Equal(
+				t,
+				"The definition for $BAD is invalid:\nA multi-character literal is not allowed in an inversion.\n",
+				e,
+			)
+		} else {
+			ass.Fail(t, "Test should result in recovered panic.")
+		}
+	}()
+
+	validator.ValidateGrammar(parser.ParseSource(source))
+}
+
+func TestInvertedRule(t *tes.T) {
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
+	var source = `$bad: ~rule
+$rule: "rule"
+`
+	defer func() {
+		if e := recover(); e != nil {
+			ass.Equal(
+				t,
+				"The definition for $bad is invalid:\nAn inverted assertion cannot contain a rule name.\n",
+				e,
+			)
+		} else {
+			ass.Fail(t, "Test should result in recovered panic.")
+		}
+	}()
+
+	validator.ValidateGrammar(parser.ParseSource(source))
+}
+
+func TestMissingRule(t *tes.T) {
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
+	var source = `$bad: rule
+`
+	defer func() {
+		if e := recover(); e != nil {
+			ass.Equal(
+				t,
+				"The grammar is missing a definition for the symbol: $rule\n",
+				e,
+			)
+		} else {
+			ass.Fail(t, "Test should result in recovered panic.")
+		}
+	}()
+
+	validator.ValidateGrammar(parser.ParseSource(source))
+}
+
+func TestDuplicateRule(t *tes.T) {
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
+	var source = `$bad: "bad"
+$bad: "worse"
+`
+	defer func() {
+		if e := recover(); e != nil {
+			ass.Equal(
+				t,
+				"The definition for $bad is invalid:\nThe symbol $bad is defined more than once.\n",
+				e,
+			)
+		} else {
+			ass.Fail(t, "Test should result in recovered panic.")
+		}
+	}()
+
+	validator.ValidateGrammar(parser.ParseSource(source))
+}
+
+func TestNestedInversions(t *tes.T) {
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
+	var source = `$BAD: ~(WORSE | ~BAD)
+$WORSE: CONTROL
+`
+	defer func() {
+		if e := recover(); e != nil {
+			ass.Equal(
+				t,
+				"The definition for $BAD is invalid:\nInverted assertions cannot be nested.\n",
+				e,
+			)
+		} else {
+			ass.Fail(t, "Test should result in recovered panic.")
+		}
+	}()
+
+	validator.ValidateGrammar(parser.ParseSource(source))
+}
