@@ -1,6 +1,6 @@
 <img src="https://craterdog.com/images/CraterDog.png" width="50%">
 
-## Go Grammar Framework
+## Go Language Grammar Framework
 
 ### Overview
 This project provides a Go based framework for writing, validating and formatting
