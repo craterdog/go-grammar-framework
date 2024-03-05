@@ -19,7 +19,7 @@ import (
 // Reference
 
 var tokenClass = &tokenClass_{
-	strings: map[TokenType]string{
+	strings_: map[TokenType]string{
 		ErrorToken:     "Error",
 		CharacterToken: "Character",
 		CommentToken:   "Comment",
@@ -47,30 +47,30 @@ func Token() TokenClassLike {
 // Target
 
 type tokenClass_ struct {
-	strings map[TokenType]string
+	strings_ map[TokenType]string
 }
 
 // Constructors
 
-func (c *tokenClass_) Make(
-	line int,
-	position int,
-	tokenType TokenType,
-	tokenValue string,
+func (c *tokenClass_) MakeWithAttributes(
+	line_ int,
+	position_ int,
+	type_ TokenType,
+	value_ string,
 ) TokenLike {
-	var token = &token_{
-		line:       line,
-		position:   position,
-		tokenType:  tokenType,
-		tokenValue: tokenValue,
+	var result_ = &token_{
+		line_: line_,
+		position_: position_,
+		type_: type_,
+		value_: value_,
 	}
-	return token
+	return result_
 }
 
 // Functions
 
-func (c *tokenClass_) AsString(tokenType TokenType) string {
-	return c.strings[tokenType]
+func (c *tokenClass_) AsString(type_ TokenType) string {
+	return c.strings_[type_]
 }
 
 // INSTANCE METHODS
@@ -78,41 +78,41 @@ func (c *tokenClass_) AsString(tokenType TokenType) string {
 // Target
 
 type token_ struct {
-	line       int // The line number of the token in the source string.
-	position   int // The position in the line of the first rune of the token.
-	tokenType  TokenType
-	tokenValue string
+	line_ int
+	position_ int
+	type_ TokenType
+	value_ string
+}
+
+// Attributes
+
+func (v *token_) GetLine() int {
+	return v.line_
+}
+
+func (v *token_) GetPosition() int {
+	return v.position_
+}
+
+func (v *token_) GetType() TokenType {
+	return v.type_
+}
+
+func (v *token_) GetValue() string {
+	return v.value_
 }
 
 // Stringer
 
 func (v *token_) String() string {
-	var s = fmt.Sprintf("%q", v.tokenValue)
+	var s = fmt.Sprintf("%q", v.value_)
 	if len(s) > 40 {
-		s = fmt.Sprintf("%.40q...", v.tokenValue)
+		s = fmt.Sprintf("%.40q...", v.value_)
 	}
 	return fmt.Sprintf("Token [type: %s, line: %d, position: %d]: %s",
-		Token().AsString(v.tokenType),
-		v.line,
-		v.position,
+		Token().AsString(v.type_),
+		v.line_,
+		v.position_,
 		s,
 	)
-}
-
-// Public
-
-func (v *token_) GetLine() int {
-	return v.line
-}
-
-func (v *token_) GetPosition() int {
-	return v.position
-}
-
-func (v *token_) GetType() TokenType {
-	return v.tokenType
-}
-
-func (v *token_) GetValue() string {
-	return v.tokenValue
 }

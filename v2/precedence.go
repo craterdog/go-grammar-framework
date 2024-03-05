@@ -10,12 +10,14 @@
 
 package grammar
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var precedenceClass = &precedenceClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -29,38 +31,36 @@ func Precedence() PrecedenceClassLike {
 // Target
 
 type precedenceClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *precedenceClass_) Make(
-	expression ExpressionLike,
-) PrecedenceLike {
-	var precedence = &precedence_{
-		// This class does not initialize any attributes.
+func (c *precedenceClass_) MakeWithExpression(expression_ ExpressionLike) PrecedenceLike {
+	var result_ = &precedence_{
+		expression_: expression_,
 	}
-	precedence.SetExpression(expression)
-	return precedence
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type precedence_ struct {
-	expression ExpressionLike
+	expression_ ExpressionLike
+}
+
+// Attributes
+
+func (v *precedence_) GetExpression() ExpressionLike {
+	return v.expression_
 }
 
 // Public
 
-func (v *precedence_) GetExpression() ExpressionLike {
-	return v.expression
-}
-
-func (v *precedence_) SetExpression(expression ExpressionLike) {
-	if expression == nil {
-		panic("The expression within a precedence cannot be nil.")
-	}
-	v.expression = expression
-}
+// Private

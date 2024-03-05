@@ -10,12 +10,14 @@
 
 package grammar
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var assertionClass = &assertionClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -29,82 +31,60 @@ func Assertion() AssertionClassLike {
 // Target
 
 type assertionClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *assertionClass_) MakeFromElement(element ElementLike) AssertionLike {
-	var assertion = &assertion_{
-		// This class does not initialize any attributes.
+func (c *assertionClass_) MakeWithElement(element_ ElementLike) AssertionLike {
+	var result_ = &assertion_{
+		element_: element_,
 	}
-	assertion.SetElement(element)
-	return assertion
+	return result_
 }
 
-func (c *assertionClass_) MakeFromGlyph(glyph GlyphLike) AssertionLike {
-	var assertion = &assertion_{
-		// This class does not initialize any attributes.
+func (c *assertionClass_) MakeWithGlyph(glyph_ GlyphLike) AssertionLike {
+	var result_ = &assertion_{
+		glyph_: glyph_,
 	}
-	assertion.SetGlyph(glyph)
-	return assertion
+	return result_
 }
 
-func (c *assertionClass_) MakeFromPrecedence(precedence PrecedenceLike) AssertionLike {
-	var assertion = &assertion_{
-		// This class does not initialize any attributes.
+func (c *assertionClass_) MakeWithPrecedence(precedence_ PrecedenceLike) AssertionLike {
+	var result_ = &assertion_{
+		precedence_: precedence_,
 	}
-	assertion.SetPrecedence(precedence)
-	return assertion
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type assertion_ struct {
-	element    ElementLike
-	glyph      GlyphLike
-	precedence PrecedenceLike
+	element_ ElementLike
+	glyph_ GlyphLike
+	precedence_ PrecedenceLike
+}
+
+// Attributes
+
+func (v *assertion_) GetElement() ElementLike {
+	return v.element_
+}
+
+func (v *assertion_) GetGlyph() GlyphLike {
+	return v.glyph_
+}
+
+func (v *assertion_) GetPrecedence() PrecedenceLike {
+	return v.precedence_
 }
 
 // Public
 
-func (v *assertion_) GetElement() ElementLike {
-	return v.element
-}
-
-func (v *assertion_) GetGlyph() GlyphLike {
-	return v.glyph
-}
-
-func (v *assertion_) GetPrecedence() PrecedenceLike {
-	return v.precedence
-}
-
-func (v *assertion_) SetElement(element ElementLike) {
-	if element == nil {
-		panic("An element must not be nil.")
-	}
-	v.element = element
-	v.glyph = nil
-	v.precedence = nil
-}
-
-func (v *assertion_) SetGlyph(glyph GlyphLike) {
-	if glyph == nil {
-		panic("A glyph must not be nil.")
-	}
-	v.element = nil
-	v.glyph = glyph
-	v.precedence = nil
-}
-
-func (v *assertion_) SetPrecedence(precedence PrecedenceLike) {
-	if precedence == nil {
-		panic("A precedence must not be nil.")
-	}
-	v.element = nil
-	v.glyph = nil
-	v.precedence = precedence
-}
+// Private

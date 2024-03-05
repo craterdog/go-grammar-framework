@@ -10,16 +10,14 @@
 
 package grammar
 
-import (
-	fmt "fmt"
-)
+import ()
 
 // CLASS ACCESS
 
 // Reference
 
 var elementClass = &elementClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -33,85 +31,60 @@ func Element() ElementClassLike {
 // Target
 
 type elementClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *elementClass_) MakeFromIntrinsic(
-	intrinsic string,
-) ElementLike {
-	var element = &element_{
-		// This class does not initialize any attributes.
+func (c *elementClass_) MakeWithIntrinsic(intrinsic_ string) ElementLike {
+	var result_ = &element_{
+		intrinsic_: intrinsic_,
 	}
-	element.SetIntrinsic(intrinsic)
-	return element
+	return result_
 }
 
-func (c *elementClass_) MakeFromLiteral(
-	literal string,
-) ElementLike {
-	var element = &element_{
-		// This class does not initialize any attributes.
+func (c *elementClass_) MakeWithLiteral(literal_ string) ElementLike {
+	var result_ = &element_{
+		literal_: literal_,
 	}
-	element.SetLiteral(literal)
-	return element
+	return result_
 }
 
-func (c *elementClass_) MakeFromName(
-	name string,
-) ElementLike {
-	var element = &element_{
-		// This class does not initialize any attributes.
+func (c *elementClass_) MakeWithName(name_ string) ElementLike {
+	var result_ = &element_{
+		name_: name_,
 	}
-	element.SetName(name)
-	return element
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type element_ struct {
-	intrinsic string
-	literal   string
-	name      string
+	intrinsic_ string
+	literal_ string
+	name_ string
+}
+
+// Attributes
+
+func (v *element_) GetIntrinsic() string {
+	return v.intrinsic_
+}
+
+func (v *element_) GetLiteral() string {
+	return v.literal_
+}
+
+func (v *element_) GetName() string {
+	return v.name_
 }
 
 // Public
 
-func (v *element_) GetIntrinsic() string {
-	return v.intrinsic
-}
-
-func (v *element_) GetLiteral() string {
-	return v.literal
-}
-
-func (v *element_) GetName() string {
-	return v.name
-}
-
-func (v *element_) SetIntrinsic(intrinsic string) {
-	if len(intrinsic) < 1 {
-		var message = fmt.Sprintf("An invalid intrinsic was found:\n    %v\n", intrinsic)
-		panic(message)
-	}
-	v.intrinsic = intrinsic
-}
-
-func (v *element_) SetLiteral(literal string) {
-	if len(literal) < 1 {
-		var message = fmt.Sprintf("An invalid literal was found:\n    %v\n", literal)
-		panic(message)
-	}
-	v.literal = literal
-}
-
-func (v *element_) SetName(name string) {
-	if len(name) < 1 {
-		var message = fmt.Sprintf("An invalid name was found:\n    %v\n", name)
-		panic(message)
-	}
-	v.name = name
-}
+// Private

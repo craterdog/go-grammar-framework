@@ -19,7 +19,7 @@ import (
 // Reference
 
 var expressionClass = &expressionClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -33,49 +33,46 @@ func Expression() ExpressionClassLike {
 // Target
 
 type expressionClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *expressionClass_) Make(
-	alternatives col.Sequential[AlternativeLike],
-	isMultilined bool,
-) ExpressionLike {
-	var expression = &expression_{
-		// This class does not initialize any attributes.
+func (c *expressionClass_) MakeWithAttributes(alternatives_ col.Sequential[AlternativeLike], multilined_ bool) ExpressionLike {
+	var result_ = &expression_{
+		alternatives_: alternatives_,
+		multilined_: multilined_,
 	}
-	expression.SetAlternatives(alternatives)
-	expression.SetMultilined(isMultilined)
-	return expression
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type expression_ struct {
-	alternatives col.Sequential[AlternativeLike]
-	isMultilined bool
+	alternatives_ col.Sequential[AlternativeLike]
+	multilined_ bool
+}
+
+// Attributes
+
+func (v *expression_) GetAlternatives() col.Sequential[AlternativeLike] {
+	return v.alternatives_
+}
+
+func (v *expression_) GetMultilined() bool {
+	return v.multilined_
 }
 
 // Public
 
-func (v *expression_) GetAlternatives() col.Sequential[AlternativeLike] {
-	return v.alternatives
-}
-
 func (v *expression_) IsMultilined() bool {
-	return v.isMultilined
+	return v.multilined_
 }
 
-func (v *expression_) SetAlternatives(alternatives col.Sequential[AlternativeLike]) {
-	if alternatives == nil || alternatives.IsEmpty() {
-		panic("An expression must have at least one alternative.")
-	}
-	v.alternatives = alternatives
-}
-
-func (v *expression_) SetMultilined(isMultilined bool) {
-	v.isMultilined = isMultilined
-}
+// Private

@@ -29,6 +29,7 @@ on interfaces, not on each other.
 package grammar
 
 import (
+	cla "github.com/craterdog/go-class-framework/v2"
 	col "github.com/craterdog/go-collection-framework/v3"
 )
 
@@ -68,7 +69,7 @@ functions that must be supported by all alternative-class-like classes.
 */
 type AlternativeClassLike interface {
 	// Constructors
-	Make(factors col.Sequential[FactorLike], note string) AlternativeLike
+	MakeWithAttributes(factors_ col.Sequential[FactorLike], note_ string) AlternativeLike
 }
 
 /*
@@ -77,9 +78,9 @@ functions that must be supported by all assertion-class-like classes.
 */
 type AssertionClassLike interface {
 	// Constructors
-	MakeFromElement(element ElementLike) AssertionLike
-	MakeFromGlyph(glyph GlyphLike) AssertionLike
-	MakeFromPrecedence(precedence PrecedenceLike) AssertionLike
+	MakeWithElement(element_ ElementLike) AssertionLike
+	MakeWithGlyph(glyph_ GlyphLike) AssertionLike
+	MakeWithPrecedence(precedence_ PrecedenceLike) AssertionLike
 }
 
 /*
@@ -88,7 +89,7 @@ functions that must be supported by all cardinality-class-like classes.
 */
 type CardinalityClassLike interface {
 	// Constructors
-	Make(constraint ConstraintLike) CardinalityLike
+	MakeWithConstraint(constraint_ ConstraintLike) CardinalityLike
 }
 
 /*
@@ -97,7 +98,7 @@ functions that must be supported by all constraint-class-like classes.
 */
 type ConstraintClassLike interface {
 	// Constructors
-	Make(first string, last string) ConstraintLike
+	MakeWithRange(first_ string, last_ string) ConstraintLike
 }
 
 /*
@@ -106,7 +107,7 @@ functions that must be supported by all definition-class-like classes.
 */
 type DefinitionClassLike interface {
 	// Constructors
-	Make(symbol string, expression ExpressionLike) DefinitionLike
+	MakeWithAttributes(symbol_ string, expression_ ExpressionLike) DefinitionLike
 }
 
 /*
@@ -115,9 +116,9 @@ that must be supported by all element-class-like classes.
 */
 type ElementClassLike interface {
 	// Constructors
-	MakeFromIntrinsic(intrinsic string) ElementLike
-	MakeFromLiteral(literal string) ElementLike
-	MakeFromName(name string) ElementLike
+	MakeWithIntrinsic(intrinsic_ string) ElementLike
+	MakeWithLiteral(literal_ string) ElementLike
+	MakeWithName(name_ string) ElementLike
 }
 
 /*
@@ -126,7 +127,7 @@ functions that must be supported by all expression-class-like classes.
 */
 type ExpressionClassLike interface {
 	// Constructors
-	Make(alternatives col.Sequential[AlternativeLike], isMultilined bool) ExpressionLike
+	MakeWithAttributes(alternatives_ col.Sequential[AlternativeLike], multilined_ bool) ExpressionLike
 }
 
 /*
@@ -135,7 +136,7 @@ that must be supported by all factor-class-like classes.
 */
 type FactorClassLike interface {
 	// Constructors
-	Make(predicate PredicateLike, cardinality CardinalityLike) FactorLike
+	MakeWithAttributes(predicate_ PredicateLike, cardinality_ CardinalityLike) FactorLike
 }
 
 /*
@@ -148,12 +149,21 @@ type FormatterClassLike interface {
 }
 
 /*
+GeneratorClassLike defines the set of class constants, constructors and
+functions that must be supported by all generator-class-like classes.
+*/
+type GeneratorClassLike interface {
+	// Constructors
+	Make() GeneratorLike
+}
+
+/*
 GlyphClassLike defines the set of class constants, constructors and functions
 that must be supported by all glyph-class-like classes.
 */
 type GlyphClassLike interface {
 	// Constructors
-	Make(first string, last string) GlyphLike
+	MakeWithRange(first_ string, last_ string) GlyphLike
 }
 
 /*
@@ -162,7 +172,7 @@ that must be supported by all grammar-class-like classes.
 */
 type GrammarClassLike interface {
 	// Constructors
-	Make(statements col.Sequential[StatementLike]) GrammarLike
+	MakeWithStatements(statements_ col.Sequential[StatementLike]) GrammarLike
 }
 
 /*
@@ -180,7 +190,7 @@ functions that must be supported by all precedence-class-like classes.
 */
 type PrecedenceClassLike interface {
 	// Constructors
-	Make(expression ExpressionLike) PrecedenceLike
+	MakeWithExpression(expression_ ExpressionLike) PrecedenceLike
 }
 
 /*
@@ -189,7 +199,7 @@ functions that must be supported by all predicate-class-like classes.
 */
 type PredicateClassLike interface {
 	// Constructors
-	Make(assertion AssertionLike, inverted bool) PredicateLike
+	MakeWithAttributes(assertion_ AssertionLike, inverted_ bool) PredicateLike
 }
 
 /*
@@ -210,8 +220,8 @@ functions that must be supported by all statement-class-like classes.
 */
 type StatementClassLike interface {
 	// Constructors
-	MakeFromComment(comment string) StatementLike
-	MakeFromDefinition(definition DefinitionLike) StatementLike
+	MakeWithComment(comment_ string) StatementLike
+	MakeWithDefinition(definition_ DefinitionLike) StatementLike
 }
 
 /*
@@ -220,11 +230,11 @@ that must be supported by all token-class-like classes.
 */
 type TokenClassLike interface {
 	// Constructors
-	Make(
-		line int,
-		position int,
-		tokenType TokenType,
-		tokenValue string,
+	MakeWithAttributes(
+		line_ int,
+		position_ int,
+		type_ TokenType,
+		value_ string,
 	) TokenLike
 
 	// Functions
@@ -249,9 +259,7 @@ all alternative-like instances.
 type AlternativeLike interface {
 	// Attributes
 	GetFactors() col.Sequential[FactorLike]
-	SetFactors(factors col.Sequential[FactorLike])
 	GetNote() string
-	SetNote(note string)
 }
 
 /*
@@ -261,11 +269,8 @@ all assertion-like instances.
 type AssertionLike interface {
 	// Attributes
 	GetElement() ElementLike
-	SetElement(element ElementLike)
 	GetGlyph() GlyphLike
-	SetGlyph(glyph GlyphLike)
 	GetPrecedence() PrecedenceLike
-	SetPrecedence(precedence PrecedenceLike)
 }
 
 /*
@@ -275,7 +280,6 @@ all cardinality-like instances.
 type CardinalityLike interface {
 	// Attributes
 	GetConstraint() ConstraintLike
-	SetConstraint(constraint ConstraintLike)
 }
 
 /*
@@ -285,9 +289,7 @@ all constraint-like instances.
 type ConstraintLike interface {
 	// Attributes
 	GetFirst() string
-	SetFirst(first string)
 	GetLast() string
-	SetLast(last string)
 }
 
 /*
@@ -297,9 +299,7 @@ all definition-like instances.
 type DefinitionLike interface {
 	// Attributes
 	GetExpression() ExpressionLike
-	SetExpression(expression ExpressionLike)
 	GetSymbol() string
-	SetSymbol(symbol string)
 }
 
 /*
@@ -309,11 +309,8 @@ element-like instances.
 type ElementLike interface {
 	// Attributes
 	GetIntrinsic() string
-	SetIntrinsic(intrinsic string)
 	GetLiteral() string
-	SetLiteral(literal string)
 	GetName() string
-	SetName(name string)
 }
 
 /*
@@ -323,8 +320,7 @@ all expression-like instances.
 type ExpressionLike interface {
 	// Attributes
 	GetAlternatives() col.Sequential[AlternativeLike]
-	SetAlternatives(alternatives col.Sequential[AlternativeLike])
-	SetMultilined(isMultilined bool)
+	GetMultilined() bool
 
 	// Methods
 	IsMultilined() bool
@@ -337,9 +333,7 @@ factor-like instances.
 type FactorLike interface {
 	// Attributes
 	GetCardinality() CardinalityLike
-	SetCardinality(cardinality CardinalityLike)
 	GetPredicate() PredicateLike
-	SetPredicate(predicate PredicateLike)
 }
 
 /*
@@ -353,15 +347,27 @@ type FormatterLike interface {
 }
 
 /*
+GeneratorLike defines the set of aspects and methods that must be supported by
+all generator-like instances.
+*/
+type GeneratorLike interface {
+	// Methods
+	GeneratePackage(
+		name string,
+		license string,
+		comment string,
+		grammar GrammarLike,
+	) cla.GoPNLike
+}
+
+/*
 GlyphLike defines the set of aspects and methods that must be supported by all
 glyph-like instances.
 */
 type GlyphLike interface {
 	// Attributes
 	GetFirst() string
-	SetFirst(first string)
 	GetLast() string
-	SetLast(last string)
 }
 
 /*
@@ -371,7 +377,6 @@ grammar-like instances.
 type GrammarLike interface {
 	// Attributes
 	GetStatements() col.Sequential[StatementLike]
-	SetStatements(statements col.Sequential[StatementLike])
 }
 
 /*
@@ -390,7 +395,6 @@ all precedence-like instances.
 type PrecedenceLike interface {
 	// Attributes
 	GetExpression() ExpressionLike
-	SetExpression(expression ExpressionLike)
 }
 
 /*
@@ -400,8 +404,7 @@ all predicate-like instances.
 type PredicateLike interface {
 	// Attributes
 	GetAssertion() AssertionLike
-	SetAssertion(assertion AssertionLike)
-	SetInverted(inverted bool)
+	GetInverted() bool
 
 	// Methods
 	IsInverted() bool
@@ -421,9 +424,7 @@ all statement-like instances.
 type StatementLike interface {
 	// Attributes
 	GetComment() string
-	SetComment(comment string)
 	GetDefinition() DefinitionLike
-	SetDefinition(definition DefinitionLike)
 }
 
 /*

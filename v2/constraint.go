@@ -10,12 +10,14 @@
 
 package grammar
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var constraintClass = &constraintClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -29,46 +31,42 @@ func Constraint() ConstraintClassLike {
 // Target
 
 type constraintClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *constraintClass_) Make(first, last string) ConstraintLike {
-	var constraint = &constraint_{
-		// This class does not initialize any attributes.
+func (c *constraintClass_) MakeWithRange(first_ string, last_ string) ConstraintLike {
+	var result_ = &constraint_{
+		first_: first_,
+		last_: last_,
 	}
-	constraint.SetFirst(first)
-	constraint.SetLast(last)
-	return constraint
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type constraint_ struct {
-	first string
-	last  string
+	first_ string
+	last_ string
+}
+
+// Attributes
+
+func (v *constraint_) GetFirst() string {
+	return v.first_
+}
+
+func (v *constraint_) GetLast() string {
+	return v.last_
 }
 
 // Public
 
-func (v *constraint_) GetFirst() string {
-	return v.first
-}
-
-func (v *constraint_) GetLast() string {
-	return v.last
-}
-
-func (v *constraint_) SetFirst(first string) {
-	if len(first) < 1 {
-		panic("A constraint requires a first number.")
-	}
-	v.first = first
-}
-
-func (v *constraint_) SetLast(last string) {
-	v.last = last
-}
+// Private

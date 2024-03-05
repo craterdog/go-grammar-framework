@@ -19,7 +19,7 @@ import (
 // Reference
 
 var grammarClass = &grammarClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -33,36 +33,36 @@ func Grammar() GrammarClassLike {
 // Target
 
 type grammarClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *grammarClass_) Make(statements col.Sequential[StatementLike]) GrammarLike {
-	var grammar = &grammar_{
-		// This class does not initialize any attributes.
+func (c *grammarClass_) MakeWithStatements(statements_ col.Sequential[StatementLike]) GrammarLike {
+	var result_ = &grammar_{
+		statements_: statements_,
 	}
-	grammar.SetStatements(statements)
-	return grammar
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type grammar_ struct {
-	statements col.Sequential[StatementLike]
+	statements_ col.Sequential[StatementLike]
+}
+
+// Attributes
+
+func (v *grammar_) GetStatements() col.Sequential[StatementLike] {
+	return v.statements_
 }
 
 // Public
 
-func (v *grammar_) GetStatements() col.Sequential[StatementLike] {
-	return v.statements
-}
-
-func (v *grammar_) SetStatements(statements col.Sequential[StatementLike]) {
-	if statements == nil || statements.IsEmpty() {
-		panic("An grammar must have at least one statement.")
-	}
-	v.statements = statements
-}
+// Private

@@ -3,6 +3,7 @@ module github.com/craterdog/go-grammar-framework/v2
 go 1.22
 
 require (
+	github.com/craterdog/go-class-framework/v2 v2.0.0
 	github.com/craterdog/go-collection-framework/v3 v3.5.0
 	github.com/stretchr/testify v1.9.0
 )

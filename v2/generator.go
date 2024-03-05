@@ -10,27 +10,29 @@
 
 package grammar
 
-import ()
+import (
+	cla "github.com/craterdog/go-class-framework/v2"
+)
 
 // CLASS ACCESS
 
 // Reference
 
-var definitionClass = &definitionClass_{
+var generatorClass = &generatorClass_{
 	// TBA - Assign constant values.
 }
 
 // Function
 
-func Definition() DefinitionClassLike {
-	return definitionClass
+func Generator() GeneratorClassLike {
+	return generatorClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type definitionClass_ struct {
+type generatorClass_ struct {
 	// TBA - Add private class constants.
 }
 
@@ -38,11 +40,8 @@ type definitionClass_ struct {
 
 // Constructors
 
-func (c *definitionClass_) MakeWithAttributes(symbol_ string, expression_ ExpressionLike) DefinitionLike {
-	var result_ = &definition_{
-		symbol_: symbol_,
-		expression_: expression_,
-	}
+func (c *generatorClass_) Make() GeneratorLike {
+	var result_ = &generator_{}
 	return result_
 }
 
@@ -52,21 +51,23 @@ func (c *definitionClass_) MakeWithAttributes(symbol_ string, expression_ Expres
 
 // Target
 
-type definition_ struct {
-	expression_ ExpressionLike
-	symbol_ string
+type generator_ struct {
+	// TBA - Add private instance attributes.
 }
 
 // Attributes
 
-func (v *definition_) GetExpression() ExpressionLike {
-	return v.expression_
-}
-
-func (v *definition_) GetSymbol() string {
-	return v.symbol_
-}
-
 // Public
+
+func (v *generator_) GeneratePackage(
+	name string,
+	license string,
+	comment string,
+	grammar GrammarLike,
+) cla.GoPNLike {
+	var result_ cla.GoPNLike
+	// TBA - Implement the method.
+	return result_
+}
 
 // Private

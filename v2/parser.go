@@ -199,7 +199,7 @@ func (v *parser_) parseAlternative() (
 	note, token, _ = v.parseToken(NoteToken, "")
 
 	// Found an alternative.
-	alternative = Alternative().Make(factors, note)
+	alternative = Alternative().MakeWithAttributes(factors, note)
 	return alternative, token, true
 }
 
@@ -215,21 +215,21 @@ func (v *parser_) parseAssertion() (
 	// Attempt to parse an element assertion.
 	element, token, ok = v.parseElement()
 	if ok {
-		assertion = Assertion().MakeFromElement(element)
+		assertion = Assertion().MakeWithElement(element)
 		return assertion, token, true
 	}
 
 	// Attempt to parse a glyph assertion.
 	glyph, token, ok = v.parseGlyph()
 	if ok {
-		assertion = Assertion().MakeFromGlyph(glyph)
+		assertion = Assertion().MakeWithGlyph(glyph)
 		return assertion, token, true
 	}
 
 	// Attempt to parse a precedence assertion.
 	precedence, token, ok = v.parsePrecedence()
 	if ok {
-		assertion = Assertion().MakeFromPrecedence(precedence)
+		assertion = Assertion().MakeWithPrecedence(precedence)
 		return assertion, token, true
 	}
 
@@ -247,24 +247,24 @@ func (v *parser_) parseCardinality() (
 	// Attempt to parse a zero-or-one cardinality.
 	_, token, ok = v.parseToken(DelimiterToken, "?")
 	if ok {
-		constraint = Constraint().Make("0", "1")
-		cardinality = Cardinality().Make(constraint)
+		constraint = Constraint().MakeWithRange("0", "1")
+		cardinality = Cardinality().MakeWithConstraint(constraint)
 		return cardinality, token, true
 	}
 
 	// Attempt to parse a zero-or-more cardinality.
 	_, token, ok = v.parseToken(DelimiterToken, "*")
 	if ok {
-		constraint = Constraint().Make("0", "")
-		cardinality = Cardinality().Make(constraint)
+		constraint = Constraint().MakeWithRange("0", "")
+		cardinality = Cardinality().MakeWithConstraint(constraint)
 		return cardinality, token, true
 	}
 
 	// Attempt to parse a one-or-more cardinality.
 	_, token, ok = v.parseToken(DelimiterToken, "+")
 	if ok {
-		constraint = Constraint().Make("1", "")
-		cardinality = Cardinality().Make(constraint)
+		constraint = Constraint().MakeWithRange("1", "")
+		cardinality = Cardinality().MakeWithConstraint(constraint)
 		return cardinality, token, true
 	}
 
@@ -291,7 +291,7 @@ func (v *parser_) parseCardinality() (
 		}
 
 		// Found a cardinality.
-		cardinality = Cardinality().Make(constraint)
+		cardinality = Cardinality().MakeWithConstraint(constraint)
 		return cardinality, token, true
 	}
 	// This is not a cardinality.
@@ -323,7 +323,7 @@ func (v *parser_) parseConstraint() (
 	}
 
 	// Found a constraint.
-	constraint = Constraint().Make(first, last)
+	constraint = Constraint().MakeWithRange(first, last)
 	return constraint, token, true
 }
 
@@ -365,7 +365,7 @@ func (v *parser_) parseDefinition() (
 	}
 
 	// Found a definition.
-	definition = Definition().Make(symbol, expression)
+	definition = Definition().MakeWithAttributes(symbol, expression)
 	return definition, token, true
 }
 
@@ -381,21 +381,21 @@ func (v *parser_) parseElement() (
 	// Attempt to parse an intrinsic element.
 	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
 	if ok {
-		element = Element().MakeFromIntrinsic(intrinsic)
+		element = Element().MakeWithIntrinsic(intrinsic)
 		return element, token, true
 	}
 
 	// Attempt to parse a literal element.
 	literal, token, ok = v.parseToken(LiteralToken, "")
 	if ok {
-		element = Element().MakeFromLiteral(literal)
+		element = Element().MakeWithLiteral(literal)
 		return element, token, true
 	}
 
 	// Attempt to parse a name element.
 	name, token, ok = v.parseToken(NameToken, "")
 	if ok {
-		element = Element().MakeFromName(name)
+		element = Element().MakeWithName(name)
 		return element, token, true
 	}
 
@@ -442,7 +442,7 @@ func (v *parser_) parseExpression() (
 		}
 
 		// Found a multi-line expression.
-		expression = Expression().Make(alternatives, isMultilined)
+		expression = Expression().MakeWithAttributes(alternatives, isMultilined)
 		return expression, token, true
 	}
 
@@ -471,7 +471,7 @@ func (v *parser_) parseExpression() (
 	}
 
 	// Found an in-line expression.
-	expression = Expression().Make(alternatives, isMultilined)
+	expression = Expression().MakeWithAttributes(alternatives, isMultilined)
 	return expression, token, true
 }
 
@@ -494,7 +494,7 @@ func (v *parser_) parseFactor() (
 	cardinality, token, _ = v.parseCardinality()
 
 	// Found a factor.
-	factor = Factor().Make(predicate, cardinality)
+	factor = Factor().MakeWithAttributes(predicate, cardinality)
 	return factor, token, true
 }
 
@@ -527,7 +527,7 @@ func (v *parser_) parseGlyph() (
 	}
 
 	// Found a glyph.
-	glyph = Glyph().Make(first, last)
+	glyph = Glyph().MakeWithRange(first, last)
 	return glyph, token, true
 }
 
@@ -564,7 +564,7 @@ func (v *parser_) parseGrammar() (
 	}
 
 	// Found a grammar.
-	grammar = Grammar().Make(statements)
+	grammar = Grammar().MakeWithStatements(statements)
 	return grammar, token, true
 }
 
@@ -605,7 +605,7 @@ func (v *parser_) parsePrecedence() (
 	}
 
 	// Found a precedence.
-	precedence = Precedence().Make(expression)
+	precedence = Precedence().MakeWithExpression(expression)
 	return precedence, token, true
 }
 
@@ -637,7 +637,7 @@ func (v *parser_) parsePredicate() (
 	}
 
 	// Found a predicate.
-	predicate = Predicate().Make(assertion, isInverted)
+	predicate = Predicate().MakeWithAttributes(assertion, isInverted)
 	return predicate, token, true
 }
 
@@ -652,14 +652,14 @@ func (v *parser_) parseStatement() (
 	// Attempt to parse a comment statement.
 	comment, token, ok = v.parseToken(CommentToken, "")
 	if ok {
-		statement = Statement().MakeFromComment(comment)
+		statement = Statement().MakeWithComment(comment)
 		return statement, token, true
 	}
 
 	// Attempt to parse a definition statement.
 	definition, token, ok = v.parseDefinition()
 	if ok {
-		statement = Statement().MakeFromDefinition(definition)
+		statement = Statement().MakeWithDefinition(definition)
 		return statement, token, true
 	}
 

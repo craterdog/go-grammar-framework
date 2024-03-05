@@ -10,12 +10,14 @@
 
 package grammar
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var glyphClass = &glyphClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -29,46 +31,42 @@ func Glyph() GlyphClassLike {
 // Target
 
 type glyphClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *glyphClass_) Make(first, last string) GlyphLike {
-	var glyph = &glyph_{
-		// This class does not initialize any attributes.
+func (c *glyphClass_) MakeWithRange(first_ string, last_ string) GlyphLike {
+	var result_ = &glyph_{
+		first_: first_,
+		last_: last_,
 	}
-	glyph.SetFirst(first)
-	glyph.SetLast(last)
-	return glyph
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type glyph_ struct {
-	first string
-	last  string
+	first_ string
+	last_ string
+}
+
+// Attributes
+
+func (v *glyph_) GetFirst() string {
+	return v.first_
+}
+
+func (v *glyph_) GetLast() string {
+	return v.last_
 }
 
 // Public
 
-func (v *glyph_) GetFirst() string {
-	return v.first
-}
-
-func (v *glyph_) GetLast() string {
-	return v.last
-}
-
-func (v *glyph_) SetFirst(first string) {
-	if len(first) < 1 {
-		panic("A glyph requires a first character.")
-	}
-	v.first = first
-}
-
-func (v *glyph_) SetLast(last string) {
-	v.last = last
-}
+// Private

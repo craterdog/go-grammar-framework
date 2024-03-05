@@ -10,16 +10,14 @@
 
 package grammar
 
-import (
-	fmt "fmt"
-)
+import ()
 
 // CLASS ACCESS
 
 // Reference
 
 var statementClass = &statementClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -33,62 +31,48 @@ func Statement() StatementClassLike {
 // Target
 
 type statementClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *statementClass_) MakeFromComment(comment string) StatementLike {
-	var statement = &statement_{
-		// This class does not initialize any attributes.
+func (c *statementClass_) MakeWithComment(comment_ string) StatementLike {
+	var result_ = &statement_{
+		comment_: comment_,
 	}
-	statement.SetComment(comment)
-	return statement
+	return result_
 }
 
-func (c *statementClass_) MakeFromDefinition(definition DefinitionLike) StatementLike {
-	var statement = &statement_{
-		// This class does not initialize any attributes.
+func (c *statementClass_) MakeWithDefinition(definition_ DefinitionLike) StatementLike {
+	var result_ = &statement_{
+		definition_: definition_,
 	}
-	statement.SetDefinition(definition)
-	return statement
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type statement_ struct {
-	comment    string
-	definition DefinitionLike
+	comment_ string
+	definition_ DefinitionLike
+}
+
+// Attributes
+
+func (v *statement_) GetComment() string {
+	return v.comment_
+}
+
+func (v *statement_) GetDefinition() DefinitionLike {
+	return v.definition_
 }
 
 // Public
 
-func (v *statement_) GetComment() string {
-	return v.comment
-}
-
-func (v *statement_) GetDefinition() DefinitionLike {
-	return v.definition
-}
-
-func (v *statement_) SetComment(comment string) {
-	if len(comment) < 4 {
-		var message = fmt.Sprintf(
-			"Attempted to set an invalid comment:\n%v\n",
-			comment,
-		)
-		panic(message)
-	}
-	v.comment = comment
-	v.definition = nil
-}
-
-func (v *statement_) SetDefinition(definition DefinitionLike) {
-	if definition == nil {
-		panic("A definition must not be nil.")
-	}
-	v.comment = ""
-	v.definition = definition
-}
+// Private

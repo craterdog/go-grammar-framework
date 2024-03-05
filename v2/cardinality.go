@@ -10,12 +10,14 @@
 
 package grammar
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var cardinalityClass = &cardinalityClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -29,36 +31,36 @@ func Cardinality() CardinalityClassLike {
 // Target
 
 type cardinalityClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *cardinalityClass_) Make(constraint ConstraintLike) CardinalityLike {
-	var cardinality = &cardinality_{
-		// This class does not initialize any attributes.
+func (c *cardinalityClass_) MakeWithConstraint(constraint_ ConstraintLike) CardinalityLike {
+	var result_ = &cardinality_{
+		constraint_: constraint_,
 	}
-	cardinality.SetConstraint(constraint)
-	return cardinality
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type cardinality_ struct {
-	constraint ConstraintLike
+	constraint_ ConstraintLike
+}
+
+// Attributes
+
+func (v *cardinality_) GetConstraint() ConstraintLike {
+	return v.constraint_
 }
 
 // Public
 
-func (v *cardinality_) GetConstraint() ConstraintLike {
-	return v.constraint
-}
-
-func (v *cardinality_) SetConstraint(constraint ConstraintLike) {
-	if constraint == nil {
-		panic("A constraint must not be nil.")
-	}
-	v.constraint = constraint
-}
+// Private

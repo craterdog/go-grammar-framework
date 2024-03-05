@@ -19,7 +19,7 @@ import (
 // Reference
 
 var alternativeClass = &alternativeClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -33,49 +33,42 @@ func Alternative() AlternativeClassLike {
 // Target
 
 type alternativeClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *alternativeClass_) Make(
-	factors col.Sequential[FactorLike],
-	note string,
-) AlternativeLike {
-	var alternative = &alternative_{
-		// This class does not initialize any attributes.
+func (c *alternativeClass_) MakeWithAttributes(factors_ col.Sequential[FactorLike], note_ string) AlternativeLike {
+	var result_ = &alternative_{
+		factors_: factors_,
+		note_: note_,
 	}
-	alternative.SetFactors(factors)
-	alternative.SetNote(note)
-	return alternative
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type alternative_ struct {
-	factors col.Sequential[FactorLike]
-	note    string
+	factors_ col.Sequential[FactorLike]
+	note_ string
+}
+
+// Attributes
+
+func (v *alternative_) GetFactors() col.Sequential[FactorLike] {
+	return v.factors_
+}
+
+func (v *alternative_) GetNote() string {
+	return v.note_
 }
 
 // Public
 
-func (v *alternative_) GetFactors() col.Sequential[FactorLike] {
-	return v.factors
-}
-
-func (v *alternative_) GetNote() string {
-	return v.note
-}
-
-func (v *alternative_) SetFactors(factors col.Sequential[FactorLike]) {
-	if factors == nil || factors.IsEmpty() {
-		panic("An alternative must have at least one factor.")
-	}
-	v.factors = factors
-}
-
-func (v *alternative_) SetNote(note string) {
-	v.note = note
-}
+// Private

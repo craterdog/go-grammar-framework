@@ -10,12 +10,14 @@
 
 package grammar
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var factorClass = &factorClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -29,49 +31,42 @@ func Factor() FactorClassLike {
 // Target
 
 type factorClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *factorClass_) Make(
-	predicate PredicateLike,
-	cardinality CardinalityLike,
-) FactorLike {
-	var factor = &factor_{
-		// This class does not initialize any attributes.
+func (c *factorClass_) MakeWithAttributes(predicate_ PredicateLike, cardinality_ CardinalityLike) FactorLike {
+	var result_ = &factor_{
+		predicate_: predicate_,
+		cardinality_: cardinality_,
 	}
-	factor.SetPredicate(predicate)
-	factor.SetCardinality(cardinality)
-	return factor
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type factor_ struct {
-	cardinality CardinalityLike
-	predicate   PredicateLike
+	cardinality_ CardinalityLike
+	predicate_ PredicateLike
+}
+
+// Attributes
+
+func (v *factor_) GetCardinality() CardinalityLike {
+	return v.cardinality_
+}
+
+func (v *factor_) GetPredicate() PredicateLike {
+	return v.predicate_
 }
 
 // Public
 
-func (v *factor_) GetCardinality() CardinalityLike {
-	return v.cardinality
-}
-
-func (v *factor_) GetPredicate() PredicateLike {
-	return v.predicate
-}
-
-func (v *factor_) SetCardinality(cardinality CardinalityLike) {
-	v.cardinality = cardinality
-}
-
-func (v *factor_) SetPredicate(predicate PredicateLike) {
-	if predicate == nil {
-		panic("A predicate within a factor cannot be nil.")
-	}
-	v.predicate = predicate
-}
+// Private

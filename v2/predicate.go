@@ -10,12 +10,14 @@
 
 package grammar
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var predicateClass = &predicateClass_{
-	// This class does not initialize any constants.
+	// TBA - Assign constant values.
 }
 
 // Function
@@ -29,49 +31,46 @@ func Predicate() PredicateClassLike {
 // Target
 
 type predicateClass_ struct {
-	// This class does not define any constants.
+	// TBA - Add private class constants.
 }
+
+// Constants
 
 // Constructors
 
-func (c *predicateClass_) Make(
-	assertion AssertionLike,
-	isInverted bool,
-) PredicateLike {
-	var predicate = &predicate_{
-		// This class does not initialize any attributes.
+func (c *predicateClass_) MakeWithAttributes(assertion_ AssertionLike, inverted_ bool) PredicateLike {
+	var result_ = &predicate_{
+		assertion_: assertion_,
+		inverted_: inverted_,
 	}
-	predicate.SetAssertion(assertion)
-	predicate.SetInverted(isInverted)
-	return predicate
+	return result_
 }
+
+// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type predicate_ struct {
-	assertion  AssertionLike
-	isInverted bool
+	assertion_ AssertionLike
+	inverted_ bool
+}
+
+// Attributes
+
+func (v *predicate_) GetAssertion() AssertionLike {
+	return v.assertion_
+}
+
+func (v *predicate_) GetInverted() bool {
+	return v.inverted_
 }
 
 // Public
 
-func (v *predicate_) GetAssertion() AssertionLike {
-	return v.assertion
-}
-
 func (v *predicate_) IsInverted() bool {
-	return v.isInverted
+	return v.inverted_
 }
 
-func (v *predicate_) SetAssertion(assertion AssertionLike) {
-	if assertion == nil {
-		panic("An assertion must not be nil.")
-	}
-	v.assertion = assertion
-}
-
-func (v *predicate_) SetInverted(isInverted bool) {
-	v.isInverted = isInverted
-}
+// Private
