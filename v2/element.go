@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import ()
 
@@ -67,8 +67,8 @@ func (c *elementClass_) MakeWithName(name_ string) ElementLike {
 
 type element_ struct {
 	intrinsic_ string
-	literal_ string
-	name_ string
+	literal_   string
+	name_      string
 }
 
 // Attributes

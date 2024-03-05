@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import ()
 
@@ -41,7 +41,7 @@ type constraintClass_ struct {
 func (c *constraintClass_) MakeWithRange(first_ string, last_ string) ConstraintLike {
 	var result_ = &constraint_{
 		first_: first_,
-		last_: last_,
+		last_:  last_,
 	}
 	return result_
 }
@@ -54,7 +54,7 @@ func (c *constraintClass_) MakeWithRange(first_ string, last_ string) Constraint
 
 type constraint_ struct {
 	first_ string
-	last_ string
+	last_  string
 }
 
 // Attributes

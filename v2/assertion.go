@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import ()
 
@@ -66,8 +66,8 @@ func (c *assertionClass_) MakeWithPrecedence(precedence_ PrecedenceLike) Asserti
 // Target
 
 type assertion_ struct {
-	element_ ElementLike
-	glyph_ GlyphLike
+	element_    ElementLike
+	glyph_      GlyphLike
 	precedence_ PrecedenceLike
 }
 

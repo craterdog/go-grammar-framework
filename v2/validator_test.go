@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar_test
+package grammars_test
 
 import (
 	fmt "fmt"

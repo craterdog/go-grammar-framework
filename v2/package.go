@@ -9,8 +9,8 @@
  *******************************************************************************/
 
 /*
-Package grammar provides a parser and formatter for language grammars defined using
-Crater Dog Syntax Notation™ (CDSN).  The parser performs validation on the
+Package grammars provides a parser and formatter for language grammars defined
+using Crater Dog Syntax Notation™ (CDSN).  The parser performs validation on the
 resulting parse tree.  The formatter takes a validated parse tree and generates
 the corresponding CDSN source using the canonical format.
 
@@ -26,7 +26,7 @@ developed and used seamlessly since the interface definitions only depend on
 other interfaces and primitive types; and the class implementations only depend
 on interfaces, not on each other.
 */
-package grammar
+package grammars
 
 import (
 	cla "github.com/craterdog/go-class-framework/v2"

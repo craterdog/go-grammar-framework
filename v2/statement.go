@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import ()
 
@@ -59,7 +59,7 @@ func (c *statementClass_) MakeWithDefinition(definition_ DefinitionLike) Stateme
 // Target
 
 type statement_ struct {
-	comment_ string
+	comment_    string
 	definition_ DefinitionLike
 }
 

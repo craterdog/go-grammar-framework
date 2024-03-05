@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import ()
 
@@ -41,7 +41,7 @@ type predicateClass_ struct {
 func (c *predicateClass_) MakeWithAttributes(assertion_ AssertionLike, inverted_ bool) PredicateLike {
 	var result_ = &predicate_{
 		assertion_: assertion_,
-		inverted_: inverted_,
+		inverted_:  inverted_,
 	}
 	return result_
 }
@@ -54,7 +54,7 @@ func (c *predicateClass_) MakeWithAttributes(assertion_ AssertionLike, inverted_
 
 type predicate_ struct {
 	assertion_ AssertionLike
-	inverted_ bool
+	inverted_  bool
 }
 
 // Attributes

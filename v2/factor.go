@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import ()
 
@@ -40,7 +40,7 @@ type factorClass_ struct {
 
 func (c *factorClass_) MakeWithAttributes(predicate_ PredicateLike, cardinality_ CardinalityLike) FactorLike {
 	var result_ = &factor_{
-		predicate_: predicate_,
+		predicate_:   predicate_,
 		cardinality_: cardinality_,
 	}
 	return result_
@@ -54,7 +54,7 @@ func (c *factorClass_) MakeWithAttributes(predicate_ PredicateLike, cardinality_
 
 type factor_ struct {
 	cardinality_ CardinalityLike
-	predicate_ PredicateLike
+	predicate_   PredicateLike
 }
 
 // Attributes

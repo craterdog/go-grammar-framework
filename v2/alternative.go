@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import (
 	col "github.com/craterdog/go-collection-framework/v3"
@@ -43,7 +43,7 @@ type alternativeClass_ struct {
 func (c *alternativeClass_) MakeWithAttributes(factors_ col.Sequential[FactorLike], note_ string) AlternativeLike {
 	var result_ = &alternative_{
 		factors_: factors_,
-		note_: note_,
+		note_:    note_,
 	}
 	return result_
 }
@@ -56,7 +56,7 @@ func (c *alternativeClass_) MakeWithAttributes(factors_ col.Sequential[FactorLik
 
 type alternative_ struct {
 	factors_ col.Sequential[FactorLike]
-	note_ string
+	note_    string
 }
 
 // Attributes

@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import (
 	col "github.com/craterdog/go-collection-framework/v3"
@@ -43,7 +43,7 @@ type expressionClass_ struct {
 func (c *expressionClass_) MakeWithAttributes(alternatives_ col.Sequential[AlternativeLike], multilined_ bool) ExpressionLike {
 	var result_ = &expression_{
 		alternatives_: alternatives_,
-		multilined_: multilined_,
+		multilined_:   multilined_,
 	}
 	return result_
 }
@@ -56,7 +56,7 @@ func (c *expressionClass_) MakeWithAttributes(alternatives_ col.Sequential[Alter
 
 type expression_ struct {
 	alternatives_ col.Sequential[AlternativeLike]
-	multilined_ bool
+	multilined_   bool
 }
 
 // Attributes

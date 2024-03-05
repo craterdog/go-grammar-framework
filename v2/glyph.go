@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import ()
 
@@ -41,7 +41,7 @@ type glyphClass_ struct {
 func (c *glyphClass_) MakeWithRange(first_ string, last_ string) GlyphLike {
 	var result_ = &glyph_{
 		first_: first_,
-		last_: last_,
+		last_:  last_,
 	}
 	return result_
 }
@@ -54,7 +54,7 @@ func (c *glyphClass_) MakeWithRange(first_ string, last_ string) GlyphLike {
 
 type glyph_ struct {
 	first_ string
-	last_ string
+	last_  string
 }
 
 // Attributes

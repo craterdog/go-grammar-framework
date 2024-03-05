@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import ()
 
@@ -40,7 +40,7 @@ type definitionClass_ struct {
 
 func (c *definitionClass_) MakeWithAttributes(symbol_ string, expression_ ExpressionLike) DefinitionLike {
 	var result_ = &definition_{
-		symbol_: symbol_,
+		symbol_:     symbol_,
 		expression_: expression_,
 	}
 	return result_
@@ -54,7 +54,7 @@ func (c *definitionClass_) MakeWithAttributes(symbol_ string, expression_ Expres
 
 type definition_ struct {
 	expression_ ExpressionLike
-	symbol_ string
+	symbol_     string
 }
 
 // Attributes

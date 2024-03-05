@@ -8,7 +8,7 @@
  * Initiative. (See http://opensource.org/licenses/MIT)                        *
  *******************************************************************************/
 
-package grammar
+package grammars
 
 import (
 	fmt "fmt"
@@ -59,10 +59,10 @@ func (c *tokenClass_) MakeWithAttributes(
 	value_ string,
 ) TokenLike {
 	var result_ = &token_{
-		line_: line_,
+		line_:     line_,
 		position_: position_,
-		type_: type_,
-		value_: value_,
+		type_:     type_,
+		value_:    value_,
 	}
 	return result_
 }
@@ -78,10 +78,10 @@ func (c *tokenClass_) AsString(type_ TokenType) string {
 // Target
 
 type token_ struct {
-	line_ int
+	line_     int
 	position_ int
-	type_ TokenType
-	value_ string
+	type_     TokenType
+	value_    string
 }
 
 // Attributes
