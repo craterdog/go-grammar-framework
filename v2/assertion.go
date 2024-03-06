@@ -39,24 +39,21 @@ type assertionClass_ struct {
 // Constructors
 
 func (c *assertionClass_) MakeWithElement(element_ ElementLike) AssertionLike {
-	var result_ = &assertion_{
+	return &assertion_{
 		element_: element_,
 	}
-	return result_
 }
 
 func (c *assertionClass_) MakeWithGlyph(glyph_ GlyphLike) AssertionLike {
-	var result_ = &assertion_{
+	return &assertion_{
 		glyph_: glyph_,
 	}
-	return result_
 }
 
 func (c *assertionClass_) MakeWithPrecedence(precedence_ PrecedenceLike) AssertionLike {
-	var result_ = &assertion_{
+	return &assertion_{
 		precedence_: precedence_,
 	}
-	return result_
 }
 
 // Functions

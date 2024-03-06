@@ -38,11 +38,10 @@ type precedenceClass_ struct {
 
 // Constructors
 
-func (c *precedenceClass_) MakeWithExpression(expression_ ExpressionLike) PrecedenceLike {
-	var result_ = &precedence_{
+func (c *precedenceClass_) MakeWithAttributes(expression_ ExpressionLike) PrecedenceLike {
+	return &precedence_{
 		expression_: expression_,
 	}
-	return result_
 }
 
 // Functions

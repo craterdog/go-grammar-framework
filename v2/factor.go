@@ -39,11 +39,10 @@ type factorClass_ struct {
 // Constructors
 
 func (c *factorClass_) MakeWithAttributes(predicate_ PredicateLike, cardinality_ CardinalityLike) FactorLike {
-	var result_ = &factor_{
+	return &factor_{
 		predicate_:   predicate_,
 		cardinality_: cardinality_,
 	}
-	return result_
 }
 
 // Functions

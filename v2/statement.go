@@ -39,17 +39,15 @@ type statementClass_ struct {
 // Constructors
 
 func (c *statementClass_) MakeWithComment(comment_ string) StatementLike {
-	var result_ = &statement_{
+	return &statement_{
 		comment_: comment_,
 	}
-	return result_
 }
 
 func (c *statementClass_) MakeWithDefinition(definition_ DefinitionLike) StatementLike {
-	var result_ = &statement_{
+	return &statement_{
 		definition_: definition_,
 	}
-	return result_
 }
 
 // Functions

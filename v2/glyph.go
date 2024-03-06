@@ -38,12 +38,11 @@ type glyphClass_ struct {
 
 // Constructors
 
-func (c *glyphClass_) MakeWithRange(first_ string, last_ string) GlyphLike {
-	var result_ = &glyph_{
+func (c *glyphClass_) MakeWithAttributes(first_ string, last_ string) GlyphLike {
+	return &glyph_{
 		first_: first_,
 		last_:  last_,
 	}
-	return result_
 }
 
 // Functions

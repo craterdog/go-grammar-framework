@@ -41,8 +41,7 @@ type generatorClass_ struct {
 // Constructors
 
 func (c *generatorClass_) Make() GeneratorLike {
-	var result_ = &generator_{}
-	return result_
+	return &generator_{}
 }
 
 // Functions

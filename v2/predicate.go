@@ -39,11 +39,10 @@ type predicateClass_ struct {
 // Constructors
 
 func (c *predicateClass_) MakeWithAttributes(assertion_ AssertionLike, inverted_ bool) PredicateLike {
-	var result_ = &predicate_{
+	return &predicate_{
 		assertion_: assertion_,
 		inverted_:  inverted_,
 	}
-	return result_
 }
 
 // Functions
@@ -63,14 +62,10 @@ func (v *predicate_) GetAssertion() AssertionLike {
 	return v.assertion_
 }
 
-func (v *predicate_) GetInverted() bool {
+func (v *predicate_) IsInverted() bool {
 	return v.inverted_
 }
 
 // Public
-
-func (v *predicate_) IsInverted() bool {
-	return v.inverted_
-}
 
 // Private

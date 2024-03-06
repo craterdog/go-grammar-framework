@@ -39,24 +39,21 @@ type elementClass_ struct {
 // Constructors
 
 func (c *elementClass_) MakeWithIntrinsic(intrinsic_ string) ElementLike {
-	var result_ = &element_{
+	return &element_{
 		intrinsic_: intrinsic_,
 	}
-	return result_
 }
 
 func (c *elementClass_) MakeWithLiteral(literal_ string) ElementLike {
-	var result_ = &element_{
+	return &element_{
 		literal_: literal_,
 	}
-	return result_
 }
 
 func (c *elementClass_) MakeWithName(name_ string) ElementLike {
-	var result_ = &element_{
+	return &element_{
 		name_: name_,
 	}
-	return result_
 }
 
 // Functions

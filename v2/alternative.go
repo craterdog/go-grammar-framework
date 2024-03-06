@@ -41,11 +41,10 @@ type alternativeClass_ struct {
 // Constructors
 
 func (c *alternativeClass_) MakeWithAttributes(factors_ col.Sequential[FactorLike], note_ string) AlternativeLike {
-	var result_ = &alternative_{
+	return &alternative_{
 		factors_: factors_,
 		note_:    note_,
 	}
-	return result_
 }
 
 // Functions

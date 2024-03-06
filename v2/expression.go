@@ -41,11 +41,10 @@ type expressionClass_ struct {
 // Constructors
 
 func (c *expressionClass_) MakeWithAttributes(alternatives_ col.Sequential[AlternativeLike], multilined_ bool) ExpressionLike {
-	var result_ = &expression_{
+	return &expression_{
 		alternatives_: alternatives_,
 		multilined_:   multilined_,
 	}
-	return result_
 }
 
 // Functions
@@ -65,14 +64,10 @@ func (v *expression_) GetAlternatives() col.Sequential[AlternativeLike] {
 	return v.alternatives_
 }
 
-func (v *expression_) GetMultilined() bool {
+func (v *expression_) IsMultilined() bool {
 	return v.multilined_
 }
 
 // Public
-
-func (v *expression_) IsMultilined() bool {
-	return v.multilined_
-}
 
 // Private

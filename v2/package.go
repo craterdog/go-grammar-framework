@@ -89,7 +89,7 @@ functions that must be supported by all cardinality-class-like classes.
 */
 type CardinalityClassLike interface {
 	// Constructors
-	MakeWithConstraint(constraint_ ConstraintLike) CardinalityLike
+	MakeWithAttributes(constraint_ ConstraintLike) CardinalityLike
 }
 
 /*
@@ -98,7 +98,7 @@ functions that must be supported by all constraint-class-like classes.
 */
 type ConstraintClassLike interface {
 	// Constructors
-	MakeWithRange(first_ string, last_ string) ConstraintLike
+	MakeWithAttributes(first_ string, last_ string) ConstraintLike
 }
 
 /*
@@ -163,7 +163,7 @@ that must be supported by all glyph-class-like classes.
 */
 type GlyphClassLike interface {
 	// Constructors
-	MakeWithRange(first_ string, last_ string) GlyphLike
+	MakeWithAttributes(first_ string, last_ string) GlyphLike
 }
 
 /*
@@ -172,7 +172,7 @@ that must be supported by all grammar-class-like classes.
 */
 type GrammarClassLike interface {
 	// Constructors
-	MakeWithStatements(statements_ col.Sequential[StatementLike]) GrammarLike
+	MakeWithAttributes(statements_ col.Sequential[StatementLike]) GrammarLike
 }
 
 /*
@@ -190,7 +190,7 @@ functions that must be supported by all precedence-class-like classes.
 */
 type PrecedenceClassLike interface {
 	// Constructors
-	MakeWithExpression(expression_ ExpressionLike) PrecedenceLike
+	MakeWithAttributes(expression_ ExpressionLike) PrecedenceLike
 }
 
 /*
@@ -320,9 +320,6 @@ all expression-like instances.
 type ExpressionLike interface {
 	// Attributes
 	GetAlternatives() col.Sequential[AlternativeLike]
-	GetMultilined() bool
-
-	// Methods
 	IsMultilined() bool
 }
 
@@ -404,9 +401,6 @@ all predicate-like instances.
 type PredicateLike interface {
 	// Attributes
 	GetAssertion() AssertionLike
-	GetInverted() bool
-
-	// Methods
 	IsInverted() bool
 }
 

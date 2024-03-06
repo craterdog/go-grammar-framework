@@ -247,24 +247,24 @@ func (v *parser_) parseCardinality() (
 	// Attempt to parse a zero-or-one cardinality.
 	_, token, ok = v.parseToken(DelimiterToken, "?")
 	if ok {
-		constraint = Constraint().MakeWithRange("0", "1")
-		cardinality = Cardinality().MakeWithConstraint(constraint)
+		constraint = Constraint().MakeWithAttributes("0", "1")
+		cardinality = Cardinality().MakeWithAttributes(constraint)
 		return cardinality, token, true
 	}
 
 	// Attempt to parse a zero-or-more cardinality.
 	_, token, ok = v.parseToken(DelimiterToken, "*")
 	if ok {
-		constraint = Constraint().MakeWithRange("0", "")
-		cardinality = Cardinality().MakeWithConstraint(constraint)
+		constraint = Constraint().MakeWithAttributes("0", "")
+		cardinality = Cardinality().MakeWithAttributes(constraint)
 		return cardinality, token, true
 	}
 
 	// Attempt to parse a one-or-more cardinality.
 	_, token, ok = v.parseToken(DelimiterToken, "+")
 	if ok {
-		constraint = Constraint().MakeWithRange("1", "")
-		cardinality = Cardinality().MakeWithConstraint(constraint)
+		constraint = Constraint().MakeWithAttributes("1", "")
+		cardinality = Cardinality().MakeWithAttributes(constraint)
 		return cardinality, token, true
 	}
 
@@ -291,7 +291,7 @@ func (v *parser_) parseCardinality() (
 		}
 
 		// Found a cardinality.
-		cardinality = Cardinality().MakeWithConstraint(constraint)
+		cardinality = Cardinality().MakeWithAttributes(constraint)
 		return cardinality, token, true
 	}
 	// This is not a cardinality.
@@ -323,7 +323,7 @@ func (v *parser_) parseConstraint() (
 	}
 
 	// Found a constraint.
-	constraint = Constraint().MakeWithRange(first, last)
+	constraint = Constraint().MakeWithAttributes(first, last)
 	return constraint, token, true
 }
 
@@ -527,7 +527,7 @@ func (v *parser_) parseGlyph() (
 	}
 
 	// Found a glyph.
-	glyph = Glyph().MakeWithRange(first, last)
+	glyph = Glyph().MakeWithAttributes(first, last)
 	return glyph, token, true
 }
 
@@ -564,7 +564,7 @@ func (v *parser_) parseGrammar() (
 	}
 
 	// Found a grammar.
-	grammar = Grammar().MakeWithStatements(statements)
+	grammar = Grammar().MakeWithAttributes(statements)
 	return grammar, token, true
 }
 
@@ -605,7 +605,7 @@ func (v *parser_) parsePrecedence() (
 	}
 
 	// Found a precedence.
-	precedence = Precedence().MakeWithExpression(expression)
+	precedence = Precedence().MakeWithAttributes(expression)
 	return precedence, token, true
 }
 

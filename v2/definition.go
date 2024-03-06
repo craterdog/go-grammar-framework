@@ -39,11 +39,10 @@ type definitionClass_ struct {
 // Constructors
 
 func (c *definitionClass_) MakeWithAttributes(symbol_ string, expression_ ExpressionLike) DefinitionLike {
-	var result_ = &definition_{
+	return &definition_{
 		symbol_:     symbol_,
 		expression_: expression_,
 	}
-	return result_
 }
 
 // Functions

@@ -38,12 +38,11 @@ type constraintClass_ struct {
 
 // Constructors
 
-func (c *constraintClass_) MakeWithRange(first_ string, last_ string) ConstraintLike {
-	var result_ = &constraint_{
+func (c *constraintClass_) MakeWithAttributes(first_ string, last_ string) ConstraintLike {
+	return &constraint_{
 		first_: first_,
 		last_:  last_,
 	}
-	return result_
 }
 
 // Functions
