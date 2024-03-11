@@ -29,7 +29,6 @@ on interfaces, not on each other.
 package grammars
 
 import (
-	cla "github.com/craterdog/go-class-framework/v2"
 	col "github.com/craterdog/go-collection-framework/v3"
 )
 
@@ -349,12 +348,7 @@ all generator-like instances.
 */
 type GeneratorLike interface {
 	// Methods
-	GeneratePackage(
-		name string,
-		license string,
-		comment string,
-		grammar GrammarLike,
-	) cla.GoPNLike
+	GeneratePackage(directory string)
 }
 
 /*

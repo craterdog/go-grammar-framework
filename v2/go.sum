@@ -1,7 +1,7 @@
-github.com/craterdog/go-class-framework/v2 v2.0.0 h1:rEY9FYgL+VBYJRDJgDq9nuySByfnSPwv0j+yRv6Sg04=
-github.com/craterdog/go-class-framework/v2 v2.0.0/go.mod h1:yYhIhL3K3CLd1KtpWsGxHCTq1nSeZzPdCJh5pBvV2yU=
-github.com/craterdog/go-collection-framework/v3 v3.5.0 h1:ewNwBsAj3KEorhaEMTe06TyAmDulWXRVjAJiABuXauY=
-github.com/craterdog/go-collection-framework/v3 v3.5.0/go.mod h1:HEDpP5tO8AdzuCIOJds67vAQk2YYacFQChxDLfHJTIM=
+github.com/craterdog/go-class-framework/v2 v2.2.0 h1:75ox+OHtSseBVw+vI6SNgwT0mW4v6Do75eUS5heNoDQ=
+github.com/craterdog/go-class-framework/v2 v2.2.0/go.mod h1:XzUDRvq7MrlOYne8vkjk6G6AzQFXLzHkQ9yvFdKQd90=
+github.com/craterdog/go-collection-framework/v3 v3.6.1 h1:36xulvgntQDAKjMecvqVyRWb/XcUxM7tjRXa9SHVI8o=
+github.com/craterdog/go-collection-framework/v3 v3.6.1/go.mod h1:HEDpP5tO8AdzuCIOJds67vAQk2YYacFQChxDLfHJTIM=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
