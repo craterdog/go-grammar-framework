@@ -40,9 +40,9 @@ type grammarClass_ struct {
 
 // Constructors
 
-func (c *grammarClass_) MakeWithAttributes(statements_ col.Sequential[StatementLike]) GrammarLike {
+func (c *grammarClass_) MakeWithAttributes(statements col.Sequential[StatementLike]) GrammarLike {
 	return &grammar_{
-		statements_: statements_,
+		statements_: statements,
 	}
 }
 

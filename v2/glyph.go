@@ -38,10 +38,10 @@ type glyphClass_ struct {
 
 // Constructors
 
-func (c *glyphClass_) MakeWithAttributes(first_ string, last_ string) GlyphLike {
+func (c *glyphClass_) MakeWithAttributes(first string, last string) GlyphLike {
 	return &glyph_{
-		first_: first_,
-		last_:  last_,
+		first_: first,
+		last_:  last,
 	}
 }
 

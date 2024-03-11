@@ -40,10 +40,10 @@ type expressionClass_ struct {
 
 // Constructors
 
-func (c *expressionClass_) MakeWithAttributes(alternatives_ col.Sequential[AlternativeLike], multilined_ bool) ExpressionLike {
+func (c *expressionClass_) MakeWithAttributes(alternatives col.Sequential[AlternativeLike], multilined bool) ExpressionLike {
 	return &expression_{
-		alternatives_: alternatives_,
-		multilined_:   multilined_,
+		alternatives_: alternatives,
+		multilined_:   multilined,
 	}
 }
 

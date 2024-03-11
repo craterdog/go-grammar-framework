@@ -38,21 +38,21 @@ type assertionClass_ struct {
 
 // Constructors
 
-func (c *assertionClass_) MakeWithElement(element_ ElementLike) AssertionLike {
+func (c *assertionClass_) MakeWithElement(element ElementLike) AssertionLike {
 	return &assertion_{
-		element_: element_,
+		element_: element,
 	}
 }
 
-func (c *assertionClass_) MakeWithGlyph(glyph_ GlyphLike) AssertionLike {
+func (c *assertionClass_) MakeWithGlyph(glyph GlyphLike) AssertionLike {
 	return &assertion_{
-		glyph_: glyph_,
+		glyph_: glyph,
 	}
 }
 
-func (c *assertionClass_) MakeWithPrecedence(precedence_ PrecedenceLike) AssertionLike {
+func (c *assertionClass_) MakeWithPrecedence(precedence PrecedenceLike) AssertionLike {
 	return &assertion_{
-		precedence_: precedence_,
+		precedence_: precedence,
 	}
 }
 

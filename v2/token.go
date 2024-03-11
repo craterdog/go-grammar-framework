@@ -53,18 +53,17 @@ type tokenClass_ struct {
 // Constructors
 
 func (c *tokenClass_) MakeWithAttributes(
-	line_ int,
-	position_ int,
+	line int,
+	position int,
 	type_ TokenType,
-	value_ string,
+	value string,
 ) TokenLike {
-	var result_ = &token_{
-		line_:     line_,
-		position_: position_,
+	return &token_{
+		line_:     line,
+		position_: position,
 		type_:     type_,
-		value_:    value_,
+		value_:    value,
 	}
-	return result_
 }
 
 // Functions

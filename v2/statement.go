@@ -38,15 +38,15 @@ type statementClass_ struct {
 
 // Constructors
 
-func (c *statementClass_) MakeWithComment(comment_ string) StatementLike {
+func (c *statementClass_) MakeWithComment(comment string) StatementLike {
 	return &statement_{
-		comment_: comment_,
+		comment_: comment,
 	}
 }
 
-func (c *statementClass_) MakeWithDefinition(definition_ DefinitionLike) StatementLike {
+func (c *statementClass_) MakeWithDefinition(definition DefinitionLike) StatementLike {
 	return &statement_{
-		definition_: definition_,
+		definition_: definition,
 	}
 }
 

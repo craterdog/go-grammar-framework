@@ -38,10 +38,10 @@ type definitionClass_ struct {
 
 // Constructors
 
-func (c *definitionClass_) MakeWithAttributes(symbol_ string, expression_ ExpressionLike) DefinitionLike {
+func (c *definitionClass_) MakeWithAttributes(symbol string, expression ExpressionLike) DefinitionLike {
 	return &definition_{
-		symbol_:     symbol_,
-		expression_: expression_,
+		symbol_:     symbol,
+		expression_: expression,
 	}
 }
 

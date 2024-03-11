@@ -42,8 +42,7 @@ type validatorClass_ struct {
 // Constructors
 
 func (c *validatorClass_) Make() ValidatorLike {
-	var validator = &validator_{}
-	return validator
+	return &validator_{}
 }
 
 // INSTANCE METHODS
@@ -51,19 +50,19 @@ func (c *validatorClass_) Make() ValidatorLike {
 // Target
 
 type validator_ struct {
-	inInversion bool
-	isToken     bool
-	stack       col.StackLike[DefinitionLike]
-	symbols     col.CatalogLike[string, ExpressionLike]
+	inInversion_ bool
+	isToken_     bool
+	stack_       col.StackLike[DefinitionLike]
+	symbols_     col.CatalogLike[string, ExpressionLike]
 }
 
 // Public
 
 func (v *validator_) ValidateGrammar(grammar GrammarLike) {
-	v.stack = col.Stack[DefinitionLike]().Make()
-	v.symbols = col.Catalog[string, ExpressionLike]().Make()
+	v.stack_ = col.Stack[DefinitionLike]().Make()
+	v.symbols_ = col.Catalog[string, ExpressionLike]().Make()
 	v.validateGrammar(grammar)
-	var iterator = v.symbols.GetIterator()
+	var iterator = v.symbols_.GetIterator()
 	for iterator.HasNext() {
 		var association = iterator.GetNext()
 		var symbol = association.GetKey()
@@ -81,7 +80,7 @@ func (v *validator_) ValidateGrammar(grammar GrammarLike) {
 // Private
 
 func (v *validator_) formatError(message string) string {
-	var definition = v.stack.RemoveTop()
+	var definition = v.stack_.RemoveTop()
 	message = fmt.Sprintf(
 		"The definition for %v is invalid:\n%v\n",
 		definition.GetSymbol(),
@@ -177,7 +176,7 @@ func (v *validator_) validateConstraint(constraint ConstraintLike) {
 }
 
 func (v *validator_) validateDefinition(definition DefinitionLike) {
-	v.stack.AddValue(definition)
+	v.stack_.AddValue(definition)
 	var symbol = definition.GetSymbol()
 	v.validateSymbol(symbol)
 	var expression = definition.GetExpression()
@@ -187,7 +186,7 @@ func (v *validator_) validateDefinition(definition DefinitionLike) {
 		)
 		panic(message)
 	}
-	if v.symbols.GetValue(symbol) != nil {
+	if v.symbols_.GetValue(symbol) != nil {
 		var message = v.formatError(
 			fmt.Sprintf(
 				"The symbol %s is defined more than once.",
@@ -196,10 +195,10 @@ func (v *validator_) validateDefinition(definition DefinitionLike) {
 		)
 		panic(message)
 	}
-	v.symbols.SetValue(symbol, expression)
+	v.symbols_.SetValue(symbol, expression)
 	v.validateExpression(expression)
-	v.inInversion = false
-	var _ = v.stack.RemoveTop()
+	v.inInversion_ = false
+	var _ = v.stack_.RemoveTop()
 }
 
 func (v *validator_) validateElement(element ElementLike) {
@@ -297,7 +296,7 @@ func (v *validator_) validateLiteral(literal string) {
 		)
 		panic(message)
 	}
-	if v.inInversion && len([]rune(literal)) > 3 {
+	if v.inInversion_ && len([]rune(literal)) > 3 {
 		var message = v.formatError(
 			"A multi-character literal is not allowed in an inversion.",
 		)
@@ -314,13 +313,13 @@ func (v *validator_) validateName(name string) {
 		panic(message)
 	}
 	if uni.IsLower([]rune(name)[0]) {
-		if v.isToken {
+		if v.isToken_ {
 			var message = v.formatError(
 				"A token definition cannot contain a rule name.",
 			)
 			panic(message)
 		}
-		if v.inInversion {
+		if v.inInversion_ {
 			var message = v.formatError(
 				"An inverted assertion cannot contain a rule name.",
 			)
@@ -328,8 +327,8 @@ func (v *validator_) validateName(name string) {
 		}
 	}
 	var symbol = "$" + name
-	var expression = v.symbols.GetValue(symbol)
-	v.symbols.SetValue(symbol, expression)
+	var expression = v.symbols_.GetValue(symbol)
+	v.symbols_.SetValue(symbol, expression)
 }
 
 func (v *validator_) validateNote(note string) {
@@ -365,14 +364,14 @@ func (v *validator_) validatePrecedence(precedence PrecedenceLike) {
 
 func (v *validator_) validatePredicate(predicate PredicateLike) {
 	var isInverted = predicate.IsInverted()
-	if isInverted && v.inInversion {
+	if isInverted && v.inInversion_ {
 		var message = v.formatError(
 			"Inverted assertions cannot be nested.",
 		)
 		panic(message)
 	}
 	if isInverted {
-		v.inInversion = true
+		v.inInversion_ = true
 	}
 	var assertion = predicate.GetAssertion()
 	if assertion == nil {
@@ -405,5 +404,5 @@ func (v *validator_) validateSymbol(symbol string) {
 		)
 		panic(message)
 	}
-	v.isToken = uni.IsUpper([]rune(matches.GetValue(2))[0])
+	v.isToken_ = uni.IsUpper([]rune(matches.GetValue(2))[0])
 }

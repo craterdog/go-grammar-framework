@@ -69,7 +69,7 @@ functions that must be supported by all alternative-class-like classes.
 */
 type AlternativeClassLike interface {
 	// Constructors
-	MakeWithAttributes(factors_ col.Sequential[FactorLike], note_ string) AlternativeLike
+	MakeWithAttributes(factors col.Sequential[FactorLike], note string) AlternativeLike
 }
 
 /*
@@ -78,9 +78,9 @@ functions that must be supported by all assertion-class-like classes.
 */
 type AssertionClassLike interface {
 	// Constructors
-	MakeWithElement(element_ ElementLike) AssertionLike
-	MakeWithGlyph(glyph_ GlyphLike) AssertionLike
-	MakeWithPrecedence(precedence_ PrecedenceLike) AssertionLike
+	MakeWithElement(element ElementLike) AssertionLike
+	MakeWithGlyph(glyph GlyphLike) AssertionLike
+	MakeWithPrecedence(precedence PrecedenceLike) AssertionLike
 }
 
 /*
@@ -89,7 +89,7 @@ functions that must be supported by all cardinality-class-like classes.
 */
 type CardinalityClassLike interface {
 	// Constructors
-	MakeWithAttributes(constraint_ ConstraintLike) CardinalityLike
+	MakeWithAttributes(constraint ConstraintLike) CardinalityLike
 }
 
 /*
@@ -98,7 +98,7 @@ functions that must be supported by all constraint-class-like classes.
 */
 type ConstraintClassLike interface {
 	// Constructors
-	MakeWithAttributes(first_ string, last_ string) ConstraintLike
+	MakeWithAttributes(first string, last string) ConstraintLike
 }
 
 /*
@@ -107,7 +107,7 @@ functions that must be supported by all definition-class-like classes.
 */
 type DefinitionClassLike interface {
 	// Constructors
-	MakeWithAttributes(symbol_ string, expression_ ExpressionLike) DefinitionLike
+	MakeWithAttributes(symbol string, expression ExpressionLike) DefinitionLike
 }
 
 /*
@@ -116,9 +116,9 @@ that must be supported by all element-class-like classes.
 */
 type ElementClassLike interface {
 	// Constructors
-	MakeWithIntrinsic(intrinsic_ string) ElementLike
-	MakeWithLiteral(literal_ string) ElementLike
-	MakeWithName(name_ string) ElementLike
+	MakeWithIntrinsic(intrinsic string) ElementLike
+	MakeWithLiteral(literal string) ElementLike
+	MakeWithName(name string) ElementLike
 }
 
 /*
@@ -127,7 +127,7 @@ functions that must be supported by all expression-class-like classes.
 */
 type ExpressionClassLike interface {
 	// Constructors
-	MakeWithAttributes(alternatives_ col.Sequential[AlternativeLike], multilined_ bool) ExpressionLike
+	MakeWithAttributes(alternatives col.Sequential[AlternativeLike], multilined bool) ExpressionLike
 }
 
 /*
@@ -136,7 +136,7 @@ that must be supported by all factor-class-like classes.
 */
 type FactorClassLike interface {
 	// Constructors
-	MakeWithAttributes(predicate_ PredicateLike, cardinality_ CardinalityLike) FactorLike
+	MakeWithAttributes(predicate PredicateLike, cardinality CardinalityLike) FactorLike
 }
 
 /*
@@ -163,7 +163,7 @@ that must be supported by all glyph-class-like classes.
 */
 type GlyphClassLike interface {
 	// Constructors
-	MakeWithAttributes(first_ string, last_ string) GlyphLike
+	MakeWithAttributes(first string, last string) GlyphLike
 }
 
 /*
@@ -172,7 +172,7 @@ that must be supported by all grammar-class-like classes.
 */
 type GrammarClassLike interface {
 	// Constructors
-	MakeWithAttributes(statements_ col.Sequential[StatementLike]) GrammarLike
+	MakeWithAttributes(statements col.Sequential[StatementLike]) GrammarLike
 }
 
 /*
@@ -190,7 +190,7 @@ functions that must be supported by all precedence-class-like classes.
 */
 type PrecedenceClassLike interface {
 	// Constructors
-	MakeWithAttributes(expression_ ExpressionLike) PrecedenceLike
+	MakeWithAttributes(expression ExpressionLike) PrecedenceLike
 }
 
 /*
@@ -199,7 +199,7 @@ functions that must be supported by all predicate-class-like classes.
 */
 type PredicateClassLike interface {
 	// Constructors
-	MakeWithAttributes(assertion_ AssertionLike, inverted_ bool) PredicateLike
+	MakeWithAttributes(assertion AssertionLike, inverted bool) PredicateLike
 }
 
 /*
@@ -220,8 +220,8 @@ functions that must be supported by all statement-class-like classes.
 */
 type StatementClassLike interface {
 	// Constructors
-	MakeWithComment(comment_ string) StatementLike
-	MakeWithDefinition(definition_ DefinitionLike) StatementLike
+	MakeWithComment(comment string) StatementLike
+	MakeWithDefinition(definition DefinitionLike) StatementLike
 }
 
 /*
@@ -231,10 +231,10 @@ that must be supported by all token-class-like classes.
 type TokenClassLike interface {
 	// Constructors
 	MakeWithAttributes(
-		line_ int,
-		position_ int,
+		line int,
+		position int,
 		type_ TokenType,
-		value_ string,
+		value string,
 	) TokenLike
 
 	// Functions

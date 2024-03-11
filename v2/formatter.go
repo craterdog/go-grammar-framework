@@ -39,8 +39,7 @@ type formatterClass_ struct {
 // Constructors
 
 func (c *formatterClass_) Make() FormatterLike {
-	var formatter = &formatter_{}
-	return formatter
+	return &formatter_{}
 }
 
 // INSTANCE METHODS
@@ -48,8 +47,8 @@ func (c *formatterClass_) Make() FormatterLike {
 // Target
 
 type formatter_ struct {
-	depth  int
-	result sts.Builder
+	depth_  int
+	result_ sts.Builder
 }
 
 // Public
@@ -68,14 +67,14 @@ func (v *formatter_) FormatGrammar(grammar GrammarLike) string {
 
 func (v *formatter_) appendNewline() {
 	var separator = "\n"
-	for level := 0; level < v.depth; level++ {
+	for level := 0; level < v.depth_; level++ {
 		separator += "    "
 	}
 	v.appendString(separator)
 }
 
 func (v *formatter_) appendString(s string) {
-	v.result.WriteString(s)
+	v.result_.WriteString(s)
 }
 
 func (v *formatter_) formatAlternative(alternative AlternativeLike) {
@@ -177,14 +176,14 @@ func (v *formatter_) formatExpression(expression ExpressionLike) {
 	var alternatives = expression.GetAlternatives()
 	var iterator = alternatives.GetIterator()
 	if expression.IsMultilined() {
-		v.depth++
+		v.depth_++
 		v.appendNewline()
 		for iterator.HasNext() {
 			alternative = iterator.GetNext()
 			v.formatAlternative(alternative)
 			if iterator.GetSlot() == alternatives.GetSize() {
 				// The last newline must be out-dented by one.
-				v.depth--
+				v.depth_--
 			}
 			v.appendNewline()
 		}
@@ -258,7 +257,7 @@ func (v *formatter_) formatStatement(statement StatementLike) {
 }
 
 func (v *formatter_) getResult() string {
-	var result = v.result.String()
-	v.result.Reset()
+	var result = v.result_.String()
+	v.result_.Reset()
 	return result
 }

@@ -38,21 +38,21 @@ type elementClass_ struct {
 
 // Constructors
 
-func (c *elementClass_) MakeWithIntrinsic(intrinsic_ string) ElementLike {
+func (c *elementClass_) MakeWithIntrinsic(intrinsic string) ElementLike {
 	return &element_{
-		intrinsic_: intrinsic_,
+		intrinsic_: intrinsic,
 	}
 }
 
-func (c *elementClass_) MakeWithLiteral(literal_ string) ElementLike {
+func (c *elementClass_) MakeWithLiteral(literal string) ElementLike {
 	return &element_{
-		literal_: literal_,
+		literal_: literal,
 	}
 }
 
-func (c *elementClass_) MakeWithName(name_ string) ElementLike {
+func (c *elementClass_) MakeWithName(name string) ElementLike {
 	return &element_{
-		name_: name_,
+		name_: name,
 	}
 }
 

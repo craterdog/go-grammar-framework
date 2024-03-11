@@ -21,8 +21,8 @@ import (
 // Reference
 
 var parserClass = &parserClass_{
-	queueSize: 16,
-	stackSize: 4,
+	queueSize_: 16,
+	stackSize_: 4,
 }
 
 // Function
@@ -36,17 +36,16 @@ func Parser() ParserClassLike {
 // Target
 
 type parserClass_ struct {
-	queueSize int
-	stackSize int
+	queueSize_ int
+	stackSize_ int
 }
 
 // Constructors
 
 func (c *parserClass_) Make() ParserLike {
-	var parser = &parser_{
-		next: col.Stack[TokenLike]().MakeWithCapacity(c.stackSize),
+	return &parser_{
+		next_: col.Stack[TokenLike]().MakeWithCapacity(c.stackSize_),
 	}
-	return parser
 }
 
 // INSTANCE METHODS
@@ -54,18 +53,18 @@ func (c *parserClass_) Make() ParserLike {
 // Target
 
 type parser_ struct {
-	next   col.StackLike[TokenLike] // A stack of unprocessed retrieved tokens.
-	source string                   // The original source code.
-	tokens col.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
+	next_   col.StackLike[TokenLike] // A stack of unprocessed retrieved tokens.
+	source_ string                   // The original source code.
+	tokens_ col.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
 }
 
 // Public
 
 func (v *parser_) ParseSource(source string) GrammarLike {
 	// The scanner runs in a separate Go routine.
-	v.source = source
-	v.tokens = col.Queue[TokenLike]().MakeWithCapacity(parserClass.queueSize)
-	Scanner().Make(v.source, v.tokens)
+	v.source_ = source
+	v.tokens_ = col.Queue[TokenLike]().MakeWithCapacity(parserClass.queueSize_)
+	Scanner().Make(v.source_, v.tokens_)
 
 	// Attempt to parse a grammar.
 	var grammar, token, ok = v.parseGrammar()
@@ -106,7 +105,7 @@ func (v *parser_) formatError(token TokenLike) string {
 		token,
 	)
 	var line = token.GetLine()
-	var lines = sts.Split(v.source, "\n")
+	var lines = sts.Split(v.source_, "\n")
 
 	// Append the source line with the error in it.
 	message += "\033[36m"
@@ -155,12 +154,12 @@ stream and return it.
 */
 func (v *parser_) getNextToken() TokenLike {
 	// Check for any unprocessed tokens.
-	if !v.next.IsEmpty() {
-		return v.next.RemoveTop()
+	if !v.next_.IsEmpty() {
+		return v.next_.RemoveTop()
 	}
 
 	// Read a new token from the token stream.
-	var token, ok = v.tokens.RemoveHead() // This will block if the queue is empty.
+	var token, ok = v.tokens_.RemoveHead() // This will block if the queue is empty.
 	if !ok {
 		panic("The token channel terminated without an EOF token.")
 	}
@@ -690,7 +689,7 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 }
 
 func (v *parser_) putBack(token TokenLike) {
-	v.next.AddValue(token)
+	v.next_.AddValue(token)
 }
 
 var grammar = map[string]string{

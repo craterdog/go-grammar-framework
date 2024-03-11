@@ -38,10 +38,10 @@ type constraintClass_ struct {
 
 // Constructors
 
-func (c *constraintClass_) MakeWithAttributes(first_ string, last_ string) ConstraintLike {
+func (c *constraintClass_) MakeWithAttributes(first string, last string) ConstraintLike {
 	return &constraint_{
-		first_: first_,
-		last_:  last_,
+		first_: first,
+		last_:  last,
 	}
 }
 

@@ -38,10 +38,10 @@ type predicateClass_ struct {
 
 // Constructors
 
-func (c *predicateClass_) MakeWithAttributes(assertion_ AssertionLike, inverted_ bool) PredicateLike {
+func (c *predicateClass_) MakeWithAttributes(assertion AssertionLike, inverted bool) PredicateLike {
 	return &predicate_{
-		assertion_: assertion_,
-		inverted_:  inverted_,
+		assertion_: assertion,
+		inverted_:  inverted,
 	}
 }
 
