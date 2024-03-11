@@ -51,7 +51,11 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
-	// This class does not define any instance attributes.
+	copyright_  cla.CopyrightLike
+	header_     cla.HeaderLike
+	imports_    cla.ImportsLike
+	types_      cla.TypesLike
+	interfaces_ cla.InterfacesLike
 }
 
 // Public
@@ -65,7 +69,8 @@ func (v *generator_) GeneratePackage(directory string) {
 	if grammar == nil {
 		return
 	}
-	v.generatePackage(directory, grammar)
+	var gopn = v.processGrammar(grammar)
+	v.generatePackage(directory, gopn)
 }
 
 // Private
@@ -80,19 +85,7 @@ func (v *generator_) createDirectory(directory string) {
 	}
 }
 
-func (v *generator_) generatePackage(directory string, grammar GrammarLike) {
-	var copyright cla.CopyrightLike
-	var header cla.HeaderLike
-	var imports cla.ImportsLike
-	var types cla.TypesLike
-	var interfaces cla.InterfacesLike
-	var gopn = cla.GoPN().MakeWithAttributes(
-		copyright,
-		header,
-		imports,
-		types,
-		interfaces,
-	)
+func (v *generator_) generatePackage(directory string, gopn cla.GoPNLike) {
 	var validator = cla.Validator().Make()
 	validator.ValidatePackage(gopn)
 	var formatter = cla.Formatter().Make()
@@ -107,5 +100,34 @@ func (v *generator_) generatePackage(directory string, grammar GrammarLike) {
 }
 
 func (v *generator_) parseGrammar(directory string) GrammarLike {
-	return nil
+	var filename = directory + "grammar.cdsn"
+	var bytes, err = osx.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	var source = string(bytes)
+	var parser = Parser().Make()
+	var grammar = parser.ParseSource(source)
+	var validator = Validator().Make()
+	validator.ValidateGrammar(grammar)
+	return grammar
+}
+
+func (v *generator_) processGrammar(grammar GrammarLike) cla.GoPNLike {
+	var iterator = grammar.GetStatements().GetIterator()
+	for iterator.HasNext() {
+		var statement = iterator.GetNext()
+		v.processStatement(statement)
+	}
+	var gopn = cla.GoPN().MakeWithAttributes(
+		v.copyright_,
+		v.header_,
+		v.imports_,
+		v.types_,
+		v.interfaces_,
+	)
+	return gopn
+}
+
+func (v *generator_) processStatement(statement StatementLike) {
 }
