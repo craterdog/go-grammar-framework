@@ -12,8 +12,10 @@ package grammars
 
 import (
 	cla "github.com/craterdog/go-class-framework/v2"
+	col "github.com/craterdog/go-collection-framework/v3"
 	osx "os"
 	sts "strings"
+	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -42,7 +44,9 @@ type generatorClass_ struct {
 
 func (c *generatorClass_) Make() GeneratorLike {
 	return &generator_{
-		// This class does not initialize any instance attributes.
+		imports_:   col.Catalog[string, cla.ModuleLike]().Make(),
+		classes_:   col.Catalog[string, cla.ClassLike]().Make(),
+		instances_: col.Catalog[string, cla.InstanceLike]().Make(),
 	}
 }
 
@@ -51,11 +55,9 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
-	copyright_  cla.CopyrightLike
-	header_     cla.HeaderLike
-	imports_    cla.ImportsLike
-	types_      cla.TypesLike
-	interfaces_ cla.InterfacesLike
+	imports_   col.CatalogLike[string, cla.ModuleLike]
+	classes_   col.CatalogLike[string, cla.ClassLike]
+	instances_ col.CatalogLike[string, cla.InstanceLike]
 }
 
 // Public
@@ -85,6 +87,46 @@ func (v *generator_) createDirectory(directory string) {
 	}
 }
 
+func (v *generator_) generateClassComment(className string) string {
+	var comment = classCommentTemplate_
+	comment = sts.ReplaceAll(comment, "<ClassName>", className)
+	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(className))
+	return comment
+}
+
+func (v *generator_) generateCopyright() cla.CopyrightLike {
+	return nil
+}
+
+func (v *generator_) generateHeader() cla.HeaderLike {
+	return nil
+}
+
+func (v *generator_) generateImports() cla.ImportsLike {
+	return nil
+}
+
+func (v *generator_) generateInstanceComment(className string) string {
+	var comment = instanceCommentTemplate_
+	comment = sts.ReplaceAll(comment, "<ClassName>", className)
+	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(className))
+	return comment
+}
+
+func (v *generator_) generateInterfaces(
+	classMethods col.Sequential[cla.ClassLike],
+	instanceMethods col.Sequential[cla.InstanceLike],
+) cla.InterfacesLike {
+	var classes = cla.Classes().MakeWithAttributes(classMethods)
+	var instances = cla.Instances().MakeWithAttributes(instanceMethods)
+	var interfaces = cla.Interfaces().MakeWithAttributes(
+		nil,
+		classes,
+		instances,
+	)
+	return interfaces
+}
+
 func (v *generator_) generatePackage(directory string, gopn cla.GoPNLike) {
 	var validator = cla.Validator().Make()
 	validator.ValidatePackage(gopn)
@@ -97,6 +139,12 @@ func (v *generator_) generatePackage(directory string, gopn cla.GoPNLike) {
 	}
 	var generator = cla.Generator().Make()
 	generator.GeneratePackage(directory)
+}
+
+func (v *generator_) makePrivate(identifier string) string {
+	runes := []rune(identifier)
+	runes[0] = uni.ToLower(runes[0])
+	return string(runes)
 }
 
 func (v *generator_) parseGrammar(directory string) GrammarLike {
@@ -113,21 +161,96 @@ func (v *generator_) parseGrammar(directory string) GrammarLike {
 	return grammar
 }
 
+func (v *generator_) processDefinition(
+	definition DefinitionLike,
+	classes col.ListLike[cla.ClassLike],
+	instances col.ListLike[cla.InstanceLike],
+) {
+	var symbol = definition.GetSymbol()
+	var expression = definition.GetExpression()
+	if uni.IsUpper([]rune(symbol)[0]) {
+		// Ignore token definitions.
+		return
+	}
+	v.processRule(symbol, expression, classes, instances)
+}
+
+func (v *generator_) processExpression(
+	expression ExpressionLike,
+	constructorMethods col.ListLike[cla.ConstructorLike],
+	attributeMethods col.ListLike[cla.AttributeLike],
+) {
+}
+
 func (v *generator_) processGrammar(grammar GrammarLike) cla.GoPNLike {
+	var classes = col.List[cla.ClassLike]().Make()
+	var instances = col.List[cla.InstanceLike]().Make()
 	var iterator = grammar.GetStatements().GetIterator()
 	for iterator.HasNext() {
 		var statement = iterator.GetNext()
-		v.processStatement(statement)
+		v.processStatement(statement, classes, instances)
 	}
+	var copyright = v.generateCopyright()
+	var header = v.generateHeader()
+	var imports = v.generateImports()
+	var interfaces = v.generateInterfaces(classes, instances)
 	var gopn = cla.GoPN().MakeWithAttributes(
-		v.copyright_,
-		v.header_,
-		v.imports_,
-		v.types_,
-		v.interfaces_,
+		copyright,
+		header,
+		imports,
+		nil,
+		interfaces,
 	)
 	return gopn
 }
 
-func (v *generator_) processStatement(statement StatementLike) {
+func (v *generator_) processRule(
+	symbol string,
+	expression ExpressionLike,
+	classes col.ListLike[cla.ClassLike],
+	instances col.ListLike[cla.InstanceLike],
+) {
+	var constructorMethods = col.List[cla.ConstructorLike]().Make()
+	var attributeMethods = col.List[cla.AttributeLike]().Make()
+	v.processExpression(expression, constructorMethods, attributeMethods)
+	var className = v.makePrivate(symbol)
+	var declaration = cla.Declaration().MakeWithAttributes(
+		v.generateClassComment(className),
+		className+"ClassLike",
+		nil,
+	)
+	var constructors = cla.Constructors().MakeWithAttributes(constructorMethods)
+	var class = cla.Class().MakeWithAttributes(
+		declaration,
+		nil,
+		constructors,
+		nil,
+	)
+	declaration = cla.Declaration().MakeWithAttributes(
+		v.generateInstanceComment(className),
+		className+"Like",
+		nil,
+	)
+	var attributes = cla.Attributes().MakeWithAttributes(attributeMethods)
+	var instance = cla.Instance().MakeWithAttributes(
+		declaration,
+		attributes,
+		nil,
+		nil,
+	)
+	classes.AppendValue(class)
+	instances.AppendValue(instance)
+}
+
+func (v *generator_) processStatement(
+	statement StatementLike,
+	classes col.ListLike[cla.ClassLike],
+	instances col.ListLike[cla.InstanceLike],
+) {
+	var definition = statement.GetDefinition()
+	if definition == nil {
+		// Ignore comments.
+		return
+	}
+	v.processDefinition(definition, classes, instances)
 }
