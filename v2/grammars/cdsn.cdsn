@@ -1,11 +1,21 @@
 !>
+ *******************************************************************************
+ *   Copyright (c) 2009-2024 Crater Dog Technologies™.  All Rights Reserved.   *
+ *******************************************************************************
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               *
+ *                                                                             *
+ * This code is free software; you can redistribute it and/or modify it under  *
+ * the terms of The MIT License (MIT), as published by the Open Source         *
+ * Initiative. (See http://opensource.org/licenses/MIT)                        *
+ *******************************************************************************
+<!
+
+!>
     CRATER DOG SYNTAX NOTATION
     This document contains a formal definition of the Crater Dog Syntax Notation™
     (CDSN) using CDSN itself in homage to Douglas Hofstadter.  A language grammar
     consists of a set of token and rule definitions.
-<!
 
-!>
     TOKEN DEFINITIONS
     The following token definitions are used by the scanner to generate the
     stream of tokens that are processed by the parser.  Each token name begins
