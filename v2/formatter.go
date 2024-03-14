@@ -177,16 +177,12 @@ func (v *formatter_) formatExpression(expression ExpressionLike) {
 	var iterator = alternatives.GetIterator()
 	if expression.IsMultilined() {
 		v.depth_++
-		v.appendNewline()
 		for iterator.HasNext() {
+			v.appendNewline()
 			alternative = iterator.GetNext()
 			v.formatAlternative(alternative)
-			if iterator.GetSlot() == alternatives.GetSize() {
-				// The last newline must be out-dented by one.
-				v.depth_--
-			}
-			v.appendNewline()
 		}
+		v.depth_--
 	} else {
 		alternative = iterator.GetNext()
 		v.formatAlternative(alternative)
@@ -234,6 +230,9 @@ func (v *formatter_) formatPrecedence(precedence PrecedenceLike) {
 	v.appendString("(")
 	var expression = precedence.GetExpression()
 	v.formatExpression(expression)
+	if expression.IsMultilined() {
+		v.appendNewline()
+	}
 	v.appendString(")")
 }
 

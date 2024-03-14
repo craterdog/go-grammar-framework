@@ -46,7 +46,6 @@ $INTEGER:
     '0'{4}
     '-'? '1'..'9' DIGIT*
 
-
 $ANYTHING: ANY
 
 !>

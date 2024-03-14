@@ -91,7 +91,6 @@ $expression:
     alternative ("|" alternative)*
     (EOL alternative)+
 
-
 $alternative: factor+ NOTE?
 
 $factor: predicate cardinality?  ! The default cardinality is one.
@@ -111,7 +110,6 @@ $cardinality:
     "*"  ! Zero or more instances of a predicate.
     "+"  ! One or more instances of a predicate.
     "{" constraint "}"  ! Constrains the number of instances of a predicate.
-
 
 $constraint: NUMBER (".." NUMBER?)?  ! The range of numbers is inclusive.
 
