@@ -1,12 +1,14 @@
-/*******************************************************************************
- *   Copyright (c) 2009-2024 Crater Dog Technologies™.  All Rights Reserved.   *
- *******************************************************************************
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               *
- *                                                                             *
- * This code is free software; you can redistribute it and/or modify it under  *
- * the terms of The MIT License (MIT), as published by the Open Source         *
- * Initiative. (See http://opensource.org/licenses/MIT)                        *
- *******************************************************************************/
+/*
+................................................................................
+.    Copyright (c) 2009-2024 Crater Dog Technologies™.  All Rights Reserved.   .
+................................................................................
+.  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               .
+.                                                                              .
+.  This code is free software; you can redistribute it and/or modify it under  .
+.  the terms of The MIT License (MIT), as published by the Open Source         .
+.  Initiative. (See http://opensource.org/licenses/MIT)                        .
+................................................................................
+*/
 
 package grammars
 
@@ -728,12 +730,12 @@ func (v *parser_) putBack(token TokenLike) {
 
 var grammar = map[string]string{
 	"$source":     `grammar EOF  ! Terminated with an end-of-file marker.`,
-	"$grammar":    `(statement EOL+)*`,
-	"$statement":  `COMMENT | definition`,
+	"$grammar":    `COMMENT statement+`,
+	"$statement":  `COMMENT? definition EOL+`,
 	"$definition": `SYMBOL ":" expression  ! This works for tokens and rules.`,
 	"$expression": `
     alternative ("|" alternative)*
-    EOL (alternative EOL)+`,
+    (EOL alternative)+`,
 	"$alternative": `factor+ NOTE?`,
 	"$factor":      `predicate cardinality?  ! The default cardinality is one.`,
 	"$predicate":   `"~"? assertion`,
