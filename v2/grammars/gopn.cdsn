@@ -36,7 +36,7 @@
     greedy.  Any spaces within a token definition are NOT ignored.
 <!
 
-$COMMENT: "/*" ANY* "*/"  ! Chooses the shortest possible match.
+$COMMENT: "/*" EOL ANY* EOL "*/"  ! Chooses the shortest possible match.
 
 $DELIMITER: "[" | "]" | "(" | ")" | "{" | "}" | "." | "," | "="
 

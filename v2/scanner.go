@@ -207,7 +207,7 @@ const (
 	any_       = `.|` + eol_
 	base16_    = `[0-9a-f]`
 	character_ = `['][^` + control_ + `][']`
-	comment_   = `!>(?:` + any_ + `)*?<!` // This returns the shortest match.
+	comment_   = `!>` + eol_ + `((?:` + any_ + `)*?)` + eol_ + `<![` + eol_ + `]+`
 	control_   = `\p{Cc}`
 	delimiter_ = `[~?*+:|(){}]|\.\.`
 	digit_     = `\p{Nd}`

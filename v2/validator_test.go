@@ -44,10 +44,15 @@ func TestParsingRoundtrips(t *tes.T) {
 	}
 }
 
+const comment = `!>
+Comment
+<!
+`
+
 func TestRuleInTokenDefinition(t *tes.T) {
 	var parser = cds.Parser().Make()
 	var validator = cds.Validator().Make()
-	var source = `$BAD: rule
+	var source = comment + `$BAD: rule
 $rule: "bad"
 `
 	defer func() {
@@ -68,13 +73,13 @@ $rule: "bad"
 func TestDoubleInversion(t *tes.T) {
 	var parser = cds.Parser().Make()
 	var validator = cds.Validator().Make()
-	var source = `$BAD: ~~CONTROL
+	var source = comment + `$BAD: ~~CONTROL
 `
 	defer func() {
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"An unexpected token was received by the parser: Token [type: Delimiter, line: 1, position: 8]: \"~\"\n\x1b[36m0001: $BAD: ~~CONTROL\n \x1b[32m>>>─────────⌃\x1b[36m\n0002: \n\x1b[0m\nWas expecting 'assertion' from:\n  \x1b[32m$predicate: \x1b[33m\"~\"? assertion\x1b[0m\n\n  \x1b[32m$assertion: \x1b[33melement | glyph | precedence\x1b[0m\n\n",
+				"An unexpected token was received by the parser: Token [type: Delimiter, line: 4, position: 8]: \"~\"\n\x1b[36m0003: <!\n0004: $BAD: ~~CONTROL\n \x1b[32m>>>─────────⌃\x1b[36m\n0005: \n\x1b[0m\nWas expecting 'assertion' from:\n  \x1b[32m$predicate: \x1b[33m\"~\"? assertion\x1b[0m\n\n  \x1b[32m$assertion: \x1b[33melement | glyph | precedence\x1b[0m\n\n",
 				e,
 			)
 		} else {
@@ -88,7 +93,7 @@ func TestDoubleInversion(t *tes.T) {
 func TestInvertedString(t *tes.T) {
 	var parser = cds.Parser().Make()
 	var validator = cds.Validator().Make()
-	var source = `$BAD: ~"ow"
+	var source = comment + `$BAD: ~"ow"
 `
 	defer func() {
 		if e := recover(); e != nil {
@@ -108,7 +113,7 @@ func TestInvertedString(t *tes.T) {
 func TestInvertedRule(t *tes.T) {
 	var parser = cds.Parser().Make()
 	var validator = cds.Validator().Make()
-	var source = `$bad: ~rule
+	var source = comment + `$bad: ~rule
 $rule: "rule"
 `
 	defer func() {
@@ -129,7 +134,7 @@ $rule: "rule"
 func TestMissingRule(t *tes.T) {
 	var parser = cds.Parser().Make()
 	var validator = cds.Validator().Make()
-	var source = `$bad: rule
+	var source = comment + `$bad: rule
 `
 	defer func() {
 		if e := recover(); e != nil {
@@ -149,7 +154,7 @@ func TestMissingRule(t *tes.T) {
 func TestDuplicateRule(t *tes.T) {
 	var parser = cds.Parser().Make()
 	var validator = cds.Validator().Make()
-	var source = `$bad: "bad"
+	var source = comment + `$bad: "bad"
 $bad: "worse"
 `
 	defer func() {
@@ -170,7 +175,7 @@ $bad: "worse"
 func TestNestedInversions(t *tes.T) {
 	var parser = cds.Parser().Make()
 	var validator = cds.Validator().Make()
-	var source = `$BAD: ~(WORSE | ~BAD)
+	var source = comment + `$BAD: ~(WORSE | ~BAD)
 $WORSE: CONTROL
 `
 	defer func() {

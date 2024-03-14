@@ -39,7 +39,7 @@
 
 $CHARACTER: "'" ~CONTROL "'"  ! Any printable character.
 
-$COMMENT: "!>" ANY* "<!"  ! Chooses the shortest possible match.
+$COMMENT: "!>" EOL ANY* EOL "<!" EOL+  ! Chooses the shortest possible match.
 
 $DELIMITER: "~" | "?" | "*" | "+" | ":" | "|" | "(" | ")" | "{" | "}" | ".."
 
@@ -81,15 +81,15 @@ $SYMBOL: '$' NAME
 
 $source: grammar EOF  ! Terminated with an end-of-file marker.
 
-$grammar: (statement EOL+)*
+$grammar: COMMENT statement+
 
-$statement: COMMENT | definition
+$statement: COMMENT? definition EOL+
 
 $definition: SYMBOL ":" expression  ! This works for tokens and rules.
 
 $expression:
     alternative ("|" alternative)*
-    EOL (alternative EOL)+
+    (EOL alternative)+
 
 
 $alternative: factor+ NOTE?

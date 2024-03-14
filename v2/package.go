@@ -171,7 +171,7 @@ that must be supported by all grammar-class-like classes.
 */
 type GrammarClassLike interface {
 	// Constructors
-	MakeWithAttributes(statements col.Sequential[StatementLike]) GrammarLike
+	MakeWithAttributes(comment string, statements col.Sequential[StatementLike]) GrammarLike
 }
 
 /*
@@ -219,8 +219,7 @@ functions that must be supported by all statement-class-like classes.
 */
 type StatementClassLike interface {
 	// Constructors
-	MakeWithComment(comment string) StatementLike
-	MakeWithDefinition(definition DefinitionLike) StatementLike
+	MakeWithAttributes(comment string, definition DefinitionLike) StatementLike
 }
 
 /*
@@ -367,6 +366,7 @@ grammar-like instances.
 */
 type GrammarLike interface {
 	// Attributes
+	GetComment() string
 	GetStatements() col.Sequential[StatementLike]
 }
 

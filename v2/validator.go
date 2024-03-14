@@ -387,13 +387,12 @@ func (v *validator_) validateStatement(statement StatementLike) {
 	var comment = statement.GetComment()
 	if len(comment) > 0 {
 		v.validateComment(comment)
-	} else {
-		var definition = statement.GetDefinition()
-		if definition == nil {
-			panic("A statement must contain either a comment or a definition.")
-		}
-		v.validateDefinition(definition)
 	}
+	var definition = statement.GetDefinition()
+	if definition == nil {
+		panic("A statement must contain a definition.")
+	}
+	v.validateDefinition(definition)
 }
 
 func (v *validator_) validateSymbol(symbol string) {

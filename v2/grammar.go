@@ -40,8 +40,12 @@ type grammarClass_ struct {
 
 // Constructors
 
-func (c *grammarClass_) MakeWithAttributes(statements col.Sequential[StatementLike]) GrammarLike {
+func (c *grammarClass_) MakeWithAttributes(
+	comment string,
+	statements col.Sequential[StatementLike],
+) GrammarLike {
 	return &grammar_{
+		comment_:    comment,
 		statements_: statements,
 	}
 }
@@ -53,10 +57,15 @@ func (c *grammarClass_) MakeWithAttributes(statements col.Sequential[StatementLi
 // Target
 
 type grammar_ struct {
+	comment_    string
 	statements_ col.Sequential[StatementLike]
 }
 
 // Attributes
+
+func (v *grammar_) GetComment() string {
+	return v.comment_
+}
 
 func (v *grammar_) GetStatements() col.Sequential[StatementLike] {
 	return v.statements_

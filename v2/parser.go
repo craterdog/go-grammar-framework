@@ -407,6 +407,7 @@ func (v *parser_) parseExpression() (
 	token TokenLike,
 	ok bool,
 ) {
+	var eolToken TokenLike
 	var alternative AlternativeLike
 	var alternatives = col.List[AlternativeLike]().Make()
 	var isMultilined bool
@@ -428,16 +429,15 @@ func (v *parser_) parseExpression() (
 		// Parse any additional alternatives.
 		for ok {
 			alternatives.AppendValue(alternative)
-			_, token, ok = v.parseToken(EOLToken, "")
+			_, eolToken, ok = v.parseToken(EOLToken, "")
 			if !ok {
-				var message = v.formatError(token)
-				message += v.generateGrammar("EOL",
-					"$expression",
-					"$alternative",
-				)
-				panic(message)
+				break
 			}
 			alternative, token, ok = v.parseAlternative()
+			if !ok {
+				v.putBack(eolToken)
+				break
+			}
 		}
 
 		// Found a multi-line expression.
@@ -535,35 +535,36 @@ func (v *parser_) parseGrammar() (
 	token TokenLike,
 	ok bool,
 ) {
+	var comment string
 	var statement StatementLike
 	var statements = col.List[StatementLike]().Make()
 
-	// Attempt to parse any statements.
+	// Attempt to parse a comment.
+	comment, token, ok = v.parseToken(CommentToken, "")
+	if !ok {
+		return grammar, token, false
+	}
+
+	// Attempt to parse a statement.
 	statement, token, ok = v.parseStatement()
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateGrammar("statement",
+			"$grammar",
+			"$copyright",
+			"$statement",
+		)
+		panic(message)
+	}
+
+	// Parse any additional statements.
 	for ok {
 		statements.AppendValue(statement)
-
-		// Attempt to parse an end-of-line character.
-		_, token, ok = v.parseToken(EOLToken, "")
-		if !ok {
-			var message = v.formatError(token)
-			message += v.generateGrammar("EOL",
-				"$grammar",
-				"$statement",
-			)
-			panic(message)
-		}
-
-		// Parse any additional end-of-line characters.
-		for ok {
-			_, _, ok = v.parseToken(EOLToken, "")
-		}
-
 		statement, token, ok = v.parseStatement()
 	}
 
 	// Found a grammar.
-	grammar = Grammar().MakeWithAttributes(statements)
+	grammar = Grammar().MakeWithAttributes(comment, statements)
 	return grammar, token, true
 }
 
@@ -590,6 +591,19 @@ func (v *parser_) parsePrecedence() (
 			"$expression",
 		)
 		panic(message)
+	}
+
+	if expression.IsMultilined() {
+		// Attempt to parse an end-of-line character.
+		_, token, ok = v.parseToken(EOLToken, "")
+		if !ok {
+			var message = v.formatError(token)
+			message += v.generateGrammar("EOL",
+				"$precedence",
+				"$expression",
+			)
+			panic(message)
+		}
 	}
 
 	// Attempt to parse the closing delimiter for the precedence.
@@ -648,22 +662,43 @@ func (v *parser_) parseStatement() (
 	var comment string
 	var definition DefinitionLike
 
-	// Attempt to parse a comment statement.
-	comment, token, ok = v.parseToken(CommentToken, "")
-	if ok {
-		statement = Statement().MakeWithComment(comment)
-		return statement, token, true
-	}
+	// Attempt to parse an optional comment.
+	comment, _, _ = v.parseToken(CommentToken, "")
 
-	// Attempt to parse a definition statement.
+	// Attempt to parse a definition.
 	definition, token, ok = v.parseDefinition()
-	if ok {
-		statement = Statement().MakeWithDefinition(definition)
-		return statement, token, true
+	if !ok {
+		if len(comment) > 0 {
+			var message = v.formatError(token)
+			message += v.generateGrammar("definition",
+				"$statement",
+				"$definition",
+			)
+			panic(message)
+		} else {
+			return statement, token, false
+		}
 	}
 
-	// This is not a statement.
-	return statement, token, false
+	// Attempt to parse an end-of-line character.
+	_, token, ok = v.parseToken(EOLToken, "")
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateGrammar("EOL",
+			"$statement",
+			"$definition",
+		)
+		panic(message)
+	}
+
+	// Parse any additional end-of-line characters.
+	for ok {
+		_, _, ok = v.parseToken(EOLToken, "")
+	}
+
+	// Found a statement.
+	statement = Statement().MakeWithAttributes(comment, definition)
+	return statement, token, true
 }
 
 func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
@@ -671,7 +706,6 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 	token TokenLike,
 	ok bool,
 ) {
-
 	// Attempt to parse a specific token.
 	token = v.getNextToken()
 	value = token.GetValue()

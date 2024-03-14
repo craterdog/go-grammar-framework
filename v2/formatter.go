@@ -218,6 +218,8 @@ func (v *formatter_) formatGlyph(glyph GlyphLike) {
 }
 
 func (v *formatter_) formatGrammar(grammar GrammarLike) {
+	var comment = grammar.GetComment()
+	v.appendString(comment)
 	var statements = grammar.GetStatements()
 	var iterator = statements.GetIterator()
 	for iterator.HasNext() {
@@ -245,15 +247,9 @@ func (v *formatter_) formatPredicate(predicate PredicateLike) {
 
 func (v *formatter_) formatStatement(statement StatementLike) {
 	var comment = statement.GetComment()
+	v.appendString(comment)
 	var definition = statement.GetDefinition()
-	switch {
-	case len(comment) > 0:
-		v.appendString(comment)
-	case definition != nil:
-		v.formatDefinition(definition)
-	default:
-		panic("Attempted to format an empty statement.")
-	}
+	v.formatDefinition(definition)
 }
 
 func (v *formatter_) getResult() string {
