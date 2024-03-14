@@ -409,14 +409,12 @@ func (v *parser_) parseExpression() (
 	token TokenLike,
 	ok bool,
 ) {
-	var eolToken TokenLike
 	var alternative AlternativeLike
 	var alternatives = col.List[AlternativeLike]().Make()
-	var isMultilined bool
 
 	// Attempt to parse a multi-line expression.
-	_, _, isMultilined = v.parseToken(EOLToken, "")
-	if isMultilined {
+	_, _, ok = v.parseToken(EOLToken, "")
+	if ok {
 		// Attempt to parse the first alternative.
 		alternative, token, ok = v.parseAlternative()
 		if !ok {
@@ -431,19 +429,22 @@ func (v *parser_) parseExpression() (
 		// Parse any additional alternatives.
 		for ok {
 			alternatives.AppendValue(alternative)
-			_, eolToken, ok = v.parseToken(EOLToken, "")
+			_, token, ok = v.parseToken(EOLToken, "")
 			if !ok {
 				break
 			}
-			alternative, token, ok = v.parseAlternative()
+			alternative, _, ok = v.parseAlternative()
 			if !ok {
-				v.putBack(eolToken)
+				v.putBack(token)
 				break
 			}
 		}
 
+		// Attempt to parse an optional end-of-line character.
+		_, token, _ = v.parseToken(EOLToken, "")
+
 		// Found a multi-line expression.
-		expression = Expression().MakeWithAttributes(alternatives, isMultilined)
+		expression = Expression().MakeWithAttributes(alternatives, true)
 		return expression, token, true
 	}
 
@@ -472,7 +473,7 @@ func (v *parser_) parseExpression() (
 	}
 
 	// Found an in-line expression.
-	expression = Expression().MakeWithAttributes(alternatives, isMultilined)
+	expression = Expression().MakeWithAttributes(alternatives, false)
 	return expression, token, true
 }
 
@@ -593,19 +594,6 @@ func (v *parser_) parsePrecedence() (
 			"$expression",
 		)
 		panic(message)
-	}
-
-	if expression.IsMultilined() {
-		// Attempt to parse an end-of-line character.
-		_, token, ok = v.parseToken(EOLToken, "")
-		if !ok {
-			var message = v.formatError(token)
-			message += v.generateGrammar("EOL",
-				"$precedence",
-				"$expression",
-			)
-			panic(message)
-		}
 	}
 
 	// Attempt to parse the closing delimiter for the precedence.

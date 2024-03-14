@@ -89,7 +89,7 @@ $definition: SYMBOL ":" expression  ! This works for tokens and rules.
 
 $expression:
     alternative ("|" alternative)*
-    (EOL alternative)+
+    (EOL alternative)+ EOL?
 
 $alternative: factor+ NOTE?
 
