@@ -42,10 +42,7 @@ type grammarClass_ struct {
 
 // Constructors
 
-func (c *grammarClass_) MakeWithAttributes(
-	comment string,
-	statements col.Sequential[StatementLike],
-) GrammarLike {
+func (c *grammarClass_) MakeWithAttributes(comment string, statements col.Sequential[StatementLike]) GrammarLike {
 	return &grammar_{
 		comment_:    comment,
 		statements_: statements,

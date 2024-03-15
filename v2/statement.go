@@ -40,10 +40,7 @@ type statementClass_ struct {
 
 // Constructors
 
-func (c *statementClass_) MakeWithAttributes(
-	comment string,
-	definition DefinitionLike,
-) StatementLike {
+func (c *statementClass_) MakeWithAttributes(comment string, definition DefinitionLike) StatementLike {
 	return &statement_{
 		comment_:    comment,
 		definition_: definition,
