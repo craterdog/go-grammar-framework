@@ -21,19 +21,19 @@ import (
 	tes "testing"
 )
 
-const grammarsDirectory = "./grammars/"
+const testDirectory = "./test/"
 
 func TestParsingRoundtrips(t *tes.T) {
-	var files, err = osx.ReadDir(grammarsDirectory)
+	var files, err = osx.ReadDir(testDirectory)
 	if err != nil {
-		panic("Could not find the " + grammarsDirectory + " directory.")
+		panic("Could not find the " + testDirectory + " directory.")
 	}
 
 	for _, file := range files {
 		var parser = cds.Parser().Make()
 		var validator = cds.Validator().Make()
 		var formatter = cds.Formatter().Make()
-		var filename = grammarsDirectory + file.Name()
+		var filename = testDirectory + file.Name()
 		if sts.HasSuffix(filename, ".cdsn") {
 			fmt.Println(filename)
 			var bytes, _ = osx.ReadFile(filename)
