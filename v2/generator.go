@@ -13,8 +13,8 @@
 package grammars
 
 import (
-	cla "github.com/craterdog/go-class-framework/v2"
 	col "github.com/craterdog/go-collection-framework/v3"
+	pac "github.com/craterdog/go-package-framework/v2"
 	osx "os"
 	sts "strings"
 	uni "unicode"
@@ -46,8 +46,8 @@ type generatorClass_ struct {
 
 func (c *generatorClass_) Make() GeneratorLike {
 	return &generator_{
-		classes_:   col.Catalog[string, cla.ClassLike]().Make(),
-		instances_: col.Catalog[string, cla.InstanceLike]().Make(),
+		classes_:   col.Catalog[string, pac.ClassLike]().Make(),
+		instances_: col.Catalog[string, pac.InstanceLike]().Make(),
 	}
 }
 
@@ -56,8 +56,8 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
-	classes_   col.CatalogLike[string, cla.ClassLike]
-	instances_ col.CatalogLike[string, cla.InstanceLike]
+	classes_   col.CatalogLike[string, pac.ClassLike]
+	instances_ col.CatalogLike[string, pac.InstanceLike]
 }
 
 // Public
@@ -94,15 +94,15 @@ func (v *generator_) generateClassComment(className string) string {
 	return comment
 }
 
-func (v *generator_) generateCopyright(grammar GrammarLike) cla.CopyrightLike {
+func (v *generator_) generateCopyright(grammar GrammarLike) pac.CopyrightLike {
 	return nil
 }
 
-func (v *generator_) generateHeader() cla.HeaderLike {
+func (v *generator_) generateHeader() pac.HeaderLike {
 	return nil
 }
 
-func (v *generator_) generateImports() cla.ImportsLike {
+func (v *generator_) generateImports() pac.ImportsLike {
 	return nil
 }
 
@@ -114,12 +114,12 @@ func (v *generator_) generateInstanceComment(className string) string {
 }
 
 func (v *generator_) generateInterfaces(
-	classMethods col.Sequential[cla.ClassLike],
-	instanceMethods col.Sequential[cla.InstanceLike],
-) cla.InterfacesLike {
-	var classes = cla.Classes().MakeWithAttributes(classMethods)
-	var instances = cla.Instances().MakeWithAttributes(instanceMethods)
-	var interfaces = cla.Interfaces().MakeWithAttributes(
+	classMethods col.Sequential[pac.ClassLike],
+	instanceMethods col.Sequential[pac.InstanceLike],
+) pac.InterfacesLike {
+	var classes = pac.Classes().MakeWithAttributes(classMethods)
+	var instances = pac.Instances().MakeWithAttributes(instanceMethods)
+	var interfaces = pac.Interfaces().MakeWithAttributes(
 		nil,
 		classes,
 		instances,
@@ -127,17 +127,17 @@ func (v *generator_) generateInterfaces(
 	return interfaces
 }
 
-func (v *generator_) generatePackage(directory string, gopn cla.GoPNLike) {
-	var validator = cla.Validator().Make()
+func (v *generator_) generatePackage(directory string, gopn pac.GoPNLike) {
+	var validator = pac.Validator().Make()
 	validator.ValidatePackage(gopn)
-	var formatter = cla.Formatter().Make()
+	var formatter = pac.Formatter().Make()
 	var source = formatter.FormatGoPN(gopn)
 	var bytes = []byte(source)
 	var err = osx.WriteFile(directory+"package.go", bytes, 0644)
 	if err != nil {
 		panic(err)
 	}
-	var generator = cla.Generator().Make()
+	var generator = pac.Generator().Make()
 	generator.GeneratePackage(directory)
 }
 
@@ -163,8 +163,8 @@ func (v *generator_) parseGrammar(directory string) GrammarLike {
 
 func (v *generator_) processDefinition(
 	definition DefinitionLike,
-	classes col.ListLike[cla.ClassLike],
-	instances col.ListLike[cla.InstanceLike],
+	classes col.ListLike[pac.ClassLike],
+	instances col.ListLike[pac.InstanceLike],
 ) {
 	var symbol = definition.GetSymbol()
 	var expression = definition.GetExpression()
@@ -177,14 +177,14 @@ func (v *generator_) processDefinition(
 
 func (v *generator_) processExpression(
 	expression ExpressionLike,
-	constructorMethods col.ListLike[cla.ConstructorLike],
-	attributeMethods col.ListLike[cla.AttributeLike],
+	constructorMethods col.ListLike[pac.ConstructorLike],
+	attributeMethods col.ListLike[pac.AttributeLike],
 ) {
 }
 
-func (v *generator_) processGrammar(grammar GrammarLike) cla.GoPNLike {
-	var classes = col.List[cla.ClassLike]().Make()
-	var instances = col.List[cla.InstanceLike]().Make()
+func (v *generator_) processGrammar(grammar GrammarLike) pac.GoPNLike {
+	var classes = col.List[pac.ClassLike]().Make()
+	var instances = col.List[pac.InstanceLike]().Make()
 	var iterator = grammar.GetStatements().GetIterator()
 	for iterator.HasNext() {
 		var statement = iterator.GetNext()
@@ -194,7 +194,7 @@ func (v *generator_) processGrammar(grammar GrammarLike) cla.GoPNLike {
 	var header = v.generateHeader()
 	var imports = v.generateImports()
 	var interfaces = v.generateInterfaces(classes, instances)
-	var gopn = cla.GoPN().MakeWithAttributes(
+	var gopn = pac.GoPN().MakeWithAttributes(
 		copyright,
 		header,
 		imports,
@@ -207,32 +207,32 @@ func (v *generator_) processGrammar(grammar GrammarLike) cla.GoPNLike {
 func (v *generator_) processRule(
 	symbol string,
 	expression ExpressionLike,
-	classes col.ListLike[cla.ClassLike],
-	instances col.ListLike[cla.InstanceLike],
+	classes col.ListLike[pac.ClassLike],
+	instances col.ListLike[pac.InstanceLike],
 ) {
-	var constructorMethods = col.List[cla.ConstructorLike]().Make()
-	var attributeMethods = col.List[cla.AttributeLike]().Make()
+	var constructorMethods = col.List[pac.ConstructorLike]().Make()
+	var attributeMethods = col.List[pac.AttributeLike]().Make()
 	v.processExpression(expression, constructorMethods, attributeMethods)
 	var className = v.makePrivate(symbol)
-	var declaration = cla.Declaration().MakeWithAttributes(
+	var declaration = pac.Declaration().MakeWithAttributes(
 		v.generateClassComment(className),
 		className+"ClassLike",
 		nil,
 	)
-	var constructors = cla.Constructors().MakeWithAttributes(constructorMethods)
-	var class = cla.Class().MakeWithAttributes(
+	var constructors = pac.Constructors().MakeWithAttributes(constructorMethods)
+	var class = pac.Class().MakeWithAttributes(
 		declaration,
 		nil,
 		constructors,
 		nil,
 	)
-	declaration = cla.Declaration().MakeWithAttributes(
+	declaration = pac.Declaration().MakeWithAttributes(
 		v.generateInstanceComment(className),
 		className+"Like",
 		nil,
 	)
-	var attributes = cla.Attributes().MakeWithAttributes(attributeMethods)
-	var instance = cla.Instance().MakeWithAttributes(
+	var attributes = pac.Attributes().MakeWithAttributes(attributeMethods)
+	var instance = pac.Instance().MakeWithAttributes(
 		declaration,
 		attributes,
 		nil,
@@ -244,8 +244,8 @@ func (v *generator_) processRule(
 
 func (v *generator_) processStatement(
 	statement StatementLike,
-	classes col.ListLike[cla.ClassLike],
-	instances col.ListLike[cla.InstanceLike],
+	classes col.ListLike[pac.ClassLike],
+	instances col.ListLike[pac.InstanceLike],
 ) {
 	var definition = statement.GetDefinition()
 	if definition == nil {
