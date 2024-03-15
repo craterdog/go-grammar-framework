@@ -212,7 +212,7 @@ type ScannerClassLike interface {
 	Make(source string, tokens col.QueueLike[TokenLike]) ScannerLike
 
 	// Functions
-	MatchToken(tokenType TokenType, text string) col.ListLike[string]
+	MatchToken(type_ TokenType, text string) col.ListLike[string]
 }
 
 /*
@@ -238,7 +238,7 @@ type TokenClassLike interface {
 	) TokenLike
 
 	// Functions
-	AsString(tokenType TokenType) string
+	AsString(type_ TokenType) string
 }
 
 /*
