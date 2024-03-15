@@ -79,8 +79,8 @@ func (c *tokenClass_) AsString(type_ TokenType) string {
 // Target
 
 type token_ struct {
-	line_     int
-	position_ int
+	line_     int // The line number of the token in the source string.
+	position_ int // The position in the line of the first rune of the token.
 	type_     TokenType
 	value_    string
 }
