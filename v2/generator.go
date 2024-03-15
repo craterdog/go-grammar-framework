@@ -46,7 +46,6 @@ type generatorClass_ struct {
 
 func (c *generatorClass_) Make() GeneratorLike {
 	return &generator_{
-		imports_:   col.Catalog[string, cla.ModuleLike]().Make(),
 		classes_:   col.Catalog[string, cla.ClassLike]().Make(),
 		instances_: col.Catalog[string, cla.InstanceLike]().Make(),
 	}
@@ -57,7 +56,6 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
-	imports_   col.CatalogLike[string, cla.ModuleLike]
 	classes_   col.CatalogLike[string, cla.ClassLike]
 	instances_ col.CatalogLike[string, cla.InstanceLike]
 }
@@ -96,7 +94,7 @@ func (v *generator_) generateClassComment(className string) string {
 	return comment
 }
 
-func (v *generator_) generateCopyright() cla.CopyrightLike {
+func (v *generator_) generateCopyright(grammar GrammarLike) cla.CopyrightLike {
 	return nil
 }
 
@@ -192,7 +190,7 @@ func (v *generator_) processGrammar(grammar GrammarLike) cla.GoPNLike {
 		var statement = iterator.GetNext()
 		v.processStatement(statement, classes, instances)
 	}
-	var copyright = v.generateCopyright()
+	var copyright = v.generateCopyright(grammar)
 	var header = v.generateHeader()
 	var imports = v.generateImports()
 	var interfaces = v.generateInterfaces(classes, instances)

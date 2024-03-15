@@ -11,9 +11,10 @@
 <!
 
 !>
-    GO PACKAGE NOTATION
-    This document is a formal definition of Go Package Notation (GoPN) using
-    Crater Dog Syntax Notation™ (CDSN).
+    CRATER DOG SYNTAX NOTATION
+    This document contains a formal definition of the Crater Dog Syntax Notation™
+    (CDSN) using CDSN itself in homage to Douglas Hofstadter.  A language grammar
+    consists of a set of token and rule definitions.
 
     TOKEN DEFINITIONS
     The following token definitions are used by the scanner to generate the
@@ -36,15 +37,25 @@
     greedy.  Any spaces within a token definition are NOT ignored.
 <!
 
-$COMMENT: "/*" EOL ANY* EOL "*/" EOL+  ! Chooses the shortest possible match.
+$CHARACTER: "'" ~CONTROL "'"  ! Any printable character.
 
-$DELIMITER: "[" | "]" | "(" | ")" | "{" | "}" | "." | "," | "="
+$COMMENT: "!>" EOL ANY* EOL "<!" EOL+  ! Chooses the shortest possible match.
 
-$IDENTIFIER: (LOWER | UPPER) (LOWER | UPPER | DIGIT)*
+$DELIMITER: "~" | "?" | "*" | "+" | ":" | "|" | "(" | ")" | "{" | "}" | ".."
 
-$NOTE: "//" (~CONTROL)*
+$INTRINSIC: "ANY" | "LOWER" | "UPPER" | "DIGIT" | "ESCAPE" | "CONTROL" | "EOL" | "EOF"
 
-$TEXT: '"' ANY* '"'  ! Chooses the shortest possible match.
+$LETTER: LOWER | UPPER
+
+$LITERAL: '"' (ESCAPE | ~('"' | CONTROL))+ '"'
+
+$NAME: LETTER ('_'? (LETTER | DIGIT))*
+
+$NOTE: "! " (~CONTROL)*
+
+$NUMBER: DIGIT+
+
+$SYMBOL: '$' NAME
 
 !>
     RULE DEFINITIONS
@@ -64,85 +75,41 @@ $TEXT: '"' ANY* '"'  ! Chooses the shortest possible match.
      * predicate* - Zero or more instances of the specified predicate.
      * predicate+ - One or more instances of the specified predicate.
 
-    Inversion within a rule definition may only be applied to a token predicate
-    resulting in a single token.  Rule inversions cannot be nested.
+    Inversion within a rule definition may only be applied to an assertion
+    resulting in a single character or glyph.
 <!
 
-$source: gopn EOF
+$source: grammar EOF  ! Terminated with an end-of-file marker.
 
-$gopn: copyright header imports? types? interfaces?
+$grammar: COMMENT statement+
 
-$copyright: COMMENT
+$statement: COMMENT? definition EOL+
 
-$header: COMMENT "package" IDENTIFIER
+$definition: SYMBOL ":" expression  ! This works for tokens and rules.
 
-$imports: "import" "(" modules? ")"
+$expression:
+    alternative ("|" alternative)*
+    (EOL alternative)+ EOL?
 
-$modules: module+
+$alternative: factor+ NOTE?
 
-$module: IDENTIFIER TEXT
+$factor: predicate cardinality?  ! The default cardinality is one.
 
-$types: "// TYPES" specializations? functionals?
+$predicate: "~"? assertion
 
-$specializations: "// Specializations" specialization+
+$assertion: element | glyph | precedence
 
-$specialization: declaration abstraction enumeration?
+$element: INTRINSIC | LITERAL | NAME
 
-$declaration: COMMENT "type" IDENTIFIER ("[" parameters "]")?
+$glyph: CHARACTER (".." CHARACTER)?  ! The range of characters is inclusive.
 
-$parameters: parameter ("," parameter)* ","?
+$precedence: "(" expression ")"
 
-$parameter: IDENTIFIER abstraction
+$cardinality:
+    "?"  ! Zero or one instance of a predicate.
+    "*"  ! Zero or more instances of a predicate.
+    "+"  ! One or more instances of a predicate.
+    "{" constraint "}"  ! Constrains the number of instances of a predicate.
 
-$abstraction: prefix? IDENTIFIER ("[" arguments "]")?
-
-$prefix: "[" "]" | "map" "[" IDENTIFIER "]" | "chan" | IDENTIFIER "."
-
-$arguments: abstraction ("," abstraction)* ","?
-
-$enumeration: "const" "(" values ")"
-
-$values: parameter "=" "iota" IDENTIFIER*
-
-$functionals: "// Functionals" functional+
-
-$functional: declaration "func" "(" parameters? ")" result
-
-$result: abstraction | "(" parameters ")"
-
-$interfaces: "// INTERFACES" aspects? classes? instances?
-
-$aspects: "// Aspects" aspect+
-
-$aspect: declaration "interface" "{" methods? "}"
-
-$classes: "// Classes" class+
-
-$class: declaration "interface" "{" constants? constructors? functions? "}"
-
-$constants: "// Constants" constant+
-
-$constant: IDENTIFIER "(" ")" abstraction
-
-$constructors: "// Constructors" constructor+
-
-$constructor: IDENTIFIER "(" parameters? ")" abstraction
-
-$functions: "// Functions" function+
-
-$function: IDENTIFIER "(" parameters? ")" result
-
-$instances: "// Instances" instance+
-
-$instance: declaration "interface" "{" attributes? abstractions? methods? "}"
-
-$attributes: "// Attributes" attribute+
-
-$attribute: IDENTIFIER "(" parameter? ")" abstraction?
-
-$abstractions: "// Abstractions" abstraction+
-
-$methods: "// Methods" method+
-
-$method: IDENTIFIER "(" parameters? ")" result?
+$constraint: NUMBER (".." NUMBER?)?  ! The range of numbers is inclusive.
 
