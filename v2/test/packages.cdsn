@@ -71,9 +71,9 @@ $TEXT: '"' ANY* '"'  ! Chooses the shortest possible match.
 
 $source: package EOF  ! Terminated with an end-of-file marker.
 
-$package: copyright header imports? types? interfaces?
+$package: notice header imports? types? interfaces?
 
-$copyright: COMMENT
+$notice: COMMENT
 
 $header: COMMENT "package" IDENTIFIER
 

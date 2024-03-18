@@ -70,7 +70,7 @@ $ANYTHING: ANY
     resulting in a single token.  Rule inversions cannot be nested.
 <!
 
-$document: component EOF  ! Terminated with an end-of-file marker.
+$source: component EOF  ! Terminated with an end-of-file marker.
 
 $component: primitive | list{3..5}
 

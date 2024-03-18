@@ -13,10 +13,12 @@
 package grammars
 
 import (
+	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v3"
 	pac "github.com/craterdog/go-package-framework/v2"
 	osx "os"
 	sts "strings"
+	tim "time"
 	uni "unicode"
 )
 
@@ -62,17 +64,58 @@ type generator_ struct {
 
 // Public
 
+func (v *generator_) CreateGrammar(directory string, copyright string) {
+	// Center and insert the copyright string into the grammar template.
+	var maximum = 78
+	var length = len(copyright)
+	if length > maximum {
+		var message = fmt.Sprintf(
+			"The copyright notice cannot be longer than 78 characters: %v",
+			copyright,
+		)
+		panic(message)
+	}
+	if length == 0 {
+		copyright = fmt.Sprintf(
+			"Copyright (c) %v.  All Rights Reserved.",
+			tim.Now().Year(),
+		)
+		length = len(copyright)
+	}
+	var padding = (maximum - length) / 2
+	for range padding {
+		copyright = " " + copyright + " "
+	}
+	if len(copyright) < maximum {
+		copyright = " " + copyright
+	}
+	copyright = "." + copyright + "."
+	var template = sts.ReplaceAll(grammarTemplate_, "<Copyright>", copyright)
+	var bytes = []byte(template[1:]) // Remove leading "\n".
+
+	// Save the new grammar template.
+	v.createDirectory(directory)
+	var grammarFile = directory + "Grammar.cdsn"
+	fmt.Printf(
+		"The grammar file %q does not exist, creating a template for it.\n",
+		grammarFile,
+	)
+	var err = osx.WriteFile(grammarFile, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (v *generator_) GeneratePackage(directory string) {
 	if !sts.HasSuffix(directory, "/") {
 		directory += "/"
 	}
-	v.createDirectory(directory)
 	var grammar = v.parseGrammar(directory)
 	if grammar == nil {
 		return
 	}
-	var gopn = v.processGrammar(grammar)
-	v.generatePackage(directory, gopn)
+	var package_ = v.processGrammar(grammar)
+	v.generatePackage(directory, package_)
 }
 
 // Private
@@ -94,7 +137,7 @@ func (v *generator_) generateClassComment(className string) string {
 	return comment
 }
 
-func (v *generator_) generateCopyright(grammar GrammarLike) pac.CopyrightLike {
+func (v *generator_) generateNotice(grammar GrammarLike) pac.NoticeLike {
 	return nil
 }
 
@@ -127,11 +170,11 @@ func (v *generator_) generateInterfaces(
 	return interfaces
 }
 
-func (v *generator_) generatePackage(directory string, gopn pac.GoPNLike) {
+func (v *generator_) generatePackage(directory string, package_ pac.PackageLike) {
 	var validator = pac.Validator().Make()
-	validator.ValidatePackage(gopn)
+	validator.ValidatePackage(package_)
 	var formatter = pac.Formatter().Make()
-	var source = formatter.FormatGoPN(gopn)
+	var source = formatter.FormatPackage(package_)
 	var bytes = []byte(source)
 	var err = osx.WriteFile(directory+"package.go", bytes, 0644)
 	if err != nil {
@@ -148,10 +191,14 @@ func (v *generator_) makePrivate(identifier string) string {
 }
 
 func (v *generator_) parseGrammar(directory string) GrammarLike {
-	var filename = directory + "grammar.cdsn"
-	var bytes, err = osx.ReadFile(filename)
+	var grammarFile = directory + "Grammar.cdsn"
+	var bytes, err = osx.ReadFile(grammarFile)
 	if err != nil {
-		panic(err)
+		var message = fmt.Sprintf(
+			"The specified directory is missing a grammar file: %v",
+			grammarFile,
+		)
+		panic(message)
 	}
 	var source = string(bytes)
 	var parser = Parser().Make()
@@ -182,7 +229,7 @@ func (v *generator_) processExpression(
 ) {
 }
 
-func (v *generator_) processGrammar(grammar GrammarLike) pac.GoPNLike {
+func (v *generator_) processGrammar(grammar GrammarLike) pac.PackageLike {
 	var classes = col.List[pac.ClassLike]().Make()
 	var instances = col.List[pac.InstanceLike]().Make()
 	var iterator = grammar.GetStatements().GetIterator()
@@ -190,18 +237,18 @@ func (v *generator_) processGrammar(grammar GrammarLike) pac.GoPNLike {
 		var statement = iterator.GetNext()
 		v.processStatement(statement, classes, instances)
 	}
-	var copyright = v.generateCopyright(grammar)
+	var copyright = v.generateNotice(grammar)
 	var header = v.generateHeader()
 	var imports = v.generateImports()
 	var interfaces = v.generateInterfaces(classes, instances)
-	var gopn = pac.GoPN().MakeWithAttributes(
+	var package_ = pac.Package().MakeWithAttributes(
 		copyright,
 		header,
 		imports,
 		nil,
 		interfaces,
 	)
-	return gopn
+	return package_
 }
 
 func (v *generator_) processRule(
