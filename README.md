@@ -19,7 +19,7 @@ For more information on this project click on the following links:
 To include the Go packages for this module use the following import statement:
 ```go
 import (
-	cds "github.com/craterdog/go-grammar-framework/v2"
+	gra "github.com/craterdog/go-grammar-framework/v2"
 )
 ```
 

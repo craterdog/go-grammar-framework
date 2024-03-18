@@ -14,7 +14,7 @@ package grammars_test
 
 import (
 	fmt "fmt"
-	cds "github.com/craterdog/go-grammar-framework/v2"
+	gra "github.com/craterdog/go-grammar-framework/v2"
 	ass "github.com/stretchr/testify/assert"
 	osx "os"
 	sts "strings"
@@ -30,9 +30,9 @@ func TestParsingRoundtrips(t *tes.T) {
 	}
 
 	for _, file := range files {
-		var parser = cds.Parser().Make()
-		var validator = cds.Validator().Make()
-		var formatter = cds.Formatter().Make()
+		var parser = gra.Parser().Make()
+		var validator = gra.Validator().Make()
+		var formatter = gra.Formatter().Make()
 		var filename = testDirectory + file.Name()
 		if sts.HasSuffix(filename, ".cdsn") {
 			fmt.Println(filename)
@@ -52,8 +52,8 @@ Comment
 `
 
 func TestRuleInTokenDefinition(t *tes.T) {
-	var parser = cds.Parser().Make()
-	var validator = cds.Validator().Make()
+	var parser = gra.Parser().Make()
+	var validator = gra.Validator().Make()
 	var source = comment + `$BAD: rule
 $rule: "bad"
 `
@@ -73,8 +73,8 @@ $rule: "bad"
 }
 
 func TestDoubleInversion(t *tes.T) {
-	var parser = cds.Parser().Make()
-	var validator = cds.Validator().Make()
+	var parser = gra.Parser().Make()
+	var validator = gra.Validator().Make()
 	var source = comment + `$BAD: ~~CONTROL
 `
 	defer func() {
@@ -93,8 +93,8 @@ func TestDoubleInversion(t *tes.T) {
 }
 
 func TestInvertedString(t *tes.T) {
-	var parser = cds.Parser().Make()
-	var validator = cds.Validator().Make()
+	var parser = gra.Parser().Make()
+	var validator = gra.Validator().Make()
 	var source = comment + `$BAD: ~"ow"
 `
 	defer func() {
@@ -113,8 +113,8 @@ func TestInvertedString(t *tes.T) {
 }
 
 func TestInvertedRule(t *tes.T) {
-	var parser = cds.Parser().Make()
-	var validator = cds.Validator().Make()
+	var parser = gra.Parser().Make()
+	var validator = gra.Validator().Make()
 	var source = comment + `$bad: ~rule
 $rule: "rule"
 `
@@ -134,8 +134,8 @@ $rule: "rule"
 }
 
 func TestMissingRule(t *tes.T) {
-	var parser = cds.Parser().Make()
-	var validator = cds.Validator().Make()
+	var parser = gra.Parser().Make()
+	var validator = gra.Validator().Make()
 	var source = comment + `$bad: rule
 `
 	defer func() {
@@ -154,8 +154,8 @@ func TestMissingRule(t *tes.T) {
 }
 
 func TestDuplicateRule(t *tes.T) {
-	var parser = cds.Parser().Make()
-	var validator = cds.Validator().Make()
+	var parser = gra.Parser().Make()
+	var validator = gra.Validator().Make()
 	var source = comment + `$bad: "bad"
 $bad: "worse"
 `
@@ -175,8 +175,8 @@ $bad: "worse"
 }
 
 func TestNestedInversions(t *tes.T) {
-	var parser = cds.Parser().Make()
-	var validator = cds.Validator().Make()
+	var parser = gra.Parser().Make()
+	var validator = gra.Validator().Make()
 	var source = comment + `$BAD: ~(WORSE | ~BAD)
 $WORSE: CONTROL
 `
