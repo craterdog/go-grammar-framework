@@ -23,10 +23,10 @@ import (
 
 const testDirectory = "./test/"
 
-func TestParsingRoundtrips(t *tes.T) {
+func TestRoundtrips(t *tes.T) {
 	var files, err = osx.ReadDir(testDirectory)
 	if err != nil {
-		panic("Could not find the " + testDirectory + " directory.")
+		panic(err)
 	}
 
 	for _, file := range files {
@@ -36,7 +36,10 @@ func TestParsingRoundtrips(t *tes.T) {
 		var filename = testDirectory + file.Name()
 		if sts.HasSuffix(filename, ".cdsn") {
 			fmt.Println(filename)
-			var bytes, _ = osx.ReadFile(filename)
+			var bytes, err = osx.ReadFile(filename)
+			if err != nil {
+				panic(err)
+			}
 			var expected = string(bytes)
 			var grammar = parser.ParseSource(expected)
 			validator.ValidateGrammar(grammar)

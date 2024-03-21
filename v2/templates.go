@@ -12,10 +12,29 @@
 
 package grammars
 
+const packageCommentTemplate_ = `
+/*
+Package <packagename> provides...
+
+For detailed documentation on this package refer to the wiki:
+  - https://github.com/craterdog/<module-name>/wiki
+
+This package follows the Crater Dog Technologies™ Go Coding Conventions located
+here:
+  - https://github.com/craterdog/go-package-framework/wiki
+
+Additional implementations of the concrete classes provided by this package can
+be developed and used seamlessly since the interface definitions only depend on
+other interfaces and primitive types—and the class implementations only depend
+on interfaces, not on each other.
+*/
+`
+
 const classCommentTemplate_ = `
 /*
-<ClassName>ClassLike defines the set of class constants, constructors and functions
-that must be supported by all <class-name>-class-like classes.
+<ClassName>ClassLike is a class interface that defines the set of class
+constants, constructors and functions that must be supported by each
+<class-name>-like concrete class.
 */
 `
 

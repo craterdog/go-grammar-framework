@@ -350,7 +350,7 @@ all generator-like instances.
 type GeneratorLike interface {
 	// Methods
 	CreateGrammar(directory string, copyright string)
-	GeneratePackage(directory string)
+	GenerateModel(directory string)
 }
 
 /*
