@@ -48,6 +48,7 @@ type generatorClass_ struct {
 
 func (c *generatorClass_) Make() GeneratorLike {
 	return &generator_{
+		modules_:   col.Catalog[string, pac.ModuleLike]().Make(),
 		classes_:   col.Catalog[string, pac.ClassLike]().Make(),
 		instances_: col.Catalog[string, pac.InstanceLike]().Make(),
 	}
@@ -59,6 +60,7 @@ func (c *generatorClass_) Make() GeneratorLike {
 
 type generator_ struct {
 	name_      string
+	modules_   col.CatalogLike[string, pac.ModuleLike]
 	classes_   col.CatalogLike[string, pac.ClassLike]
 	instances_ col.CatalogLike[string, pac.InstanceLike]
 }
@@ -163,7 +165,14 @@ func (v *generator_) generateHeader() pac.HeaderLike {
 }
 
 func (v *generator_) generateImports() pac.ImportsLike {
-	return nil
+	var imports pac.ImportsLike
+	if !v.modules_.IsEmpty() {
+		v.modules_.SortValues()
+		var values = v.modules_.GetValues(v.modules_.GetKeys())
+		var modules = pac.Modules().MakeWithAttributes(values)
+		imports = pac.Imports().MakeWithAttributes(modules)
+	}
+	return imports
 }
 
 func (v *generator_) generateInstanceComment(className string) string {
@@ -254,6 +263,18 @@ func (v *generator_) parseGrammar(directory string) GrammarLike {
 	return grammar
 }
 
+func (v *generator_) processAlternative(
+	alternative AlternativeLike,
+	constructorMethods col.ListLike[pac.ConstructorLike],
+	attributeMethods col.ListLike[pac.AttributeLike],
+) {
+	var iterator = alternative.GetFactors().GetIterator()
+	for iterator.HasNext() {
+		var factor = iterator.GetNext()
+		v.processFactor(factor, constructorMethods, attributeMethods)
+	}
+}
+
 func (v *generator_) processDefinition(
 	definition DefinitionLike,
 	classes col.ListLike[pac.ClassLike],
@@ -275,6 +296,29 @@ func (v *generator_) processExpression(
 	constructorMethods col.ListLike[pac.ConstructorLike],
 	attributeMethods col.ListLike[pac.AttributeLike],
 ) {
+	var iterator = expression.GetAlternatives().GetIterator()
+	for iterator.HasNext() {
+		var alternative = iterator.GetNext()
+		v.processAlternative(alternative, constructorMethods, attributeMethods)
+	}
+}
+
+func (v *generator_) processFactor(
+	factor FactorLike,
+	constructorMethods col.ListLike[pac.ConstructorLike],
+	attributeMethods col.ListLike[pac.AttributeLike],
+) {
+	var cardinality = factor.GetCardinality()
+	if cardinality != nil {
+		var prefix = "col"
+		var repository = `"github.com/craterdog/go-collection-framework/v3"`
+		var module = pac.Module().MakeWithAttributes(
+			prefix,
+			repository,
+		)
+		// Must be sorted by the repository name NOT the prefix.
+		v.modules_.SetValue(repository, module)
+	}
 }
 
 func (v *generator_) processGrammar(grammar GrammarLike) pac.ModelLike {
