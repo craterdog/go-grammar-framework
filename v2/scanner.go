@@ -36,7 +36,6 @@ var scannerClass = &scannerClass_{
 		NoteToken:      reg.MustCompile(`^(?:` + note_ + `)`),
 		NumberToken:    reg.MustCompile(`^(?:` + number_ + `)`),
 		SpaceToken:     reg.MustCompile(`^(?:` + space_ + `)`),
-		SymbolToken:    reg.MustCompile(`^(?:` + symbol_ + `)`),
 	},
 }
 
@@ -187,7 +186,6 @@ loop:
 		case v.foundToken(NoteToken):
 		case v.foundToken(NumberToken):
 		case v.foundToken(SpaceToken):
-		case v.foundToken(SymbolToken):
 		default:
 			v.foundError()
 			break loop
@@ -206,20 +204,29 @@ way.  We append an underscore to each name to lessen the chance of a name
 collision with other private Go class constants in this package.
 */
 const (
+	_any_      = `a^`
+	_control_  = `\P{Cc}`
+	_digit_    = `\P{Nd}`
+	_eof_      = `[^\z]`
+	_eol_      = `[^\n]`
+	_escape_   = `[^\\]`
+	_lower_    = `\P{Ll}`
+	_upper_    = `\P{Lu}`
 	any_       = `.|` + eol_
 	base16_    = `[0-9a-f]`
 	character_ = `['][^` + control_ + `][']`
-	comment_   = `!>` + eol_ + `((?:` + any_ + `)*?)` + eol_ + `<![` + eol_ + `]+`
+	comment_   = `!>` + eol_ + `((?:` + any_ + `)*?)` + eol_ + `<!` + eol_
 	control_   = `\p{Cc}`
 	delimiter_ = `[~?*+:|(){}]|\.\.`
 	digit_     = `\p{Nd}`
+	eof_       = `\z`
 	eol_       = `\n`
 	escape_    = `\\(?:(?:` + unicode_ + `)|[abfnrtv'"\\])`
 	intrinsic_ = `ANY|LOWER|UPPER|DIGIT|ESCAPE|CONTROL|EOL|EOF`
 	letter_    = lower_ + `|` + upper_
-	literal_   = `["](?:` + escape_ + `|[^"` + eol_ + `])+["]`
+	literal_   = `["](?:` + escape_ + `|[^` + control_ + `])+?["]`
 	lower_     = `\p{Ll}`
-	name_      = `(?:` + letter_ + `)(?:_?(?:` + letter_ + `|` + digit_ + `))*`
+	name_      = `(?:` + letter_ + `)(?:` + letter_ + `|` + digit_ + `)*`
 	note_      = `! [^` + control_ + `]*`
 	number_    = `(?:` + digit_ + `)+`
 	space_     = `[ \t]+`

@@ -18,21 +18,21 @@ import ()
 
 // Reference
 
-var assertionClass = &assertionClass_{
+var lineClass = &lineClass_{
 	// TBA - Assign constant values.
 }
 
 // Function
 
-func Assertion() AssertionClassLike {
-	return assertionClass
+func Line() LineClassLike {
+	return lineClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type assertionClass_ struct {
+type lineClass_ struct {
 	// TBA - Add private class constants.
 }
 
@@ -40,21 +40,10 @@ type assertionClass_ struct {
 
 // Constructors
 
-func (c *assertionClass_) MakeWithElement(element ElementLike) AssertionLike {
-	return &assertion_{
-		element_: element,
-	}
-}
-
-func (c *assertionClass_) MakeWithGlyph(glyph GlyphLike) AssertionLike {
-	return &assertion_{
-		glyph_: glyph,
-	}
-}
-
-func (c *assertionClass_) MakeWithPrecedence(precedence PrecedenceLike) AssertionLike {
-	return &assertion_{
-		precedence_: precedence,
+func (c *lineClass_) MakeWithAttributes(alternative AlternativeLike, note string) LineLike {
+	return &line_{
+		alternative_: alternative,
+		note_:        note,
 	}
 }
 
@@ -64,24 +53,19 @@ func (c *assertionClass_) MakeWithPrecedence(precedence PrecedenceLike) Assertio
 
 // Target
 
-type assertion_ struct {
-	element_    ElementLike
-	glyph_      GlyphLike
-	precedence_ PrecedenceLike
+type line_ struct {
+	alternative_ AlternativeLike
+	note_        string
 }
 
 // Attributes
 
-func (v *assertion_) GetElement() ElementLike {
-	return v.element_
+func (v *line_) GetAlternative() AlternativeLike {
+	return v.alternative_
 }
 
-func (v *assertion_) GetGlyph() GlyphLike {
-	return v.glyph_
-}
-
-func (v *assertion_) GetPrecedence() PrecedenceLike {
-	return v.precedence_
+func (v *line_) GetNote() string {
+	return v.note_
 }
 
 // Public

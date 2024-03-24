@@ -55,16 +55,16 @@ type validator_ struct {
 	inInversion_ bool
 	isToken_     bool
 	stack_       col.StackLike[DefinitionLike]
-	symbols_     col.CatalogLike[string, ExpressionLike]
+	names_     col.CatalogLike[string, ExpressionLike]
 }
 
 // Public
 
 func (v *validator_) ValidateGrammar(grammar GrammarLike) {
 	v.stack_ = col.Stack[DefinitionLike]().Make()
-	v.symbols_ = col.Catalog[string, ExpressionLike]().Make()
+	v.names_ = col.Catalog[string, ExpressionLike]().Make()
 	v.validateGrammar(grammar)
-	var iterator = v.symbols_.GetIterator()
+	var iterator = v.names_.GetIterator()
 	for iterator.HasNext() {
 		var association = iterator.GetNext()
 		var symbol = association.GetKey()
@@ -85,7 +85,7 @@ func (v *validator_) formatError(message string) string {
 	var definition = v.stack_.RemoveTop()
 	message = fmt.Sprintf(
 		"The definition for %v is invalid:\n%v\n",
-		definition.GetSymbol(),
+		definition.GetName(),
 		message,
 	)
 	return message
@@ -103,29 +103,6 @@ func (v *validator_) validateAlternative(alternative AlternativeLike) {
 	for iterator.HasNext() {
 		var factor = iterator.GetNext()
 		v.validateFactor(factor)
-	}
-	var note = alternative.GetNote()
-	if len(note) > 0 {
-		v.validateNote(note)
-	}
-}
-
-func (v *validator_) validateAssertion(assertion AssertionLike) {
-	var element = assertion.GetElement()
-	var glyph = assertion.GetGlyph()
-	var precedence = assertion.GetPrecedence()
-	switch {
-	case element != nil && glyph == nil && precedence == nil:
-		v.validateElement(element)
-	case element == nil && glyph != nil && precedence == nil:
-		v.validateGlyph(glyph)
-	case element == nil && glyph == nil && precedence != nil:
-		v.validatePrecedence(precedence)
-	default:
-		var message = v.formatError(
-			"An assertion must contain exactly one element, glyph, or precedence.",
-		)
-		panic(message)
 	}
 }
 
@@ -177,10 +154,25 @@ func (v *validator_) validateConstraint(constraint ConstraintLike) {
 	}
 }
 
+func (v *validator_) validateHeader(header HeaderLike) {
+	var comment = header.GetComment()
+	if len(comment) == 0 {
+		var message = v.formatError(
+			"A header must contain a comment.",
+		)
+		panic(message)
+	}
+	v.validateComment(comment)
+}
+
 func (v *validator_) validateDefinition(definition DefinitionLike) {
 	v.stack_.AddValue(definition)
-	var symbol = definition.GetSymbol()
-	v.validateSymbol(symbol)
+	var comment = definition.GetComment()
+	if len(comment) > 0 {
+		v.validateComment(comment)
+	}
+	var name = definition.GetName()
+	v.validateName(name)
 	var expression = definition.GetExpression()
 	if expression == nil {
 		var message = v.formatError(
@@ -188,45 +180,41 @@ func (v *validator_) validateDefinition(definition DefinitionLike) {
 		)
 		panic(message)
 	}
-	if v.symbols_.GetValue(symbol) != nil {
+	if v.names_.GetValue(name) != nil {
 		var message = v.formatError(
 			fmt.Sprintf(
-				"The symbol %s is defined more than once.",
-				symbol,
+				"The name %s is defined more than once.",
+				name,
 			),
 		)
 		panic(message)
 	}
-	v.symbols_.SetValue(symbol, expression)
+	v.names_.SetValue(name, expression)
 	v.validateExpression(expression)
-	v.inInversion_ = false
 	var _ = v.stack_.RemoveTop()
 }
 
 func (v *validator_) validateElement(element ElementLike) {
-	var intrinsic = element.GetIntrinsic()
-	var name = element.GetName()
 	var literal = element.GetLiteral()
+	var name = element.GetName()
 	switch {
-	case len(intrinsic) > 0 && len(name) == 0 && len(literal) == 0:
-		v.validateIntrinsic(intrinsic)
-	case len(intrinsic) == 0 && len(name) > 0 && len(literal) == 0:
-		v.validateName(name)
-	case len(intrinsic) == 0 && len(name) == 0 && len(literal) > 0:
+	case len(literal) > 0 && len(name) == 0:
 		v.validateLiteral(literal)
+	case len(literal) == 0 && len(name) > 0:
+		v.validateName(name)
 	default:
 		var message = v.formatError(
-			"An element must contain exactly one intrinsic, name, or literal.",
+			"An element must contain a literal or a name but not both.",
 		)
 		panic(message)
 	}
 }
 
-func (v *validator_) validateExpression(expression ExpressionLike) {
-	var alternatives = expression.GetAlternatives()
+func (v *validator_) validateInline(inline InlineLike) {
+	var alternatives = inline.GetAlternatives()
 	if alternatives == nil || alternatives.IsEmpty() {
 		var message = v.formatError(
-			"Each expression must have at least one alternative.",
+			"Each inline expression must have at least one alternative.",
 		)
 		panic(message)
 	}
@@ -234,6 +222,56 @@ func (v *validator_) validateExpression(expression ExpressionLike) {
 	for iterator.HasNext() {
 		var alternative = iterator.GetNext()
 		v.validateAlternative(alternative)
+	}
+	var note = inline.GetNote()
+	if len(note) > 0 {
+		v.validateNote(note)
+	}
+}
+
+func (v *validator_) validateLine(line LineLike) {
+	var alternative = line.GetAlternative()
+	if alternative == nil {
+		var message = v.formatError(
+			"A line must contain an alternative.",
+		)
+		panic(message)
+	}
+	v.validateAlternative(alternative)
+	var note = line.GetNote()
+	if len(note) > 0 {
+		v.validateNote(note)
+	}
+}
+
+func (v *validator_) validateMultiline(multiline MultilineLike) {
+	var lines = multiline.GetLines()
+	if lines == nil || lines.IsEmpty() {
+		var message = v.formatError(
+			"Each multi-line expression must have at least one line.",
+		)
+		panic(message)
+	}
+	var iterator = lines.GetIterator()
+	for iterator.HasNext() {
+		var line = iterator.GetNext()
+		v.validateLine(line)
+	}
+}
+
+func (v *validator_) validateExpression(expression ExpressionLike) {
+	var inline = expression.GetInline()
+	var multiline = expression.GetMultiline()
+	switch {
+	case inline != nil && multiline == nil:
+		v.validateInline(inline)
+	case inline == nil && multiline != nil:
+		v.validateMultiline(multiline)
+	default:
+		var message = v.formatError(
+			"An expression must be inline or multiline but not both.",
+		)
+		panic(message)
 	}
 }
 
@@ -249,6 +287,22 @@ func (v *validator_) validateFactor(factor FactorLike) {
 	var cardinality = factor.GetCardinality()
 	if cardinality != nil {
 		v.validateCardinality(cardinality)
+	}
+}
+
+func (v *validator_) validateFilter(filter FilterLike) {
+	var intrinsic = filter.GetIntrinsic()
+	var glyph = filter.GetGlyph()
+	switch {
+	case len(intrinsic) > 0 && glyph == nil:
+		v.validateIntrinsic(intrinsic)
+	case len(intrinsic) == 0 && glyph != nil:
+		v.validateGlyph(glyph)
+	default:
+		var message = v.formatError(
+			"A filter must contain an intrinsic or a glyph but not both.",
+		)
+		panic(message)
 	}
 }
 
@@ -268,15 +322,25 @@ func (v *validator_) validateGlyph(glyph GlyphLike) {
 }
 
 func (v *validator_) validateGrammar(grammar GrammarLike) {
-	var statements = grammar.GetStatements()
-	if statements == nil || statements.IsEmpty() {
-		var message = "The grammar must contain at least one statement.\n"
+	var headers = grammar.GetHeaders()
+	if headers == nil || headers.IsEmpty() {
+		var message = "The grammar must contain at least one header.\n"
 		panic(message)
 	}
-	var iterator = statements.GetIterator()
-	for iterator.HasNext() {
-		var statement = iterator.GetNext()
-		v.validateStatement(statement)
+	var headerIterator = headers.GetIterator()
+	for headerIterator.HasNext() {
+		var header = headerIterator.GetNext()
+		v.validateHeader(header)
+	}
+	var definitions = grammar.GetHeaders()
+	if definitions == nil || definitions.IsEmpty() {
+		var message = "The grammar must contain at least one definition.\n"
+		panic(message)
+	}
+	var definitionIterator = definitions.GetIterator()
+	for definitionIterator.HasNext() {
+		var definition = definitionIterator.GetNext()
+		v.validateHeader(definition)
 	}
 }
 
@@ -321,16 +385,9 @@ func (v *validator_) validateName(name string) {
 			)
 			panic(message)
 		}
-		if v.inInversion_ {
-			var message = v.formatError(
-				"An inverted assertion cannot contain a rule name.",
-			)
-			panic(message)
-		}
 	}
-	var symbol = "$" + name
-	var expression = v.symbols_.GetValue(symbol)
-	v.symbols_.SetValue(symbol, expression)
+	var expression = v.names_.GetValue(name)
+	v.names_.SetValue(name, expression)
 }
 
 func (v *validator_) validateNote(note string) {
@@ -365,45 +422,20 @@ func (v *validator_) validatePrecedence(precedence PrecedenceLike) {
 }
 
 func (v *validator_) validatePredicate(predicate PredicateLike) {
-	var isInverted = predicate.IsInverted()
-	if isInverted && v.inInversion_ {
+	var element = predicate.GetElement()
+	var filter = predicate.GetFilter()
+	var precedence = predicate.GetPrecedence()
+	switch {
+	case element != nil && filter == nil && precedence == nil:
+		v.validateElement(element)
+	case element == nil && filter != nil && precedence == nil:
+		v.validateFilter(filter)
+	case element == nil && filter == nil && precedence != nil:
+		v.validatePrecedence(precedence)
+	default:
 		var message = v.formatError(
-			"Inverted assertions cannot be nested.",
+			"A predicate must contain exactly one element, filter, or precedence.",
 		)
 		panic(message)
 	}
-	if isInverted {
-		v.inInversion_ = true
-	}
-	var assertion = predicate.GetAssertion()
-	if assertion == nil {
-		var message = v.formatError(
-			"A predicate must have an assertion.",
-		)
-		panic(message)
-	}
-	v.validateAssertion(assertion)
-}
-
-func (v *validator_) validateStatement(statement StatementLike) {
-	var comment = statement.GetComment()
-	if len(comment) > 0 {
-		v.validateComment(comment)
-	}
-	var definition = statement.GetDefinition()
-	if definition == nil {
-		panic("A statement must contain a definition.")
-	}
-	v.validateDefinition(definition)
-}
-
-func (v *validator_) validateSymbol(symbol string) {
-	var matches = Scanner().MatchToken(SymbolToken, symbol)
-	if matches.IsEmpty() {
-		var message = v.formatError(
-			"Found an invalid symbol.",
-		)
-		panic(message)
-	}
-	v.isToken_ = uni.IsUpper([]rune(matches.GetValue(2))[0])
 }

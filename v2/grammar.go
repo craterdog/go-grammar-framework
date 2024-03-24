@@ -42,10 +42,10 @@ type grammarClass_ struct {
 
 // Constructors
 
-func (c *grammarClass_) MakeWithAttributes(comment string, statements col.Sequential[StatementLike]) GrammarLike {
+func (c *grammarClass_) MakeWithAttributes(headers col.Sequential[HeaderLike], definitions col.Sequential[DefinitionLike]) GrammarLike {
 	return &grammar_{
-		comment_:    comment,
-		statements_: statements,
+		headers_:     headers,
+		definitions_: definitions,
 	}
 }
 
@@ -56,18 +56,18 @@ func (c *grammarClass_) MakeWithAttributes(comment string, statements col.Sequen
 // Target
 
 type grammar_ struct {
-	comment_    string
-	statements_ col.Sequential[StatementLike]
+	headers_     col.Sequential[HeaderLike]
+	definitions_ col.Sequential[DefinitionLike]
 }
 
 // Attributes
 
-func (v *grammar_) GetComment() string {
-	return v.comment_
+func (v *grammar_) GetHeaders() col.Sequential[HeaderLike] {
+	return v.headers_
 }
 
-func (v *grammar_) GetStatements() col.Sequential[StatementLike] {
-	return v.statements_
+func (v *grammar_) GetDefinitions() col.Sequential[DefinitionLike] {
+	return v.definitions_
 }
 
 // Public

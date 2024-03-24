@@ -89,27 +89,6 @@ func (v *formatter_) formatAlternative(alternative AlternativeLike) {
 		factor = iterator.GetNext()
 		v.formatFactor(factor)
 	}
-	var note = alternative.GetNote()
-	if len(note) > 0 {
-		v.appendString("  ")
-		v.appendString(note)
-	}
-}
-
-func (v *formatter_) formatAssertion(assertion AssertionLike) {
-	var element = assertion.GetElement()
-	var glyph = assertion.GetGlyph()
-	var precedence = assertion.GetPrecedence()
-	switch {
-	case element != nil:
-		v.formatElement(element)
-	case glyph != nil:
-		v.formatGlyph(glyph)
-	case precedence != nil:
-		v.formatPrecedence(precedence)
-	default:
-		panic("Attempted to format an empty assertion.")
-	}
 }
 
 func (v *formatter_) formatCardinality(cardinality CardinalityLike) {
@@ -147,52 +126,41 @@ func (v *formatter_) formatConstraint(constraint ConstraintLike) {
 }
 
 func (v *formatter_) formatDefinition(definition DefinitionLike) {
-	var symbol = definition.GetSymbol()
-	v.appendString(symbol)
+	var comment = definition.GetComment()
+	if len(comment) > 0 {
+		v.appendString(comment)
+	}
+	var name = definition.GetName()
+	v.appendString(name)
 	v.appendString(":")
 	var expression = definition.GetExpression()
-	if !expression.IsMultilined() {
-		v.appendString(" ")
-	}
 	v.formatExpression(expression)
+	v.appendNewline()
 }
 
 func (v *formatter_) formatElement(element ElementLike) {
-	var intrinsic = element.GetIntrinsic()
-	var name = element.GetName()
 	var literal = element.GetLiteral()
+	var name = element.GetName()
 	switch {
-	case len(intrinsic) > 0:
-		v.appendString(intrinsic)
-	case len(name) > 0:
-		v.appendString(name)
 	case len(literal) > 0:
 		v.appendString(literal)
+	case len(name) > 0:
+		v.appendString(name)
 	default:
 		panic("Attempted to format an empty element.")
 	}
 }
 
 func (v *formatter_) formatExpression(expression ExpressionLike) {
-	var alternative AlternativeLike
-	var alternatives = expression.GetAlternatives()
-	var iterator = alternatives.GetIterator()
-	if expression.IsMultilined() {
-		v.depth_++
-		for iterator.HasNext() {
-			v.appendNewline()
-			alternative = iterator.GetNext()
-			v.formatAlternative(alternative)
-		}
-		v.depth_--
-	} else {
-		alternative = iterator.GetNext()
-		v.formatAlternative(alternative)
-		for iterator.HasNext() {
-			v.appendString(" | ")
-			alternative = iterator.GetNext()
-			v.formatAlternative(alternative)
-		}
+	var inline = expression.GetInline()
+	var multiline = expression.GetMultiline()
+	switch {
+	case inline != nil:
+		v.formatInline(inline)
+	case multiline != nil:
+		v.formatMultiline(multiline)
+	default:
+		panic("Attempted to format an empty expression.")
 	}
 }
 
@@ -202,6 +170,22 @@ func (v *formatter_) formatFactor(factor FactorLike) {
 	var cardinality = factor.GetCardinality()
 	if cardinality != nil {
 		v.formatCardinality(cardinality)
+	}
+}
+
+func (v *formatter_) formatFilter(filter FilterLike) {
+	var intrinsic = filter.GetIntrinsic()
+	var glyph = filter.GetGlyph()
+	if filter.IsInverted() {
+		v.appendString("~")
+	}
+	switch {
+	case len(intrinsic) > 0:
+		v.appendString(intrinsic)
+	case glyph != nil:
+		v.formatGlyph(glyph)
+	default:
+		panic("Attempted to format an empty filter.")
 	}
 }
 
@@ -216,41 +200,97 @@ func (v *formatter_) formatGlyph(glyph GlyphLike) {
 }
 
 func (v *formatter_) formatGrammar(grammar GrammarLike) {
-	var comment = grammar.GetComment()
-	v.appendString(comment)
-	var statements = grammar.GetStatements()
-	var iterator = statements.GetIterator()
-	for iterator.HasNext() {
-		var statement = iterator.GetNext()
-		v.formatStatement(statement)
-		v.appendNewline()
-		v.appendNewline()
+	// Format the headers.
+	var headers = grammar.GetHeaders()
+	var headerIterator = headers.GetIterator()
+	var header = headerIterator.GetNext()
+	v.formatHeader(header)
+	for headerIterator.HasNext() {
+		header = headerIterator.GetNext()
+		v.formatHeader(header)
 	}
+
+	// Format the definitions.
+	var definitions = grammar.GetDefinitions()
+	var definitionIterator = definitions.GetIterator()
+	var definition = definitionIterator.GetNext()
+	v.formatDefinition(definition)
+	for definitionIterator.HasNext() {
+		definition = definitionIterator.GetNext()
+		v.formatDefinition(definition)
+	}
+}
+
+func (v *formatter_) formatHeader(header HeaderLike) {
+	var comment = header.GetComment()
+	v.appendString(comment)
+	v.appendNewline()
+}
+
+func (v *formatter_) formatInline(inline InlineLike) {
+	v.appendString(" ")
+	var alternatives = inline.GetAlternatives()
+	var iterator = alternatives.GetIterator()
+	var alternative = iterator.GetNext()
+	v.formatAlternative(alternative)
+	for iterator.HasNext() {
+		v.appendString(" | ")
+		alternative = iterator.GetNext()
+		v.formatAlternative(alternative)
+	}
+	var note = inline.GetNote()
+	if len(note) > 0 {
+		v.appendString("  ")
+		v.appendString(note)
+	}
+}
+
+func (v *formatter_) formatLine(line LineLike) {
+	var alternative = line.GetAlternative()
+	v.formatAlternative(alternative)
+	var note = line.GetNote()
+	if len(note) > 0 {
+		v.appendString("  ")
+		v.appendString(note)
+	}
+}
+
+func (v *formatter_) formatMultiline(multiline MultilineLike) {
+	v.depth_++
+	var lines = multiline.GetLines()
+	var iterator = lines.GetIterator()
+	for iterator.HasNext() {
+		var line = iterator.GetNext()
+		v.formatLine(line)
+	}
+	v.depth_--
+	v.appendNewline()
 }
 
 func (v *formatter_) formatPrecedence(precedence PrecedenceLike) {
 	v.appendString("(")
 	var expression = precedence.GetExpression()
 	v.formatExpression(expression)
-	if expression.IsMultilined() {
+	if expression.GetMultiline() != nil {
 		v.appendNewline()
 	}
 	v.appendString(")")
 }
 
 func (v *formatter_) formatPredicate(predicate PredicateLike) {
-	var assertion = predicate.GetAssertion()
-	if predicate.IsInverted() {
-		v.appendString("~")
+	var element = predicate.GetElement()
+	var filter = predicate.GetFilter()
+	var precedence = predicate.GetPrecedence()
+	switch {
+	case element != nil:
+		v.formatElement(element)
+	case filter != nil:
+		v.formatFilter(filter)
+	case precedence != nil:
+		v.formatPrecedence(precedence)
+	default:
+		panic("Attempted to format an empty predicate.")
 	}
-	v.formatAssertion(assertion)
-}
-
-func (v *formatter_) formatStatement(statement StatementLike) {
-	var comment = statement.GetComment()
-	v.appendString(comment)
-	var definition = statement.GetDefinition()
-	v.formatDefinition(definition)
 }
 
 func (v *formatter_) getResult() string {

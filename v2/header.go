@@ -18,21 +18,21 @@ import ()
 
 // Reference
 
-var factorClass = &factorClass_{
+var headerClass = &headerClass_{
 	// TBA - Assign constant values.
 }
 
 // Function
 
-func Factor() FactorClassLike {
-	return factorClass
+func Header() HeaderClassLike {
+	return headerClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type factorClass_ struct {
+type headerClass_ struct {
 	// TBA - Add private class constants.
 }
 
@@ -40,10 +40,9 @@ type factorClass_ struct {
 
 // Constructors
 
-func (c *factorClass_) MakeWithAttributes(predicate PredicateLike, cardinality CardinalityLike) FactorLike {
-	return &factor_{
-		predicate_:   predicate,
-		cardinality_: cardinality,
+func (c *headerClass_) MakeWithAttributes(comment string) HeaderLike {
+	return &header_{
+		comment_: comment,
 	}
 }
 
@@ -53,19 +52,14 @@ func (c *factorClass_) MakeWithAttributes(predicate PredicateLike, cardinality C
 
 // Target
 
-type factor_ struct {
-	predicate_   PredicateLike
-	cardinality_ CardinalityLike
+type header_ struct {
+	comment_ string
 }
 
 // Attributes
 
-func (v *factor_) GetPredicate() PredicateLike {
-	return v.predicate_
-}
-
-func (v *factor_) GetCardinality() CardinalityLike {
-	return v.cardinality_
+func (v *header_) GetComment() string {
+	return v.comment_
 }
 
 // Public

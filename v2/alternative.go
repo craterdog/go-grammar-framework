@@ -42,10 +42,9 @@ type alternativeClass_ struct {
 
 // Constructors
 
-func (c *alternativeClass_) MakeWithAttributes(factors col.Sequential[FactorLike], note string) AlternativeLike {
+func (c *alternativeClass_) MakeWithAttributes(factors col.Sequential[FactorLike]) AlternativeLike {
 	return &alternative_{
 		factors_: factors,
-		note_:    note,
 	}
 }
 
@@ -57,17 +56,12 @@ func (c *alternativeClass_) MakeWithAttributes(factors col.Sequential[FactorLike
 
 type alternative_ struct {
 	factors_ col.Sequential[FactorLike]
-	note_    string
 }
 
 // Attributes
 
 func (v *alternative_) GetFactors() col.Sequential[FactorLike] {
 	return v.factors_
-}
-
-func (v *alternative_) GetNote() string {
-	return v.note_
 }
 
 // Public

@@ -12,27 +12,29 @@
 
 package grammars
 
-import ()
+import (
+	col "github.com/craterdog/go-collection-framework/v3"
+)
 
 // CLASS ACCESS
 
 // Reference
 
-var statementClass = &statementClass_{
+var inlineClass = &inlineClass_{
 	// TBA - Assign constant values.
 }
 
 // Function
 
-func Statement() StatementClassLike {
-	return statementClass
+func Inline() InlineClassLike {
+	return inlineClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type statementClass_ struct {
+type inlineClass_ struct {
 	// TBA - Add private class constants.
 }
 
@@ -40,10 +42,10 @@ type statementClass_ struct {
 
 // Constructors
 
-func (c *statementClass_) MakeWithAttributes(comment string, definition DefinitionLike) StatementLike {
-	return &statement_{
-		comment_:    comment,
-		definition_: definition,
+func (c *inlineClass_) MakeWithAttributes(alternatives col.Sequential[AlternativeLike], note string) InlineLike {
+	return &inline_{
+		alternatives_: alternatives,
+		note_:         note,
 	}
 }
 
@@ -53,19 +55,19 @@ func (c *statementClass_) MakeWithAttributes(comment string, definition Definiti
 
 // Target
 
-type statement_ struct {
-	comment_    string
-	definition_ DefinitionLike
+type inline_ struct {
+	alternatives_ col.Sequential[AlternativeLike]
+	note_         string
 }
 
 // Attributes
 
-func (v *statement_) GetComment() string {
-	return v.comment_
+func (v *inline_) GetAlternatives() col.Sequential[AlternativeLike] {
+	return v.alternatives_
 }
 
-func (v *statement_) GetDefinition() DefinitionLike {
-	return v.definition_
+func (v *inline_) GetNote() string {
+	return v.note_
 }
 
 // Public

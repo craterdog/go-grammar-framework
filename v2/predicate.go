@@ -40,10 +40,21 @@ type predicateClass_ struct {
 
 // Constructors
 
-func (c *predicateClass_) MakeWithAttributes(assertion AssertionLike, inverted bool) PredicateLike {
+func (c *predicateClass_) MakeWithElement(element ElementLike) PredicateLike {
 	return &predicate_{
-		assertion_: assertion,
-		inverted_:  inverted,
+		element_: element,
+	}
+}
+
+func (c *predicateClass_) MakeWithFilter(filter FilterLike) PredicateLike {
+	return &predicate_{
+		filter_: filter,
+	}
+}
+
+func (c *predicateClass_) MakeWithPrecedence(precedence PrecedenceLike) PredicateLike {
+	return &predicate_{
+		precedence_: precedence,
 	}
 }
 
@@ -54,18 +65,23 @@ func (c *predicateClass_) MakeWithAttributes(assertion AssertionLike, inverted b
 // Target
 
 type predicate_ struct {
-	assertion_ AssertionLike
-	inverted_  bool
+	element_    ElementLike
+	filter_     FilterLike
+	precedence_ PrecedenceLike
 }
 
 // Attributes
 
-func (v *predicate_) GetAssertion() AssertionLike {
-	return v.assertion_
+func (v *predicate_) GetElement() ElementLike {
+	return v.element_
 }
 
-func (v *predicate_) IsInverted() bool {
-	return v.inverted_
+func (v *predicate_) GetFilter() FilterLike {
+	return v.filter_
+}
+
+func (v *predicate_) GetPrecedence() PrecedenceLike {
+	return v.precedence_
 }
 
 // Public

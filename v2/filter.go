@@ -18,21 +18,21 @@ import ()
 
 // Reference
 
-var factorClass = &factorClass_{
+var filterClass = &filterClass_{
 	// TBA - Assign constant values.
 }
 
 // Function
 
-func Factor() FactorClassLike {
-	return factorClass
+func Filter() FilterClassLike {
+	return filterClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type factorClass_ struct {
+type filterClass_ struct {
 	// TBA - Add private class constants.
 }
 
@@ -40,10 +40,23 @@ type factorClass_ struct {
 
 // Constructors
 
-func (c *factorClass_) MakeWithAttributes(predicate PredicateLike, cardinality CardinalityLike) FactorLike {
-	return &factor_{
-		predicate_:   predicate,
-		cardinality_: cardinality,
+func (c *filterClass_) MakeWithGlyph(
+	glyph GlyphLike,
+	inverted bool,
+) FilterLike {
+	return &filter_{
+		glyph_:    glyph,
+		inverted_: inverted,
+	}
+}
+
+func (c *filterClass_) MakeWithIntrinsic(
+	intrinsic string,
+	inverted bool,
+) FilterLike {
+	return &filter_{
+		intrinsic_:  intrinsic,
+		inverted_: inverted,
 	}
 }
 
@@ -53,19 +66,24 @@ func (c *factorClass_) MakeWithAttributes(predicate PredicateLike, cardinality C
 
 // Target
 
-type factor_ struct {
-	predicate_   PredicateLike
-	cardinality_ CardinalityLike
+type filter_ struct {
+	inverted_   bool
+	intrinsic_  string
+	glyph_      GlyphLike
 }
 
 // Attributes
 
-func (v *factor_) GetPredicate() PredicateLike {
-	return v.predicate_
+func (v *filter_) IsInverted() bool {
+	return v.inverted_
 }
 
-func (v *factor_) GetCardinality() CardinalityLike {
-	return v.cardinality_
+func (v *filter_) GetIntrinsic() string {
+	return v.intrinsic_
+}
+
+func (v *filter_) GetGlyph() GlyphLike {
+	return v.glyph_
 }
 
 // Public

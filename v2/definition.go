@@ -40,9 +40,14 @@ type definitionClass_ struct {
 
 // Constructors
 
-func (c *definitionClass_) MakeWithAttributes(symbol string, expression ExpressionLike) DefinitionLike {
+func (c *definitionClass_) MakeWithAttributes(
+	comment string,
+	name string,
+	expression ExpressionLike,
+) DefinitionLike {
 	return &definition_{
-		symbol_:     symbol,
+		comment_:    comment,
+		name_:       name,
 		expression_: expression,
 	}
 }
@@ -54,18 +59,23 @@ func (c *definitionClass_) MakeWithAttributes(symbol string, expression Expressi
 // Target
 
 type definition_ struct {
+	comment_    string
+	name_       string
 	expression_ ExpressionLike
-	symbol_     string
 }
 
 // Attributes
 
-func (v *definition_) GetExpression() ExpressionLike {
-	return v.expression_
+func (v *definition_) GetComment() string {
+	return v.comment_
 }
 
-func (v *definition_) GetSymbol() string {
-	return v.symbol_
+func (v *definition_) GetName() string {
+	return v.name_
+}
+
+func (v *definition_) GetExpression() ExpressionLike {
+	return v.expression_
 }
 
 // Public

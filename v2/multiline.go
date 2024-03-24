@@ -12,27 +12,29 @@
 
 package grammars
 
-import ()
+import (
+	col "github.com/craterdog/go-collection-framework/v3"
+)
 
 // CLASS ACCESS
 
 // Reference
 
-var factorClass = &factorClass_{
+var multilineClass = &multilineClass_{
 	// TBA - Assign constant values.
 }
 
 // Function
 
-func Factor() FactorClassLike {
-	return factorClass
+func Multiline() MultilineClassLike {
+	return multilineClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type factorClass_ struct {
+type multilineClass_ struct {
 	// TBA - Add private class constants.
 }
 
@@ -40,10 +42,9 @@ type factorClass_ struct {
 
 // Constructors
 
-func (c *factorClass_) MakeWithAttributes(predicate PredicateLike, cardinality CardinalityLike) FactorLike {
-	return &factor_{
-		predicate_:   predicate,
-		cardinality_: cardinality,
+func (c *multilineClass_) MakeWithAttributes(lines col.Sequential[LineLike]) MultilineLike {
+	return &multiline_{
+		lines_: lines,
 	}
 }
 
@@ -53,19 +54,14 @@ func (c *factorClass_) MakeWithAttributes(predicate PredicateLike, cardinality C
 
 // Target
 
-type factor_ struct {
-	predicate_   PredicateLike
-	cardinality_ CardinalityLike
+type multiline_ struct {
+	lines_ col.Sequential[LineLike]
 }
 
 // Attributes
 
-func (v *factor_) GetPredicate() PredicateLike {
-	return v.predicate_
-}
-
-func (v *factor_) GetCardinality() CardinalityLike {
-	return v.cardinality_
+func (v *multiline_) GetLines() col.Sequential[LineLike] {
+	return v.lines_
 }
 
 // Public

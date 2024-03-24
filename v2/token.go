@@ -34,7 +34,6 @@ var tokenClass = &tokenClass_{
 		NoteToken:      "Note",
 		NumberToken:    "Number",
 		SpaceToken:     "Space",
-		SymbolToken:    "Symbol",
 	},
 }
 

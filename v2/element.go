@@ -40,12 +40,6 @@ type elementClass_ struct {
 
 // Constructors
 
-func (c *elementClass_) MakeWithIntrinsic(intrinsic string) ElementLike {
-	return &element_{
-		intrinsic_: intrinsic,
-	}
-}
-
 func (c *elementClass_) MakeWithLiteral(literal string) ElementLike {
 	return &element_{
 		literal_: literal,
@@ -65,16 +59,11 @@ func (c *elementClass_) MakeWithName(name string) ElementLike {
 // Target
 
 type element_ struct {
-	intrinsic_ string
-	literal_   string
-	name_      string
+	literal_ string
+	name_    string
 }
 
 // Attributes
-
-func (v *element_) GetIntrinsic() string {
-	return v.intrinsic_
-}
 
 func (v *element_) GetLiteral() string {
 	return v.literal_

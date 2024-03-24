@@ -182,14 +182,21 @@ func (v *generator_) generateInstanceComment(className string) string {
 	return comment
 }
 
-func (v *generator_) generateInterfaces(
-	classMethods col.Sequential[pac.ClassLike],
-	instanceMethods col.Sequential[pac.InstanceLike],
-) pac.InterfacesLike {
-	var classes = pac.Classes().MakeWithAttributes(classMethods)
-	var instances = pac.Instances().MakeWithAttributes(instanceMethods)
+func (v *generator_) generateInterfaces() pac.InterfacesLike {
+	var aspects pac.AspectsLike
+
+	v.classes_.SortValues()
+	var classes = pac.Classes().MakeWithAttributes(
+		v.classes_.GetValues(v.classes_.GetKeys()),
+	)
+
+	v.instances_.SortValues()
+	var instances = pac.Instances().MakeWithAttributes(
+		v.instances_.GetValues(v.instances_.GetKeys()),
+	)
+
 	var interfaces = pac.Interfaces().MakeWithAttributes(
-		nil,
+		aspects,
 		classes,
 		instances,
 	)
@@ -277,8 +284,6 @@ func (v *generator_) processAlternative(
 
 func (v *generator_) processDefinition(
 	definition DefinitionLike,
-	classes col.ListLike[pac.ClassLike],
-	instances col.ListLike[pac.InstanceLike],
 ) {
 	var symbol = definition.GetSymbol()
 	var name = symbol[1:] // Strip off the leading '$' character.
@@ -288,7 +293,7 @@ func (v *generator_) processDefinition(
 		v.makeLowercase(name)
 		return
 	}
-	v.processRule(name, expression, classes, instances)
+	v.processRule(name, expression)
 }
 
 func (v *generator_) processExpression(
@@ -322,18 +327,16 @@ func (v *generator_) processFactor(
 }
 
 func (v *generator_) processGrammar(grammar GrammarLike) pac.ModelLike {
-	var classes = col.List[pac.ClassLike]().Make()
-	var instances = col.List[pac.InstanceLike]().Make()
 	var iterator = grammar.GetStatements().GetIterator()
 	for iterator.HasNext() {
 		var statement = iterator.GetNext()
-		v.processStatement(statement, classes, instances)
+		v.processStatement(statement)
 	}
 	var copyright = v.generateNotice(grammar)
 	var header = v.generateHeader()
 	var imports = v.generateImports()
 	var types pac.TypesLike
-	var interfaces = v.generateInterfaces(classes, instances)
+	var interfaces = v.generateInterfaces()
 	var model = pac.Model().MakeWithAttributes(
 		copyright,
 		header,
@@ -347,8 +350,6 @@ func (v *generator_) processGrammar(grammar GrammarLike) pac.ModelLike {
 func (v *generator_) processRule(
 	name string,
 	expression ExpressionLike,
-	classes col.ListLike[pac.ClassLike],
-	instances col.ListLike[pac.InstanceLike],
 ) {
 	var constructorMethods = col.List[pac.ConstructorLike]().Make()
 	var attributeMethods = col.List[pac.AttributeLike]().Make()
@@ -382,18 +383,16 @@ func (v *generator_) processRule(
 		nil,
 		nil,
 	)
-	classes.AppendValue(class)
-	instances.AppendValue(instance)
+	v.classes_.SetValue(className, class)
+	v.instances_.SetValue(className, instance)
 }
 
 func (v *generator_) processStatement(
 	statement StatementLike,
-	classes col.ListLike[pac.ClassLike],
-	instances col.ListLike[pac.InstanceLike],
 ) {
 	var definition = statement.GetDefinition()
 	if definition == nil {
 		panic("Found a statement without a definition.")
 	}
-	v.processDefinition(definition, classes, instances)
+	v.processDefinition(definition)
 }

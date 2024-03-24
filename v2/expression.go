@@ -12,9 +12,7 @@
 
 package grammars
 
-import (
-	col "github.com/craterdog/go-collection-framework/v3"
-)
+import ()
 
 // CLASS ACCESS
 
@@ -42,10 +40,15 @@ type expressionClass_ struct {
 
 // Constructors
 
-func (c *expressionClass_) MakeWithAttributes(alternatives col.Sequential[AlternativeLike], multilined bool) ExpressionLike {
+func (c *expressionClass_) MakeWithInline(inline InlineLike) ExpressionLike {
 	return &expression_{
-		alternatives_: alternatives,
-		multilined_:   multilined,
+		inline_: inline,
+	}
+}
+
+func (c *expressionClass_) MakeWithMultiline(multiline MultilineLike) ExpressionLike {
+	return &expression_{
+		multiline_: multiline,
 	}
 }
 
@@ -56,18 +59,18 @@ func (c *expressionClass_) MakeWithAttributes(alternatives col.Sequential[Altern
 // Target
 
 type expression_ struct {
-	alternatives_ col.Sequential[AlternativeLike]
-	multilined_   bool
+	inline_    InlineLike
+	multiline_ MultilineLike
 }
 
 // Attributes
 
-func (v *expression_) GetAlternatives() col.Sequential[AlternativeLike] {
-	return v.alternatives_
+func (v *expression_) GetInline() InlineLike {
+	return v.inline_
 }
 
-func (v *expression_) IsMultilined() bool {
-	return v.multilined_
+func (v *expression_) GetMultiline() MultilineLike {
+	return v.multiline_
 }
 
 // Public
