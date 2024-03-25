@@ -106,7 +106,7 @@ filter: "~"? (Intrinsic | glyph)
 
 glyph: Character (".." Character)?  ! The range of characters is inclusive.
 
-precedence: "(" expression ")"
+precedence: "(" expression EOL? ")"
 
 cardinality:
     "?"  ! Zero or one instance of a predicate.

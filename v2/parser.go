@@ -182,14 +182,12 @@ func (v *parser_) parseAlternative() (
 	var factor FactorLike
 	var factors = col.List[FactorLike]().Make()
 
-	// Attempt to parse the first factor.
+	// Attempt to parse one or more factors.
 	factor, token, ok = v.parseFactor()
 	if !ok {
 		// This is not an alternative.
 		return alternative, token, false
 	}
-
-	// Parse any additional factors.
 	for ok {
 		factors.AppendValue(factor)
 		factor, _, ok = v.parseFactor()
@@ -384,13 +382,11 @@ func (v *parser_) parseInline() (
 	var alternative AlternativeLike
 	var note string
 
-	// Attempt to parse the first alternative in an in-line expression.
+	// Attempt to parse one or more alternatives in an in-line expression.
 	alternative, token, ok = v.parseAlternative()
 	if !ok {
 		return inline, token, false
 	}
-
-	// Parse any additional alternatives.
 	var alternatives = col.List[AlternativeLike]().Make()
 	for ok {
 		alternatives.AppendValue(alternative)
@@ -456,14 +452,12 @@ func (v *parser_) parseMultiline() (
 ) {
 	var line LineLike
 
-	// Attempt to parse the first line of the expression.
+	// Attempt to parse one or more lines of a multi-line expression.
 	line, token, ok = v.parseLine()
 	if !ok {
 		// This is not a multi-line expression.
 		return multiline, token, false
 	}
-
-	// Parse any additional lines in the expression.
 	var lines = col.List[LineLike]().Make()
 	for ok {
 		lines.AppendValue(line)
@@ -610,19 +604,17 @@ func (v *parser_) parseGrammar() (
 	var definition DefinitionLike
 	var definitions = col.List[DefinitionLike]().Make()
 
-	// Attempt to parse a header.
+	// Attempt to parse one or more headers.
 	header, token, ok = v.parseHeader()
 	if !ok {
 		return grammar, token, false
 	}
-
-	// Parse any additional headers.
 	for ok {
 		headers.AppendValue(header)
 		header, _, ok = v.parseHeader()
 	}
 
-	// Attempt to parse a definition.
+	// Attempt to parse one or more definitions.
 	definition, token, ok = v.parseDefinition()
 	if !ok {
 		var message = v.formatError(token)
@@ -633,8 +625,6 @@ func (v *parser_) parseGrammar() (
 		)
 		panic(message)
 	}
-
-	// Parse any additional definitions.
 	for ok {
 		definitions.AppendValue(definition)
 		definition, token, ok = v.parseDefinition()
@@ -658,15 +648,13 @@ func (v *parser_) parseHeader() (
 		return header, token, false
 	}
 
-	// Attempt to parse an end-of-line character.
+	// Attempt to parse one or more end-of-line characters.
 	_, _, ok = v.parseToken(EOLToken, "")
 	if !ok {
 		// The comment is not part of a header.
 		v.putBack(token)
 		return header, token, false
 	}
-
-	// Parse any additional end-of-line characters.
 	for ok {
 		_, _, ok = v.parseToken(EOLToken, "")
 	}
