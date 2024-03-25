@@ -46,7 +46,8 @@ type parserClass_ struct {
 
 func (c *parserClass_) Make() ParserLike {
 	return &parser_{
-		next_: col.Stack[TokenLike]().MakeWithCapacity(c.stackSize_),
+		tokens_: col.Queue[TokenLike]().MakeWithCapacity(c.queueSize_),
+		next_:   col.Stack[TokenLike]().MakeWithCapacity(c.stackSize_),
 	}
 }
 
@@ -55,9 +56,9 @@ func (c *parserClass_) Make() ParserLike {
 // Target
 
 type parser_ struct {
-	next_   col.StackLike[TokenLike] // A stack of unprocessed retrieved tokens.
 	source_ string                   // The original source code.
 	tokens_ col.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
+	next_   col.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
 }
 
 // Public
@@ -65,7 +66,6 @@ type parser_ struct {
 func (v *parser_) ParseSource(source string) GrammarLike {
 	// The scanner runs in a separate Go routine.
 	v.source_ = source
-	v.tokens_ = col.Queue[TokenLike]().MakeWithCapacity(parserClass.queueSize_)
 	Scanner().Make(v.source_, v.tokens_)
 
 	// Attempt to parse a grammar.
@@ -138,13 +138,13 @@ func (v *parser_) formatError(token TokenLike) string {
 This private instance method is useful when creating scanner and parser error
 messages that include the required grammatical rules.
 */
-func (v *parser_) generateGrammar(expected string, symbols ...string) string {
+func (v *parser_) generateGrammar(expected string, names ...string) string {
 	var message = "Was expecting '" + expected + "' from:\n"
-	for _, symbol := range symbols {
+	for _, name := range names {
 		message += fmt.Sprintf(
 			"  \033[32m%v: \033[33m%v\033[0m\n\n",
-			symbol,
-			grammar[symbol],
+			name,
+			grammar[name],
 		)
 	}
 	return message
@@ -155,13 +155,13 @@ This private instance method attempts to read the next token from the token
 stream and return it.
 */
 func (v *parser_) getNextToken() TokenLike {
-	// Check for any unprocessed tokens.
+	// Check for any read, but unprocessed tokens.
 	if !v.next_.IsEmpty() {
 		return v.next_.RemoveTop()
 	}
 
 	// Read a new token from the token stream.
-	var token, ok = v.tokens_.RemoveHead() // This will block if the queue is empty.
+	var token, ok = v.tokens_.RemoveHead() // This will wait for a token.
 	if !ok {
 		panic("The token channel terminated without an EOF token.")
 	}
@@ -171,6 +171,7 @@ func (v *parser_) getNextToken() TokenLike {
 		var message = v.formatError(token)
 		panic(message)
 	}
+
 	return token
 }
 
@@ -190,7 +191,7 @@ func (v *parser_) parseAlternative() (
 	}
 	for ok {
 		factors.AppendValue(factor)
-		factor, _, ok = v.parseFactor()
+		factor, token, ok = v.parseFactor()
 	}
 
 	// Found an alternative.
@@ -231,32 +232,33 @@ func (v *parser_) parseCardinality() (
 
 	// Attempt to parse an explicit constrained cardinality.
 	_, token, ok = v.parseToken(DelimiterToken, "{")
-	if ok {
-		constraint, token, ok = v.parseConstraint()
-		if !ok {
-			var message = v.formatError(token)
-			message += v.generateGrammar("constraint",
-				"cardinality",
-				"constraint",
-			)
-			panic(message)
-		}
-		_, token, ok = v.parseToken(DelimiterToken, "}")
-		if !ok {
-			var message = v.formatError(token)
-			message += v.generateGrammar("}",
-				"cardinality",
-				"constraint",
-			)
-			panic(message)
-		}
-
-		// Found a cardinality.
-		cardinality = Cardinality().MakeWithAttributes(constraint)
-		return cardinality, token, true
+	if !ok {
+		// This is not a cardinality.
+		return cardinality, token, false
 	}
-	// This is not a cardinality.
-	return cardinality, token, false
+
+	constraint, token, ok = v.parseConstraint()
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateGrammar("constraint",
+			"cardinality",
+			"constraint",
+		)
+		panic(message)
+	}
+	_, token, ok = v.parseToken(DelimiterToken, "}")
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateGrammar("}",
+			"cardinality",
+			"constraint",
+		)
+		panic(message)
+	}
+
+	// Found a cardinality.
+	cardinality = Cardinality().MakeWithAttributes(constraint)
+	return cardinality, token, true
 }
 
 func (v *parser_) parseConstraint() (
@@ -276,7 +278,7 @@ func (v *parser_) parseConstraint() (
 	// Attempt to parse an additional range of numbers in the constraint.
 	_, _, ok = v.parseToken(DelimiterToken, "..")
 	if ok {
-		// Attempt to parse the last number in the range of numbers.
+		// Attempt to parse the optional last number in the range of numbers.
 		last, token, _ = v.parseToken(NumberToken, "")
 	} else {
 		// This constraint is not a range of numbers.
@@ -340,7 +342,7 @@ func (v *parser_) parseDefinition() (
 		panic(message)
 	}
 	for ok {
-		_, _, ok = v.parseToken(EOLToken, "")
+		_, token, ok = v.parseToken(EOLToken, "")
 	}
 
 	// Found a definition.
@@ -374,101 +376,6 @@ func (v *parser_) parseElement() (
 	return element, token, false
 }
 
-func (v *parser_) parseInline() (
-	inline InlineLike,
-	token TokenLike,
-	ok bool,
-) {
-	var alternative AlternativeLike
-	var note string
-
-	// Attempt to parse one or more alternatives in an in-line expression.
-	alternative, token, ok = v.parseAlternative()
-	if !ok {
-		return inline, token, false
-	}
-	var alternatives = col.List[AlternativeLike]().Make()
-	for ok {
-		alternatives.AppendValue(alternative)
-		_, token, ok = v.parseToken(DelimiterToken, "|")
-		if ok {
-			// Attempt to parse an alternative.
-			alternative, token, ok = v.parseAlternative()
-			if !ok {
-				var message = v.formatError(token)
-				message += v.generateGrammar("alternative",
-					"expression",
-					"alternative",
-				)
-				panic(message)
-			}
-		}
-	}
-
-	// Attempt to parse an optional note.
-	note, _, _ = v.parseToken(NoteToken, "")
-
-	// Found an in-line expression.
-	inline = Inline().MakeWithAttributes(alternatives, note)
-	return inline, token, true
-}
-
-func (v *parser_) parseLine() (
-	line LineLike,
-	token TokenLike,
-	ok bool,
-) {
-	var eolToken TokenLike
-	var alternative AlternativeLike
-	var note string
-
-	// Attempt to parse an end-of-line character.
-	_, eolToken, ok = v.parseToken(EOLToken, "")
-	if !ok {
-		// This is not a line.
-		return line, eolToken, false
-	}
-
-	// Attempt to parse the an alternative.
-	alternative, token, ok = v.parseAlternative()
-	if !ok {
-		// This is not a line.
-		v.putBack(eolToken)
-		return line, token, false
-	}
-
-	// Attempt to parse an optional note.
-	note, _, _ = v.parseToken(NoteToken, "")
-
-	// Found a line.
-	line = Line().MakeWithAttributes(alternative, note)
-	return line, token, true
-}
-
-func (v *parser_) parseMultiline() (
-	multiline MultilineLike,
-	token TokenLike,
-	ok bool,
-) {
-	var line LineLike
-
-	// Attempt to parse one or more lines of a multi-line expression.
-	line, token, ok = v.parseLine()
-	if !ok {
-		// This is not a multi-line expression.
-		return multiline, token, false
-	}
-	var lines = col.List[LineLike]().Make()
-	for ok {
-		lines.AppendValue(line)
-		line, _, ok = v.parseLine()
-	}
-
-	// Found a multi-line expression.
-	multiline = Multiline().MakeWithAttributes(lines)
-	return multiline, token, true
-}
-
 func (v *parser_) parseExpression() (
 	expression ExpressionLike,
 	token TokenLike,
@@ -477,19 +384,19 @@ func (v *parser_) parseExpression() (
 	var inline InlineLike
 	var multiline MultilineLike
 
-	// Attempt to parse a multi-line expression.
-	multiline, token, ok = v.parseMultiline()
-	if ok {
-		// Found a multi-line expression.
-		expression = Expression().MakeWithMultiline(multiline)
-		return expression, token, true
-	}
-
 	// Attempt to parse an in-line expression.
 	inline, token, ok = v.parseInline()
 	if ok {
 		// Found an in-line expression.
 		expression = Expression().MakeWithInline(inline)
+		return expression, token, true
+	}
+
+	// Attempt to parse a multi-line expression.
+	multiline, token, ok = v.parseMultiline()
+	if ok {
+		// Found a multi-line expression.
+		expression = Expression().MakeWithMultiline(multiline)
 		return expression, token, true
 	}
 
@@ -502,8 +409,8 @@ func (v *parser_) parseFactor() (
 	token TokenLike,
 	ok bool,
 ) {
-	var cardinality CardinalityLike
 	var predicate PredicateLike
+	var cardinality CardinalityLike
 
 	// Attempt to parse a predicate.
 	predicate, token, ok = v.parsePredicate()
@@ -548,6 +455,7 @@ func (v *parser_) parseFilter() (
 		return filter, token, true
 	}
 
+	// Handle an empty inversion.
 	if inverted {
 		var message = v.formatError(token)
 		message += v.generateGrammar("glyph",
@@ -640,28 +548,124 @@ func (v *parser_) parseHeader() (
 	token TokenLike,
 	ok bool,
 ) {
+	var commentToken TokenLike
 	var comment string
 
 	// Attempt to parse a comment.
-	comment, token, ok = v.parseToken(CommentToken, "")
+	comment, commentToken, ok = v.parseToken(CommentToken, "")
 	if !ok {
-		return header, token, false
+		return header, commentToken, false
 	}
 
 	// Attempt to parse one or more end-of-line characters.
-	_, _, ok = v.parseToken(EOLToken, "")
+	_, token, ok = v.parseToken(EOLToken, "")
 	if !ok {
-		// The comment is not part of a header.
-		v.putBack(token)
+		// This is not a header, put back the comment token.
+		v.putBack(commentToken)
 		return header, token, false
 	}
 	for ok {
-		_, _, ok = v.parseToken(EOLToken, "")
+		_, token, ok = v.parseToken(EOLToken, "")
 	}
 
 	// Found a header.
 	header = Header().MakeWithAttributes(comment)
 	return header, token, true
+}
+
+func (v *parser_) parseInline() (
+	inline InlineLike,
+	token TokenLike,
+	ok bool,
+) {
+	var alternative AlternativeLike
+	var note string
+
+	// Attempt to parse one or more alternatives in an in-line expression.
+	alternative, token, ok = v.parseAlternative()
+	if !ok {
+		return inline, token, false
+	}
+	var alternatives = col.List[AlternativeLike]().Make()
+	for ok {
+		alternatives.AppendValue(alternative)
+		_, _, ok = v.parseToken(DelimiterToken, "|")
+		if ok {
+			// Attempt to parse an alternative.
+			alternative, token, ok = v.parseAlternative()
+			if !ok {
+				var message = v.formatError(token)
+				message += v.generateGrammar("alternative",
+					"inline",
+					"alternative",
+				)
+				panic(message)
+			}
+		}
+	}
+
+	// Attempt to parse an optional note.
+	note, token, _ = v.parseToken(NoteToken, "")
+
+	// Found an in-line expression.
+	inline = Inline().MakeWithAttributes(alternatives, note)
+	return inline, token, true
+}
+
+func (v *parser_) parseLine() (
+	line LineLike,
+	token TokenLike,
+	ok bool,
+) {
+	var eolToken TokenLike
+	var alternative AlternativeLike
+	var note string
+
+	// Attempt to parse an end-of-line character.
+	_, eolToken, ok = v.parseToken(EOLToken, "")
+	if !ok {
+		// This is not a line.
+		return line, eolToken, false
+	}
+
+	// Attempt to parse the an alternative.
+	alternative, token, ok = v.parseAlternative()
+	if !ok {
+		// This is not a line, so put back the end-of-line token.
+		v.putBack(eolToken)
+		return line, token, false
+	}
+
+	// Attempt to parse an optional note.
+	note, token, _ = v.parseToken(NoteToken, "")
+
+	// Found a line.
+	line = Line().MakeWithAttributes(alternative, note)
+	return line, token, true
+}
+
+func (v *parser_) parseMultiline() (
+	multiline MultilineLike,
+	token TokenLike,
+	ok bool,
+) {
+	var line LineLike
+
+	// Attempt to parse one or more lines of a multi-line expression.
+	line, token, ok = v.parseLine()
+	if !ok {
+		// This is not a multi-line expression.
+		return multiline, token, false
+	}
+	var lines = col.List[LineLike]().Make()
+	for ok {
+		lines.AppendValue(line)
+		line, token, ok = v.parseLine()
+	}
+
+	// Found a multi-line expression.
+	multiline = Multiline().MakeWithAttributes(lines)
+	return multiline, token, true
 }
 
 func (v *parser_) parsePrecedence() (
