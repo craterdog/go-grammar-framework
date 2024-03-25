@@ -18,21 +18,21 @@ import ()
 
 // Reference
 
-var filterClass = &filterClass_{
+var inversionClass = &inversionClass_{
 	// TBA - Assign constant values.
 }
 
 // Function
 
-func Filter() FilterClassLike {
-	return filterClass
+func Inversion() InversionClassLike {
+	return inversionClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type filterClass_ struct {
+type inversionClass_ struct {
 	// TBA - Add private class constants.
 }
 
@@ -40,19 +40,13 @@ type filterClass_ struct {
 
 // Constructors
 
-func (c *filterClass_) MakeWithGlyph(
-	glyph GlyphLike,
-) FilterLike {
-	return &filter_{
-		glyph_: glyph,
-	}
-}
-
-func (c *filterClass_) MakeWithIntrinsic(
-	intrinsic string,
-) FilterLike {
-	return &filter_{
-		intrinsic_: intrinsic,
+func (c *inversionClass_) MakeWithAttributes(
+	inverted bool,
+	filter FilterLike,
+) InversionLike {
+	return &inversion_{
+		inverted_: inverted,
+		filter_:   filter,
 	}
 }
 
@@ -62,19 +56,19 @@ func (c *filterClass_) MakeWithIntrinsic(
 
 // Target
 
-type filter_ struct {
-	intrinsic_ string
-	glyph_     GlyphLike
+type inversion_ struct {
+	inverted_ bool
+	filter_   FilterLike
 }
 
 // Attributes
 
-func (v *filter_) GetIntrinsic() string {
-	return v.intrinsic_
+func (v *inversion_) IsInverted() bool {
+	return v.inverted_
 }
 
-func (v *filter_) GetGlyph() GlyphLike {
-	return v.glyph_
+func (v *inversion_) GetFilter() FilterLike {
+	return v.filter_
 }
 
 // Public

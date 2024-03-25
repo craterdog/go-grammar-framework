@@ -85,7 +85,7 @@ func TestDoubleInversion(t *tes.T) {
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"An unexpected token was received by the parser: Token [type: Delimiter, line: 5, position: 7]: \"~\"\n\x1b[36m0004: \n0005: Bad: ~~CONTROL\n \x1b[32m>>>────────⌃\x1b[36m\n0006: \n\x1b[0m\nWas expecting 'glyph' from:\n  \x1b[32mfilter: \x1b[33m\"~\"? (Intrinsic | glyph)\x1b[0m\n\n  \x1b[32mglyph: \x1b[33mCharacter (\"..\" Character)?  ! The range of characters is inclusive.\x1b[0m\n\n",
+				"An unexpected token was received by the parser: Token [type: Delimiter, line: 5, position: 7]: \"~\"\n\x1b[36m0004: \n0005: Bad: ~~CONTROL\n \x1b[32m>>>────────⌃\x1b[36m\n0006: \n\x1b[0m\nWas expecting 'filter' from:\n  \x1b[32minversion: \x1b[33m\"~\"? filter\x1b[0m\n\n  \x1b[32mfilter: \x1b[33mIntrinsic | glyph\x1b[0m\n\n",
 				e,
 			)
 		} else {
@@ -105,7 +105,7 @@ func TestInvertedString(t *tes.T) {
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"An unexpected token was received by the parser: Token [type: Literal, line: 5, position: 7]: \"\\\"ow\\\"\"\n\x1b[36m0004: \n0005: Bad: ~\"ow\"\n \x1b[32m>>>────────⌃\x1b[36m\n0006: \n\x1b[0m\nWas expecting 'glyph' from:\n  \x1b[32mfilter: \x1b[33m\"~\"? (Intrinsic | glyph)\x1b[0m\n\n  \x1b[32mglyph: \x1b[33mCharacter (\"..\" Character)?  ! The range of characters is inclusive.\x1b[0m\n\n",
+				"An unexpected token was received by the parser: Token [type: Literal, line: 5, position: 7]: \"\\\"ow\\\"\"\n\x1b[36m0004: \n0005: Bad: ~\"ow\"\n \x1b[32m>>>────────⌃\x1b[36m\n0006: \n\x1b[0m\nWas expecting 'filter' from:\n  \x1b[32minversion: \x1b[33m\"~\"? filter\x1b[0m\n\n  \x1b[32mfilter: \x1b[33mIntrinsic | glyph\x1b[0m\n\n",
 				e,
 			)
 		} else {
@@ -126,7 +126,7 @@ rule: "rule"
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"An unexpected token was received by the parser: Token [type: Name, line: 5, position: 7]: \"rule\"\n\x1b[36m0004: \n0005: bad: ~rule\n \x1b[32m>>>────────⌃\x1b[36m\n0006: rule: \"rule\"\n\x1b[0m\nWas expecting 'glyph' from:\n  \x1b[32mfilter: \x1b[33m\"~\"? (Intrinsic | glyph)\x1b[0m\n\n  \x1b[32mglyph: \x1b[33mCharacter (\"..\" Character)?  ! The range of characters is inclusive.\x1b[0m\n\n",
+				"An unexpected token was received by the parser: Token [type: Name, line: 5, position: 7]: \"rule\"\n\x1b[36m0004: \n0005: bad: ~rule\n \x1b[32m>>>────────⌃\x1b[36m\n0006: rule: \"rule\"\n\x1b[0m\nWas expecting 'filter' from:\n  \x1b[32minversion: \x1b[33m\"~\"? filter\x1b[0m\n\n  \x1b[32mfilter: \x1b[33mIntrinsic | glyph\x1b[0m\n\n",
 				e,
 			)
 		} else {
@@ -188,7 +188,7 @@ Worse: CONTROL
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"An unexpected token was received by the parser: Token [type: Delimiter, line: 5, position: 7]: \"(\"\n\x1b[36m0004: \n0005: Bad: ~(Worse | ~Bad)\n \x1b[32m>>>────────⌃\x1b[36m\n0006: Worse: CONTROL\n\x1b[0m\nWas expecting 'glyph' from:\n  \x1b[32mfilter: \x1b[33m\"~\"? (Intrinsic | glyph)\x1b[0m\n\n  \x1b[32mglyph: \x1b[33mCharacter (\"..\" Character)?  ! The range of characters is inclusive.\x1b[0m\n\n",
+				"An unexpected token was received by the parser: Token [type: Delimiter, line: 5, position: 7]: \"(\"\n\x1b[36m0004: \n0005: Bad: ~(Worse | ~Bad)\n \x1b[32m>>>────────⌃\x1b[36m\n0006: Worse: CONTROL\n\x1b[0m\nWas expecting 'filter' from:\n  \x1b[32minversion: \x1b[33m\"~\"? filter\x1b[0m\n\n  \x1b[32mfilter: \x1b[33mIntrinsic | glyph\x1b[0m\n\n",
 				e,
 			)
 		} else {

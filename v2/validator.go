@@ -233,6 +233,17 @@ func (v *validator_) validateInline(inline InlineLike) {
 	}
 }
 
+func (v *validator_) validateInversion(inversion InversionLike) {
+	var filter = inversion.GetFilter()
+	if filter == nil {
+		var message = v.formatError(
+			"An inversion must contain a filter.",
+		)
+		panic(message)
+	}
+	v.validateFilter(filter)
+}
+
 func (v *validator_) validateLine(line LineLike) {
 	var alternative = line.GetAlternative()
 	if alternative == nil {
@@ -427,18 +438,18 @@ func (v *validator_) validatePrecedence(precedence PrecedenceLike) {
 
 func (v *validator_) validatePredicate(predicate PredicateLike) {
 	var element = predicate.GetElement()
-	var filter = predicate.GetFilter()
+	var inversion = predicate.GetInversion()
 	var precedence = predicate.GetPrecedence()
 	switch {
-	case element != nil && filter == nil && precedence == nil:
+	case element != nil && inversion == nil && precedence == nil:
 		v.validateElement(element)
-	case element == nil && filter != nil && precedence == nil:
-		v.validateFilter(filter)
-	case element == nil && filter == nil && precedence != nil:
+	case element == nil && inversion != nil && precedence == nil:
+		v.validateInversion(inversion)
+	case element == nil && inversion == nil && precedence != nil:
 		v.validatePrecedence(precedence)
 	default:
 		var message = v.formatError(
-			"A predicate must contain exactly one element, filter, or precedence.",
+			"A predicate must contain exactly one element, inversion, or precedence.",
 		)
 		panic(message)
 	}

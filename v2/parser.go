@@ -432,18 +432,14 @@ func (v *parser_) parseFilter() (
 	token TokenLike,
 	ok bool,
 ) {
-	var inverted bool
 	var intrinsic string
 	var glyph GlyphLike
-
-	// Check to see if the filter is inverted.
-	_, _, inverted = v.parseToken(DelimiterToken, "~")
 
 	// Attempt to parse an intrinsic.
 	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
 	if ok {
 		// Found an intrinsic filter.
-		filter = Filter().MakeWithIntrinsic(intrinsic, inverted)
+		filter = Filter().MakeWithIntrinsic(intrinsic)
 		return filter, token, true
 	}
 
@@ -451,18 +447,8 @@ func (v *parser_) parseFilter() (
 	glyph, token, ok = v.parseGlyph()
 	if ok {
 		// Found a glyph filter.
-		filter = Filter().MakeWithGlyph(glyph, inverted)
+		filter = Filter().MakeWithGlyph(glyph)
 		return filter, token, true
-	}
-
-	// Handle an empty inversion.
-	if inverted {
-		var message = v.formatError(token)
-		message += v.generateGrammar("glyph",
-			"filter",
-			"glyph",
-		)
-		panic(message)
 	}
 
 	// This is not a filter.
@@ -528,7 +514,7 @@ func (v *parser_) parseGrammar() (
 		var message = v.formatError(token)
 		message += v.generateGrammar("definition",
 			"grammar",
-			"copyright",
+			"header",
 			"definition",
 		)
 		panic(message)
@@ -610,6 +596,39 @@ func (v *parser_) parseInline() (
 	// Found an in-line expression.
 	inline = Inline().MakeWithAttributes(alternatives, note)
 	return inline, token, true
+}
+
+func (v *parser_) parseInversion() (
+	inversion InversionLike,
+	token TokenLike,
+	ok bool,
+) {
+	var inverted bool
+	var filter FilterLike
+
+	// Check to see if the filter is inverted.
+	_, _, inverted = v.parseToken(DelimiterToken, "~")
+
+	// Attempt to parse a filter.
+	filter, token, ok = v.parseFilter()
+	if ok {
+		// Found an inversion.
+		inversion = Inversion().MakeWithAttributes(inverted, filter)
+		return inversion, token, true
+	}
+
+	// Handle an empty inversion.
+	if inverted {
+		var message = v.formatError(token)
+		message += v.generateGrammar("filter",
+			"inversion",
+			"filter",
+		)
+		panic(message)
+	}
+
+	// This is not an inversion.
+	return inversion, token, false
 }
 
 func (v *parser_) parseLine() (
@@ -718,7 +737,7 @@ func (v *parser_) parsePredicate() (
 	ok bool,
 ) {
 	var element ElementLike
-	var filter FilterLike
+	var inversion InversionLike
 	var precedence PrecedenceLike
 
 	// Attempt to parse an element predicate.
@@ -728,10 +747,10 @@ func (v *parser_) parsePredicate() (
 		return predicate, token, true
 	}
 
-	// Attempt to parse a filter predicate.
-	filter, token, ok = v.parseFilter()
+	// Attempt to parse an inversion predicate.
+	inversion, token, ok = v.parseInversion()
 	if ok {
-		predicate = Predicate().MakeWithFilter(filter)
+		predicate = Predicate().MakeWithInversion(inversion)
 		return predicate, token, true
 	}
 
@@ -782,9 +801,10 @@ var grammar = map[string]string{
 	"line":        `EOL alternative Note?`,
 	"alternative": `factor+`,
 	"factor":      `predicate cardinality?  ! The default cardinality is one.`,
-	"predicate":   `element | filter | precedence`,
+	"predicate":   `element | inversion | precedence`,
 	"element":     `Literal | Name`,
-	"filter":      `"~"? (Intrinsic | glyph)`,
+	"inversion":   `"~"? filter`,
+	"filter":      `Intrinsic | glyph`,
 	"glyph":       `Character (".." Character)?  ! The range of characters is inclusive.`,
 	"precedence":  `"(" expression ")"`,
 	"cardinality": `

@@ -46,9 +46,9 @@ func (c *predicateClass_) MakeWithElement(element ElementLike) PredicateLike {
 	}
 }
 
-func (c *predicateClass_) MakeWithFilter(filter FilterLike) PredicateLike {
+func (c *predicateClass_) MakeWithInversion(inversion InversionLike) PredicateLike {
 	return &predicate_{
-		filter_: filter,
+		inversion_: inversion,
 	}
 }
 
@@ -66,7 +66,7 @@ func (c *predicateClass_) MakeWithPrecedence(precedence PrecedenceLike) Predicat
 
 type predicate_ struct {
 	element_    ElementLike
-	filter_     FilterLike
+	inversion_  InversionLike
 	precedence_ PrecedenceLike
 }
 
@@ -76,8 +76,8 @@ func (v *predicate_) GetElement() ElementLike {
 	return v.element_
 }
 
-func (v *predicate_) GetFilter() FilterLike {
-	return v.filter_
+func (v *predicate_) GetInversion() InversionLike {
+	return v.inversion_
 }
 
 func (v *predicate_) GetPrecedence() PrecedenceLike {

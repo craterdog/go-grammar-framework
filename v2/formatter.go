@@ -180,9 +180,6 @@ func (v *formatter_) formatFactor(factor FactorLike) {
 func (v *formatter_) formatFilter(filter FilterLike) {
 	var intrinsic = filter.GetIntrinsic()
 	var glyph = filter.GetGlyph()
-	if filter.IsInverted() {
-		v.appendString("~")
-	}
 	switch {
 	case len(intrinsic) > 0:
 		v.appendString(intrinsic)
@@ -248,6 +245,14 @@ func (v *formatter_) formatInline(inline InlineLike) {
 	}
 }
 
+func (v *formatter_) formatInversion(inversion InversionLike) {
+	if inversion.IsInverted() {
+		v.appendString("~")
+	}
+	var filter = inversion.GetFilter()
+	v.formatFilter(filter)
+}
+
 func (v *formatter_) formatLine(line LineLike) {
 	v.appendNewline()
 	var alternative = line.GetAlternative()
@@ -282,13 +287,13 @@ func (v *formatter_) formatPrecedence(precedence PrecedenceLike) {
 
 func (v *formatter_) formatPredicate(predicate PredicateLike) {
 	var element = predicate.GetElement()
-	var filter = predicate.GetFilter()
+	var inversion = predicate.GetInversion()
 	var precedence = predicate.GetPrecedence()
 	switch {
 	case element != nil:
 		v.formatElement(element)
-	case filter != nil:
-		v.formatFilter(filter)
+	case inversion != nil:
+		v.formatInversion(inversion)
 	case precedence != nil:
 		v.formatPrecedence(precedence)
 	default:
