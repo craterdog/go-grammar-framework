@@ -138,14 +138,8 @@ that must be supported by all filter-class-like classes.
 */
 type FilterClassLike interface {
 	// Constructors
-	MakeWithGlyph(
-		glyph GlyphLike,
-		inverted bool,
-	) FilterLike
-	MakeWithIntrinsic(
-		intrinsic string,
-		inverted bool,
-	) FilterLike
+	MakeWithGlyph(glyph GlyphLike, inverted bool) FilterLike
+	MakeWithIntrinsic(intrinsic string, inverted bool) FilterLike
 }
 
 /*
