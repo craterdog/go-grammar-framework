@@ -180,15 +180,14 @@ func (v *parser_) parseAlternative() (
 	token TokenLike,
 	ok bool,
 ) {
-	var factor FactorLike
-	var factors = col.List[FactorLike]().Make()
-
 	// Attempt to parse one or more factors.
+	var factor FactorLike
 	factor, token, ok = v.parseFactor()
 	if !ok {
 		// This is not an alternative.
 		return alternative, token, false
 	}
+	var factors = col.List[FactorLike]().Make()
 	for ok {
 		factors.AppendValue(factor)
 		factor, token, ok = v.parseFactor()
@@ -493,22 +492,20 @@ func (v *parser_) parseGrammar() (
 	token TokenLike,
 	ok bool,
 ) {
-	var header HeaderLike
-	var headers = col.List[HeaderLike]().Make()
-	var definition DefinitionLike
-	var definitions = col.List[DefinitionLike]().Make()
-
 	// Attempt to parse one or more headers.
+	var header HeaderLike
 	header, token, ok = v.parseHeader()
 	if !ok {
 		return grammar, token, false
 	}
+	var headers = col.List[HeaderLike]().Make()
 	for ok {
 		headers.AppendValue(header)
 		header, _, ok = v.parseHeader()
 	}
 
 	// Attempt to parse one or more definitions.
+	var definition DefinitionLike
 	definition, token, ok = v.parseDefinition()
 	if !ok {
 		var message = v.formatError(token)
@@ -519,6 +516,7 @@ func (v *parser_) parseGrammar() (
 		)
 		panic(message)
 	}
+	var definitions = col.List[DefinitionLike]().Make()
 	for ok {
 		definitions.AppendValue(definition)
 		definition, token, ok = v.parseDefinition()
@@ -534,10 +532,9 @@ func (v *parser_) parseHeader() (
 	token TokenLike,
 	ok bool,
 ) {
-	var commentToken TokenLike
-	var comment string
-
 	// Attempt to parse a comment.
+	var comment string
+	var commentToken TokenLike
 	comment, commentToken, ok = v.parseToken(CommentToken, "")
 	if !ok {
 		return header, commentToken, false
@@ -564,10 +561,8 @@ func (v *parser_) parseInline() (
 	token TokenLike,
 	ok bool,
 ) {
-	var alternative AlternativeLike
-	var note string
-
 	// Attempt to parse one or more alternatives in an in-line expression.
+	var alternative AlternativeLike
 	alternative, token, ok = v.parseAlternative()
 	if !ok {
 		return inline, token, false
@@ -591,6 +586,7 @@ func (v *parser_) parseInline() (
 	}
 
 	// Attempt to parse an optional note.
+	var note string
 	note, token, _ = v.parseToken(NoteToken, "")
 
 	// Found an in-line expression.
@@ -603,13 +599,11 @@ func (v *parser_) parseInversion() (
 	token TokenLike,
 	ok bool,
 ) {
-	var inverted bool
-	var filter FilterLike
-
 	// Check to see if the filter is inverted.
-	_, _, inverted = v.parseToken(DelimiterToken, "~")
+	var _, _, inverted = v.parseToken(DelimiterToken, "~")
 
 	// Attempt to parse a filter.
+	var filter FilterLike
 	filter, token, ok = v.parseFilter()
 	if ok {
 		// Found an inversion.
@@ -636,11 +630,8 @@ func (v *parser_) parseLine() (
 	token TokenLike,
 	ok bool,
 ) {
-	var eolToken TokenLike
-	var alternative AlternativeLike
-	var note string
-
 	// Attempt to parse an end-of-line character.
+	var eolToken TokenLike
 	_, eolToken, ok = v.parseToken(EOLToken, "")
 	if !ok {
 		// This is not a line.
@@ -648,6 +639,7 @@ func (v *parser_) parseLine() (
 	}
 
 	// Attempt to parse the an alternative.
+	var alternative AlternativeLike
 	alternative, token, ok = v.parseAlternative()
 	if !ok {
 		// This is not a line, so put back the end-of-line token.
@@ -656,6 +648,7 @@ func (v *parser_) parseLine() (
 	}
 
 	// Attempt to parse an optional note.
+	var note string
 	note, token, _ = v.parseToken(NoteToken, "")
 
 	// Found a line.
@@ -668,9 +661,8 @@ func (v *parser_) parseMultiline() (
 	token TokenLike,
 	ok bool,
 ) {
-	var line LineLike
-
 	// Attempt to parse one or more lines of a multi-line expression.
+	var line LineLike
 	line, token, ok = v.parseLine()
 	if !ok {
 		// This is not a multi-line expression.
@@ -692,8 +684,6 @@ func (v *parser_) parsePrecedence() (
 	token TokenLike,
 	ok bool,
 ) {
-	var expression ExpressionLike
-
 	// Attempt to parse the opening delimiter for a precedence.
 	_, token, ok = v.parseToken(DelimiterToken, "(")
 	if !ok {
@@ -702,6 +692,7 @@ func (v *parser_) parsePrecedence() (
 	}
 
 	// Attempt to parse an expression.
+	var expression ExpressionLike
 	expression, token, ok = v.parseExpression()
 	if !ok {
 		var message = v.formatError(token)
@@ -736,11 +727,8 @@ func (v *parser_) parsePredicate() (
 	token TokenLike,
 	ok bool,
 ) {
-	var element ElementLike
-	var inversion InversionLike
-	var precedence PrecedenceLike
-
 	// Attempt to parse an element predicate.
+	var element ElementLike
 	element, token, ok = v.parseElement()
 	if ok {
 		predicate = Predicate().MakeWithElement(element)
@@ -748,6 +736,7 @@ func (v *parser_) parsePredicate() (
 	}
 
 	// Attempt to parse an inversion predicate.
+	var inversion InversionLike
 	inversion, token, ok = v.parseInversion()
 	if ok {
 		predicate = Predicate().MakeWithInversion(inversion)
@@ -755,6 +744,7 @@ func (v *parser_) parsePredicate() (
 	}
 
 	// Attempt to parse a precedence predicate.
+	var precedence PrecedenceLike
 	precedence, token, ok = v.parsePrecedence()
 	if ok {
 		predicate = Predicate().MakeWithPrecedence(precedence)
@@ -772,10 +762,9 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 ) {
 	// Attempt to parse a specific token.
 	token = v.getNextToken()
-	value = token.GetValue()
 	if token.GetType() == expectedType {
-		var constrained = len(expectedValue) > 0
-		if !constrained || value == expectedValue {
+		value = token.GetValue()
+		if len(expectedValue) == 0 || expectedValue == value {
 			// Found the expected token.
 			return value, token, true
 		}
@@ -783,7 +772,7 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 
 	// This is not the right token.
 	v.putBack(token)
-	return "", token, false
+	return value, token, false
 }
 
 func (v *parser_) putBack(token TokenLike) {
@@ -797,7 +786,7 @@ var grammar = map[string]string{
 	"definition":  `Comment? Name ":" expression EOL+`,
 	"expression":  `inline | multiline`,
 	"inline":      `alternative ("|" alternative)* Note?`,
-	"multiline":   `line+ EOL?`,
+	"multiline":   `line+`,
 	"line":        `EOL alternative Note?`,
 	"alternative": `factor+`,
 	"factor":      `predicate cardinality?  ! The default cardinality is one.`,
@@ -806,7 +795,7 @@ var grammar = map[string]string{
 	"inversion":   `"~"? filter`,
 	"filter":      `Intrinsic | glyph`,
 	"glyph":       `Character (".." Character)?  ! The range of characters is inclusive.`,
-	"precedence":  `"(" expression ")"`,
+	"precedence":  `"(" expression EOL? ")"`,
 	"cardinality": `
     "?"  ! Zero or one instance of a predicate.
     "*"  ! Zero or more instances of a predicate.
