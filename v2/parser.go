@@ -73,8 +73,8 @@ func (v *parser_) ParseSource(source string) GrammarLike {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar("grammar",
-			"$source",
-			"$grammar",
+			"source",
+			"grammar",
 		)
 		panic(message)
 	}
@@ -84,8 +84,8 @@ func (v *parser_) ParseSource(source string) GrammarLike {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar("EOF",
-			"$source",
-			"$grammar",
+			"source",
+			"grammar",
 		)
 		panic(message)
 	}
@@ -238,8 +238,8 @@ func (v *parser_) parseCardinality() (
 		if !ok {
 			var message = v.formatError(token)
 			message += v.generateGrammar("constraint",
-				"$cardinality",
-				"$constraint",
+				"cardinality",
+				"constraint",
 			)
 			panic(message)
 		}
@@ -247,8 +247,8 @@ func (v *parser_) parseCardinality() (
 		if !ok {
 			var message = v.formatError(token)
 			message += v.generateGrammar("}",
-				"$cardinality",
-				"$constraint",
+				"cardinality",
+				"constraint",
 			)
 			panic(message)
 		}
@@ -300,7 +300,7 @@ func (v *parser_) parseDefinition() (
 	var expression ExpressionLike
 
 	// Attempt to parse an optional comment.
-	_, token, _ = v.parseToken(CommentToken, "")
+	comment, _, _ = v.parseToken(CommentToken, "")
 
 	// Attempt to parse a name.
 	name, token, ok = v.parseToken(NameToken, "")
@@ -314,8 +314,8 @@ func (v *parser_) parseDefinition() (
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar(":",
-			"$definition",
-			"$expression",
+			"definition",
+			"expression",
 		)
 		panic(message)
 	}
@@ -325,10 +325,24 @@ func (v *parser_) parseDefinition() (
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar("expression",
-			"$definition",
-			"$expression",
+			"definition",
+			"expression",
 		)
 		panic(message)
+	}
+
+	// Attempt to parse one or more end-of-line characters.
+	_, token, ok = v.parseToken(EOLToken, "")
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateGrammar("EOL",
+			"definition",
+			"expression",
+		)
+		panic(message)
+	}
+	for ok {
+		_, _, ok = v.parseToken(EOLToken, "")
 	}
 
 	// Found a definition.
@@ -387,8 +401,8 @@ func (v *parser_) parseInline() (
 			if !ok {
 				var message = v.formatError(token)
 				message += v.generateGrammar("alternative",
-					"$expression",
-					"$alternative",
+					"expression",
+					"alternative",
 				)
 				panic(message)
 			}
@@ -408,25 +422,23 @@ func (v *parser_) parseLine() (
 	token TokenLike,
 	ok bool,
 ) {
+	var eolToken TokenLike
 	var alternative AlternativeLike
 	var note string
 
 	// Attempt to parse an end-of-line character.
-	_, token, ok = v.parseToken(EOLToken, "")
+	_, eolToken, ok = v.parseToken(EOLToken, "")
 	if !ok {
 		// This is not a line.
-		return line, token, false
+		return line, eolToken, false
 	}
 
 	// Attempt to parse the an alternative.
 	alternative, token, ok = v.parseAlternative()
 	if !ok {
-		var message = v.formatError(token)
-		message += v.generateGrammar("alternative",
-			"$line",
-			"$alternative",
-		)
-		panic(message)
+		// This is not a line.
+		v.putBack(eolToken)
+		return line, token, false
 	}
 
 	// Attempt to parse an optional note.
@@ -447,23 +459,16 @@ func (v *parser_) parseMultiline() (
 	// Attempt to parse the first line of the expression.
 	line, token, ok = v.parseLine()
 	if !ok {
-		var message = v.formatError(token)
-		message += v.generateGrammar("line",
-			"$multiline",
-			"$line",
-		)
-		panic(message)
+		// This is not a multi-line expression.
+		return multiline, token, false
 	}
 
 	// Parse any additional lines in the expression.
 	var lines = col.List[LineLike]().Make()
 	for ok {
 		lines.AppendValue(line)
-		line, token, ok = v.parseLine()
+		line, _, ok = v.parseLine()
 	}
-
-	// Attempt to parse an optional end-of-line character.
-	_, token, _ = v.parseToken(EOLToken, "")
 
 	// Found a multi-line expression.
 	multiline = Multiline().MakeWithAttributes(lines)
@@ -552,8 +557,8 @@ func (v *parser_) parseFilter() (
 	if inverted {
 		var message = v.formatError(token)
 		message += v.generateGrammar("glyph",
-			"$filter",
-			"$glyph",
+			"filter",
+			"glyph",
 		)
 		panic(message)
 	}
@@ -584,7 +589,7 @@ func (v *parser_) parseGlyph() (
 		if !ok {
 			var message = v.formatError(token)
 			message += v.generateGrammar("CHARACTER",
-				"$glyph",
+				"glyph",
 			)
 			panic(message)
 		}
@@ -614,7 +619,7 @@ func (v *parser_) parseGrammar() (
 	// Parse any additional headers.
 	for ok {
 		headers.AppendValue(header)
-		header, token, ok = v.parseHeader()
+		header, _, ok = v.parseHeader()
 	}
 
 	// Attempt to parse a definition.
@@ -622,9 +627,9 @@ func (v *parser_) parseGrammar() (
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar("definition",
-			"$grammar",
-			"$copyright",
-			"$definition",
+			"grammar",
+			"copyright",
+			"definition",
 		)
 		panic(message)
 	}
@@ -690,19 +695,22 @@ func (v *parser_) parsePrecedence() (
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar("expression",
-			"$precedence",
-			"$expression",
+			"precedence",
+			"expression",
 		)
 		panic(message)
 	}
+
+	// Attempt to parse an optional end-of-line character.
+	_, _, _ = v.parseToken(EOLToken, "")
 
 	// Attempt to parse the closing delimiter for the precedence.
 	_, token, ok = v.parseToken(DelimiterToken, ")")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar(")",
-			"$precedence",
-			"$expression",
+			"precedence",
+			"expression",
 		)
 		panic(message)
 	}
@@ -772,24 +780,25 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var grammar = map[string]string{
-	"$source":     `grammar EOF  ! Terminated with an end-of-file marker.`,
-	"$grammar":    `COMMENT statement+`,
-	"$statement":  `COMMENT? definition EOL+`,
-	"$definition": `SYMBOL ":" expression  ! This works for tokens and rules.`,
-	"$expression": `
-    alternative ("|" alternative)*
-    (EOL alternative)+`,
-	"$alternative": `factor+ NOTE?`,
-	"$factor":      `predicate cardinality?  ! The default cardinality is one.`,
-	"$predicate":   `"~"? assertion`,
-	"$assertion":   `element | glyph | precedence`,
-	"$element":     `INTRINSIC | LITERAL | NAME`,
-	"$glyph":       `CHARACTER (".." CHARACTER)?  ! The range of characters is inclusive.`,
-	"$precedence":  `"(" expression ")"`,
-	"$cardinality": `
+	"source":      `grammar EOF  ! Terminated with an end-of-file marker.`,
+	"grammar":     `header+ definition+`,
+	"header":      `Comment EOL+`,
+	"definition":  `Comment? Name ":" expression EOL+`,
+	"expression":  `inline | multiline`,
+	"inline":      `alternative ("|" alternative)* Note?`,
+	"multiline":   `line+ EOL?`,
+	"line":        `EOL alternative Note?`,
+	"alternative": `factor+`,
+	"factor":      `predicate cardinality?  ! The default cardinality is one.`,
+	"predicate":   `element | filter | precedence`,
+	"element":     `Literal | Name`,
+	"filter":      `"~"? (Intrinsic | glyph)`,
+	"glyph":       `Character (".." Character)?  ! The range of characters is inclusive.`,
+	"precedence":  `"(" expression ")"`,
+	"cardinality": `
     "?"  ! Zero or one instance of a predicate.
     "*"  ! Zero or more instances of a predicate.
     "+"  ! One or more instances of a predicate.
     "{" constraint "}"  ! Constrains the number of instances of a predicate.`,
-	"$constraint": `NUMBER (".." NUMBER?)?  ! The range of numbers is inclusive.`,
+	"constraint": `Number (".." Number?)?  ! The range of numbers is inclusive.`,
 }

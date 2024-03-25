@@ -133,14 +133,34 @@ func (v *generator_) createDirectory(directory string) {
 	}
 }
 
+func (v *generator_) extractAlternatives(expression ExpressionLike) col.Sequential[AlternativeLike] {
+	var alternatives = col.List[AlternativeLike]().Make()
+	var inline = expression.GetInline()
+	if inline != nil {
+		var iterator = inline.GetAlternatives().GetIterator()
+		for iterator.HasNext() {
+			var alternative = iterator.GetNext()
+			alternatives.AppendValue(alternative)
+		}
+	}
+	var multiline = expression.GetInline()
+	if multiline != nil {
+		var iterator = multiline.GetAlternatives().GetIterator()
+		for iterator.HasNext() {
+			var alternative = iterator.GetNext()
+			alternatives.AppendValue(alternative)
+		}
+	}
+	return alternatives
+}
+
 func (v *generator_) extractName(expression ExpressionLike) string {
-	var alternatives = expression.GetAlternatives()
+	var alternatives = v.extractAlternatives(expression)
 	var alternative = alternatives.GetIterator().GetNext()
 	var factors = alternative.GetFactors()
 	var factor = factors.GetIterator().GetNext()
 	var predicate = factor.GetPredicate()
-	var assertion = predicate.GetAssertion()
-	var element = assertion.GetElement()
+	var element = predicate.GetElement()
 	var name = element.GetName()
 	if sts.HasSuffix(name, "s") {
 		name += "es"
@@ -216,7 +236,8 @@ func (v *generator_) generateModel(directory string, model pac.ModelLike) {
 }
 
 func (v *generator_) generateNotice(grammar GrammarLike) pac.NoticeLike {
-	var comment = grammar.GetComment()
+	var header = grammar.GetHeaders().GetIterator().GetNext()
+	var comment = header.GetComment()
 
 	// Strip off the grammar style comment delimiters.
 	comment = Scanner().MatchToken(CommentToken, comment).GetValue(2)
@@ -285,8 +306,7 @@ func (v *generator_) processAlternative(
 func (v *generator_) processDefinition(
 	definition DefinitionLike,
 ) {
-	var symbol = definition.GetSymbol()
-	var name = symbol[1:] // Strip off the leading '$' character.
+	var name = definition.GetName()
 	var expression = definition.GetExpression()
 	if v.isUppercase(name) {
 		// Ignore token definitions for now.
@@ -301,7 +321,8 @@ func (v *generator_) processExpression(
 	constructorMethods col.ListLike[pac.ConstructorLike],
 	attributeMethods col.ListLike[pac.AttributeLike],
 ) {
-	var iterator = expression.GetAlternatives().GetIterator()
+	var alternatives = v.extractAlternatives(expression)
+	var iterator = alternatives.GetIterator()
 	for iterator.HasNext() {
 		var alternative = iterator.GetNext()
 		v.processAlternative(alternative, constructorMethods, attributeMethods)
@@ -327,10 +348,10 @@ func (v *generator_) processFactor(
 }
 
 func (v *generator_) processGrammar(grammar GrammarLike) pac.ModelLike {
-	var iterator = grammar.GetStatements().GetIterator()
+	var iterator = grammar.GetDefinitions().GetIterator()
 	for iterator.HasNext() {
-		var statement = iterator.GetNext()
-		v.processStatement(statement)
+		var definition = iterator.GetNext()
+		v.processDefinition(definition)
 	}
 	var copyright = v.generateNotice(grammar)
 	var header = v.generateHeader()
@@ -385,14 +406,4 @@ func (v *generator_) processRule(
 	)
 	v.classes_.SetValue(className, class)
 	v.instances_.SetValue(className, instance)
-}
-
-func (v *generator_) processStatement(
-	statement StatementLike,
-) {
-	var definition = statement.GetDefinition()
-	if definition == nil {
-		panic("Found a statement without a definition.")
-	}
-	v.processDefinition(definition)
 }

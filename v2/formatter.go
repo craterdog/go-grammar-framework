@@ -134,7 +134,11 @@ func (v *formatter_) formatDefinition(definition DefinitionLike) {
 	v.appendString(name)
 	v.appendString(":")
 	var expression = definition.GetExpression()
+	if expression.GetInline() != nil {
+		v.appendString(" ")
+	}
 	v.formatExpression(expression)
+	v.appendNewline()
 	v.appendNewline()
 }
 
@@ -228,7 +232,6 @@ func (v *formatter_) formatHeader(header HeaderLike) {
 }
 
 func (v *formatter_) formatInline(inline InlineLike) {
-	v.appendString(" ")
 	var alternatives = inline.GetAlternatives()
 	var iterator = alternatives.GetIterator()
 	var alternative = iterator.GetNext()
@@ -246,6 +249,7 @@ func (v *formatter_) formatInline(inline InlineLike) {
 }
 
 func (v *formatter_) formatLine(line LineLike) {
+	v.appendNewline()
 	var alternative = line.GetAlternative()
 	v.formatAlternative(alternative)
 	var note = line.GetNote()
@@ -264,7 +268,6 @@ func (v *formatter_) formatMultiline(multiline MultilineLike) {
 		v.formatLine(line)
 	}
 	v.depth_--
-	v.appendNewline()
 }
 
 func (v *formatter_) formatPrecedence(precedence PrecedenceLike) {

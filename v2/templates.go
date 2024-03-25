@@ -85,7 +85,7 @@ const grammarTemplate_ = `
     greedy.  Any spaces within a token definition are NOT ignored.
 <!
 
-$TOKEN: '$' UPPER+
+Token: UPPER (LOWER | UPPER)*
 
 !>
     RULE DEFINITIONS
@@ -109,8 +109,8 @@ $TOKEN: '$' UPPER+
     resulting in a single character or glyph.
 <!
 
-$source: rule EOF  ! Terminated with an end-of-file marker.
+source: rule EOF  ! Terminated with an end-of-file marker.
 
-$rule: TOKEN+
+rule: Token+
 
 `

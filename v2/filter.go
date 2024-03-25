@@ -55,8 +55,8 @@ func (c *filterClass_) MakeWithIntrinsic(
 	inverted bool,
 ) FilterLike {
 	return &filter_{
-		intrinsic_:  intrinsic,
-		inverted_: inverted,
+		intrinsic_: intrinsic,
+		inverted_:  inverted,
 	}
 }
 
@@ -67,9 +67,9 @@ func (c *filterClass_) MakeWithIntrinsic(
 // Target
 
 type filter_ struct {
-	inverted_   bool
-	intrinsic_  string
-	glyph_      GlyphLike
+	inverted_  bool
+	intrinsic_ string
+	glyph_     GlyphLike
 }
 
 // Attributes

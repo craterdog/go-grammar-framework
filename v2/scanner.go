@@ -230,7 +230,6 @@ const (
 	note_      = `! [^` + control_ + `]*`
 	number_    = `(?:` + digit_ + `)+`
 	space_     = `[ \t]+`
-	symbol_    = `[$](` + name_ + `)`
 	unicode_   = `x` + base16_ + `{2}|u` + base16_ + `{4}|U` + base16_ + `{8}`
 	upper_     = `\p{Lu}`
 )

@@ -90,7 +90,7 @@ expression: inline | multiline
 
 inline: alternative ("|" alternative)* Note?
 
-multiline: line+ EOL?
+multiline: line+
 
 line: EOL alternative Note?
 

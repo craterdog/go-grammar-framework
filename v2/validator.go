@@ -55,7 +55,7 @@ type validator_ struct {
 	inInversion_ bool
 	isToken_     bool
 	stack_       col.StackLike[DefinitionLike]
-	names_     col.CatalogLike[string, ExpressionLike]
+	names_       col.CatalogLike[string, ExpressionLike]
 }
 
 // Public
@@ -173,6 +173,9 @@ func (v *validator_) validateDefinition(definition DefinitionLike) {
 	}
 	var name = definition.GetName()
 	v.validateName(name)
+	if uni.IsUpper([]rune(name)[0]) {
+		v.isToken_ = true
+	}
 	var expression = definition.GetExpression()
 	if expression == nil {
 		var message = v.formatError(
@@ -191,6 +194,7 @@ func (v *validator_) validateDefinition(definition DefinitionLike) {
 	}
 	v.names_.SetValue(name, expression)
 	v.validateExpression(expression)
+	v.isToken_ = false
 	var _ = v.stack_.RemoveTop()
 }
 
@@ -332,7 +336,7 @@ func (v *validator_) validateGrammar(grammar GrammarLike) {
 		var header = headerIterator.GetNext()
 		v.validateHeader(header)
 	}
-	var definitions = grammar.GetHeaders()
+	var definitions = grammar.GetDefinitions()
 	if definitions == nil || definitions.IsEmpty() {
 		var message = "The grammar must contain at least one definition.\n"
 		panic(message)
@@ -340,7 +344,7 @@ func (v *validator_) validateGrammar(grammar GrammarLike) {
 	var definitionIterator = definitions.GetIterator()
 	for definitionIterator.HasNext() {
 		var definition = definitionIterator.GetNext()
-		v.validateHeader(definition)
+		v.validateDefinition(definition)
 	}
 }
 
