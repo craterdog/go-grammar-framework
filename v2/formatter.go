@@ -69,8 +69,9 @@ func (v *formatter_) FormatGrammar(grammar GrammarLike) string {
 
 func (v *formatter_) appendNewline() {
 	var separator = "\n"
+	var indentation = "    "
 	for level := 0; level < v.depth_; level++ {
-		separator += "    "
+		separator += indentation
 	}
 	v.appendString(separator)
 }
@@ -105,7 +106,9 @@ func (v *formatter_) formatCardinality(cardinality CardinalityLike) {
 	case first == "1" && len(last) == 0:
 		v.appendString("+")
 	case len(first) > 0:
+		v.appendString("{")
 		v.formatConstraint(constraint)
+		v.appendString("}")
 	default:
 		panic("Attempted to format an invalid cardinality.")
 	}
@@ -114,7 +117,6 @@ func (v *formatter_) formatCardinality(cardinality CardinalityLike) {
 func (v *formatter_) formatConstraint(constraint ConstraintLike) {
 	var first = constraint.GetFirst()
 	var last = constraint.GetLast()
-	v.appendString("{")
 	v.appendString(first)
 	if first != last {
 		v.appendString("..")
@@ -122,7 +124,6 @@ func (v *formatter_) formatConstraint(constraint ConstraintLike) {
 			v.appendString(last)
 		}
 	}
-	v.appendString("}")
 }
 
 func (v *formatter_) formatDefinition(definition DefinitionLike) {
@@ -196,28 +197,22 @@ func (v *formatter_) formatGlyph(glyph GlyphLike) {
 	var last = glyph.GetLast()
 	if len(last) > 0 {
 		v.appendString("..")
-		v.appendString(last)
+		v.appendString(last) // The last character may be empty.
 	}
 }
 
 func (v *formatter_) formatGrammar(grammar GrammarLike) {
 	// Format the headers.
-	var headers = grammar.GetHeaders()
-	var headerIterator = headers.GetIterator()
-	var header = headerIterator.GetNext()
-	v.formatHeader(header)
+	var headerIterator = grammar.GetHeaders().GetIterator()
 	for headerIterator.HasNext() {
-		header = headerIterator.GetNext()
+		var header = headerIterator.GetNext()
 		v.formatHeader(header)
 	}
 
 	// Format the definitions.
-	var definitions = grammar.GetDefinitions()
-	var definitionIterator = definitions.GetIterator()
-	var definition = definitionIterator.GetNext()
-	v.formatDefinition(definition)
+	var definitionIterator = grammar.GetDefinitions().GetIterator()
 	for definitionIterator.HasNext() {
-		definition = definitionIterator.GetNext()
+		var definition = definitionIterator.GetNext()
 		v.formatDefinition(definition)
 	}
 }
@@ -229,8 +224,7 @@ func (v *formatter_) formatHeader(header HeaderLike) {
 }
 
 func (v *formatter_) formatInline(inline InlineLike) {
-	var alternatives = inline.GetAlternatives()
-	var iterator = alternatives.GetIterator()
+	var iterator = inline.GetAlternatives().GetIterator()
 	var alternative = iterator.GetNext()
 	v.formatAlternative(alternative)
 	for iterator.HasNext() {
@@ -266,8 +260,7 @@ func (v *formatter_) formatLine(line LineLike) {
 
 func (v *formatter_) formatMultiline(multiline MultilineLike) {
 	v.depth_++
-	var lines = multiline.GetLines()
-	var iterator = lines.GetIterator()
+	var iterator = multiline.GetLines().GetIterator()
 	for iterator.HasNext() {
 		var line = iterator.GetNext()
 		v.formatLine(line)
