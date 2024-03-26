@@ -52,10 +52,9 @@ func (c *validatorClass_) Make() ValidatorLike {
 // Target
 
 type validator_ struct {
-	inInversion_ bool
-	isToken_     bool
-	stack_       col.StackLike[DefinitionLike]
-	names_       col.CatalogLike[string, ExpressionLike]
+	isToken_ bool
+	stack_   col.StackLike[DefinitionLike]
+	names_   col.CatalogLike[string, ExpressionLike]
 }
 
 // Public
@@ -374,12 +373,6 @@ func (v *validator_) validateLiteral(literal string) {
 	if matches.IsEmpty() {
 		var message = v.formatError(
 			"Found an invalid literal.",
-		)
-		panic(message)
-	}
-	if v.inInversion_ && len([]rune(literal)) > 3 {
-		var message = v.formatError(
-			"A multi-character literal is not allowed in an inversion.",
 		)
 		panic(message)
 	}
