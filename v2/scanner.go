@@ -86,8 +86,8 @@ func (c *scannerClass_) MatchToken(
 
 type scanner_ struct {
 	first_    int // A zero based index of the first possible rune in the next token.
-	line_     int // The line number in the source string of the next rune.
 	next_     int // A zero based index of the next possible rune in the next token.
+	line_     int // The line number in the source string of the next rune.
 	position_ int // The position in the current line of the next rune.
 	runes_    []rune
 	tokens_   col.QueueLike[TokenLike]
@@ -192,7 +192,6 @@ loop:
 		}
 	}
 	v.foundEOF()
-	v.tokens_.CloseQueue()
 }
 
 /*
