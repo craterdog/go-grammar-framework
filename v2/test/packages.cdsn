@@ -11,9 +11,9 @@
 <!
 
 !>
-    GO PACKAGE NOTATION
+    GO MODEL NOTATION
 
-    This document is a formal definition of Go Package Notation™ (GoPN) using
+    This document is a formal definition of Go Model Notation™ (GoMN) using
     Crater Dog Syntax Notation™ (CDSN).  A language grammar consists of a set of
     token definitions and rule definitions.
 

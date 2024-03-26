@@ -98,11 +98,13 @@ alternative: factor+
 
 factor: predicate cardinality?  ! The default cardinality is one.
 
-predicate: element | filter | precedence
+predicate: element | inversion | precedence
 
 element: Literal | Name
 
-filter: "~"? (Intrinsic | glyph)
+inversion: "~"? filter
+
+filter: Intrinsic | glyph
 
 glyph: Character (".." Character)?  ! The range of characters is inclusive.
 
