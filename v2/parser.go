@@ -475,7 +475,7 @@ func (v *parser_) parseGlyph() (
 		last, token, ok = v.parseToken(CharacterToken, "")
 		if !ok {
 			var message = v.formatError(token)
-			message += v.generateGrammar("CHARACTER",
+			message += v.generateGrammar("Character",
 				"glyph",
 			)
 			panic(message)
