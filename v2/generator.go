@@ -68,41 +68,14 @@ type generator_ struct {
 // Public
 
 func (v *generator_) CreateGrammar(directory string, copyright string) {
-	// Center and insert the copyright notice into the grammar template.
-	var maximum = 78
-	var length = len(copyright)
-	if length > maximum {
-		var message = fmt.Sprintf(
-			"The copyright notice cannot be longer than 78 characters: %v",
-			copyright,
-		)
-		panic(message)
-	}
-	if length == 0 {
-		copyright = fmt.Sprintf(
-			"Copyright (c) %v.  All Rights Reserved.",
-			tim.Now().Year(),
-		)
-		length = len(copyright)
-	}
-	var padding = (maximum - length) / 2
-	for range padding {
-		copyright = " " + copyright + " "
-	}
-	if len(copyright) < maximum {
-		copyright = " " + copyright
-	}
-	copyright = "." + copyright + "."
+	// Insert the copyright statement into a new grammar template.
+	copyright = v.expandCopyright(copyright)
 	var template = sts.ReplaceAll(grammarTemplate_, "<Copyright>", copyright)
-	var bytes = []byte(template[1:]) // Remove leading "\n".
 
-	// Save the new grammar template.
+	// Save the new grammar template into the directory.
 	v.createDirectory(directory)
 	var grammarFile = directory + "Grammar.cdsn"
-	fmt.Printf(
-		"The grammar file %q does not exist, creating a template for it.\n",
-		grammarFile,
-	)
+	var bytes = []byte(template[1:]) // Remove leading "\n".
 	var err = osx.WriteFile(grammarFile, bytes, 0644)
 	if err != nil {
 		panic(err)
@@ -131,6 +104,34 @@ func (v *generator_) createDirectory(directory string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (v *generator_) expandCopyright(copyright string) string {
+	var maximum = 78
+	var length = len(copyright)
+	if length > maximum {
+		var message = fmt.Sprintf(
+			"The copyright notice cannot be longer than 78 characters: %v",
+			copyright,
+		)
+		panic(message)
+	}
+	if length == 0 {
+		copyright = fmt.Sprintf(
+			"Copyright (c) %v.  All Rights Reserved.",
+			tim.Now().Year(),
+		)
+		length = len(copyright)
+	}
+	var padding = (maximum - length) / 2
+	for range padding {
+		copyright = " " + copyright + " "
+	}
+	if len(copyright) < maximum {
+		copyright = " " + copyright
+	}
+	copyright = "." + copyright + "."
+	return copyright
 }
 
 func (v *generator_) extractAlternatives(expression ExpressionLike) col.Sequential[AlternativeLike] {
