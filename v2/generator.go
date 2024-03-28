@@ -73,6 +73,9 @@ func (v *generator_) CreateGrammar(directory string, copyright string) {
 	var template = sts.ReplaceAll(grammarTemplate_, "<Copyright>", copyright)
 
 	// Save the new grammar template into the directory.
+	if !sts.HasSuffix(directory, "/") {
+		directory += "/"
+	}
 	v.createDirectory(directory)
 	var grammarFile = directory + "Grammar.cdsn"
 	var bytes = []byte(template[1:]) // Remove leading "\n".
@@ -97,9 +100,6 @@ func (v *generator_) GenerateModel(directory string) {
 // Private
 
 func (v *generator_) createDirectory(directory string) {
-	if !sts.HasSuffix(directory, "/") {
-		directory += "/"
-	}
 	var err = osx.MkdirAll(directory, 0755)
 	if err != nil {
 		panic(err)
@@ -354,13 +354,13 @@ func (v *generator_) processGrammar(grammar GrammarLike) pac.ModelLike {
 		var definition = iterator.GetNext()
 		v.processDefinition(definition)
 	}
-	var copyright = v.generateNotice(grammar)
+	var notice = v.generateNotice(grammar)
 	var header = v.generateHeader()
 	var imports = v.generateImports()
 	var types pac.TypesLike
 	var interfaces = v.generateInterfaces()
 	var model = pac.Model().MakeWithAttributes(
-		copyright,
+		notice,
 		header,
 		imports,
 		types,
