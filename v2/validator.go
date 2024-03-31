@@ -172,7 +172,7 @@ func (v *validator_) validateDefinition(definition DefinitionLike) {
 	}
 	var name = definition.GetName()
 	v.validateName(name)
-	if uni.IsUpper([]rune(name)[0]) {
+	if uni.IsLower([]rune(name)[0]) {
 		v.isToken_ = true
 	}
 	var expression = definition.GetExpression()
@@ -386,7 +386,7 @@ func (v *validator_) validateName(name string) {
 		)
 		panic(message)
 	}
-	if uni.IsLower([]rune(name)[0]) {
+	if uni.IsUpper([]rune(name)[0]) {
 		if v.isToken_ {
 			var message = v.formatError(
 				"A token definition cannot contain a rule name.",

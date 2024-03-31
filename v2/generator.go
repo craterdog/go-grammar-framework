@@ -59,7 +59,6 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
-	name_      string
 	modules_   col.CatalogLike[string, pac.ModuleLike]
 	classes_   col.CatalogLike[string, pac.ClassLike]
 	instances_ col.CatalogLike[string, pac.InstanceLike]
@@ -155,7 +154,8 @@ func (v *generator_) extractAlternatives(expression ExpressionLike) col.Sequenti
 	return alternatives
 }
 
-func (v *generator_) extractName(expression ExpressionLike) string {
+func (v *generator_) extractName(definition DefinitionLike) string {
+	var expression = definition.GetExpression()
 	var alternatives = v.extractAlternatives(expression)
 	var alternative = alternatives.GetIterator().GetNext()
 	var factors = alternative.GetFactors()
@@ -163,6 +163,7 @@ func (v *generator_) extractName(expression ExpressionLike) string {
 	var predicate = factor.GetPredicate()
 	var element = predicate.GetElement()
 	var name = element.GetName()
+	name = sts.ToLower(name)
 	if sts.HasSuffix(name, "s") {
 		name += "es"
 	} else {
@@ -171,15 +172,31 @@ func (v *generator_) extractName(expression ExpressionLike) string {
 	return name
 }
 
-func (v *generator_) generateClassComment(className string) string {
+func (v *generator_) generateClass(
+	name string,
+	constructors col.Sequential[pac.ConstructorLike],
+) pac.ClassLike {
 	var comment = classCommentTemplate_
-	comment = sts.ReplaceAll(comment, "<ClassName>", className)
-	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(className))
-	return comment
+	comment = sts.ReplaceAll(comment, "<ClassName>", name)
+	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(name))
+	var parameters pac.ParametersLike
+	var declaration = pac.Declaration().MakeWithAttributes(
+		comment,
+		name+"ClassLike",
+		parameters,
+	)
+	var constants pac.ConstantsLike
+	var functions pac.FunctionsLike
+	var class = pac.Class().MakeWithAttributes(
+		declaration,
+		constants,
+		pac.Constructors().MakeWithAttributes(constructors),
+		functions,
+	)
+	return class
 }
 
-func (v *generator_) generateHeader() pac.HeaderLike {
-	var packageName = v.name_
+func (v *generator_) generateHeader(packageName string) pac.HeaderLike {
 	var comment = v.generatePackageComment(packageName)
 	var header = pac.Header().MakeWithAttributes(comment, packageName)
 	return header
@@ -196,11 +213,28 @@ func (v *generator_) generateImports() pac.ImportsLike {
 	return imports
 }
 
-func (v *generator_) generateInstanceComment(className string) string {
+func (v *generator_) generateInstance(
+	name string,
+	attributes col.Sequential[pac.AttributeLike],
+) pac.InstanceLike {
 	var comment = instanceCommentTemplate_
-	comment = sts.ReplaceAll(comment, "<ClassName>", className)
-	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(className))
-	return comment
+	comment = sts.ReplaceAll(comment, "<ClassName>", name)
+	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(name))
+	var parameters pac.ParametersLike
+	var declaration = pac.Declaration().MakeWithAttributes(
+		comment,
+		name+"Like",
+		parameters,
+	)
+	var abstractions pac.AbstractionsLike
+	var methods pac.MethodsLike
+	var instance = pac.Instance().MakeWithAttributes(
+		declaration,
+		pac.Attributes().MakeWithAttributes(attributes),
+		abstractions,
+		methods,
+	)
+	return instance
 }
 
 func (v *generator_) generateInterfaces() pac.InterfacesLike {
@@ -258,20 +292,8 @@ func (v *generator_) generatePackageComment(
 	return comment
 }
 
-func (v *generator_) isUppercase(identifier string) bool {
-	return uni.IsUpper([]rune(identifier)[0])
-}
-
-func (v *generator_) makeLowercase(identifier string) string {
-	var runes = []rune(identifier)
-	runes[0] = uni.ToLower(runes[0])
-	return string(runes)
-}
-
-func (v *generator_) makeUppercase(identifier string) string {
-	var runes = []rune(identifier)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
+func (v *generator_) isLowercase(identifier string) bool {
+	return uni.IsLower([]rune(identifier)[0])
 }
 
 func (v *generator_) parseGrammar(directory string) GrammarLike {
@@ -292,16 +314,35 @@ func (v *generator_) parseGrammar(directory string) GrammarLike {
 	return grammar
 }
 
-func (v *generator_) processAlternative(
-	alternative AlternativeLike,
-	constructorMethods col.ListLike[pac.ConstructorLike],
-	attributeMethods col.ListLike[pac.AttributeLike],
+func (v *generator_) processAlternative(name string, alternative AlternativeLike) (
+	constructor pac.ConstructorLike,
+	attributes col.Sequential[pac.AttributeLike],
 ) {
+	// Extract the constructor.
+	var prefix pac.PrefixLike
+	var arguments pac.ArgumentsLike
+	var abstraction = pac.Abstraction().MakeWithAttributes(
+		prefix,
+		name+"Like",
+		arguments,
+	)
+	var parameters pac.ParametersLike
+	constructor = pac.Constructor().MakeWithAttributes(
+		"MakeWith"+name,
+		parameters,
+		abstraction,
+	)
+
+	// Extract the attributes.
+	var attributeList = col.List[pac.AttributeLike]().Make()
 	var iterator = alternative.GetFactors().GetIterator()
 	for iterator.HasNext() {
 		var factor = iterator.GetNext()
-		v.processFactor(factor, constructorMethods, attributeMethods)
+		attributes = v.processFactor(name, factor)
+		attributeList.AppendValues(attributes)
 	}
+
+	return constructor, attributeList
 }
 
 func (v *generator_) processDefinition(
@@ -309,32 +350,34 @@ func (v *generator_) processDefinition(
 ) {
 	var name = definition.GetName()
 	var expression = definition.GetExpression()
-	if v.isUppercase(name) {
-		// Ignore token definitions for now.
-		v.makeLowercase(name)
-		return
+	if v.isLowercase(name) {
+		v.processToken(name, expression)
+	} else {
+		v.processRule(name, expression)
 	}
-	v.processRule(name, expression)
 }
 
-func (v *generator_) processExpression(
-	expression ExpressionLike,
-	constructorMethods col.ListLike[pac.ConstructorLike],
-	attributeMethods col.ListLike[pac.AttributeLike],
+func (v *generator_) processExpression(name string, expression ExpressionLike) (
+	constructors col.Sequential[pac.ConstructorLike],
+	attributes col.Sequential[pac.AttributeLike],
 ) {
+	var constructorList = col.List[pac.ConstructorLike]().Make()
+	var attributeList = col.List[pac.AttributeLike]().Make()
 	var alternatives = v.extractAlternatives(expression)
 	var iterator = alternatives.GetIterator()
 	for iterator.HasNext() {
 		var alternative = iterator.GetNext()
-		v.processAlternative(alternative, constructorMethods, attributeMethods)
+		var constructor, attributes = v.processAlternative(name, alternative)
+		constructorList.AppendValue(constructor)
+		attributeList.AppendValues(attributes)
 	}
+	return constructorList, attributeList
 }
 
 func (v *generator_) processFactor(
+	name string,
 	factor FactorLike,
-	constructorMethods col.ListLike[pac.ConstructorLike],
-	attributeMethods col.ListLike[pac.AttributeLike],
-) {
+) col.Sequential[pac.AttributeLike] {
 	var cardinality = factor.GetCardinality()
 	if cardinality != nil {
 		var prefix = "col"
@@ -346,16 +389,34 @@ func (v *generator_) processFactor(
 		// Must be sorted by the repository name NOT the prefix.
 		v.modules_.SetValue(repository, module)
 	}
+	var attributes = col.List[pac.AttributeLike]().Make()
+	var predicate = factor.GetPredicate()
+	var element = predicate.GetElement()
+	var inversion = predicate.GetInversion()
+	var precedence = predicate.GetPrecedence()
+	switch {
+	case element != nil:
+	case inversion != nil:
+	case precedence != nil:
+		var expression = precedence.GetExpression()
+		var _, sequence = v.processExpression(name, expression)
+		attributes.AppendValues(sequence)
+	default:
+		panic("Found an empty predicate.")
+	}
+	return attributes
 }
 
 func (v *generator_) processGrammar(grammar GrammarLike) pac.ModelLike {
 	var iterator = grammar.GetDefinitions().GetIterator()
+	var definition = iterator.GetNext()
+	var packageName = v.extractName(definition)
 	for iterator.HasNext() {
-		var definition = iterator.GetNext()
+		definition = iterator.GetNext()
 		v.processDefinition(definition)
 	}
 	var notice = v.generateNotice(grammar)
-	var header = v.generateHeader()
+	var header = v.generateHeader(packageName)
 	var imports = v.generateImports()
 	var types pac.TypesLike
 	var interfaces = v.generateInterfaces()
@@ -373,38 +434,18 @@ func (v *generator_) processRule(
 	name string,
 	expression ExpressionLike,
 ) {
-	var constructorMethods = col.List[pac.ConstructorLike]().Make()
-	var attributeMethods = col.List[pac.AttributeLike]().Make()
-	v.processExpression(expression, constructorMethods, attributeMethods)
-	if name == "source" {
-		v.name_ = v.extractName(expression)
-		return
-	}
-	var className = v.makeUppercase(name)
-	var declaration = pac.Declaration().MakeWithAttributes(
-		v.generateClassComment(className),
-		className+"ClassLike",
-		nil,
-	)
-	var constructors = pac.Constructors().MakeWithAttributes(constructorMethods)
-	var class = pac.Class().MakeWithAttributes(
-		declaration,
-		nil,
-		constructors,
-		nil,
-	)
-	declaration = pac.Declaration().MakeWithAttributes(
-		v.generateInstanceComment(className),
-		className+"Like",
-		nil,
-	)
-	var attributes = pac.Attributes().MakeWithAttributes(attributeMethods)
-	var instance = pac.Instance().MakeWithAttributes(
-		declaration,
-		attributes,
-		nil,
-		nil,
-	)
-	v.classes_.SetValue(className, class)
-	v.instances_.SetValue(className, instance)
+	// Process the full expression first.
+	var constructors, attributes = v.processExpression(name, expression)
+
+	// Create the class interface.
+	var class = v.generateClass(name, constructors)
+	v.classes_.SetValue(name, class)
+
+	// Create the instance interface.
+	var instance = v.generateInstance(name, attributes)
+	v.instances_.SetValue(name, instance)
+}
+
+func (v *generator_) processToken(name string, expression ExpressionLike) {
+	// Ignore token definitions for now.
 }

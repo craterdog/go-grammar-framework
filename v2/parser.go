@@ -72,11 +72,16 @@ func (v *parser_) ParseSource(source string) GrammarLike {
 	var grammar, token, ok = v.parseGrammar()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("grammar",
-			"source",
-			"grammar",
+		message += v.generateGrammar("Grammar",
+			"Source",
+			"Grammar",
 		)
 		panic(message)
+	}
+
+	// Attempt to parse optional end-of-line characters.
+	for ok {
+		_, _, ok = v.parseToken(EOLToken, "")
 	}
 
 	// Attempt to parse the end-of-file marker.
@@ -84,8 +89,8 @@ func (v *parser_) ParseSource(source string) GrammarLike {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar("EOF",
-			"source",
-			"grammar",
+			"Source",
+			"Grammar",
 		)
 		panic(message)
 	}
@@ -239,9 +244,9 @@ func (v *parser_) parseCardinality() (
 	constraint, token, ok = v.parseConstraint()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("constraint",
-			"cardinality",
-			"constraint",
+		message += v.generateGrammar("Constraint",
+			"Cardinality",
+			"Constraint",
 		)
 		panic(message)
 	}
@@ -249,8 +254,8 @@ func (v *parser_) parseCardinality() (
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar("}",
-			"cardinality",
-			"constraint",
+			"Cardinality",
+			"Constraint",
 		)
 		panic(message)
 	}
@@ -313,8 +318,8 @@ func (v *parser_) parseDefinition() (
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar(":",
-			"definition",
-			"expression",
+			"Definition",
+			"Expression",
 		)
 		panic(message)
 	}
@@ -323,9 +328,9 @@ func (v *parser_) parseDefinition() (
 	expression, token, ok = v.parseExpression()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("expression",
-			"definition",
-			"expression",
+		message += v.generateGrammar("Expression",
+			"Definition",
+			"Expression",
 		)
 		panic(message)
 	}
@@ -335,8 +340,8 @@ func (v *parser_) parseDefinition() (
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar("EOL",
-			"definition",
-			"expression",
+			"Definition",
+			"Expression",
 		)
 		panic(message)
 	}
@@ -475,8 +480,8 @@ func (v *parser_) parseGlyph() (
 		last, token, ok = v.parseToken(CharacterToken, "")
 		if !ok {
 			var message = v.formatError(token)
-			message += v.generateGrammar("Character",
-				"glyph",
+			message += v.generateGrammar("character",
+				"Glyph",
 			)
 			panic(message)
 		}
@@ -509,10 +514,10 @@ func (v *parser_) parseGrammar() (
 	definition, token, ok = v.parseDefinition()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("definition",
-			"grammar",
-			"header",
-			"definition",
+		message += v.generateGrammar("Definition",
+			"Grammar",
+			"Header",
+			"Definition",
 		)
 		panic(message)
 	}
@@ -576,9 +581,9 @@ func (v *parser_) parseInline() (
 			alternative, token, ok = v.parseAlternative()
 			if !ok {
 				var message = v.formatError(token)
-				message += v.generateGrammar("alternative",
-					"inline",
-					"alternative",
+				message += v.generateGrammar("Alternative",
+					"Inline",
+					"Alternative",
 				)
 				panic(message)
 			}
@@ -614,9 +619,9 @@ func (v *parser_) parseInversion() (
 	// Handle an empty inversion.
 	if inverted {
 		var message = v.formatError(token)
-		message += v.generateGrammar("filter",
-			"inversion",
-			"filter",
+		message += v.generateGrammar("Filter",
+			"Inversion",
+			"Filter",
 		)
 		panic(message)
 	}
@@ -696,9 +701,9 @@ func (v *parser_) parsePrecedence() (
 	expression, token, ok = v.parseExpression()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("expression",
-			"precedence",
-			"expression",
+		message += v.generateGrammar("Expression",
+			"Precedence",
+			"Expression",
 		)
 		panic(message)
 	}
@@ -711,8 +716,8 @@ func (v *parser_) parsePrecedence() (
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar(")",
-			"precedence",
-			"expression",
+			"Precedence",
+			"Expression",
 		)
 		panic(message)
 	}
@@ -780,26 +785,26 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var grammar = map[string]string{
-	"source":      `grammar EOF  ! Terminated with an end-of-file marker.`,
-	"grammar":     `header+ definition+`,
-	"header":      `Comment EOL+`,
-	"definition":  `Comment? Name ":" expression EOL+`,
-	"expression":  `inline | multiline`,
-	"inline":      `alternative ("|" alternative)* Note?`,
-	"multiline":   `line+`,
-	"line":        `EOL alternative Note?`,
-	"alternative": `factor+`,
-	"factor":      `predicate cardinality?  ! The default cardinality is one.`,
-	"predicate":   `element | inversion | precedence`,
-	"element":     `Literal | Name`,
-	"inversion":   `"~"? filter`,
-	"filter":      `Intrinsic | glyph`,
-	"glyph":       `Character (".." Character)?  ! The range of characters is inclusive.`,
-	"precedence":  `"(" expression EOL? ")"`,
-	"cardinality": `
+	"Source":      `Grammar EOF  ! Terminated with an end-of-file marker.`,
+	"Grammar":     `Header+ Definition+`,
+	"Header":      `comment EOL+`,
+	"Definition":  `comment? name ":" Expression EOL+`,
+	"Expression":  `Inline | Multiline`,
+	"Inline":      `Alternative ("|" Alternative)* note?`,
+	"Multiline":   `Line+`,
+	"Line":        `EOL Alternative note?`,
+	"Alternative": `Factor+`,
+	"Factor":      `Predicate Cardinality?  ! The default cardinality is one.`,
+	"Predicate":   `Element | Inversion | Precedence`,
+	"Element":     `literal | name`,
+	"Inversion":   `"~"? Filter`,
+	"Filter":      `intrinsic | Glyph`,
+	"Glyph":       `character (".." character)?  ! The range of characters is inclusive.`,
+	"Precedence":  `"(" Expression EOL? ")"`,
+	"Cardinality": `
     "?"  ! Zero or one instance of a predicate.
     "*"  ! Zero or more instances of a predicate.
     "+"  ! One or more instances of a predicate.
-    "{" constraint "}"  ! Constrains the number of instances of a predicate.`,
-	"constraint": `Number (".." Number?)?  ! The range of numbers is inclusive.`,
+    "{" Constraint "}"  ! Constrains the number of instances of a predicate.`,
+	"Constraint": `number (".." number?)?  ! The range of numbers is inclusive.`,
 }

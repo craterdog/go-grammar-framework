@@ -22,18 +22,18 @@ import (
 
 var tokenClass = &tokenClass_{
 	strings_: map[TokenType]string{
-		ErrorToken:     "Error",
-		CharacterToken: "Character",
-		CommentToken:   "Comment",
-		DelimiterToken: "Delimiter",
+		ErrorToken:     "error",
+		CharacterToken: "character",
+		CommentToken:   "comment",
+		DelimiterToken: "delimiter",
 		EOFToken:       "EOF",
 		EOLToken:       "EOL",
-		IntrinsicToken: "Intrinsic",
-		LiteralToken:   "Literal",
-		NameToken:      "Name",
-		NoteToken:      "Note",
-		NumberToken:    "Number",
-		SpaceToken:     "Space",
+		IntrinsicToken: "intrinsic",
+		LiteralToken:   "literal",
+		NameToken:      "name",
+		NoteToken:      "note",
+		NumberToken:    "number",
+		SpaceToken:     "space",
 	},
 }
 
