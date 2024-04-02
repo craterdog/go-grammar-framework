@@ -47,11 +47,7 @@ type generatorClass_ struct {
 // Constructors
 
 func (c *generatorClass_) Make() GeneratorLike {
-	return &generator_{
-		modules_:   col.Catalog[string, pac.ModuleLike]().Make(),
-		classes_:   col.Catalog[string, pac.ClassLike]().Make(),
-		instances_: col.Catalog[string, pac.InstanceLike]().Make(),
-	}
+	return &generator_{}
 }
 
 // INSTANCE METHODS
@@ -85,6 +81,12 @@ func (v *generator_) CreateGrammar(directory string, copyright string) {
 }
 
 func (v *generator_) GenerateModel(directory string) {
+	// Initialize the catalogs.
+	v.modules_ = col.Catalog[string, pac.ModuleLike]().Make()
+	v.classes_ = col.Catalog[string, pac.ClassLike]().Make()
+	v.instances_ = col.Catalog[string, pac.InstanceLike]().Make()
+
+	// Parse the grammar file.
 	if !sts.HasSuffix(directory, "/") {
 		directory += "/"
 	}
@@ -92,6 +94,8 @@ func (v *generator_) GenerateModel(directory string) {
 	if grammar == nil {
 		return
 	}
+
+	// Generate the Package.go file.
 	var model = v.processGrammar(grammar)
 	v.generateModel(directory, model)
 }
@@ -143,11 +147,12 @@ func (v *generator_) extractAlternatives(expression ExpressionLike) col.Sequenti
 			alternatives.AppendValue(alternative)
 		}
 	}
-	var multiline = expression.GetInline()
+	var multiline = expression.GetMultiline()
 	if multiline != nil {
-		var iterator = multiline.GetAlternatives().GetIterator()
+		var iterator = multiline.GetLines().GetIterator()
 		for iterator.HasNext() {
-			var alternative = iterator.GetNext()
+			var line = iterator.GetNext()
+			var alternative = line.GetAlternative()
 			alternatives.AppendValue(alternative)
 		}
 	}
@@ -164,17 +169,32 @@ func (v *generator_) extractName(definition DefinitionLike) string {
 	var element = predicate.GetElement()
 	var name = element.GetName()
 	name = sts.ToLower(name)
-	if sts.HasSuffix(name, "s") {
-		name += "es"
-	} else {
-		name += "s"
-	}
+	name = v.makePlural(name)
 	return name
+}
+
+func (v *generator_) extractParameters(
+	attributes col.Sequential[pac.AttributeLike],
+) pac.ParametersLike {
+	var parameterList = col.List[pac.ParameterLike]().Make()
+	var iterator = attributes.GetIterator()
+	for iterator.HasNext() {
+		var attribute = iterator.GetNext()
+		var identifier = sts.TrimPrefix(attribute.GetIdentifier(), "Get")
+		var abstraction = attribute.GetAbstraction()
+		var parameter = pac.Parameter().MakeWithAttributes(
+			v.makeLowercase(identifier),
+			abstraction,
+		)
+		parameterList.AppendValue(parameter)
+	}
+	var parameters = pac.Parameters().MakeWithAttributes(parameterList)
+	return parameters
 }
 
 func (v *generator_) generateClass(
 	name string,
-	constructors col.Sequential[pac.ConstructorLike],
+	constructors pac.ConstructorsLike,
 ) pac.ClassLike {
 	var comment = classCommentTemplate_
 	comment = sts.ReplaceAll(comment, "<ClassName>", name)
@@ -190,7 +210,7 @@ func (v *generator_) generateClass(
 	var class = pac.Class().MakeWithAttributes(
 		declaration,
 		constants,
-		pac.Constructors().MakeWithAttributes(constructors),
+		constructors,
 		functions,
 	)
 	return class
@@ -215,7 +235,7 @@ func (v *generator_) generateImports() pac.ImportsLike {
 
 func (v *generator_) generateInstance(
 	name string,
-	attributes col.Sequential[pac.AttributeLike],
+	attributes pac.AttributesLike,
 ) pac.InstanceLike {
 	var comment = instanceCommentTemplate_
 	comment = sts.ReplaceAll(comment, "<ClassName>", name)
@@ -230,7 +250,7 @@ func (v *generator_) generateInstance(
 	var methods pac.MethodsLike
 	var instance = pac.Instance().MakeWithAttributes(
 		declaration,
-		pac.Attributes().MakeWithAttributes(attributes),
+		attributes,
 		abstractions,
 		methods,
 	)
@@ -296,6 +316,31 @@ func (v *generator_) isLowercase(identifier string) bool {
 	return uni.IsLower([]rune(identifier)[0])
 }
 
+func (v *generator_) isUppercase(identifier string) bool {
+	return uni.IsUpper([]rune(identifier)[0])
+}
+
+func (v *generator_) makeLowercase(identifier string) string {
+	runes := []rune(identifier)
+	runes[0] = uni.ToLower(runes[0])
+	return string(runes)
+}
+
+func (v *generator_) makePlural(identifier string) string {
+	if sts.HasSuffix(identifier, "s") {
+		identifier += "es"
+	} else {
+		identifier += "s"
+	}
+	return identifier
+}
+
+func (v *generator_) makeUppercase(identifier string) string {
+	runes := []rune(identifier)
+	runes[0] = uni.ToUpper(runes[0])
+	return string(runes)
+}
+
 func (v *generator_) parseGrammar(directory string) GrammarLike {
 	var grammarFile = directory + "Grammar.cdsn"
 	var bytes, err = osx.ReadFile(grammarFile)
@@ -316,8 +361,17 @@ func (v *generator_) parseGrammar(directory string) GrammarLike {
 
 func (v *generator_) processAlternative(name string, alternative AlternativeLike) (
 	constructor pac.ConstructorLike,
-	attributes col.Sequential[pac.AttributeLike],
+	attributes pac.AttributesLike,
 ) {
+	// Extract the attributes.
+	var attributeList = col.List[pac.AttributeLike]().Make()
+	var iterator = alternative.GetFactors().GetIterator()
+	for iterator.HasNext() {
+		var factor = iterator.GetNext()
+		attributes = v.processFactor(name, factor)
+		attributeList.AppendValues(attributes.GetSequence())
+	}
+
 	// Extract the constructor.
 	var prefix pac.PrefixLike
 	var arguments pac.ArgumentsLike
@@ -326,23 +380,22 @@ func (v *generator_) processAlternative(name string, alternative AlternativeLike
 		name+"Like",
 		arguments,
 	)
-	var parameters pac.ParametersLike
-	constructor = pac.Constructor().MakeWithAttributes(
-		"MakeWith"+name,
-		parameters,
-		abstraction,
-	)
-
-	// Extract the attributes.
-	var attributeList = col.List[pac.AttributeLike]().Make()
-	var iterator = alternative.GetFactors().GetIterator()
-	for iterator.HasNext() {
-		var factor = iterator.GetNext()
-		attributes = v.processFactor(name, factor)
-		attributeList.AppendValues(attributes)
+	name = "MakeWithAttributes"
+	if attributeList.GetSize() == 1 {
+		name = sts.TrimPrefix(attributeList.GetValue(1).GetIdentifier(), "Get")
+		name = "MakeWith" + name
+	}
+	if !attributeList.IsEmpty() {
+		var parameters = v.extractParameters(attributeList)
+		constructor = pac.Constructor().MakeWithAttributes(
+			name,
+			parameters,
+			abstraction,
+		)
 	}
 
-	return constructor, attributeList
+	attributes = pac.Attributes().MakeWithAttributes(attributeList)
+	return constructor, attributes
 }
 
 func (v *generator_) processDefinition(
@@ -358,8 +411,8 @@ func (v *generator_) processDefinition(
 }
 
 func (v *generator_) processExpression(name string, expression ExpressionLike) (
-	constructors col.Sequential[pac.ConstructorLike],
-	attributes col.Sequential[pac.AttributeLike],
+	constructors pac.ConstructorsLike,
+	attributes pac.AttributesLike,
 ) {
 	var constructorList = col.List[pac.ConstructorLike]().Make()
 	var attributeList = col.List[pac.AttributeLike]().Make()
@@ -368,42 +421,91 @@ func (v *generator_) processExpression(name string, expression ExpressionLike) (
 	for iterator.HasNext() {
 		var alternative = iterator.GetNext()
 		var constructor, attributes = v.processAlternative(name, alternative)
-		constructorList.AppendValue(constructor)
-		attributeList.AppendValues(attributes)
+		if constructor != nil {
+			constructorList.AppendValue(constructor)
+		}
+		attributeList.AppendValues(attributes.GetSequence())
 	}
-	return constructorList, attributeList
+	constructors = pac.Constructors().MakeWithAttributes(constructorList)
+	attributes = pac.Attributes().MakeWithAttributes(attributeList)
+	return constructors, attributes
 }
 
 func (v *generator_) processFactor(
 	name string,
 	factor FactorLike,
-) col.Sequential[pac.AttributeLike] {
+) (attributes pac.AttributesLike) {
+	var isSequential bool
 	var cardinality = factor.GetCardinality()
 	if cardinality != nil {
-		var prefix = "col"
-		var repository = `"github.com/craterdog/go-collection-framework/v3"`
-		var module = pac.Module().MakeWithAttributes(
-			prefix,
-			repository,
-		)
-		// Must be sorted by the repository name NOT the prefix.
-		v.modules_.SetValue(repository, module)
+		var constraint = cardinality.GetConstraint()
+		if constraint.GetFirst() != "0" || constraint.GetLast() != "1" {
+			isSequential = true
+			var prefix = "col"
+			var repository = `"github.com/craterdog/go-collection-framework/v3"`
+			var module = pac.Module().MakeWithAttributes(
+				prefix,
+				repository,
+			)
+			// Must be sorted by the repository name NOT the prefix.
+			v.modules_.SetValue(repository, module)
+		}
 	}
-	var attributes = col.List[pac.AttributeLike]().Make()
+	var identifier string
+	var abstraction pac.AbstractionLike
+	var attribute pac.AttributeLike
+	var attributeList = col.List[pac.AttributeLike]().Make()
 	var predicate = factor.GetPredicate()
 	var element = predicate.GetElement()
 	var inversion = predicate.GetInversion()
 	var precedence = predicate.GetPrecedence()
 	switch {
 	case element != nil:
+		identifier = element.GetName()
+		if len(identifier) > 0 {
+			var prefix pac.PrefixLike
+			var arguments pac.ArgumentsLike
+			if v.isUppercase(identifier) {
+				abstraction = pac.Abstraction().MakeWithAttributes(
+					prefix,
+					identifier+"Like",
+					arguments,
+				)
+				if isSequential {
+					identifier = v.makePlural(identifier)
+					var argumentList = col.List[pac.AbstractionLike]().Make()
+					argumentList.AppendValue(abstraction)
+					arguments = pac.Arguments().MakeWithAttributes(argumentList)
+					abstraction = pac.Abstraction().MakeWithAttributes(
+						pac.Prefix().MakeWithAttributes("col", pac.AliasPrefix),
+						"Sequential",
+						arguments,
+					)
+				}
+			} else {
+				abstraction = pac.Abstraction().MakeWithAttributes(
+					prefix,
+					"string",
+					arguments,
+				)
+			}
+			var parameter pac.ParameterLike
+			attribute = pac.Attribute().MakeWithAttributes(
+				"Get"+v.makeUppercase(identifier),
+				parameter,
+				abstraction,
+			)
+			attributeList.AppendValue(attribute)
+		}
 	case inversion != nil:
 	case precedence != nil:
 		var expression = precedence.GetExpression()
-		var _, sequence = v.processExpression(name, expression)
-		attributes.AppendValues(sequence)
+		var _, attributes = v.processExpression(name, expression)
+		attributeList.AppendValues(attributes.GetSequence())
 	default:
 		panic("Found an empty predicate.")
 	}
+	attributes = pac.Attributes().MakeWithAttributes(attributeList)
 	return attributes
 }
 
