@@ -102,6 +102,57 @@ func (v *generator_) GenerateModel(directory string) {
 
 // Private
 
+func (v *generator_) consolidateAttributes(
+	attributes col.ListLike[pac.AttributeLike],
+) {
+	for i := 1; i <= attributes.GetSize(); i++ {
+		var attribute = attributes.GetValue(i)
+		var first = attribute.GetIdentifier()
+		for j := i + 1; j <= attributes.GetSize(); {
+			var second = attributes.GetValue(j).GetIdentifier()
+			switch {
+			case first == second:
+				attributes.RemoveValue(j)
+				var attribute = attributes.GetValue(i)
+				attributes.SetValue(i, v.makeSequence(attribute))
+			case first == second[:len(second)-1] && sts.HasSuffix(second, "s"):
+				attribute = attributes.GetValue(j)
+				attributes.RemoveValue(j)
+				attributes.SetValue(i, attribute)
+			case first == second[:len(second)-2] && sts.HasSuffix(second, "es"):
+				attribute = attributes.GetValue(j)
+				attributes.RemoveValue(j)
+				attributes.SetValue(i, attribute)
+			case second == first[:len(first)-1] && sts.HasSuffix(first, "s"):
+				attributes.RemoveValue(j)
+			case second == first[:len(first)-2] && sts.HasSuffix(first, "es"):
+				attributes.RemoveValue(j)
+			default:
+				// We only increment the index j if we didn't remove anything.
+				j++
+			}
+
+		}
+	}
+}
+
+func (v *generator_) consolidateConstructors(
+	constructors col.ListLike[pac.ConstructorLike],
+) {
+	for i := 1; i <= constructors.GetSize(); i++ {
+		var first = constructors.GetValue(i).GetIdentifier()
+		for j := i + 1; j <= constructors.GetSize(); {
+			var second = constructors.GetValue(j).GetIdentifier()
+			if first == second {
+				constructors.RemoveValue(j)
+			} else {
+				// We only increment the index j if we didn't remove anything.
+				j++
+			}
+		}
+	}
+}
+
 func (v *generator_) createDirectory(directory string) {
 	var err = osx.MkdirAll(directory, 0755)
 	if err != nil {
@@ -335,6 +386,23 @@ func (v *generator_) makePlural(identifier string) string {
 	return identifier
 }
 
+func (v *generator_) makeSequence(attribute pac.AttributeLike) pac.AttributeLike {
+	var identifier = attribute.GetIdentifier()
+	identifier = v.makePlural(identifier)
+	var abstraction = attribute.GetAbstraction()
+	var argumentList = col.List[pac.AbstractionLike]().Make()
+	argumentList.AppendValue(abstraction)
+	var arguments = pac.Arguments().MakeWithAttributes(argumentList)
+	abstraction = pac.Abstraction().MakeWithAttributes(
+		pac.Prefix().MakeWithAttributes("col", pac.AliasPrefix),
+		"Sequential",
+		arguments,
+	)
+	var parameter pac.ParameterLike
+	attribute = pac.Attribute().MakeWithAttributes(identifier, parameter, abstraction)
+	return attribute
+}
+
 func (v *generator_) makeUppercase(identifier string) string {
 	runes := []rune(identifier)
 	runes[0] = uni.ToUpper(runes[0])
@@ -371,6 +439,7 @@ func (v *generator_) processAlternative(name string, alternative AlternativeLike
 		attributes = v.processFactor(name, factor)
 		attributeList.AppendValues(attributes.GetSequence())
 	}
+	v.consolidateAttributes(attributeList)
 
 	// Extract the constructor.
 	var prefix pac.PrefixLike
@@ -426,6 +495,8 @@ func (v *generator_) processExpression(name string, expression ExpressionLike) (
 		}
 		attributeList.AppendValues(attributes.GetSequence())
 	}
+	v.consolidateConstructors(constructorList)
+	v.consolidateAttributes(attributeList)
 	constructors = pac.Constructors().MakeWithAttributes(constructorList)
 	attributes = pac.Attributes().MakeWithAttributes(attributeList)
 	return constructors, attributes
