@@ -105,33 +105,17 @@ func (v *generator_) GenerateModel(directory string) {
 func (v *generator_) consolidateAttributes(
 	attributes col.ListLike[pac.AttributeLike],
 ) {
+	// Compare each attribute and remove duplicates.
 	for i := 1; i <= attributes.GetSize(); i++ {
-		var attribute = attributes.GetValue(i)
-		var first = attribute.GetIdentifier()
+		var first = attributes.GetValue(i).GetIdentifier()
 		for j := i + 1; j <= attributes.GetSize(); {
 			var second = attributes.GetValue(j).GetIdentifier()
-			switch {
-			case first == second:
+			if first == second {
 				attributes.RemoveValue(j)
-				var attribute = attributes.GetValue(i)
-				attributes.SetValue(i, v.makeSequence(attribute))
-			case first == second[:len(second)-1] && sts.HasSuffix(second, "s"):
-				attribute = attributes.GetValue(j)
-				attributes.RemoveValue(j)
-				attributes.SetValue(i, attribute)
-			case first == second[:len(second)-2] && sts.HasSuffix(second, "es"):
-				attribute = attributes.GetValue(j)
-				attributes.RemoveValue(j)
-				attributes.SetValue(i, attribute)
-			case second == first[:len(first)-1] && sts.HasSuffix(first, "s"):
-				attributes.RemoveValue(j)
-			case second == first[:len(first)-2] && sts.HasSuffix(first, "es"):
-				attributes.RemoveValue(j)
-			default:
+			} else {
 				// We only increment the index j if we didn't remove anything.
 				j++
 			}
-
 		}
 	}
 }
@@ -139,6 +123,7 @@ func (v *generator_) consolidateAttributes(
 func (v *generator_) consolidateConstructors(
 	constructors col.ListLike[pac.ConstructorLike],
 ) {
+	// Compare each attribute and remove duplicates.
 	for i := 1; i <= constructors.GetSize(); i++ {
 		var first = constructors.GetValue(i).GetIdentifier()
 		for j := i + 1; j <= constructors.GetSize(); {
@@ -149,6 +134,41 @@ func (v *generator_) consolidateConstructors(
 				// We only increment the index j if we didn't remove anything.
 				j++
 			}
+		}
+	}
+}
+
+func (v *generator_) consolidateLists(
+	attributes col.ListLike[pac.AttributeLike],
+) {
+	// Compare each attribute and make lists out of duplicates.
+	for i := 1; i <= attributes.GetSize(); i++ {
+		var attribute = attributes.GetValue(i)
+		var first = attribute.GetIdentifier()
+		for j := i + 1; j <= attributes.GetSize(); {
+			var second = attributes.GetValue(j).GetIdentifier()
+			switch {
+			case first == second:
+				attribute = attributes.GetValue(i)
+				attributes.SetValue(i, v.makeList(attribute))
+				attributes.RemoveValue(j)
+			case first == second[:len(second)-1] && sts.HasSuffix(second, "s"):
+				attribute = attributes.GetValue(j)
+				attributes.SetValue(i, attribute)
+				attributes.RemoveValue(j)
+			case first == second[:len(second)-2] && sts.HasSuffix(second, "es"):
+				attribute = attributes.GetValue(j)
+				attributes.SetValue(i, attribute)
+				attributes.RemoveValue(j)
+			case second == first[:len(first)-1] && sts.HasSuffix(first, "s"):
+				attributes.RemoveValue(j)
+			case second == first[:len(first)-2] && sts.HasSuffix(first, "es"):
+				attributes.RemoveValue(j)
+			default:
+				// We only increment the index j if we didn't remove anything.
+				j++
+			}
+
 		}
 	}
 }
@@ -371,22 +391,7 @@ func (v *generator_) isUppercase(identifier string) bool {
 	return uni.IsUpper([]rune(identifier)[0])
 }
 
-func (v *generator_) makeLowercase(identifier string) string {
-	runes := []rune(identifier)
-	runes[0] = uni.ToLower(runes[0])
-	return string(runes)
-}
-
-func (v *generator_) makePlural(identifier string) string {
-	if sts.HasSuffix(identifier, "s") {
-		identifier += "es"
-	} else {
-		identifier += "s"
-	}
-	return identifier
-}
-
-func (v *generator_) makeSequence(attribute pac.AttributeLike) pac.AttributeLike {
+func (v *generator_) makeList(attribute pac.AttributeLike) pac.AttributeLike {
 	var identifier = attribute.GetIdentifier()
 	identifier = v.makePlural(identifier)
 	var abstraction = attribute.GetAbstraction()
@@ -401,6 +406,21 @@ func (v *generator_) makeSequence(attribute pac.AttributeLike) pac.AttributeLike
 	var parameter pac.ParameterLike
 	attribute = pac.Attribute().MakeWithAttributes(identifier, parameter, abstraction)
 	return attribute
+}
+
+func (v *generator_) makeLowercase(identifier string) string {
+	runes := []rune(identifier)
+	runes[0] = uni.ToLower(runes[0])
+	return string(runes)
+}
+
+func (v *generator_) makePlural(identifier string) string {
+	if sts.HasSuffix(identifier, "s") {
+		identifier += "es"
+	} else {
+		identifier += "s"
+	}
+	return identifier
 }
 
 func (v *generator_) makeUppercase(identifier string) string {
@@ -439,7 +459,7 @@ func (v *generator_) processAlternative(name string, alternative AlternativeLike
 		attributes = v.processFactor(name, factor)
 		attributeList.AppendValues(attributes.GetSequence())
 	}
-	v.consolidateAttributes(attributeList)
+	v.consolidateLists(attributeList)
 
 	// Extract the constructor.
 	var prefix pac.PrefixLike
@@ -449,15 +469,10 @@ func (v *generator_) processAlternative(name string, alternative AlternativeLike
 		name+"Like",
 		arguments,
 	)
-	name = "MakeWithAttributes"
-	if attributeList.GetSize() == 1 {
-		name = sts.TrimPrefix(attributeList.GetValue(1).GetIdentifier(), "Get")
-		name = "MakeWith" + name
-	}
 	if !attributeList.IsEmpty() {
 		var parameters = v.extractParameters(attributeList)
 		constructor = pac.Constructor().MakeWithAttributes(
-			name,
+			"MakeWithAttributes",
 			parameters,
 			abstraction,
 		)
