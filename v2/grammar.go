@@ -42,7 +42,7 @@ type grammarClass_ struct {
 
 // Constructors
 
-func (c *grammarClass_) MakeWithAttributes(headers col.Sequential[HeaderLike], definitions col.Sequential[DefinitionLike]) GrammarLike {
+func (c *grammarClass_) MakeWithAttributes(headers col.ListLike[HeaderLike], definitions col.ListLike[DefinitionLike]) GrammarLike {
 	return &grammar_{
 		headers_:     headers,
 		definitions_: definitions,
@@ -56,17 +56,17 @@ func (c *grammarClass_) MakeWithAttributes(headers col.Sequential[HeaderLike], d
 // Target
 
 type grammar_ struct {
-	headers_     col.Sequential[HeaderLike]
-	definitions_ col.Sequential[DefinitionLike]
+	headers_     col.ListLike[HeaderLike]
+	definitions_ col.ListLike[DefinitionLike]
 }
 
 // Attributes
 
-func (v *grammar_) GetHeaders() col.Sequential[HeaderLike] {
+func (v *grammar_) GetHeaders() col.ListLike[HeaderLike] {
 	return v.headers_
 }
 
-func (v *grammar_) GetDefinitions() col.Sequential[DefinitionLike] {
+func (v *grammar_) GetDefinitions() col.ListLike[DefinitionLike] {
 	return v.definitions_
 }
 

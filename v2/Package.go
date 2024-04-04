@@ -34,9 +34,7 @@ import (
 	col "github.com/craterdog/go-collection-framework/v3"
 )
 
-// TYPES
-
-// Specializations
+// Types
 
 /*
 TokenType is a specialized type representing any token type recognized by a
@@ -59,8 +57,6 @@ const (
 	SpaceToken
 )
 
-// INTERFACES
-
 // Classes
 
 /*
@@ -69,7 +65,7 @@ functions that must be supported by all alternative-class-like classes.
 */
 type AlternativeClassLike interface {
 	// Constructors
-	MakeWithAttributes(factors col.Sequential[FactorLike]) AlternativeLike
+	MakeWithAttributes(factors col.ListLike[FactorLike]) AlternativeLike
 }
 
 /*
@@ -87,7 +83,10 @@ functions that must be supported by all constraint-class-like classes.
 */
 type ConstraintClassLike interface {
 	// Constructors
-	MakeWithAttributes(first string, last string) ConstraintLike
+	MakeWithAttributes(
+		first string,
+		last string,
+	) ConstraintLike
 }
 
 /*
@@ -129,7 +128,10 @@ that must be supported by all factor-class-like classes.
 */
 type FactorClassLike interface {
 	// Constructors
-	MakeWithAttributes(predicate PredicateLike, cardinality CardinalityLike) FactorLike
+	MakeWithAttributes(
+		predicate PredicateLike,
+		cardinality CardinalityLike,
+	) FactorLike
 }
 
 /*
@@ -166,7 +168,10 @@ that must be supported by all glyph-class-like classes.
 */
 type GlyphClassLike interface {
 	// Constructors
-	MakeWithAttributes(first string, last string) GlyphLike
+	MakeWithAttributes(
+		first string,
+		last string,
+	) GlyphLike
 }
 
 /*
@@ -175,7 +180,10 @@ that must be supported by all grammar-class-like classes.
 */
 type GrammarClassLike interface {
 	// Constructors
-	MakeWithAttributes(headers col.Sequential[HeaderLike], definitions col.Sequential[DefinitionLike]) GrammarLike
+	MakeWithAttributes(
+		headers col.ListLike[HeaderLike],
+		definitions col.ListLike[DefinitionLike],
+	) GrammarLike
 }
 
 /*
@@ -193,7 +201,10 @@ that must be supported by all inline-class-like classes.
 */
 type InlineClassLike interface {
 	// Constructors
-	MakeWithAttributes(alternatives col.Sequential[AlternativeLike], note string) InlineLike
+	MakeWithAttributes(
+		alternatives col.ListLike[AlternativeLike],
+		note string,
+	) InlineLike
 }
 
 /*
@@ -202,7 +213,10 @@ that must be supported by all inversion-class-like classes.
 */
 type InversionClassLike interface {
 	// Constructors
-	MakeWithAttributes(inverted bool, filter FilterLike) InversionLike
+	MakeWithAttributes(
+		inverted bool,
+		filter FilterLike,
+	) InversionLike
 }
 
 /*
@@ -211,7 +225,10 @@ that must be supported by all line-class-like classes.
 */
 type LineClassLike interface {
 	// Constructors
-	MakeWithAttributes(alternative AlternativeLike, note string) LineLike
+	MakeWithAttributes(
+		alternative AlternativeLike,
+		note string,
+	) LineLike
 }
 
 /*
@@ -220,7 +237,7 @@ that must be supported by all inline-class-like classes.
 */
 type MultilineClassLike interface {
 	// Constructors
-	MakeWithAttributes(lines col.Sequential[LineLike]) MultilineLike
+	MakeWithAttributes(lines col.ListLike[LineLike]) MultilineLike
 }
 
 /*
@@ -258,10 +275,16 @@ that must be supported by all scanner-class-like classes.
 */
 type ScannerClassLike interface {
 	// Constructors
-	Make(source string, tokens col.QueueLike[TokenLike]) ScannerLike
+	Make(
+		source string,
+		tokens col.QueueLike[TokenLike],
+	) ScannerLike
 
 	// Functions
-	MatchToken(type_ TokenType, text string) col.ListLike[string]
+	MatchToken(
+		type_ TokenType,
+		text string,
+	) col.ListLike[string]
 }
 
 /*
@@ -298,7 +321,7 @@ all alternative-like instances.
 */
 type AlternativeLike interface {
 	// Attributes
-	GetFactors() col.Sequential[FactorLike]
+	GetFactors() col.ListLike[FactorLike]
 }
 
 /*
@@ -387,7 +410,10 @@ all generator-like instances.
 */
 type GeneratorLike interface {
 	// Methods
-	CreateGrammar(directory string, copyright string)
+	CreateGrammar(
+		directory string,
+		copyright string,
+	)
 	GenerateModel(directory string)
 }
 
@@ -407,8 +433,8 @@ grammar-like instances.
 */
 type GrammarLike interface {
 	// Attributes
-	GetHeaders() col.Sequential[HeaderLike]
-	GetDefinitions() col.Sequential[DefinitionLike]
+	GetHeaders() col.ListLike[HeaderLike]
+	GetDefinitions() col.ListLike[DefinitionLike]
 }
 
 /*
@@ -426,7 +452,7 @@ inline-like instances.
 */
 type InlineLike interface {
 	// Attributes
-	GetAlternatives() col.Sequential[AlternativeLike]
+	GetAlternatives() col.ListLike[AlternativeLike]
 	GetNote() string
 }
 
@@ -456,7 +482,7 @@ multiline-like instances.
 */
 type MultilineLike interface {
 	// Attributes
-	GetLines() col.Sequential[LineLike]
+	GetLines() col.ListLike[LineLike]
 }
 
 /*

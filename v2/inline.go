@@ -42,7 +42,7 @@ type inlineClass_ struct {
 
 // Constructors
 
-func (c *inlineClass_) MakeWithAttributes(alternatives col.Sequential[AlternativeLike], note string) InlineLike {
+func (c *inlineClass_) MakeWithAttributes(alternatives col.ListLike[AlternativeLike], note string) InlineLike {
 	return &inline_{
 		alternatives_: alternatives,
 		note_:         note,
@@ -56,13 +56,13 @@ func (c *inlineClass_) MakeWithAttributes(alternatives col.Sequential[Alternativ
 // Target
 
 type inline_ struct {
-	alternatives_ col.Sequential[AlternativeLike]
+	alternatives_ col.ListLike[AlternativeLike]
 	note_         string
 }
 
 // Attributes
 
-func (v *inline_) GetAlternatives() col.Sequential[AlternativeLike] {
+func (v *inline_) GetAlternatives() col.ListLike[AlternativeLike] {
 	return v.alternatives_
 }
 

@@ -42,7 +42,7 @@ type multilineClass_ struct {
 
 // Constructors
 
-func (c *multilineClass_) MakeWithAttributes(lines col.Sequential[LineLike]) MultilineLike {
+func (c *multilineClass_) MakeWithAttributes(lines col.ListLike[LineLike]) MultilineLike {
 	return &multiline_{
 		lines_: lines,
 	}
@@ -55,12 +55,12 @@ func (c *multilineClass_) MakeWithAttributes(lines col.Sequential[LineLike]) Mul
 // Target
 
 type multiline_ struct {
-	lines_ col.Sequential[LineLike]
+	lines_ col.ListLike[LineLike]
 }
 
 // Attributes
 
-func (v *multiline_) GetLines() col.Sequential[LineLike] {
+func (v *multiline_) GetLines() col.ListLike[LineLike] {
 	return v.lines_
 }
 

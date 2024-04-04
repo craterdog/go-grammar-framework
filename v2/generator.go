@@ -107,12 +107,26 @@ func (v *generator_) consolidateAttributes(
 ) {
 	// Compare each attribute and remove duplicates.
 	for i := 1; i <= attributes.GetSize(); i++ {
-		var first = attributes.GetValue(i).GetIdentifier()
+		var attribute = attributes.GetValue(i)
+		var first = attribute.GetIdentifier()
 		for j := i + 1; j <= attributes.GetSize(); {
 			var second = attributes.GetValue(j).GetIdentifier()
-			if first == second {
+			switch {
+			case first == second:
 				attributes.RemoveValue(j)
-			} else {
+			case first == second[:len(second)-1] && sts.HasSuffix(second, "s"):
+				attribute = attributes.GetValue(j)
+				attributes.SetValue(i, attribute)
+				attributes.RemoveValue(j)
+			case first == second[:len(second)-2] && sts.HasSuffix(second, "es"):
+				attribute = attributes.GetValue(j)
+				attributes.SetValue(i, attribute)
+				attributes.RemoveValue(j)
+			case second == first[:len(first)-1] && sts.HasSuffix(first, "s"):
+				attributes.RemoveValue(j)
+			case second == first[:len(first)-2] && sts.HasSuffix(first, "es"):
+				attributes.RemoveValue(j)
+			default:
 				// We only increment the index j if we didn't remove anything.
 				j++
 			}
@@ -123,14 +137,28 @@ func (v *generator_) consolidateAttributes(
 func (v *generator_) consolidateConstructors(
 	constructors col.ListLike[pac.ConstructorLike],
 ) {
-	// Compare each attribute and remove duplicates.
+	// Compare each constructor and remove duplicates.
 	for i := 1; i <= constructors.GetSize(); i++ {
-		var first = constructors.GetValue(i).GetIdentifier()
+		var constructor = constructors.GetValue(i)
+		var first = constructor.GetIdentifier()
 		for j := i + 1; j <= constructors.GetSize(); {
 			var second = constructors.GetValue(j).GetIdentifier()
-			if first == second {
+			switch {
+			case first == second:
 				constructors.RemoveValue(j)
-			} else {
+			case first == second[:len(second)-1] && sts.HasSuffix(second, "s"):
+				constructor = constructors.GetValue(j)
+				constructors.SetValue(i, constructor)
+				constructors.RemoveValue(j)
+			case first == second[:len(second)-2] && sts.HasSuffix(second, "es"):
+				constructor = constructors.GetValue(j)
+				constructors.SetValue(i, constructor)
+				constructors.RemoveValue(j)
+			case second == first[:len(first)-1] && sts.HasSuffix(first, "s"):
+				constructors.RemoveValue(j)
+			case second == first[:len(first)-2] && sts.HasSuffix(first, "es"):
+				constructors.RemoveValue(j)
+			default:
 				// We only increment the index j if we didn't remove anything.
 				j++
 			}
@@ -168,7 +196,6 @@ func (v *generator_) consolidateLists(
 				// We only increment the index j if we didn't remove anything.
 				j++
 			}
-
 		}
 	}
 }
@@ -208,7 +235,7 @@ func (v *generator_) expandCopyright(copyright string) string {
 	return copyright
 }
 
-func (v *generator_) extractAlternatives(expression ExpressionLike) col.Sequential[AlternativeLike] {
+func (v *generator_) extractAlternatives(expression ExpressionLike) col.ListLike[AlternativeLike] {
 	var alternatives = col.List[AlternativeLike]().Make()
 	var inline = expression.GetInline()
 	if inline != nil {
@@ -245,9 +272,9 @@ func (v *generator_) extractName(definition DefinitionLike) string {
 }
 
 func (v *generator_) extractParameters(
-	attributes col.Sequential[pac.AttributeLike],
-) pac.ParametersLike {
-	var parameterList = col.List[pac.ParameterLike]().Make()
+	attributes col.ListLike[pac.AttributeLike],
+) col.ListLike[pac.ParameterLike] {
+	var parameters = col.List[pac.ParameterLike]().Make()
 	var iterator = attributes.GetIterator()
 	for iterator.HasNext() {
 		var attribute = iterator.GetNext()
@@ -257,27 +284,31 @@ func (v *generator_) extractParameters(
 			v.makeLowercase(identifier),
 			abstraction,
 		)
-		parameterList.AppendValue(parameter)
+		parameters.AppendValue(parameter)
 	}
-	var parameters = pac.Parameters().MakeWithAttributes(parameterList)
 	return parameters
+}
+
+func (v *generator_) generateAspects() col.ListLike[pac.AspectLike] {
+	var aspects col.ListLike[pac.AspectLike]
+	return aspects
 }
 
 func (v *generator_) generateClass(
 	name string,
-	constructors pac.ConstructorsLike,
+	constructors col.ListLike[pac.ConstructorLike],
 ) pac.ClassLike {
 	var comment = classCommentTemplate_
 	comment = sts.ReplaceAll(comment, "<ClassName>", name)
 	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(name))
-	var parameters pac.ParametersLike
+	var parameters col.ListLike[pac.ParameterLike]
 	var declaration = pac.Declaration().MakeWithAttributes(
 		comment,
 		name+"ClassLike",
 		parameters,
 	)
-	var constants pac.ConstantsLike
-	var functions pac.FunctionsLike
+	var constants col.ListLike[pac.ConstantLike]
+	var functions col.ListLike[pac.FunctionLike]
 	var class = pac.Class().MakeWithAttributes(
 		declaration,
 		constants,
@@ -287,38 +318,41 @@ func (v *generator_) generateClass(
 	return class
 }
 
+func (v *generator_) generateClasses() col.ListLike[pac.ClassLike] {
+	var classes = col.List[pac.ClassLike]().Make()
+	if !v.classes_.IsEmpty() {
+		v.classes_.SortValues()
+		classes.AppendValues(v.classes_.GetValues(v.classes_.GetKeys()))
+	}
+	return classes
+}
+
 func (v *generator_) generateHeader(packageName string) pac.HeaderLike {
 	var comment = v.generatePackageComment(packageName)
 	var header = pac.Header().MakeWithAttributes(comment, packageName)
 	return header
 }
 
-func (v *generator_) generateImports() pac.ImportsLike {
-	var imports pac.ImportsLike
-	if !v.modules_.IsEmpty() {
-		v.modules_.SortValues()
-		var values = v.modules_.GetValues(v.modules_.GetKeys())
-		var modules = pac.Modules().MakeWithAttributes(values)
-		imports = pac.Imports().MakeWithAttributes(modules)
-	}
-	return imports
+func (v *generator_) generateFunctionals() col.ListLike[pac.FunctionalLike] {
+	var functionals col.ListLike[pac.FunctionalLike]
+	return functionals
 }
 
 func (v *generator_) generateInstance(
 	name string,
-	attributes pac.AttributesLike,
+	attributes col.ListLike[pac.AttributeLike],
 ) pac.InstanceLike {
 	var comment = instanceCommentTemplate_
 	comment = sts.ReplaceAll(comment, "<ClassName>", name)
 	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(name))
-	var parameters pac.ParametersLike
+	var parameters col.ListLike[pac.ParameterLike]
 	var declaration = pac.Declaration().MakeWithAttributes(
 		comment,
 		name+"Like",
 		parameters,
 	)
-	var abstractions pac.AbstractionsLike
-	var methods pac.MethodsLike
+	var abstractions col.ListLike[pac.AbstractionLike]
+	var methods col.ListLike[pac.MethodLike]
 	var instance = pac.Instance().MakeWithAttributes(
 		declaration,
 		attributes,
@@ -328,25 +362,13 @@ func (v *generator_) generateInstance(
 	return instance
 }
 
-func (v *generator_) generateInterfaces() pac.InterfacesLike {
-	var aspects pac.AspectsLike
-
-	v.classes_.SortValues()
-	var classes = pac.Classes().MakeWithAttributes(
-		v.classes_.GetValues(v.classes_.GetKeys()),
-	)
-
-	v.instances_.SortValues()
-	var instances = pac.Instances().MakeWithAttributes(
-		v.instances_.GetValues(v.instances_.GetKeys()),
-	)
-
-	var interfaces = pac.Interfaces().MakeWithAttributes(
-		aspects,
-		classes,
-		instances,
-	)
-	return interfaces
+func (v *generator_) generateInstances() col.ListLike[pac.InstanceLike] {
+	var instances = col.List[pac.InstanceLike]().Make()
+	if !v.instances_.IsEmpty() {
+		v.instances_.SortValues()
+		instances.AppendValues(v.instances_.GetValues(v.instances_.GetKeys()))
+	}
+	return instances
 }
 
 func (v *generator_) generateModel(directory string, model pac.ModelLike) {
@@ -359,6 +381,15 @@ func (v *generator_) generateModel(directory string, model pac.ModelLike) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (v *generator_) generateModules() col.ListLike[pac.ModuleLike] {
+	var modules = col.List[pac.ModuleLike]().Make()
+	if !v.modules_.IsEmpty() {
+		v.modules_.SortValues()
+		modules.AppendValues(v.modules_.GetValues(v.modules_.GetKeys()))
+	}
+	return modules
 }
 
 func (v *generator_) generateNotice(grammar GrammarLike) pac.NoticeLike {
@@ -383,6 +414,11 @@ func (v *generator_) generatePackageComment(
 	return comment
 }
 
+func (v *generator_) generateTypes() col.ListLike[pac.TypeLike] {
+	var types col.ListLike[pac.TypeLike]
+	return types
+}
+
 func (v *generator_) isLowercase(identifier string) bool {
 	return uni.IsLower([]rune(identifier)[0])
 }
@@ -395,12 +431,11 @@ func (v *generator_) makeList(attribute pac.AttributeLike) pac.AttributeLike {
 	var identifier = attribute.GetIdentifier()
 	identifier = v.makePlural(identifier)
 	var abstraction = attribute.GetAbstraction()
-	var argumentList = col.List[pac.AbstractionLike]().Make()
-	argumentList.AppendValue(abstraction)
-	var arguments = pac.Arguments().MakeWithAttributes(argumentList)
+	var arguments = col.List[pac.AbstractionLike]().Make()
+	arguments.AppendValue(abstraction)
 	abstraction = pac.Abstraction().MakeWithAttributes(
 		pac.Prefix().MakeWithAttributes("col", pac.AliasPrefix),
-		"Sequential",
+		"ListLike",
 		arguments,
 	)
 	var parameter pac.ParameterLike
@@ -411,7 +446,11 @@ func (v *generator_) makeList(attribute pac.AttributeLike) pac.AttributeLike {
 func (v *generator_) makeLowercase(identifier string) string {
 	runes := []rune(identifier)
 	runes[0] = uni.ToLower(runes[0])
-	return string(runes)
+	identifier = string(runes)
+	if reserved_[identifier] {
+		identifier += "_"
+	}
+	return identifier
 }
 
 func (v *generator_) makePlural(identifier string) string {
@@ -449,36 +488,41 @@ func (v *generator_) parseGrammar(directory string) GrammarLike {
 
 func (v *generator_) processAlternative(name string, alternative AlternativeLike) (
 	constructor pac.ConstructorLike,
-	attributes pac.AttributesLike,
+	attributes col.ListLike[pac.AttributeLike],
 ) {
 	// Extract the attributes.
-	var attributeList = col.List[pac.AttributeLike]().Make()
+	attributes = col.List[pac.AttributeLike]().Make()
 	var iterator = alternative.GetFactors().GetIterator()
 	for iterator.HasNext() {
 		var factor = iterator.GetNext()
-		attributes = v.processFactor(name, factor)
-		attributeList.AppendValues(attributes.GetSequence())
+		var values = v.processFactor(name, factor)
+		attributes.AppendValues(values)
 	}
-	v.consolidateLists(attributeList)
+	v.consolidateLists(attributes)
 
 	// Extract the constructor.
 	var prefix pac.PrefixLike
-	var arguments pac.ArgumentsLike
+	var arguments col.ListLike[pac.AbstractionLike]
 	var abstraction = pac.Abstraction().MakeWithAttributes(
 		prefix,
 		name+"Like",
 		arguments,
 	)
-	if !attributeList.IsEmpty() {
-		var parameters = v.extractParameters(attributeList)
+	if !attributes.IsEmpty() {
+		var identifier = "MakeWithAttributes"
+		if attributes.GetSize() == 1 {
+			identifier = attributes.GetValue(1).GetIdentifier()
+			identifier = sts.TrimPrefix(identifier, "Get")
+			identifier = "MakeWith" + identifier
+		}
+		var parameters = v.extractParameters(attributes)
 		constructor = pac.Constructor().MakeWithAttributes(
-			"MakeWithAttributes",
+			identifier,
 			parameters,
 			abstraction,
 		)
 	}
 
-	attributes = pac.Attributes().MakeWithAttributes(attributeList)
 	return constructor, attributes
 }
 
@@ -495,32 +539,30 @@ func (v *generator_) processDefinition(
 }
 
 func (v *generator_) processExpression(name string, expression ExpressionLike) (
-	constructors pac.ConstructorsLike,
-	attributes pac.AttributesLike,
+	constructors col.ListLike[pac.ConstructorLike],
+	attributes col.ListLike[pac.AttributeLike],
 ) {
-	var constructorList = col.List[pac.ConstructorLike]().Make()
-	var attributeList = col.List[pac.AttributeLike]().Make()
+	constructors = col.List[pac.ConstructorLike]().Make()
+	attributes = col.List[pac.AttributeLike]().Make()
 	var alternatives = v.extractAlternatives(expression)
 	var iterator = alternatives.GetIterator()
 	for iterator.HasNext() {
 		var alternative = iterator.GetNext()
-		var constructor, attributes = v.processAlternative(name, alternative)
+		var constructor, values = v.processAlternative(name, alternative)
 		if constructor != nil {
-			constructorList.AppendValue(constructor)
+			constructors.AppendValue(constructor)
 		}
-		attributeList.AppendValues(attributes.GetSequence())
+		attributes.AppendValues(values)
 	}
-	v.consolidateConstructors(constructorList)
-	v.consolidateAttributes(attributeList)
-	constructors = pac.Constructors().MakeWithAttributes(constructorList)
-	attributes = pac.Attributes().MakeWithAttributes(attributeList)
+	v.consolidateConstructors(constructors)
+	v.consolidateAttributes(attributes)
 	return constructors, attributes
 }
 
 func (v *generator_) processFactor(
 	name string,
 	factor FactorLike,
-) (attributes pac.AttributesLike) {
+) (attributes col.ListLike[pac.AttributeLike]) {
 	var isSequential bool
 	var cardinality = factor.GetCardinality()
 	if cardinality != nil {
@@ -540,7 +582,7 @@ func (v *generator_) processFactor(
 	var identifier string
 	var abstraction pac.AbstractionLike
 	var attribute pac.AttributeLike
-	var attributeList = col.List[pac.AttributeLike]().Make()
+	attributes = col.List[pac.AttributeLike]().Make()
 	var predicate = factor.GetPredicate()
 	var element = predicate.GetElement()
 	var inversion = predicate.GetInversion()
@@ -550,7 +592,7 @@ func (v *generator_) processFactor(
 		identifier = element.GetName()
 		if len(identifier) > 0 {
 			var prefix pac.PrefixLike
-			var arguments pac.ArgumentsLike
+			var arguments col.ListLike[pac.AbstractionLike]
 			if v.isUppercase(identifier) {
 				abstraction = pac.Abstraction().MakeWithAttributes(
 					prefix,
@@ -559,12 +601,11 @@ func (v *generator_) processFactor(
 				)
 				if isSequential {
 					identifier = v.makePlural(identifier)
-					var argumentList = col.List[pac.AbstractionLike]().Make()
-					argumentList.AppendValue(abstraction)
-					arguments = pac.Arguments().MakeWithAttributes(argumentList)
+					var arguments = col.List[pac.AbstractionLike]().Make()
+					arguments.AppendValue(abstraction)
 					abstraction = pac.Abstraction().MakeWithAttributes(
 						pac.Prefix().MakeWithAttributes("col", pac.AliasPrefix),
-						"Sequential",
+						"ListLike",
 						arguments,
 					)
 				}
@@ -581,17 +622,16 @@ func (v *generator_) processFactor(
 				parameter,
 				abstraction,
 			)
-			attributeList.AppendValue(attribute)
+			attributes.AppendValue(attribute)
 		}
 	case inversion != nil:
 	case precedence != nil:
 		var expression = precedence.GetExpression()
-		var _, attributes = v.processExpression(name, expression)
-		attributeList.AppendValues(attributes.GetSequence())
+		var _, values = v.processExpression(name, expression)
+		attributes.AppendValues(values)
 	default:
 		panic("Found an empty predicate.")
 	}
-	attributes = pac.Attributes().MakeWithAttributes(attributeList)
 	return attributes
 }
 
@@ -605,15 +645,21 @@ func (v *generator_) processGrammar(grammar GrammarLike) pac.ModelLike {
 	}
 	var notice = v.generateNotice(grammar)
 	var header = v.generateHeader(packageName)
-	var imports = v.generateImports()
-	var types pac.TypesLike
-	var interfaces = v.generateInterfaces()
+	var imports = v.generateModules()
+	var types = v.generateTypes()
+	var functionals = v.generateFunctionals()
+	var aspects = v.generateAspects()
+	var classes = v.generateClasses()
+	var instances = v.generateInstances()
 	var model = pac.Model().MakeWithAttributes(
 		notice,
 		header,
 		imports,
 		types,
-		interfaces,
+		functionals,
+		aspects,
+		classes,
+		instances,
 	)
 	return model
 }
@@ -636,4 +682,27 @@ func (v *generator_) processRule(
 
 func (v *generator_) processToken(name string, expression ExpressionLike) {
 	// Ignore token definitions for now.
+}
+
+var reserved_ = map[string]bool{
+	"byte":      true,
+	"case":      true,
+	"complex":   true,
+	"copy":      true,
+	"default":   true,
+	"error":     true,
+	"false":     true,
+	"import":    true,
+	"interface": true,
+	"map":       true,
+	"nil":       true,
+	"package":   true,
+	"range":     true,
+	"real":      true,
+	"return":    true,
+	"rune":      true,
+	"string":    true,
+	"switch":    true,
+	"true":      true,
+	"type":      true,
 }

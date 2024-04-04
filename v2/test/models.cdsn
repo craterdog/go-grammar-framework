@@ -49,23 +49,19 @@ definition may be separated by spaces which are ignored by the parser.
 <!
 Source: Model EOL* EOF  ! Terminated with an end-of-file marker.
 
-Model: Notice Header Imports? Types? Interfaces?
+Model: Notice Header Modules? Types? Functionals? Aspects? Classes? Instances?
 
 Notice: comment
 
 Header: comment "package" identifier
 
-Imports: "import" "(" Modules? ")"
-
-Modules: Module+
+Modules: "import" "(" Module+ ")"
 
 Module: identifier text
 
-Types: "// TYPES" Specializations? Functionals?
+Types: "// Types" Type+
 
-Specializations: "// Specializations" Specialization+
-
-Specialization: Declaration Abstraction Enumeration?
+Type: Declaration Abstraction Enumeration?
 
 Declaration: comment "type" identifier ("[" Parameters "]")?
 
@@ -75,21 +71,21 @@ Parameter: identifier Abstraction
 
 Abstraction: Prefix? identifier ("[" Arguments "]")?
 
-Prefix: "[" "]" | "map" "[" identifier "]" | "chan" | identifier "."
+Prefix:
+    "[" "]"
+    "map" "[" identifier "]"
+    "chan"
+    identifier "."
 
 Arguments: Abstraction ("," Abstraction)* ","?
 
-Enumeration: "const" "(" Values ")"
-
-Values: Parameter "=" "iota" identifier*
+Enumeration: "const" "(" Parameter "=" "iota" identifier* ")"
 
 Functionals: "// Functionals" Functional+
 
 Functional: Declaration "func" "(" Parameters? ")" Result
 
 Result: Abstraction | "(" Parameters ")"
-
-Interfaces: "// INTERFACES" Aspects? Classes? Instances?
 
 Aspects: "// Aspects" Aspect+
 
