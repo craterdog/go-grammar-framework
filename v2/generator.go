@@ -15,7 +15,7 @@ package grammars
 import (
 	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v3"
-	pac "github.com/craterdog/go-package-framework/v2"
+	mod "github.com/craterdog/go-model-framework/v2"
 	osx "os"
 	sts "strings"
 	tim "time"
@@ -55,9 +55,9 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
-	modules_   col.CatalogLike[string, pac.ModuleLike]
-	classes_   col.CatalogLike[string, pac.ClassLike]
-	instances_ col.CatalogLike[string, pac.InstanceLike]
+	modules_   col.CatalogLike[string, mod.ModuleLike]
+	classes_   col.CatalogLike[string, mod.ClassLike]
+	instances_ col.CatalogLike[string, mod.InstanceLike]
 }
 
 // Public
@@ -82,9 +82,9 @@ func (v *generator_) CreateGrammar(directory string, copyright string) {
 
 func (v *generator_) GenerateModel(directory string) {
 	// Initialize the catalogs.
-	v.modules_ = col.Catalog[string, pac.ModuleLike]().Make()
-	v.classes_ = col.Catalog[string, pac.ClassLike]().Make()
-	v.instances_ = col.Catalog[string, pac.InstanceLike]().Make()
+	v.modules_ = col.Catalog[string, mod.ModuleLike]().Make()
+	v.classes_ = col.Catalog[string, mod.ClassLike]().Make()
+	v.instances_ = col.Catalog[string, mod.InstanceLike]().Make()
 
 	// Parse the grammar file.
 	if !sts.HasSuffix(directory, "/") {
@@ -103,7 +103,7 @@ func (v *generator_) GenerateModel(directory string) {
 // Private
 
 func (v *generator_) consolidateAttributes(
-	attributes col.ListLike[pac.AttributeLike],
+	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Compare each attribute and remove duplicates.
 	for i := 1; i <= attributes.GetSize(); i++ {
@@ -135,7 +135,7 @@ func (v *generator_) consolidateAttributes(
 }
 
 func (v *generator_) consolidateConstructors(
-	constructors col.ListLike[pac.ConstructorLike],
+	constructors col.ListLike[mod.ConstructorLike],
 ) {
 	// Compare each constructor and remove duplicates.
 	for i := 1; i <= constructors.GetSize(); i++ {
@@ -167,7 +167,7 @@ func (v *generator_) consolidateConstructors(
 }
 
 func (v *generator_) consolidateLists(
-	attributes col.ListLike[pac.AttributeLike],
+	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Compare each attribute and make lists out of duplicates.
 	for i := 1; i <= attributes.GetSize(); i++ {
@@ -272,15 +272,15 @@ func (v *generator_) extractName(definition DefinitionLike) string {
 }
 
 func (v *generator_) extractParameters(
-	attributes col.ListLike[pac.AttributeLike],
-) col.ListLike[pac.ParameterLike] {
-	var parameters = col.List[pac.ParameterLike]().Make()
+	attributes col.ListLike[mod.AttributeLike],
+) col.ListLike[mod.ParameterLike] {
+	var parameters = col.List[mod.ParameterLike]().Make()
 	var iterator = attributes.GetIterator()
 	for iterator.HasNext() {
 		var attribute = iterator.GetNext()
 		var identifier = sts.TrimPrefix(attribute.GetIdentifier(), "Get")
 		var abstraction = attribute.GetAbstraction()
-		var parameter = pac.Parameter().MakeWithAttributes(
+		var parameter = mod.Parameter().MakeWithAttributes(
 			v.makeLowercase(identifier),
 			abstraction,
 		)
@@ -289,27 +289,27 @@ func (v *generator_) extractParameters(
 	return parameters
 }
 
-func (v *generator_) generateAspects() col.ListLike[pac.AspectLike] {
-	var aspects col.ListLike[pac.AspectLike]
+func (v *generator_) generateAspects() col.ListLike[mod.AspectLike] {
+	var aspects col.ListLike[mod.AspectLike]
 	return aspects
 }
 
 func (v *generator_) generateClass(
 	name string,
-	constructors col.ListLike[pac.ConstructorLike],
-) pac.ClassLike {
+	constructors col.ListLike[mod.ConstructorLike],
+) mod.ClassLike {
 	var comment = classCommentTemplate_
 	comment = sts.ReplaceAll(comment, "<ClassName>", name)
 	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(name))
-	var parameters col.ListLike[pac.ParameterLike]
-	var declaration = pac.Declaration().MakeWithAttributes(
+	var parameters col.ListLike[mod.ParameterLike]
+	var declaration = mod.Declaration().MakeWithAttributes(
 		comment,
 		name+"ClassLike",
 		parameters,
 	)
-	var constants col.ListLike[pac.ConstantLike]
-	var functions col.ListLike[pac.FunctionLike]
-	var class = pac.Class().MakeWithAttributes(
+	var constants col.ListLike[mod.ConstantLike]
+	var functions col.ListLike[mod.FunctionLike]
+	var class = mod.Class().MakeWithAttributes(
 		declaration,
 		constants,
 		constructors,
@@ -318,8 +318,8 @@ func (v *generator_) generateClass(
 	return class
 }
 
-func (v *generator_) generateClasses() col.ListLike[pac.ClassLike] {
-	var classes = col.List[pac.ClassLike]().Make()
+func (v *generator_) generateClasses() col.ListLike[mod.ClassLike] {
+	var classes = col.List[mod.ClassLike]().Make()
 	if !v.classes_.IsEmpty() {
 		v.classes_.SortValues()
 		classes.AppendValues(v.classes_.GetValues(v.classes_.GetKeys()))
@@ -327,33 +327,33 @@ func (v *generator_) generateClasses() col.ListLike[pac.ClassLike] {
 	return classes
 }
 
-func (v *generator_) generateHeader(packageName string) pac.HeaderLike {
+func (v *generator_) generateHeader(packageName string) mod.HeaderLike {
 	var comment = v.generatePackageComment(packageName)
-	var header = pac.Header().MakeWithAttributes(comment, packageName)
+	var header = mod.Header().MakeWithAttributes(comment, packageName)
 	return header
 }
 
-func (v *generator_) generateFunctionals() col.ListLike[pac.FunctionalLike] {
-	var functionals col.ListLike[pac.FunctionalLike]
+func (v *generator_) generateFunctionals() col.ListLike[mod.FunctionalLike] {
+	var functionals col.ListLike[mod.FunctionalLike]
 	return functionals
 }
 
 func (v *generator_) generateInstance(
 	name string,
-	attributes col.ListLike[pac.AttributeLike],
-) pac.InstanceLike {
+	attributes col.ListLike[mod.AttributeLike],
+) mod.InstanceLike {
 	var comment = instanceCommentTemplate_
 	comment = sts.ReplaceAll(comment, "<ClassName>", name)
 	comment = sts.ReplaceAll(comment, "<class-name>", sts.ToLower(name))
-	var parameters col.ListLike[pac.ParameterLike]
-	var declaration = pac.Declaration().MakeWithAttributes(
+	var parameters col.ListLike[mod.ParameterLike]
+	var declaration = mod.Declaration().MakeWithAttributes(
 		comment,
 		name+"Like",
 		parameters,
 	)
-	var abstractions col.ListLike[pac.AbstractionLike]
-	var methods col.ListLike[pac.MethodLike]
-	var instance = pac.Instance().MakeWithAttributes(
+	var abstractions col.ListLike[mod.AbstractionLike]
+	var methods col.ListLike[mod.MethodLike]
+	var instance = mod.Instance().MakeWithAttributes(
 		declaration,
 		attributes,
 		abstractions,
@@ -362,8 +362,8 @@ func (v *generator_) generateInstance(
 	return instance
 }
 
-func (v *generator_) generateInstances() col.ListLike[pac.InstanceLike] {
-	var instances = col.List[pac.InstanceLike]().Make()
+func (v *generator_) generateInstances() col.ListLike[mod.InstanceLike] {
+	var instances = col.List[mod.InstanceLike]().Make()
 	if !v.instances_.IsEmpty() {
 		v.instances_.SortValues()
 		instances.AppendValues(v.instances_.GetValues(v.instances_.GetKeys()))
@@ -371,10 +371,10 @@ func (v *generator_) generateInstances() col.ListLike[pac.InstanceLike] {
 	return instances
 }
 
-func (v *generator_) generateModel(directory string, model pac.ModelLike) {
-	var validator = pac.Validator().Make()
+func (v *generator_) generateModel(directory string, model mod.ModelLike) {
+	var validator = mod.Validator().Make()
 	validator.ValidateModel(model)
-	var formatter = pac.Formatter().Make()
+	var formatter = mod.Formatter().Make()
 	var source = formatter.FormatModel(model)
 	var bytes = []byte(source)
 	var err = osx.WriteFile(directory+"Package.go", bytes, 0644)
@@ -383,8 +383,8 @@ func (v *generator_) generateModel(directory string, model pac.ModelLike) {
 	}
 }
 
-func (v *generator_) generateModules() col.ListLike[pac.ModuleLike] {
-	var modules = col.List[pac.ModuleLike]().Make()
+func (v *generator_) generateModules() col.ListLike[mod.ModuleLike] {
+	var modules = col.List[mod.ModuleLike]().Make()
 	if !v.modules_.IsEmpty() {
 		v.modules_.SortValues()
 		modules.AppendValues(v.modules_.GetValues(v.modules_.GetKeys()))
@@ -392,7 +392,7 @@ func (v *generator_) generateModules() col.ListLike[pac.ModuleLike] {
 	return modules
 }
 
-func (v *generator_) generateNotice(grammar GrammarLike) pac.NoticeLike {
+func (v *generator_) generateNotice(grammar GrammarLike) mod.NoticeLike {
 	var header = grammar.GetHeaders().GetIterator().GetNext()
 	var comment = header.GetComment()
 
@@ -402,7 +402,7 @@ func (v *generator_) generateNotice(grammar GrammarLike) pac.NoticeLike {
 	// Add the Go style comment delimiters.
 	comment = "/*\n" + comment + "\n*/\n"
 
-	var notice = pac.Notice().MakeWithAttributes(comment)
+	var notice = mod.Notice().MakeWithComment(comment)
 	return notice
 }
 
@@ -414,8 +414,8 @@ func (v *generator_) generatePackageComment(
 	return comment
 }
 
-func (v *generator_) generateTypes() col.ListLike[pac.TypeLike] {
-	var types col.ListLike[pac.TypeLike]
+func (v *generator_) generateTypes() col.ListLike[mod.TypeLike] {
+	var types col.ListLike[mod.TypeLike]
 	return types
 }
 
@@ -427,19 +427,19 @@ func (v *generator_) isUppercase(identifier string) bool {
 	return uni.IsUpper([]rune(identifier)[0])
 }
 
-func (v *generator_) makeList(attribute pac.AttributeLike) pac.AttributeLike {
+func (v *generator_) makeList(attribute mod.AttributeLike) mod.AttributeLike {
 	var identifier = attribute.GetIdentifier()
 	identifier = v.makePlural(identifier)
 	var abstraction = attribute.GetAbstraction()
-	var arguments = col.List[pac.AbstractionLike]().Make()
+	var arguments = col.List[mod.AbstractionLike]().Make()
 	arguments.AppendValue(abstraction)
-	abstraction = pac.Abstraction().MakeWithAttributes(
-		pac.Prefix().MakeWithAttributes("col", pac.AliasPrefix),
+	abstraction = mod.Abstraction().MakeWithAttributes(
+		mod.Prefix().MakeWithAttributes("col", mod.AliasPrefix),
 		"ListLike",
 		arguments,
 	)
-	var parameter pac.ParameterLike
-	attribute = pac.Attribute().MakeWithAttributes(identifier, parameter, abstraction)
+	var parameter mod.ParameterLike
+	attribute = mod.Attribute().MakeWithAttributes(identifier, parameter, abstraction)
 	return attribute
 }
 
@@ -487,11 +487,11 @@ func (v *generator_) parseGrammar(directory string) GrammarLike {
 }
 
 func (v *generator_) processAlternative(name string, alternative AlternativeLike) (
-	constructor pac.ConstructorLike,
-	attributes col.ListLike[pac.AttributeLike],
+	constructor mod.ConstructorLike,
+	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Extract the attributes.
-	attributes = col.List[pac.AttributeLike]().Make()
+	attributes = col.List[mod.AttributeLike]().Make()
 	var iterator = alternative.GetFactors().GetIterator()
 	for iterator.HasNext() {
 		var factor = iterator.GetNext()
@@ -501,9 +501,9 @@ func (v *generator_) processAlternative(name string, alternative AlternativeLike
 	v.consolidateLists(attributes)
 
 	// Extract the constructor.
-	var prefix pac.PrefixLike
-	var arguments col.ListLike[pac.AbstractionLike]
-	var abstraction = pac.Abstraction().MakeWithAttributes(
+	var prefix mod.PrefixLike
+	var arguments col.ListLike[mod.AbstractionLike]
+	var abstraction = mod.Abstraction().MakeWithAttributes(
 		prefix,
 		name+"Like",
 		arguments,
@@ -516,7 +516,7 @@ func (v *generator_) processAlternative(name string, alternative AlternativeLike
 			identifier = "MakeWith" + identifier
 		}
 		var parameters = v.extractParameters(attributes)
-		constructor = pac.Constructor().MakeWithAttributes(
+		constructor = mod.Constructor().MakeWithAttributes(
 			identifier,
 			parameters,
 			abstraction,
@@ -539,11 +539,11 @@ func (v *generator_) processDefinition(
 }
 
 func (v *generator_) processExpression(name string, expression ExpressionLike) (
-	constructors col.ListLike[pac.ConstructorLike],
-	attributes col.ListLike[pac.AttributeLike],
+	constructors col.ListLike[mod.ConstructorLike],
+	attributes col.ListLike[mod.AttributeLike],
 ) {
-	constructors = col.List[pac.ConstructorLike]().Make()
-	attributes = col.List[pac.AttributeLike]().Make()
+	constructors = col.List[mod.ConstructorLike]().Make()
+	attributes = col.List[mod.AttributeLike]().Make()
 	var alternatives = v.extractAlternatives(expression)
 	var iterator = alternatives.GetIterator()
 	for iterator.HasNext() {
@@ -562,7 +562,7 @@ func (v *generator_) processExpression(name string, expression ExpressionLike) (
 func (v *generator_) processFactor(
 	name string,
 	factor FactorLike,
-) (attributes col.ListLike[pac.AttributeLike]) {
+) (attributes col.ListLike[mod.AttributeLike]) {
 	var isSequential bool
 	var cardinality = factor.GetCardinality()
 	if cardinality != nil {
@@ -571,7 +571,7 @@ func (v *generator_) processFactor(
 			isSequential = true
 			var prefix = "col"
 			var repository = `"github.com/craterdog/go-collection-framework/v3"`
-			var module = pac.Module().MakeWithAttributes(
+			var module = mod.Module().MakeWithAttributes(
 				prefix,
 				repository,
 			)
@@ -580,9 +580,9 @@ func (v *generator_) processFactor(
 		}
 	}
 	var identifier string
-	var abstraction pac.AbstractionLike
-	var attribute pac.AttributeLike
-	attributes = col.List[pac.AttributeLike]().Make()
+	var abstraction mod.AbstractionLike
+	var attribute mod.AttributeLike
+	attributes = col.List[mod.AttributeLike]().Make()
 	var predicate = factor.GetPredicate()
 	var element = predicate.GetElement()
 	var inversion = predicate.GetInversion()
@@ -591,33 +591,33 @@ func (v *generator_) processFactor(
 	case element != nil:
 		identifier = element.GetName()
 		if len(identifier) > 0 {
-			var prefix pac.PrefixLike
-			var arguments col.ListLike[pac.AbstractionLike]
+			var prefix mod.PrefixLike
+			var arguments col.ListLike[mod.AbstractionLike]
 			if v.isUppercase(identifier) {
-				abstraction = pac.Abstraction().MakeWithAttributes(
+				abstraction = mod.Abstraction().MakeWithAttributes(
 					prefix,
 					identifier+"Like",
 					arguments,
 				)
 				if isSequential {
 					identifier = v.makePlural(identifier)
-					var arguments = col.List[pac.AbstractionLike]().Make()
+					var arguments = col.List[mod.AbstractionLike]().Make()
 					arguments.AppendValue(abstraction)
-					abstraction = pac.Abstraction().MakeWithAttributes(
-						pac.Prefix().MakeWithAttributes("col", pac.AliasPrefix),
+					abstraction = mod.Abstraction().MakeWithAttributes(
+						mod.Prefix().MakeWithAttributes("col", mod.AliasPrefix),
 						"ListLike",
 						arguments,
 					)
 				}
 			} else {
-				abstraction = pac.Abstraction().MakeWithAttributes(
+				abstraction = mod.Abstraction().MakeWithAttributes(
 					prefix,
 					"string",
 					arguments,
 				)
 			}
-			var parameter pac.ParameterLike
-			attribute = pac.Attribute().MakeWithAttributes(
+			var parameter mod.ParameterLike
+			attribute = mod.Attribute().MakeWithAttributes(
 				"Get"+v.makeUppercase(identifier),
 				parameter,
 				abstraction,
@@ -635,7 +635,7 @@ func (v *generator_) processFactor(
 	return attributes
 }
 
-func (v *generator_) processGrammar(grammar GrammarLike) pac.ModelLike {
+func (v *generator_) processGrammar(grammar GrammarLike) mod.ModelLike {
 	var iterator = grammar.GetDefinitions().GetIterator()
 	var definition = iterator.GetNext()
 	var packageName = v.extractName(definition)
@@ -651,7 +651,7 @@ func (v *generator_) processGrammar(grammar GrammarLike) pac.ModelLike {
 	var aspects = v.generateAspects()
 	var classes = v.generateClasses()
 	var instances = v.generateInstances()
-	var model = pac.Model().MakeWithAttributes(
+	var model = mod.Model().MakeWithAttributes(
 		notice,
 		header,
 		imports,

@@ -12,7 +12,7 @@ but adds support for comments and negation.
 ### Quick Links
 For more information on this project click on the following links:
  * [project documentation](https://github.com/craterdog/go-grammar-framework/wiki)
- * [coding conventions](https://github.com/craterdog/go-package-framework/wiki)
+ * [coding conventions](https://github.com/craterdog/go-model-framework/wiki)
  * [release notes](https://github.com/craterdog/go-grammar-framework/wiki/releases)
 
 ### Getting Started

@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/craterdog/go-collection-framework/v3 v3.8.2
-	github.com/craterdog/go-package-framework/v2 v2.3.0
+	github.com/craterdog/go-model-framework/v2 v2.0.0
 	github.com/stretchr/testify v1.9.0
 )
 
