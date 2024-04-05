@@ -13,7 +13,7 @@
 package grammars
 
 import (
-	//fmt "fmt"
+	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v3"
 	reg "regexp"
 	sts "strings"
@@ -25,6 +25,20 @@ import (
 // Reference
 
 var scannerClass = &scannerClass_{
+	tokens_: map[TokenType]string{
+		ErrorToken:     "error",
+		CharacterToken: "character",
+		CommentToken:   "comment",
+		DelimiterToken: "delimiter",
+		EOFToken:       "EOF",
+		EOLToken:       "EOL",
+		IntrinsicToken: "intrinsic",
+		LiteralToken:   "literal",
+		NameToken:      "name",
+		NoteToken:      "note",
+		NumberToken:    "number",
+		SpaceToken:     "space",
+	},
 	matchers_: map[TokenType]*reg.Regexp{
 		CharacterToken: reg.MustCompile(`^(?:` + character_ + `)`),
 		CommentToken:   reg.MustCompile(`^(?:` + comment_ + `)`),
@@ -50,6 +64,7 @@ func Scanner() ScannerClassLike {
 // Target
 
 type scannerClass_ struct {
+	tokens_   map[TokenType]string
 	matchers_ map[TokenType]*reg.Regexp
 }
 
@@ -70,6 +85,21 @@ func (c *scannerClass_) Make(
 }
 
 // Functions
+
+func (c *scannerClass_) FormatToken(token TokenLike) string {
+	var value = token.GetValue()
+	var s = fmt.Sprintf("%q", value)
+	if len(s) > 40 {
+		s = fmt.Sprintf("%.40q...", value)
+	}
+	return fmt.Sprintf(
+		"Token [type: %s, line: %d, position: %d]: %s",
+		c.tokens_[token.GetType()],
+		token.GetLine(),
+		token.GetPosition(),
+		s,
+	)
+}
 
 func (c *scannerClass_) MatchToken(
 	type_ TokenType,
