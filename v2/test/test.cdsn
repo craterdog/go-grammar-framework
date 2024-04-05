@@ -14,7 +14,7 @@
 GO TEST NOTATION
 This document is a formal definition of a Go test notation that demonstrates
 Each of the possible token and rule definitions. A language grammar consists
-	of a set of token definitions and rule definitions.
+of a set of token definitions and rule definitions.
 
 The following intrinsic character types are context specific:
  * ANY - Any language specific character.
@@ -51,7 +51,11 @@ Source: Component EOL* EOF  ! Terminated with an end-of-file marker.
 
 Component: Primitive | List{3..5}
 
-Primitive: character | text | integer | anything
+Primitive:
+    character
+    text
+    integer
+    anything
 
 List: "[" Component (',' Component)* "]"
 
