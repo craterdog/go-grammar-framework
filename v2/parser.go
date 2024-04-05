@@ -785,7 +785,7 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var grammar = map[string]string{
-	"Source":      `Grammar EOF  ! Terminated with an end-of-file marker.`,
+	"Source":      `Grammar EOL* EOF  ! Terminated with an end-of-file marker.`,
 	"Grammar":     `Header+ Definition+`,
 	"Header":      `comment EOL+`,
 	"Definition":  `comment? name ":" Expression EOL+`,
