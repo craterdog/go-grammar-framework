@@ -103,7 +103,15 @@ comment: "!>" EOL ANY* EOL "<!" EOL  ! Chooses the shortest possible match.
 
 delimiter: "~" | "?" | "*" | "+" | ":" | "|" | "(" | ")" | "{" | "}" | ".."
 
-intrinsic: "ANY" | "LOWER" | "UPPER" | "DIGIT" | "ESCAPE" | "CONTROL" | "EOL" | "EOF"
+intrinsic:
+    "ANY"
+    "LOWER"
+    "UPPER"
+    "DIGIT"
+    "ESCAPE"
+    "CONTROL"
+    "EOL"
+    "EOF"
 
 letter: LOWER | UPPER
 
