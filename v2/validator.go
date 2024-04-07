@@ -153,17 +153,6 @@ func (v *validator_) validateConstraint(constraint ConstraintLike) {
 	}
 }
 
-func (v *validator_) validateHeader(header HeaderLike) {
-	var comment = header.GetComment()
-	if len(comment) == 0 {
-		var message = v.formatError(
-			"A header must contain a comment.",
-		)
-		panic(message)
-	}
-	v.validateComment(comment)
-}
-
 func (v *validator_) validateDefinition(definition DefinitionLike) {
 	v.stack_.AddValue(definition)
 	var comment = definition.GetComment()
@@ -210,66 +199,6 @@ func (v *validator_) validateElement(element ElementLike) {
 			"An element must contain a literal or a name but not both.",
 		)
 		panic(message)
-	}
-}
-
-func (v *validator_) validateInline(inline InlineLike) {
-	var alternatives = inline.GetAlternatives()
-	if alternatives == nil || alternatives.IsEmpty() {
-		var message = v.formatError(
-			"Each inline expression must have at least one alternative.",
-		)
-		panic(message)
-	}
-	var iterator = alternatives.GetIterator()
-	for iterator.HasNext() {
-		var alternative = iterator.GetNext()
-		v.validateAlternative(alternative)
-	}
-	var note = inline.GetNote()
-	if len(note) > 0 {
-		v.validateNote(note)
-	}
-}
-
-func (v *validator_) validateInversion(inversion InversionLike) {
-	var filter = inversion.GetFilter()
-	if filter == nil {
-		var message = v.formatError(
-			"An inversion must contain a filter.",
-		)
-		panic(message)
-	}
-	v.validateFilter(filter)
-}
-
-func (v *validator_) validateLine(line LineLike) {
-	var alternative = line.GetAlternative()
-	if alternative == nil {
-		var message = v.formatError(
-			"A line must contain an alternative.",
-		)
-		panic(message)
-	}
-	v.validateAlternative(alternative)
-	var note = line.GetNote()
-	if len(note) > 0 {
-		v.validateNote(note)
-	}
-}
-
-func (v *validator_) validateMultiline(multiline MultilineLike) {
-	var lines = multiline.GetLines()
-	if lines == nil || lines.IsEmpty() {
-		var message = v.formatError(
-			"Each multi-line expression must have at least one line.",
-		)
-		panic(message)
-	}
-	var iterator = lines.GetIterator()
-	for iterator.HasNext() {
-		var line = iterator.GetNext()
-		v.validateLine(line)
 	}
 }
 
@@ -358,6 +287,36 @@ func (v *validator_) validateGrammar(grammar GrammarLike) {
 	}
 }
 
+func (v *validator_) validateHeader(header HeaderLike) {
+	var comment = header.GetComment()
+	if len(comment) == 0 {
+		var message = v.formatError(
+			"A header must contain a comment.",
+		)
+		panic(message)
+	}
+	v.validateComment(comment)
+}
+
+func (v *validator_) validateInline(inline InlineLike) {
+	var alternatives = inline.GetAlternatives()
+	if alternatives == nil || alternatives.IsEmpty() {
+		var message = v.formatError(
+			"Each inline expression must have at least one alternative.",
+		)
+		panic(message)
+	}
+	var iterator = alternatives.GetIterator()
+	for iterator.HasNext() {
+		var alternative = iterator.GetNext()
+		v.validateAlternative(alternative)
+	}
+	var note = inline.GetNote()
+	if len(note) > 0 {
+		v.validateNote(note)
+	}
+}
+
 func (v *validator_) validateIntrinsic(intrinsic string) {
 	var matches = Scanner().MatchToken(IntrinsicToken, intrinsic)
 	if matches.IsEmpty() {
@@ -368,6 +327,32 @@ func (v *validator_) validateIntrinsic(intrinsic string) {
 	}
 }
 
+func (v *validator_) validateInversion(inversion InversionLike) {
+	var filter = inversion.GetFilter()
+	if filter == nil {
+		var message = v.formatError(
+			"An inversion must contain a filter.",
+		)
+		panic(message)
+	}
+	v.validateFilter(filter)
+}
+
+func (v *validator_) validateLine(line LineLike) {
+	var alternative = line.GetAlternative()
+	if alternative == nil {
+		var message = v.formatError(
+			"A line must contain an alternative.",
+		)
+		panic(message)
+	}
+	v.validateAlternative(alternative)
+	var note = line.GetNote()
+	if len(note) > 0 {
+		v.validateNote(note)
+	}
+}
+
 func (v *validator_) validateLiteral(literal string) {
 	var matches = Scanner().MatchToken(LiteralToken, literal)
 	if matches.IsEmpty() {
@@ -375,6 +360,21 @@ func (v *validator_) validateLiteral(literal string) {
 			"Found an invalid literal.",
 		)
 		panic(message)
+	}
+}
+
+func (v *validator_) validateMultiline(multiline MultilineLike) {
+	var lines = multiline.GetLines()
+	if lines == nil || lines.IsEmpty() {
+		var message = v.formatError(
+			"Each multi-line expression must have at least one line.",
+		)
+		panic(message)
+	}
+	var iterator = lines.GetIterator()
+	for iterator.HasNext() {
+		var line = iterator.GetNext()
+		v.validateLine(line)
 	}
 }
 

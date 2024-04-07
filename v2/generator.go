@@ -327,15 +327,15 @@ func (v *generator_) generateClasses() col.ListLike[mod.ClassLike] {
 	return classes
 }
 
+func (v *generator_) generateFunctionals() col.ListLike[mod.FunctionalLike] {
+	var functionals col.ListLike[mod.FunctionalLike]
+	return functionals
+}
+
 func (v *generator_) generateHeader(packageName string) mod.HeaderLike {
 	var comment = v.generatePackageComment(packageName)
 	var header = mod.Header().MakeWithAttributes(comment, packageName)
 	return header
-}
-
-func (v *generator_) generateFunctionals() col.ListLike[mod.FunctionalLike] {
-	var functionals col.ListLike[mod.FunctionalLike]
-	return functionals
 }
 
 func (v *generator_) generateInstance(
