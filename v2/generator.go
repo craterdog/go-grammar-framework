@@ -55,17 +55,22 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
-	modules_   col.CatalogLike[string, mod.ModuleLike]
+	tokens_    col.ListLike[string]
 	classes_   col.CatalogLike[string, mod.ClassLike]
 	instances_ col.CatalogLike[string, mod.InstanceLike]
 }
 
 // Public
 
-func (v *generator_) CreateGrammar(directory string, copyright string) {
+func (v *generator_) CreateGrammar(
+	directory string,
+	copyright string,
+	notation string,
+) {
 	// Insert the copyright statement into a new grammar template.
 	copyright = v.expandCopyright(copyright)
 	var template = sts.ReplaceAll(grammarTemplate_, "<Copyright>", copyright)
+	template = sts.ReplaceAll(template, "<Notation>", notation)
 
 	// Save the new grammar template into the directory.
 	if !sts.HasSuffix(directory, "/") {
@@ -82,7 +87,7 @@ func (v *generator_) CreateGrammar(directory string, copyright string) {
 
 func (v *generator_) GenerateModel(directory string) {
 	// Initialize the catalogs.
-	v.modules_ = col.Catalog[string, mod.ModuleLike]().Make()
+	v.tokens_ = col.List[string]().Make()
 	v.classes_ = col.Catalog[string, mod.ClassLike]().Make()
 	v.instances_ = col.Catalog[string, mod.InstanceLike]().Make()
 
@@ -101,6 +106,19 @@ func (v *generator_) GenerateModel(directory string) {
 }
 
 // Private
+
+func (v *generator_) addClasses(model mod.ModelLike) {
+	var classes = model.GetClasses()
+	classes.AppendValues(v.classes_.GetValues(v.classes_.GetKeys()))
+}
+
+func (v *generator_) addInstances(model mod.ModelLike) {
+	var instances = model.GetInstances()
+	instances.AppendValues(v.instances_.GetValues(v.instances_.GetKeys()))
+}
+
+func (v *generator_) addTokens(model mod.ModelLike) {
+}
 
 func (v *generator_) consolidateAttributes(
 	attributes col.ListLike[mod.AttributeLike],
@@ -257,7 +275,8 @@ func (v *generator_) extractAlternatives(expression ExpressionLike) col.ListLike
 	return alternatives
 }
 
-func (v *generator_) extractName(definition DefinitionLike) string {
+func (v *generator_) extractName(grammar GrammarLike) string {
+	var definition = grammar.GetDefinitions().GetValue(1)
 	var expression = definition.GetExpression()
 	var alternatives = v.extractAlternatives(expression)
 	var alternative = alternatives.GetIterator().GetNext()
@@ -266,8 +285,6 @@ func (v *generator_) extractName(definition DefinitionLike) string {
 	var predicate = factor.GetPredicate()
 	var element = predicate.GetElement()
 	var name = element.GetName()
-	name = sts.ToLower(name)
-	name = v.makePlural(name)
 	return name
 }
 
@@ -287,11 +304,6 @@ func (v *generator_) extractParameters(
 		parameters.AppendValue(parameter)
 	}
 	return parameters
-}
-
-func (v *generator_) generateAspects() col.ListLike[mod.AspectLike] {
-	var aspects col.ListLike[mod.AspectLike]
-	return aspects
 }
 
 func (v *generator_) generateClass(
@@ -318,26 +330,6 @@ func (v *generator_) generateClass(
 	return class
 }
 
-func (v *generator_) generateClasses() col.ListLike[mod.ClassLike] {
-	var classes = col.List[mod.ClassLike]().Make()
-	if !v.classes_.IsEmpty() {
-		v.classes_.SortValues()
-		classes.AppendValues(v.classes_.GetValues(v.classes_.GetKeys()))
-	}
-	return classes
-}
-
-func (v *generator_) generateFunctionals() col.ListLike[mod.FunctionalLike] {
-	var functionals col.ListLike[mod.FunctionalLike]
-	return functionals
-}
-
-func (v *generator_) generateHeader(packageName string) mod.HeaderLike {
-	var comment = v.generatePackageComment(packageName)
-	var header = mod.Header().MakeWithAttributes(comment, packageName)
-	return header
-}
-
 func (v *generator_) generateInstance(
 	name string,
 	attributes col.ListLike[mod.AttributeLike],
@@ -362,20 +354,14 @@ func (v *generator_) generateInstance(
 	return instance
 }
 
-func (v *generator_) generateInstances() col.ListLike[mod.InstanceLike] {
-	var instances = col.List[mod.InstanceLike]().Make()
-	if !v.instances_.IsEmpty() {
-		v.instances_.SortValues()
-		instances.AppendValues(v.instances_.GetValues(v.instances_.GetKeys()))
-	}
-	return instances
-}
-
 func (v *generator_) generateModel(directory string, model mod.ModelLike) {
 	var validator = mod.Validator().Make()
 	validator.ValidateModel(model)
 	var formatter = mod.Formatter().Make()
 	var source = formatter.FormatModel(model)
+	var parser = mod.Parser().Make()
+	model = parser.ParseSource(source)
+	source = formatter.FormatModel(model)
 	var bytes = []byte(source)
 	var err = osx.WriteFile(directory+"Package.go", bytes, 0644)
 	if err != nil {
@@ -383,40 +369,17 @@ func (v *generator_) generateModel(directory string, model mod.ModelLike) {
 	}
 }
 
-func (v *generator_) generateModules() col.ListLike[mod.ModuleLike] {
-	var modules = col.List[mod.ModuleLike]().Make()
-	if !v.modules_.IsEmpty() {
-		v.modules_.SortValues()
-		modules.AppendValues(v.modules_.GetValues(v.modules_.GetKeys()))
-	}
-	return modules
-}
-
-func (v *generator_) generateNotice(grammar GrammarLike) mod.NoticeLike {
-	var header = grammar.GetHeaders().GetIterator().GetNext()
+func (v *generator_) extractNotice(grammar GrammarLike) string {
+	var header = grammar.GetHeaders().GetValue(1)
 	var comment = header.GetComment()
 
 	// Strip off the grammar style comment delimiters.
-	comment = Scanner().MatchToken(CommentToken, comment).GetValue(2)
+	var notice = Scanner().MatchToken(CommentToken, comment).GetValue(2)
 
 	// Add the Go style comment delimiters.
-	comment = "/*\n" + comment + "\n*/\n"
+	notice = "/*\n" + notice + "\n*/\n"
 
-	var notice = mod.Notice().MakeWithComment(comment)
 	return notice
-}
-
-func (v *generator_) generatePackageComment(
-	packageName string,
-) string {
-	var comment = packageCommentTemplate_
-	comment = sts.ReplaceAll(comment, "<packagename>", packageName)
-	return comment
-}
-
-func (v *generator_) generateTypes() col.ListLike[mod.TypeLike] {
-	var types col.ListLike[mod.TypeLike]
-	return types
 }
 
 func (v *generator_) isLowercase(identifier string) bool {
@@ -567,17 +530,7 @@ func (v *generator_) processFactor(
 	var cardinality = factor.GetCardinality()
 	if cardinality != nil {
 		var constraint = cardinality.GetConstraint()
-		if constraint.GetFirst() != "0" || constraint.GetLast() != "1" {
-			isSequential = true
-			var prefix = "col"
-			var repository = `"github.com/craterdog/go-collection-framework/v3"`
-			var module = mod.Module().MakeWithAttributes(
-				prefix,
-				repository,
-			)
-			// Must be sorted by the repository name NOT the prefix.
-			v.modules_.SetValue(repository, module)
-		}
+		isSequential = constraint.GetFirst() != "0" || constraint.GetLast() != "1"
 	}
 	var identifier string
 	var abstraction mod.AbstractionLike
@@ -635,32 +588,35 @@ func (v *generator_) processFactor(
 	return attributes
 }
 
-func (v *generator_) processGrammar(grammar GrammarLike) mod.ModelLike {
+func (v *generator_) processGrammar(
+	grammar GrammarLike,
+) mod.ModelLike {
+	// Initialize the Package.go file template.
+	var source = packageTemplate_
+	var notice = v.extractNotice(grammar)
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var className = v.extractName(grammar)
+	var parameterName = sts.ToLower(className)
+	var packageName = v.makePlural(parameterName)
+	source = sts.ReplaceAll(source, "<packagename>", packageName)
+	source = sts.ReplaceAll(source, "<Class>", className)
+	source = sts.ReplaceAll(source, "<class>", parameterName)
+	var parser = mod.Parser().Make()
+	var model = parser.ParseSource(source)
+
+	// Process the grammar definitions.
 	var iterator = grammar.GetDefinitions().GetIterator()
-	var definition = iterator.GetNext()
-	var packageName = v.extractName(definition)
+	iterator.GetNext() // Skip the source rule.
 	for iterator.HasNext() {
-		definition = iterator.GetNext()
+		var definition = iterator.GetNext()
 		v.processDefinition(definition)
 	}
-	var notice = v.generateNotice(grammar)
-	var header = v.generateHeader(packageName)
-	var imports = v.generateModules()
-	var types = v.generateTypes()
-	var functionals = v.generateFunctionals()
-	var aspects = v.generateAspects()
-	var classes = v.generateClasses()
-	var instances = v.generateInstances()
-	var model = mod.Model().MakeWithAttributes(
-		notice,
-		header,
-		imports,
-		types,
-		functionals,
-		aspects,
-		classes,
-		instances,
-	)
+
+	// Add additional definitions to the class model.
+	v.addTokens(model)
+	v.addClasses(model)
+	v.addInstances(model)
+
 	return model
 }
 

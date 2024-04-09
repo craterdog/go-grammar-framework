@@ -420,6 +420,7 @@ type GeneratorLike interface {
 	CreateGrammar(
 		directory string,
 		copyright string,
+		notation string,
 	)
 	GenerateModel(directory string)
 }
