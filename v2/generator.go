@@ -288,6 +288,19 @@ func (v *generator_) extractName(grammar GrammarLike) string {
 	return name
 }
 
+func (v *generator_) extractNotice(grammar GrammarLike) string {
+	var header = grammar.GetHeaders().GetValue(1)
+	var comment = header.GetComment()
+
+	// Strip off the grammar style comment delimiters.
+	var notice = Scanner().MatchToken(CommentToken, comment).GetValue(2)
+
+	// Add the Go style comment delimiters.
+	notice = "/*\n" + notice + "\n*/\n"
+
+	return notice
+}
+
 func (v *generator_) extractParameters(
 	attributes col.ListLike[mod.AttributeLike],
 ) col.ListLike[mod.ParameterLike] {
@@ -354,7 +367,10 @@ func (v *generator_) generateInstance(
 	return instance
 }
 
-func (v *generator_) generateModel(directory string, model mod.ModelLike) {
+func (v *generator_) generateModel(
+	directory string,
+	model mod.ModelLike,
+) {
 	var validator = mod.Validator().Make()
 	validator.ValidateModel(model)
 	var formatter = mod.Formatter().Make()
@@ -367,19 +383,6 @@ func (v *generator_) generateModel(directory string, model mod.ModelLike) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func (v *generator_) extractNotice(grammar GrammarLike) string {
-	var header = grammar.GetHeaders().GetValue(1)
-	var comment = header.GetComment()
-
-	// Strip off the grammar style comment delimiters.
-	var notice = Scanner().MatchToken(CommentToken, comment).GetValue(2)
-
-	// Add the Go style comment delimiters.
-	notice = "/*\n" + notice + "\n*/\n"
-
-	return notice
 }
 
 func (v *generator_) isLowercase(identifier string) bool {
@@ -449,7 +452,10 @@ func (v *generator_) parseGrammar(directory string) GrammarLike {
 	return grammar
 }
 
-func (v *generator_) processAlternative(name string, alternative AlternativeLike) (
+func (v *generator_) processAlternative(
+	name string,
+	alternative AlternativeLike,
+) (
 	constructor mod.ConstructorLike,
 	attributes col.ListLike[mod.AttributeLike],
 ) {
@@ -501,7 +507,10 @@ func (v *generator_) processDefinition(
 	}
 }
 
-func (v *generator_) processExpression(name string, expression ExpressionLike) (
+func (v *generator_) processExpression(
+	name string,
+	expression ExpressionLike,
+) (
 	constructors col.ListLike[mod.ConstructorLike],
 	attributes col.ListLike[mod.AttributeLike],
 ) {
@@ -636,7 +645,10 @@ func (v *generator_) processRule(
 	v.instances_.SetValue(name, instance)
 }
 
-func (v *generator_) processToken(name string, expression ExpressionLike) {
+func (v *generator_) processToken(
+	name string,
+	expression ExpressionLike,
+) {
 	// Ignore token definitions for now.
 }
 
