@@ -42,7 +42,7 @@ type multilineClass_ struct {
 
 // Constructors
 
-func (c *multilineClass_) MakeWithAttributes(lines col.ListLike[LineLike]) MultilineLike {
+func (c *multilineClass_) MakeWithLines(lines col.ListLike[LineLike]) MultilineLike {
 	return &multiline_{
 		lines_: lines,
 	}

@@ -199,7 +199,7 @@ func (v *parser_) parseAlternative() (
 	}
 
 	// Found an alternative.
-	alternative = Alternative().MakeWithAttributes(factors)
+	alternative = Alternative().MakeWithFactors(factors)
 	return alternative, token, true
 }
 
@@ -214,7 +214,7 @@ func (v *parser_) parseCardinality() (
 	_, token, ok = v.parseToken(DelimiterToken, "?")
 	if ok {
 		constraint = Constraint().MakeWithAttributes("0", "1")
-		cardinality = Cardinality().MakeWithAttributes(constraint)
+		cardinality = Cardinality().MakeWithConstraint(constraint)
 		return cardinality, token, true
 	}
 
@@ -222,7 +222,7 @@ func (v *parser_) parseCardinality() (
 	_, token, ok = v.parseToken(DelimiterToken, "*")
 	if ok {
 		constraint = Constraint().MakeWithAttributes("0", "")
-		cardinality = Cardinality().MakeWithAttributes(constraint)
+		cardinality = Cardinality().MakeWithConstraint(constraint)
 		return cardinality, token, true
 	}
 
@@ -230,7 +230,7 @@ func (v *parser_) parseCardinality() (
 	_, token, ok = v.parseToken(DelimiterToken, "+")
 	if ok {
 		constraint = Constraint().MakeWithAttributes("1", "")
-		cardinality = Cardinality().MakeWithAttributes(constraint)
+		cardinality = Cardinality().MakeWithConstraint(constraint)
 		return cardinality, token, true
 	}
 
@@ -261,7 +261,7 @@ func (v *parser_) parseCardinality() (
 	}
 
 	// Found a cardinality.
-	cardinality = Cardinality().MakeWithAttributes(constraint)
+	cardinality = Cardinality().MakeWithConstraint(constraint)
 	return cardinality, token, true
 }
 
@@ -557,7 +557,7 @@ func (v *parser_) parseHeader() (
 	}
 
 	// Found a header.
-	header = Header().MakeWithAttributes(comment)
+	header = Header().MakeWithComment(comment)
 	return header, token, true
 }
 
@@ -680,7 +680,7 @@ func (v *parser_) parseMultiline() (
 	}
 
 	// Found a multi-line expression.
-	multiline = Multiline().MakeWithAttributes(lines)
+	multiline = Multiline().MakeWithLines(lines)
 	return multiline, token, true
 }
 
@@ -723,7 +723,7 @@ func (v *parser_) parsePrecedence() (
 	}
 
 	// Found a precedence.
-	precedence = Precedence().MakeWithAttributes(expression)
+	precedence = Precedence().MakeWithExpression(expression)
 	return precedence, token, true
 }
 

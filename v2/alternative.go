@@ -42,7 +42,7 @@ type alternativeClass_ struct {
 
 // Constructors
 
-func (c *alternativeClass_) MakeWithAttributes(factors col.ListLike[FactorLike]) AlternativeLike {
+func (c *alternativeClass_) MakeWithFactors(factors col.ListLike[FactorLike]) AlternativeLike {
 	return &alternative_{
 		factors_: factors,
 	}

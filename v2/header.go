@@ -40,7 +40,7 @@ type headerClass_ struct {
 
 // Constructors
 
-func (c *headerClass_) MakeWithAttributes(comment string) HeaderLike {
+func (c *headerClass_) MakeWithComment(comment string) HeaderLike {
 	return &header_{
 		comment_: comment,
 	}

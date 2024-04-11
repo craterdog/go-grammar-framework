@@ -40,7 +40,7 @@ type cardinalityClass_ struct {
 
 // Constructors
 
-func (c *cardinalityClass_) MakeWithAttributes(constraint ConstraintLike) CardinalityLike {
+func (c *cardinalityClass_) MakeWithConstraint(constraint ConstraintLike) CardinalityLike {
 	return &cardinality_{
 		constraint_: constraint,
 	}

@@ -19,13 +19,13 @@ the corresponding CDSN source using the canonical format.
 For detailed documentation on this package refer to the wiki:
   - https://github.com/craterdog/go-grammar-framework/wiki
 
-This package follows the Crater Dog Technologies™ (craterdog) Go Coding
-Conventions located here:
+This package follows the Crater Dog Technologies™ Go Coding Conventions located
+here:
   - https://github.com/craterdog/go-model-framework/wiki
 
-Additional implementations of the classes provided by this package can be
-developed and used seamlessly since the interface definitions only depend on
-other interfaces and primitive types; and the class implementations only depend
+Additional concrete implementations of the classes defined by this package can
+be developed and used seamlessly since the interface definitions only depend on
+other interfaces and primitive types—and the class implementations only depend
 on interfaces, not on each other.
 */
 package grammars
@@ -60,26 +60,29 @@ const (
 // Classes
 
 /*
-AlternativeClassLike defines the set of class constants, constructors and
-functions that must be supported by all alternative-class-like classes.
+AlternativeClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete alternative-like class.
 */
 type AlternativeClassLike interface {
 	// Constructors
-	MakeWithAttributes(factors col.ListLike[FactorLike]) AlternativeLike
+	MakeWithFactors(factors col.ListLike[FactorLike]) AlternativeLike
 }
 
 /*
-CardinalityClassLike defines the set of class constants, constructors and
-functions that must be supported by all cardinality-class-like classes.
+CardinalityClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete cardinality-like class.
 */
 type CardinalityClassLike interface {
 	// Constructors
-	MakeWithAttributes(constraint ConstraintLike) CardinalityLike
+	MakeWithConstraint(constraint ConstraintLike) CardinalityLike
 }
 
 /*
-ConstraintClassLike defines the set of class constants, constructors and
-functions that must be supported by all constraint-class-like classes.
+ConstraintClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete constraint-like class.
 */
 type ConstraintClassLike interface {
 	// Constructors
@@ -90,8 +93,9 @@ type ConstraintClassLike interface {
 }
 
 /*
-DefinitionClassLike defines the set of class constants, constructors and
-functions that must be supported by all definition-class-like classes.
+DefinitionClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete definition-like class.
 */
 type DefinitionClassLike interface {
 	// Constructors
@@ -103,8 +107,9 @@ type DefinitionClassLike interface {
 }
 
 /*
-ElementClassLike defines the set of class constants, constructors and functions
-that must be supported by all element-class-like classes.
+ElementClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete element-like class.
 */
 type ElementClassLike interface {
 	// Constructors
@@ -113,8 +118,9 @@ type ElementClassLike interface {
 }
 
 /*
-ExpressionClassLike defines the set of class constants, constructors and
-functions that must be supported by all expression-class-like classes.
+ExpressionClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete expression-like class.
 */
 type ExpressionClassLike interface {
 	// Constructors
@@ -123,8 +129,9 @@ type ExpressionClassLike interface {
 }
 
 /*
-FactorClassLike defines the set of class constants, constructors and functions
-that must be supported by all factor-class-like classes.
+FactorClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete factor-like class.
 */
 type FactorClassLike interface {
 	// Constructors
@@ -135,8 +142,9 @@ type FactorClassLike interface {
 }
 
 /*
-FilterClassLike defines the set of class constants, constructors and functions
-that must be supported by all filter-class-like classes.
+FilterClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete filter-like class.
 */
 type FilterClassLike interface {
 	// Constructors
@@ -145,8 +153,9 @@ type FilterClassLike interface {
 }
 
 /*
-FormatterClassLike defines the set of class constants, constructors and
-functions that must be supported by all formatter-class-like classes.
+FormatterClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete formatter-like class.
 */
 type FormatterClassLike interface {
 	// Constructors
@@ -163,8 +172,9 @@ type GeneratorClassLike interface {
 }
 
 /*
-GlyphClassLike defines the set of class constants, constructors and functions
-that must be supported by all glyph-class-like classes.
+GlyphClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete glyph-like class.
 */
 type GlyphClassLike interface {
 	// Constructors
@@ -175,8 +185,9 @@ type GlyphClassLike interface {
 }
 
 /*
-GrammarClassLike defines the set of class constants, constructors and functions
-that must be supported by all grammar-class-like classes.
+GrammarClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete grammar-like class.
 */
 type GrammarClassLike interface {
 	// Constructors
@@ -187,17 +198,19 @@ type GrammarClassLike interface {
 }
 
 /*
-HeaderClassLike defines the set of class constants, constructors and functions
-that must be supported by all header-class-like classes.
+HeaderClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete header-like class.
 */
 type HeaderClassLike interface {
 	// Constructors
-	MakeWithAttributes(comment string) HeaderLike
+	MakeWithComment(comment string) HeaderLike
 }
 
 /*
-InlineClassLike defines the set of class constants, constructors and functions
-that must be supported by all inline-class-like classes.
+InlineClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete inline-like class.
 */
 type InlineClassLike interface {
 	// Constructors
@@ -208,8 +221,9 @@ type InlineClassLike interface {
 }
 
 /*
-InversionClassLike defines the set of class constants, constructors and functions
-that must be supported by all inversion-class-like classes.
+InversionClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete inversion-like class.
 */
 type InversionClassLike interface {
 	// Constructors
@@ -220,8 +234,9 @@ type InversionClassLike interface {
 }
 
 /*
-LineClassLike defines the set of class constants, constructors and functions
-that must be supported by all line-class-like classes.
+LineClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete line-like class.
 */
 type LineClassLike interface {
 	// Constructors
@@ -232,17 +247,19 @@ type LineClassLike interface {
 }
 
 /*
-MultilineClassLike defines the set of class constants, constructors and functions
-that must be supported by all inline-class-like classes.
+MultilineClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete multiline-like class.
 */
 type MultilineClassLike interface {
 	// Constructors
-	MakeWithAttributes(lines col.ListLike[LineLike]) MultilineLike
+	MakeWithLines(lines col.ListLike[LineLike]) MultilineLike
 }
 
 /*
-ParserClassLike defines the set of class constants, constructors and functions
-that must be supported by all parser-class-like classes.
+ParserClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete parser-like class.
 */
 type ParserClassLike interface {
 	// Constructors
@@ -250,17 +267,19 @@ type ParserClassLike interface {
 }
 
 /*
-PrecedenceClassLike defines the set of class constants, constructors and
-functions that must be supported by all precedence-class-like classes.
+PrecedenceClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete precedence-like class.
 */
 type PrecedenceClassLike interface {
 	// Constructors
-	MakeWithAttributes(expression ExpressionLike) PrecedenceLike
+	MakeWithExpression(expression ExpressionLike) PrecedenceLike
 }
 
 /*
-PredicateClassLike defines the set of class constants, constructors and
-functions that must be supported by all predicate-class-like classes.
+PredicateClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete predicate-like class.
 */
 type PredicateClassLike interface {
 	// Constructors
@@ -270,9 +289,9 @@ type PredicateClassLike interface {
 }
 
 /*
-ScannerClassLike is a class interface that defines the set of class
-constants, constructors and functions that must be supported by each
-scanner-class-like concrete class.  The following functions are supported:
+ScannerClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete scanner-like class.  The following functions are supported:
 
 FormatToken() returns a formatted string containing the attributes of the token.
 
@@ -297,9 +316,9 @@ type ScannerClassLike interface {
 }
 
 /*
-TokenClassLike is a class interface that defines the set of class
-constants, constructors and functions that must be supported by each
-token-class-like concrete class.
+TokenClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete token-like class.
 */
 type TokenClassLike interface {
 	// Constructors
@@ -312,8 +331,9 @@ type TokenClassLike interface {
 }
 
 /*
-ValidatorClassLike defines the set of class constants, constructors and
-functions that must be supported by all validator-class-like classes.
+ValidatorClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete validator-like class.
 */
 type ValidatorClassLike interface {
 	// Constructors
@@ -323,8 +343,9 @@ type ValidatorClassLike interface {
 // Instances
 
 /*
-AlternativeLike defines the set of aspects and methods that must be supported by
-all alternative-like instances.
+AlternativeLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete alternative-like class.
 */
 type AlternativeLike interface {
 	// Attributes
@@ -332,8 +353,9 @@ type AlternativeLike interface {
 }
 
 /*
-CardinalityLike defines the set of aspects and methods that must be supported by
-all cardinality-like instances.
+CardinalityLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete cardinality-like class.
 */
 type CardinalityLike interface {
 	// Attributes
@@ -341,8 +363,9 @@ type CardinalityLike interface {
 }
 
 /*
-ConstraintLike defines the set of aspects and methods that must be supported by
-all constraint-like instances.
+ConstraintLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete constraint-like class.
 */
 type ConstraintLike interface {
 	// Attributes
@@ -351,8 +374,9 @@ type ConstraintLike interface {
 }
 
 /*
-DefinitionLike defines the set of aspects and methods that must be supported by
-all definition-like instances.
+DefinitionLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete definition-like class.
 */
 type DefinitionLike interface {
 	// Attributes
@@ -362,8 +386,9 @@ type DefinitionLike interface {
 }
 
 /*
-ElementLike defines the set of aspects and methods that must be supported by all
-element-like instances.
+ElementLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete element-like class.
 */
 type ElementLike interface {
 	// Attributes
@@ -372,8 +397,9 @@ type ElementLike interface {
 }
 
 /*
-ExpressionLike defines the set of aspects and methods that must be supported by
-all expression-like instances.
+ExpressionLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete expression-like class.
 */
 type ExpressionLike interface {
 	// Attributes
@@ -382,8 +408,9 @@ type ExpressionLike interface {
 }
 
 /*
-FactorLike defines the set of aspects and methods that must be supported by all
-factor-like instances.
+FactorLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete factor-like class.
 */
 type FactorLike interface {
 	// Attributes
@@ -392,8 +419,9 @@ type FactorLike interface {
 }
 
 /*
-FilterLike defines the set of aspects and methods that must be supported by all
-filter-like instances.
+FilterLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete filter-like class.
 */
 type FilterLike interface {
 	// Attributes
@@ -402,8 +430,9 @@ type FilterLike interface {
 }
 
 /*
-FormatterLike defines the set of aspects and methods that must be supported by
-all formatter-like instances.
+FormatterLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete formatter-like class.
 */
 type FormatterLike interface {
 	// Methods
@@ -426,8 +455,9 @@ type GeneratorLike interface {
 }
 
 /*
-GlyphLike defines the set of aspects and methods that must be supported by all
-glyph-like instances.
+GlyphLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete glyph-like class.
 */
 type GlyphLike interface {
 	// Attributes
@@ -436,8 +466,9 @@ type GlyphLike interface {
 }
 
 /*
-GrammarLike defines the set of aspects and methods that must be supported by all
-grammar-like instances.
+GrammarLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete grammar-like class.
 */
 type GrammarLike interface {
 	// Attributes
@@ -446,8 +477,9 @@ type GrammarLike interface {
 }
 
 /*
-HeaderLike defines the set of aspects and methods that must be supported by all
-header-like instances.
+HeaderLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete header-like class.
 */
 type HeaderLike interface {
 	// Attributes
@@ -455,8 +487,9 @@ type HeaderLike interface {
 }
 
 /*
-InlineLike defines the set of aspects and methods that must be supported by all
-inline-like instances.
+InlineLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete inline-like class.
 */
 type InlineLike interface {
 	// Attributes
@@ -465,8 +498,9 @@ type InlineLike interface {
 }
 
 /*
-InversionLike defines the set of aspects and methods that must be supported by all
-inversion-like instances.
+InversionLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete inversion-like class.
 */
 type InversionLike interface {
 	// Attributes
@@ -475,8 +509,9 @@ type InversionLike interface {
 }
 
 /*
-LineLike defines the set of aspects and methods that must be supported by all
-line-like instances.
+LineLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete line-like class.
 */
 type LineLike interface {
 	// Attributes
@@ -485,8 +520,9 @@ type LineLike interface {
 }
 
 /*
-MultilineLike defines the set of aspects and methods that must be supported by all
-multiline-like instances.
+MultilineLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete multiline-like class.
 */
 type MultilineLike interface {
 	// Attributes
@@ -494,8 +530,9 @@ type MultilineLike interface {
 }
 
 /*
-ParserLike defines the set of aspects and methods that must be supported by all
-parser-like instances.
+ParserLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete parser-like class.
 */
 type ParserLike interface {
 	// Methods
@@ -503,8 +540,9 @@ type ParserLike interface {
 }
 
 /*
-PrecedenceLike defines the set of aspects and methods that must be supported by
-all precedence-like instances.
+PrecedenceLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete precedence-like class.
 */
 type PrecedenceLike interface {
 	// Attributes
@@ -512,8 +550,9 @@ type PrecedenceLike interface {
 }
 
 /*
-PredicateLike defines the set of aspects and methods that must be supported by
-all predicate-like instances.
+PredicateLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete predicate-like class.
 */
 type PredicateLike interface {
 	// Attributes
@@ -523,16 +562,17 @@ type PredicateLike interface {
 }
 
 /*
-ScannerLike defines the set of aspects and methods that must be supported by all
-scanner-like instances.
+ScannerLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete scanner-like class.
 */
 type ScannerLike interface {
 }
 
 /*
 TokenLike is an instance interface that defines the complete set of
-abstractions and methods that must be supported by each instance of a
-token-like concrete class.
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete token-like class.
 */
 type TokenLike interface {
 	// Attributes
@@ -543,8 +583,9 @@ type TokenLike interface {
 }
 
 /*
-ValidatorLike defines the set of aspects and methods that must be supported by
-all validator-like instances.
+ValidatorLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete validator-like class.
 */
 type ValidatorLike interface {
 	// Methods
