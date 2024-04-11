@@ -87,7 +87,13 @@ func (v *generator_) CreateGrammar(
 
 func (v *generator_) GenerateModel(directory string) {
 	// Initialize the catalogs.
-	v.tokens_ = col.Set[string]().Make()
+	var array = []string{
+		"DelimiterToken",
+		"EOFToken",
+		"EOLToken",
+		"SpaceToken",
+	}
+	v.tokens_ = col.Set[string]().MakeFromArray(array)
 	v.classes_ = col.Catalog[string, mod.ClassLike]().Make()
 	v.instances_ = col.Catalog[string, mod.InstanceLike]().Make()
 
