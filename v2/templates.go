@@ -14,7 +14,6 @@ package grammars
 
 const packageTemplate_ = `
 <Notice>
-
 /*
 Package "<packagename>" provides...
 

@@ -55,7 +55,7 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
-	tokens_    col.ListLike[string]
+	tokens_    col.SetLike[string]
 	classes_   col.CatalogLike[string, mod.ClassLike]
 	instances_ col.CatalogLike[string, mod.InstanceLike]
 }
@@ -87,7 +87,7 @@ func (v *generator_) CreateGrammar(
 
 func (v *generator_) GenerateModel(directory string) {
 	// Initialize the catalogs.
-	v.tokens_ = col.List[string]().Make()
+	v.tokens_ = col.Set[string]().Make()
 	v.classes_ = col.Catalog[string, mod.ClassLike]().Make()
 	v.instances_ = col.Catalog[string, mod.InstanceLike]().Make()
 
@@ -118,6 +118,10 @@ func (v *generator_) addInstances(model mod.ModelLike) {
 }
 
 func (v *generator_) addTokens(model mod.ModelLike) {
+	var types = model.GetTypes()
+	var enumeration = types.GetValue(1).GetEnumeration()
+	var identifiers = enumeration.GetIdentifiers()
+	identifiers.AppendValues(v.tokens_)
 }
 
 func (v *generator_) consolidateAttributes(
@@ -572,6 +576,8 @@ func (v *generator_) processFactor(
 					)
 				}
 			} else {
+				var tokenType = v.makeUppercase(identifier) + "Token"
+				v.tokens_.AddValue(tokenType)
 				abstraction = mod.Abstraction().MakeWithAttributes(
 					prefix,
 					"string",
