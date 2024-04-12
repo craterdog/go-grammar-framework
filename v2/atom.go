@@ -18,21 +18,21 @@ import ()
 
 // Reference
 
-var inversionClass = &inversionClass_{
+var atomClass = &atomClass_{
 	// TBA - Assign constant values.
 }
 
 // Function
 
-func Inversion() InversionClassLike {
-	return inversionClass
+func Atom() AtomClassLike {
+	return atomClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type inversionClass_ struct {
+type atomClass_ struct {
 	// TBA - Add private class constants.
 }
 
@@ -40,13 +40,19 @@ type inversionClass_ struct {
 
 // Constructors
 
-func (c *inversionClass_) MakeWithAttributes(
-	inverted bool,
-	filter FilterLike,
-) InversionLike {
-	return &inversion_{
-		inverted_: inverted,
-		filter_:   filter,
+func (c *atomClass_) MakeWithGlyph(
+	glyph GlyphLike,
+) AtomLike {
+	return &atom_{
+		glyph_: glyph,
+	}
+}
+
+func (c *atomClass_) MakeWithIntrinsic(
+	intrinsic string,
+) AtomLike {
+	return &atom_{
+		intrinsic_: intrinsic,
 	}
 }
 
@@ -56,19 +62,19 @@ func (c *inversionClass_) MakeWithAttributes(
 
 // Target
 
-type inversion_ struct {
-	inverted_ bool
-	filter_   FilterLike
+type atom_ struct {
+	glyph_     GlyphLike
+	intrinsic_ string
 }
 
 // Attributes
 
-func (v *inversion_) IsInverted() bool {
-	return v.inverted_
+func (v *atom_) GetGlyph() GlyphLike {
+	return v.glyph_
 }
 
-func (v *inversion_) GetFilter() FilterLike {
-	return v.filter_
+func (v *atom_) GetIntrinsic() string {
+	return v.intrinsic_
 }
 
 // Public

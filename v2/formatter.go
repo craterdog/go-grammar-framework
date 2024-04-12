@@ -92,6 +92,19 @@ func (v *formatter_) formatAlternative(alternative AlternativeLike) {
 	}
 }
 
+func (v *formatter_) formatAtom(atom AtomLike) {
+	var glyph = atom.GetGlyph()
+	var intrinsic = atom.GetIntrinsic()
+	switch {
+	case glyph != nil:
+		v.formatGlyph(glyph)
+	case len(intrinsic) > 0:
+		v.appendString(intrinsic)
+	default:
+		panic("Attempted to format an empty atom.")
+	}
+}
+
 func (v *formatter_) formatCardinality(cardinality CardinalityLike) {
 	var constraint = cardinality.GetConstraint()
 	var first = constraint.GetFirst()
@@ -179,16 +192,20 @@ func (v *formatter_) formatFactor(factor FactorLike) {
 }
 
 func (v *formatter_) formatFilter(filter FilterLike) {
-	var intrinsic = filter.GetIntrinsic()
-	var glyph = filter.GetGlyph()
-	switch {
-	case len(intrinsic) > 0:
-		v.appendString(intrinsic)
-	case glyph != nil:
-		v.formatGlyph(glyph)
-	default:
-		panic("Attempted to format an empty filter.")
+	if filter.IsInverted() {
+		v.appendString("~")
 	}
+	v.appendString("[")
+	var atoms = filter.GetAtoms()
+	var iterator = atoms.GetIterator()
+	var atom = iterator.GetNext()
+	v.formatAtom(atom)
+	for iterator.HasNext() {
+		atom = iterator.GetNext()
+		v.appendString(" ")
+		v.formatAtom(atom)
+	}
+	v.appendString("]")
 }
 
 func (v *formatter_) formatGlyph(glyph GlyphLike) {
@@ -239,14 +256,6 @@ func (v *formatter_) formatInline(inline InlineLike) {
 	}
 }
 
-func (v *formatter_) formatInversion(inversion InversionLike) {
-	if inversion.IsInverted() {
-		v.appendString("~")
-	}
-	var filter = inversion.GetFilter()
-	v.formatFilter(filter)
-}
-
 func (v *formatter_) formatLine(line LineLike) {
 	v.appendNewline()
 	var alternative = line.GetAlternative()
@@ -279,14 +288,17 @@ func (v *formatter_) formatPrecedence(precedence PrecedenceLike) {
 }
 
 func (v *formatter_) formatPredicate(predicate PredicateLike) {
+	var atom = predicate.GetAtom()
 	var element = predicate.GetElement()
-	var inversion = predicate.GetInversion()
+	var filter = predicate.GetFilter()
 	var precedence = predicate.GetPrecedence()
 	switch {
+	case atom != nil:
+		v.formatAtom(atom)
 	case element != nil:
 		v.formatElement(element)
-	case inversion != nil:
-		v.formatInversion(inversion)
+	case filter != nil:
+		v.formatFilter(filter)
 	case precedence != nil:
 		v.formatPrecedence(precedence)
 	default:

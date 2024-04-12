@@ -12,7 +12,9 @@
 
 package grammars
 
-import ()
+import (
+	col "github.com/craterdog/go-collection-framework/v3"
+)
 
 // CLASS ACCESS
 
@@ -40,19 +42,13 @@ type filterClass_ struct {
 
 // Constructors
 
-func (c *filterClass_) MakeWithGlyph(
-	glyph GlyphLike,
+func (c *filterClass_) MakeWithAttributes(
+	inverted bool,
+	atoms col.ListLike[AtomLike],
 ) FilterLike {
 	return &filter_{
-		glyph_: glyph,
-	}
-}
-
-func (c *filterClass_) MakeWithIntrinsic(
-	intrinsic string,
-) FilterLike {
-	return &filter_{
-		intrinsic_: intrinsic,
+		inverted_: inverted,
+		atoms_:    atoms,
 	}
 }
 
@@ -63,18 +59,18 @@ func (c *filterClass_) MakeWithIntrinsic(
 // Target
 
 type filter_ struct {
-	intrinsic_ string
-	glyph_     GlyphLike
+	inverted_ bool
+	atoms_    col.ListLike[AtomLike]
 }
 
 // Attributes
 
-func (v *filter_) GetIntrinsic() string {
-	return v.intrinsic_
+func (v *filter_) IsInverted() bool {
+	return v.inverted_
 }
 
-func (v *filter_) GetGlyph() GlyphLike {
-	return v.glyph_
+func (v *filter_) GetAtoms() col.ListLike[AtomLike] {
+	return v.atoms_
 }
 
 // Public

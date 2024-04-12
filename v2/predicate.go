@@ -40,15 +40,21 @@ type predicateClass_ struct {
 
 // Constructors
 
+func (c *predicateClass_) MakeWithAtom(atom AtomLike) PredicateLike {
+	return &predicate_{
+		atom_: atom,
+	}
+}
+
 func (c *predicateClass_) MakeWithElement(element ElementLike) PredicateLike {
 	return &predicate_{
 		element_: element,
 	}
 }
 
-func (c *predicateClass_) MakeWithInversion(inversion InversionLike) PredicateLike {
+func (c *predicateClass_) MakeWithFilter(filter FilterLike) PredicateLike {
 	return &predicate_{
-		inversion_: inversion,
+		filter_: filter,
 	}
 }
 
@@ -65,19 +71,24 @@ func (c *predicateClass_) MakeWithPrecedence(precedence PrecedenceLike) Predicat
 // Target
 
 type predicate_ struct {
+	atom_       AtomLike
 	element_    ElementLike
-	inversion_  InversionLike
+	filter_     FilterLike
 	precedence_ PrecedenceLike
 }
 
 // Attributes
 
+func (v *predicate_) GetAtom() AtomLike {
+	return v.atom_
+}
+
 func (v *predicate_) GetElement() ElementLike {
 	return v.element_
 }
 
-func (v *predicate_) GetInversion() InversionLike {
-	return v.inversion_
+func (v *predicate_) GetFilter() FilterLike {
+	return v.filter_
 }
 
 func (v *predicate_) GetPrecedence() PrecedenceLike {

@@ -68,15 +68,15 @@ Alternative: Factor+
 
 Factor: Predicate Cardinality?  ! The default cardinality is one.
 
-Predicate: Element | Inversion | Precedence
+Predicate: Atom | Element | Filter | Precedence
+
+Atom: Glyph | intrinsic
+
+Glyph: character (".." character)?  ! The range of characters is inclusive.
 
 Element: literal | name
 
-Inversion: "~"? Filter
-
-Filter: intrinsic | Glyph
-
-Glyph: character (".." character)?  ! The range of characters is inclusive.
+Filter: "~"? "[" Atom+ "]"
 
 Precedence: "(" Expression EOL? ")"
 
@@ -97,11 +97,24 @@ specify the name of a rule within its definition but it can specify the name of
 other tokens.  Token definitions cannot be recursive and the scanning of tokens
 is NOT greedy.  Any spaces within a token definition are NOT ignored.
 <!
-character: "'" ~CONTROL "'"  ! Any printable character.
+character: "'" ~[CONTROL] "'"  ! Any printable single character.
 
 comment: "!>" EOL ANY* EOL "<!" EOL  ! Chooses the shortest possible match.
 
-delimiter: "~" | "?" | "*" | "+" | ":" | "|" | "(" | ")" | "{" | "}" | ".."
+delimiter:
+    "~"
+    "?"
+    "*"
+    "+"
+    ":"
+    "|"
+    "("
+    ")"
+    "["
+    "]"
+    "{"
+    "}"
+    ".."
 
 intrinsic:
     "ANY"
@@ -113,13 +126,13 @@ intrinsic:
     "EOL"
     "EOF"
 
-letter: LOWER | UPPER
+letter: [LOWER UPPER]
 
-literal: '"' (ESCAPE | ~CONTROL)+ '"'
+literal: '"' (ESCAPE | ~['"' CONTROL])+ '"'
 
 name: letter (letter | DIGIT)*
 
-note: "! " (~CONTROL)*
+note: "! " ~[CONTROL]*
 
 number: DIGIT+
 

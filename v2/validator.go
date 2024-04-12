@@ -105,6 +105,22 @@ func (v *validator_) validateAlternative(alternative AlternativeLike) {
 	}
 }
 
+func (v *validator_) validateAtom(atom AtomLike) {
+	var intrinsic = atom.GetIntrinsic()
+	var glyph = atom.GetGlyph()
+	switch {
+	case len(intrinsic) > 0 && glyph == nil:
+		v.validateIntrinsic(intrinsic)
+	case len(intrinsic) == 0 && glyph != nil:
+		v.validateGlyph(glyph)
+	default:
+		var message = v.formatError(
+			"An atom must contain an intrinsic or a glyph but not both.",
+		)
+		panic(message)
+	}
+}
+
 func (v *validator_) validateCardinality(cardinality CardinalityLike) {
 	var constraint = cardinality.GetConstraint()
 	if constraint == nil {
@@ -234,18 +250,17 @@ func (v *validator_) validateFactor(factor FactorLike) {
 }
 
 func (v *validator_) validateFilter(filter FilterLike) {
-	var intrinsic = filter.GetIntrinsic()
-	var glyph = filter.GetGlyph()
-	switch {
-	case len(intrinsic) > 0 && glyph == nil:
-		v.validateIntrinsic(intrinsic)
-	case len(intrinsic) == 0 && glyph != nil:
-		v.validateGlyph(glyph)
-	default:
+	var atoms = filter.GetAtoms()
+	if atoms == nil || atoms.IsEmpty() {
 		var message = v.formatError(
-			"A filter must contain an intrinsic or a glyph but not both.",
+			"A filter must contain at least one atom.",
 		)
 		panic(message)
+	}
+	var iterator = atoms.GetIterator()
+	for iterator.HasNext() {
+		var atom = iterator.GetNext()
+		v.validateAtom(atom)
 	}
 }
 
@@ -325,17 +340,6 @@ func (v *validator_) validateIntrinsic(intrinsic string) {
 		)
 		panic(message)
 	}
-}
-
-func (v *validator_) validateInversion(inversion InversionLike) {
-	var filter = inversion.GetFilter()
-	if filter == nil {
-		var message = v.formatError(
-			"An inversion must contain a filter.",
-		)
-		panic(message)
-	}
-	v.validateFilter(filter)
 }
 
 func (v *validator_) validateLine(line LineLike) {
@@ -430,19 +434,22 @@ func (v *validator_) validatePrecedence(precedence PrecedenceLike) {
 }
 
 func (v *validator_) validatePredicate(predicate PredicateLike) {
+	var atom = predicate.GetAtom()
 	var element = predicate.GetElement()
-	var inversion = predicate.GetInversion()
+	var filter = predicate.GetFilter()
 	var precedence = predicate.GetPrecedence()
 	switch {
-	case element != nil && inversion == nil && precedence == nil:
+	case atom != nil && element == nil && filter == nil && precedence == nil:
+		v.validateAtom(atom)
+	case atom == nil && element != nil && filter == nil && precedence == nil:
 		v.validateElement(element)
-	case element == nil && inversion != nil && precedence == nil:
-		v.validateInversion(inversion)
-	case element == nil && inversion == nil && precedence != nil:
+	case atom == nil && element == nil && filter != nil && precedence == nil:
+		v.validateFilter(filter)
+	case atom == nil && element == nil && filter == nil && precedence != nil:
 		v.validatePrecedence(precedence)
 	default:
 		var message = v.formatError(
-			"A predicate must contain exactly one element, inversion, or precedence.",
+			"A predicate must contain exactly one atom, element, filter, or precedence.",
 		)
 		panic(message)
 	}

@@ -71,11 +71,11 @@ the name of other tokens.  Token definitions cannot be recursive and the
 scanning of tokens is NOT greedy.  And any spaces within a token definition
 are NOT ignored.
 <!
-character: "'" ~CONTROL "'"  ! Any printable character.
+character: "'" ~[CONTROL] "'"  ! Any single printable character.
 
 text: '"' (
     ESCAPE
-    ~CONTROL{2..}
+    ~['"' CONTROL]{2..}
 )+ '"'
 
 integer:

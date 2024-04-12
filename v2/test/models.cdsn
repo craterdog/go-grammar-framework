@@ -138,7 +138,7 @@ delimiter: "[" | "]" | "(" | ")" | "{" | "}" | "." | "," | "="
 
 identifier: (LOWER | UPPER) (LOWER | UPPER | DIGIT)*
 
-note: "//" (~CONTROL)*
+note: "//" ~[CONTROL]*
 
 text: '"' ANY* '"'  ! Chooses the shortest possible match.
 

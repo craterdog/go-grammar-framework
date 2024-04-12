@@ -203,6 +203,33 @@ func (v *parser_) parseAlternative() (
 	return alternative, token, true
 }
 
+func (v *parser_) parseAtom() (
+	atom AtomLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse a glyph.
+	var glyph GlyphLike
+	glyph, token, ok = v.parseGlyph()
+	if ok {
+		// Found a glyph atom.
+		atom = Atom().MakeWithGlyph(glyph)
+		return atom, token, true
+	}
+
+	// Attempt to parse an intrinsic.
+	var intrinsic string
+	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
+	if ok {
+		// Found an intrinsic atom.
+		atom = Atom().MakeWithIntrinsic(intrinsic)
+		return atom, token, true
+	}
+
+	// This is not a atom.
+	return atom, token, false
+}
+
 func (v *parser_) parseCardinality() (
 	cardinality CardinalityLike,
 	token TokenLike,
@@ -436,27 +463,56 @@ func (v *parser_) parseFilter() (
 	token TokenLike,
 	ok bool,
 ) {
-	var intrinsic string
-	var glyph GlyphLike
+	// Check to see if the filter is inverted.
+	var _, _, inverted = v.parseToken(DelimiterToken, "~")
 
-	// Attempt to parse an intrinsic.
-	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
-	if ok {
-		// Found an intrinsic filter.
-		filter = Filter().MakeWithIntrinsic(intrinsic)
-		return filter, token, true
+	// Attempt to parse the opening delimiter for a filter.
+	_, token, ok = v.parseToken(DelimiterToken, "[")
+	if !ok {
+		if !inverted {
+			// This is not a filter.
+			return filter, token, false
+		} else {
+			var message = v.formatError(token)
+			message += v.generateGrammar("[",
+				"Filter",
+				"Atom",
+			)
+			panic(message)
+		}
 	}
 
-	// Attempt to parse a glyph.
-	glyph, token, ok = v.parseGlyph()
-	if ok {
-		// Found a glyph filter.
-		filter = Filter().MakeWithGlyph(glyph)
-		return filter, token, true
+	// Attempt to parse one or more atoms.
+	var atom AtomLike
+	atom, token, ok = v.parseAtom()
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateGrammar("Atom",
+			"Filter",
+			"Atom",
+		)
+		panic(message)
+	}
+	var atoms = col.List[AtomLike]().Make()
+	for ok {
+		atoms.AppendValue(atom)
+		atom, _, ok = v.parseAtom()
 	}
 
-	// This is not a filter.
-	return filter, token, false
+	// Attempt to parse the closing delimiter for a filter.
+	_, token, ok = v.parseToken(DelimiterToken, "]")
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateGrammar("]",
+			"Filter",
+			"Atom",
+		)
+		panic(message)
+	}
+
+	// Found a filter.
+	filter = Filter().MakeWithAttributes(inverted, atoms)
+	return filter, token, true
 }
 
 func (v *parser_) parseGlyph() (
@@ -599,37 +655,6 @@ func (v *parser_) parseInline() (
 	return inline, token, true
 }
 
-func (v *parser_) parseInversion() (
-	inversion InversionLike,
-	token TokenLike,
-	ok bool,
-) {
-	// Check to see if the filter is inverted.
-	var _, _, inverted = v.parseToken(DelimiterToken, "~")
-
-	// Attempt to parse a filter.
-	var filter FilterLike
-	filter, token, ok = v.parseFilter()
-	if ok {
-		// Found an inversion.
-		inversion = Inversion().MakeWithAttributes(inverted, filter)
-		return inversion, token, true
-	}
-
-	// Handle an empty inversion.
-	if inverted {
-		var message = v.formatError(token)
-		message += v.generateGrammar("Filter",
-			"Inversion",
-			"Filter",
-		)
-		panic(message)
-	}
-
-	// This is not an inversion.
-	return inversion, token, false
-}
-
 func (v *parser_) parseLine() (
 	line LineLike,
 	token TokenLike,
@@ -732,6 +757,14 @@ func (v *parser_) parsePredicate() (
 	token TokenLike,
 	ok bool,
 ) {
+	// Attempt to parse an atom predicate.
+	var atom AtomLike
+	atom, token, ok = v.parseAtom()
+	if ok {
+		predicate = Predicate().MakeWithAtom(atom)
+		return predicate, token, true
+	}
+
 	// Attempt to parse an element predicate.
 	var element ElementLike
 	element, token, ok = v.parseElement()
@@ -740,11 +773,11 @@ func (v *parser_) parsePredicate() (
 		return predicate, token, true
 	}
 
-	// Attempt to parse an inversion predicate.
-	var inversion InversionLike
-	inversion, token, ok = v.parseInversion()
+	// Attempt to parse an filter predicate.
+	var filter FilterLike
+	filter, token, ok = v.parseFilter()
 	if ok {
-		predicate = Predicate().MakeWithInversion(inversion)
+		predicate = Predicate().MakeWithFilter(filter)
 		return predicate, token, true
 	}
 
@@ -795,10 +828,10 @@ var grammar = map[string]string{
 	"Line":        `EOL Alternative note?`,
 	"Alternative": `Factor+`,
 	"Factor":      `Predicate Cardinality?  ! The default cardinality is one.`,
-	"Predicate":   `Element | Inversion | Precedence`,
+	"Predicate":   `Element | Filter | Precedence`,
 	"Element":     `literal | name`,
-	"Inversion":   `"~"? Filter`,
-	"Filter":      `intrinsic | Glyph`,
+	"Filter":      `"~"? Atom`,
+	"Atom":        `Glyph | intrinsic`,
 	"Glyph":       `character (".." character)?  ! The range of characters is inclusive.`,
 	"Precedence":  `"(" Expression EOL? ")"`,
 	"Cardinality": `

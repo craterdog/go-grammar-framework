@@ -79,13 +79,13 @@ Rule: "bad"
 func TestDoubleInversion(t *tes.T) {
 	var parser = gra.Parser().Make()
 	var validator = gra.Validator().Make()
-	var source = header + `Bad: ~~CONTROL
+	var source = header + `Bad: ~~[CONTROL]
 `
 	defer func() {
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"An unexpected token was received by the parser: Token [type: delimiter, line: 5, position: 7]: \"~\"\n\x1b[36m0004: \n0005: Bad: ~~CONTROL\n \x1b[32m>>>────────⌃\x1b[36m\n0006: \n\x1b[0m\nWas expecting 'Filter' from:\n  \x1b[32mInversion: \x1b[33m\"~\"? Filter\x1b[0m\n\n  \x1b[32mFilter: \x1b[33mintrinsic | Glyph\x1b[0m\n\n",
+				"An unexpected token was received by the parser: Token [type: delimiter, line: 5, position: 7]: \"~\"\n\x1b[36m0004: \n0005: Bad: ~~[CONTROL]\n \x1b[32m>>>────────⌃\x1b[36m\n0006: \n\x1b[0m\nWas expecting '[' from:\n  \x1b[32mFilter: \x1b[33m\"~\"? Atom\x1b[0m\n\n  \x1b[32mAtom: \x1b[33mGlyph | intrinsic\x1b[0m\n\n",
 				e,
 			)
 		} else {
@@ -105,7 +105,7 @@ func TestInvertedString(t *tes.T) {
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"An unexpected token was received by the parser: Token [type: literal, line: 5, position: 7]: \"\\\"ow\\\"\"\n\x1b[36m0004: \n0005: Bad: ~\"ow\"\n \x1b[32m>>>────────⌃\x1b[36m\n0006: \n\x1b[0m\nWas expecting 'Filter' from:\n  \x1b[32mInversion: \x1b[33m\"~\"? Filter\x1b[0m\n\n  \x1b[32mFilter: \x1b[33mintrinsic | Glyph\x1b[0m\n\n",
+				"An unexpected token was received by the parser: Token [type: literal, line: 5, position: 7]: \"\\\"ow\\\"\"\n\x1b[36m0004: \n0005: Bad: ~\"ow\"\n \x1b[32m>>>────────⌃\x1b[36m\n0006: \n\x1b[0m\nWas expecting '[' from:\n  \x1b[32mFilter: \x1b[33m\"~\"? Atom\x1b[0m\n\n  \x1b[32mAtom: \x1b[33mGlyph | intrinsic\x1b[0m\n\n",
 				e,
 			)
 		} else {
@@ -126,7 +126,7 @@ rule: "rule"
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"An unexpected token was received by the parser: Token [type: name, line: 5, position: 7]: \"rule\"\n\x1b[36m0004: \n0005: bad: ~rule\n \x1b[32m>>>────────⌃\x1b[36m\n0006: rule: \"rule\"\n\x1b[0m\nWas expecting 'Filter' from:\n  \x1b[32mInversion: \x1b[33m\"~\"? Filter\x1b[0m\n\n  \x1b[32mFilter: \x1b[33mintrinsic | Glyph\x1b[0m\n\n",
+				"An unexpected token was received by the parser: Token [type: name, line: 5, position: 7]: \"rule\"\n\x1b[36m0004: \n0005: bad: ~rule\n \x1b[32m>>>────────⌃\x1b[36m\n0006: rule: \"rule\"\n\x1b[0m\nWas expecting '[' from:\n  \x1b[32mFilter: \x1b[33m\"~\"? Atom\x1b[0m\n\n  \x1b[32mAtom: \x1b[33mGlyph | intrinsic\x1b[0m\n\n",
 				e,
 			)
 		} else {
@@ -178,7 +178,7 @@ bad: "worse"
 	validator.ValidateGrammar(parser.ParseSource(source))
 }
 
-func TestNestedInversions(t *tes.T) {
+func TestNestedFilters(t *tes.T) {
 	var parser = gra.Parser().Make()
 	var validator = gra.Validator().Make()
 	var source = header + `Bad: ~(Worse | ~Bad)
@@ -188,7 +188,7 @@ Worse: CONTROL
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"An unexpected token was received by the parser: Token [type: delimiter, line: 5, position: 7]: \"(\"\n\x1b[36m0004: \n0005: Bad: ~(Worse | ~Bad)\n \x1b[32m>>>────────⌃\x1b[36m\n0006: Worse: CONTROL\n\x1b[0m\nWas expecting 'Filter' from:\n  \x1b[32mInversion: \x1b[33m\"~\"? Filter\x1b[0m\n\n  \x1b[32mFilter: \x1b[33mintrinsic | Glyph\x1b[0m\n\n",
+				"An unexpected token was received by the parser: Token [type: delimiter, line: 5, position: 7]: \"(\"\n\x1b[36m0004: \n0005: Bad: ~(Worse | ~Bad)\n \x1b[32m>>>────────⌃\x1b[36m\n0006: Worse: CONTROL\n\x1b[0m\nWas expecting '[' from:\n  \x1b[32mFilter: \x1b[33m\"~\"? Atom\x1b[0m\n\n  \x1b[32mAtom: \x1b[33mGlyph | intrinsic\x1b[0m\n\n",
 				e,
 			)
 		} else {

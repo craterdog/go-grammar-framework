@@ -246,14 +246,14 @@ const (
 	character_ = `['][^` + control_ + `][']`
 	comment_   = `!>` + eol_ + `((?:` + any_ + `)*?)` + eol_ + `<!` + eol_
 	control_   = `\p{Cc}`
-	delimiter_ = `[~?*+:|(){}]|\.\.`
+	delimiter_ = `[~?*+:|()[\]{}]|\.\.`
 	digit_     = `\p{Nd}`
 	eof_       = `\z`
 	eol_       = `\n`
 	escape_    = `\\(?:(?:` + unicode_ + `)|[abfnrtv'"\\])`
 	intrinsic_ = `ANY|LOWER|UPPER|DIGIT|ESCAPE|CONTROL|EOL|EOF`
 	letter_    = lower_ + `|` + upper_
-	literal_   = `["](?:` + escape_ + `|[^` + control_ + `])+?["]`
+	literal_   = `["](?:` + escape_ + `|[^"` + control_ + `])+?["]`
 	lower_     = `\p{Ll}`
 	name_      = `(?:` + letter_ + `)(?:` + letter_ + `|` + digit_ + `)*`
 	note_      = `! [^` + control_ + `]*`

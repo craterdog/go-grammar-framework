@@ -556,10 +556,12 @@ func (v *generator_) processFactor(
 	var attribute mod.AttributeLike
 	attributes = col.List[mod.AttributeLike]().Make()
 	var predicate = factor.GetPredicate()
+	var atom = predicate.GetAtom()
 	var element = predicate.GetElement()
-	var inversion = predicate.GetInversion()
+	var filter = predicate.GetFilter()
 	var precedence = predicate.GetPrecedence()
 	switch {
+	case atom != nil:
 	case element != nil:
 		identifier = element.GetName()
 		if len(identifier) > 0 {
@@ -598,7 +600,7 @@ func (v *generator_) processFactor(
 			)
 			attributes.AppendValue(attribute)
 		}
-	case inversion != nil:
+	case filter != nil:
 	case precedence != nil:
 		var expression = precedence.GetExpression()
 		var _, values = v.processExpression(name, expression)

@@ -70,6 +70,17 @@ type AlternativeClassLike interface {
 }
 
 /*
+AtomClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete atom-like class.
+*/
+type AtomClassLike interface {
+	// Constructors
+	MakeWithGlyph(glyph GlyphLike) AtomLike
+	MakeWithIntrinsic(intrinsic string) AtomLike
+}
+
+/*
 CardinalityClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete cardinality-like class.
@@ -148,8 +159,10 @@ concrete filter-like class.
 */
 type FilterClassLike interface {
 	// Constructors
-	MakeWithGlyph(glyph GlyphLike) FilterLike
-	MakeWithIntrinsic(intrinsic string) FilterLike
+	MakeWithAttributes(
+		inverted bool,
+		atoms col.ListLike[AtomLike],
+	) FilterLike
 }
 
 /*
@@ -221,19 +234,6 @@ type InlineClassLike interface {
 }
 
 /*
-InversionClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete inversion-like class.
-*/
-type InversionClassLike interface {
-	// Constructors
-	MakeWithAttributes(
-		inverted bool,
-		filter FilterLike,
-	) InversionLike
-}
-
-/*
 LineClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete line-like class.
@@ -283,8 +283,9 @@ concrete predicate-like class.
 */
 type PredicateClassLike interface {
 	// Constructors
+	MakeWithAtom(atom AtomLike) PredicateLike
 	MakeWithElement(element ElementLike) PredicateLike
-	MakeWithInversion(inversion InversionLike) PredicateLike
+	MakeWithFilter(filter FilterLike) PredicateLike
 	MakeWithPrecedence(precedence PrecedenceLike) PredicateLike
 }
 
@@ -350,6 +351,17 @@ instance of a concrete alternative-like class.
 type AlternativeLike interface {
 	// Attributes
 	GetFactors() col.ListLike[FactorLike]
+}
+
+/*
+AtomLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete atom-like class.
+*/
+type AtomLike interface {
+	// Attributes
+	GetGlyph() GlyphLike
+	GetIntrinsic() string
 }
 
 /*
@@ -425,8 +437,8 @@ instance of a concrete filter-like class.
 */
 type FilterLike interface {
 	// Attributes
-	GetIntrinsic() string
-	GetGlyph() GlyphLike
+	IsInverted() bool
+	GetAtoms() col.ListLike[AtomLike]
 }
 
 /*
@@ -498,17 +510,6 @@ type InlineLike interface {
 }
 
 /*
-InversionLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete inversion-like class.
-*/
-type InversionLike interface {
-	// Attributes
-	IsInverted() bool
-	GetFilter() FilterLike
-}
-
-/*
 LineLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete line-like class.
@@ -556,8 +557,9 @@ instance of a concrete predicate-like class.
 */
 type PredicateLike interface {
 	// Attributes
+	GetAtom() AtomLike
 	GetElement() ElementLike
-	GetInversion() InversionLike
+	GetFilter() FilterLike
 	GetPrecedence() PrecedenceLike
 }
 
