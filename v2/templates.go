@@ -6,7 +6,7 @@
 .                                                                              .
 .  This code is free software; you can redistribute it and/or modify it under  .
 .  the terms of The MIT License (MIT), as published by the Open Source         .
-.  Initiative. (See http://opensource.org/licenses/MIT)                        .
+.  Initiative. (See https://opensource.org/license/MIT)                        .
 ................................................................................
 */
 
@@ -200,13 +200,15 @@ const grammarTemplate_ = `
 .                                                                              .
 .  This code is free software; you can redistribute it and/or modify it under  .
 .  the terms of The MIT License (MIT), as published by the Open Source         .
-.  Initiative. (See http://opensource.org/licenses/MIT)                        .
+.  Initiative. (See https://opensource.org/license/MIT)                        .
 ................................................................................
 <!
 
 !>
-<Notation>
-This document contains a formal definition of...
+<NAME> NOTATION
+This document contains a formal definition of the <Name> Notation
+using Crater Dog Syntax Notation™ (CDSN):
+ * https://github.com/craterdog/go-grammar-framework/blob/main/v2/Grammar.cdsn
 
 A language grammar consists of a set of rule definitions and token definitions.
 

@@ -460,8 +460,8 @@ type GeneratorLike interface {
 	// Methods
 	CreateGrammar(
 		directory string,
+		name string,
 		copyright string,
-		notation string,
 	)
 	GenerateModel(directory string)
 }

@@ -37,8 +37,8 @@ func TestInitialization(t *tes.T) {
 	}
 
 	var copyright string
-	var notation = "EXAMPLE NOTATION"
-	generator.CreateGrammar(directoryName, copyright, notation)
+	var name = "Example"
+	generator.CreateGrammar(directoryName, name, copyright)
 }
 
 func TestGeneration(t *tes.T) {

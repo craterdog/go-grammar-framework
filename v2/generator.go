@@ -64,13 +64,14 @@ type generator_ struct {
 
 func (v *generator_) CreateGrammar(
 	directory string,
+	name string,
 	copyright string,
-	notation string,
 ) {
 	// Insert the copyright statement into a new grammar template.
 	copyright = v.expandCopyright(copyright)
 	var template = sts.ReplaceAll(grammarTemplate_, "<Copyright>", copyright)
-	template = sts.ReplaceAll(template, "<Notation>", notation)
+	template = sts.ReplaceAll(template, "<NAME>", sts.ToUpper(name))
+	template = sts.ReplaceAll(template, "<Name>", name)
 
 	// Save the new grammar template into the directory.
 	if !sts.HasSuffix(directory, "/") {
