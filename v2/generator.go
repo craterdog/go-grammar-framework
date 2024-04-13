@@ -524,6 +524,7 @@ func (v *generator_) processExpression(
 	constructors col.ListLike[mod.ConstructorLike],
 	attributes col.ListLike[mod.AttributeLike],
 ) {
+	// Process the expression alternatives.
 	constructors = col.List[mod.ConstructorLike]().Make()
 	attributes = col.List[mod.AttributeLike]().Make()
 	var alternatives = v.extractAlternatives(expression)
@@ -536,8 +537,29 @@ func (v *generator_) processExpression(
 		}
 		attributes.AppendValues(values)
 	}
+
+	// Add a default constructor if necessary.
+	if constructors.IsEmpty() {
+		var prefix mod.PrefixLike
+		var arguments col.ListLike[mod.AbstractionLike]
+		var abstraction = mod.Abstraction().MakeWithAttributes(
+			prefix,
+			name+"Like",
+			arguments,
+		)
+		var parameters col.ListLike[mod.ParameterLike]
+		var constructor = mod.Constructor().MakeWithAttributes(
+			"Make",
+			parameters,
+			abstraction,
+		)
+		constructors.AppendValue(constructor)
+	}
+
+	// Consolidate any duplicate methods.
 	v.consolidateConstructors(constructors)
 	v.consolidateAttributes(attributes)
+
 	return constructors, attributes
 }
 

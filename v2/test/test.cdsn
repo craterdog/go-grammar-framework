@@ -51,7 +51,9 @@ definition may be separated by spaces which are ignored by the parser.
 <!
 Source: Component EOL* EOF  ! Terminated with an end-of-file marker.
 
-Component: Primitive | List{3..5}
+Component: Default | Primitive | List{3..5}
+
+Default: "default"
 
 Primitive:
     character
