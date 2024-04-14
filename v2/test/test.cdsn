@@ -49,9 +49,9 @@ matched by the parser in the order listed.  A rule definition may also be
 directly or indirectly recursive.  The sequence of factors within in a rule
 definition may be separated by spaces which are ignored by the parser.
 <!
-Source: Component EOL* EOF  ! Terminated with an end-of-file marker.
+Source: Test EOL* EOF  ! Terminated with an end-of-file marker.
 
-Component: Default | Primitive | List{3..5}
+Test: Default | Primitive | List{3..5}
 
 Default: "default"
 
@@ -61,7 +61,7 @@ Primitive:
     integer
     anything
 
-List: "[" Component (',' Component)* "]"
+List: "[" Test (',' Test)* "]"
 
 !>
 TOKEN DEFINITIONS

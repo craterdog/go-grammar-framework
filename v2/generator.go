@@ -110,6 +110,11 @@ func (v *generator_) GenerateModel(directory string) {
 	// Generate the Package.go file.
 	var model = v.processGrammar(grammar)
 	v.generateModel(directory, model)
+	v.generateScanner(directory, model)
+	v.generateParser(directory, model)
+	v.generateValidator(directory, model)
+	v.generateFormatter(directory, model)
+	v.generatePackage(directory)
 }
 
 // Private
@@ -354,6 +359,24 @@ func (v *generator_) generateClass(
 	return class
 }
 
+func (v *generator_) generateFormatter(
+	directory string,
+	model mod.ModelLike,
+) {
+	var source = formatterTemplate_
+	var notice = model.GetNotice().GetComment()
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var identifier = model.GetHeader().GetIdentifier()
+	source = sts.ReplaceAll(source, "<packagename>", identifier)
+	source = sts.ReplaceAll(source, "<RuleName>", v.makeUppercase(identifier))
+	source = sts.ReplaceAll(source, "<ruleName>", v.makeLowercase(identifier))
+	var bytes = []byte(source)
+	var err = osx.WriteFile(directory+"formatter.go", bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (v *generator_) generateInstance(
 	name string,
 	attributes col.ListLike[mod.AttributeLike],
@@ -386,11 +409,67 @@ func (v *generator_) generateModel(
 	validator.ValidateModel(model)
 	var formatter = mod.Formatter().Make()
 	var source = formatter.FormatModel(model)
-	var parser = mod.Parser().Make()
-	model = parser.ParseSource(source)
-	source = formatter.FormatModel(model)
 	var bytes = []byte(source)
 	var err = osx.WriteFile(directory+"Package.go", bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (v *generator_) generatePackage(
+	directory string,
+) {
+	var generator = mod.Generator().Make()
+	generator.GeneratePackage(directory)
+}
+
+func (v *generator_) generateParser(
+	directory string,
+	model mod.ModelLike,
+) {
+	var source = parserTemplate_
+	var notice = model.GetNotice().GetComment()
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var identifier = model.GetHeader().GetIdentifier()
+	source = sts.ReplaceAll(source, "<packagename>", identifier)
+	source = sts.ReplaceAll(source, "<RuleName>", v.makeUppercase(identifier))
+	source = sts.ReplaceAll(source, "<ruleName>", v.makeLowercase(identifier))
+	var bytes = []byte(source)
+	var err = osx.WriteFile(directory+"parser.go", bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (v *generator_) generateScanner(
+	directory string,
+	model mod.ModelLike,
+) {
+	var source = scannerTemplate_
+	var notice = model.GetNotice().GetComment()
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var identifier = model.GetHeader().GetIdentifier()
+	source = sts.ReplaceAll(source, "<packagename>", identifier)
+	var bytes = []byte(source)
+	var err = osx.WriteFile(directory+"scanner.go", bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (v *generator_) generateValidator(
+	directory string,
+	model mod.ModelLike,
+) {
+	var source = validatorTemplate_
+	var notice = model.GetNotice().GetComment()
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var identifier = model.GetHeader().GetIdentifier()
+	source = sts.ReplaceAll(source, "<packagename>", identifier)
+	source = sts.ReplaceAll(source, "<RuleName>", v.makeUppercase(identifier))
+	source = sts.ReplaceAll(source, "<ruleName>", v.makeLowercase(identifier))
+	var bytes = []byte(source)
+	var err = osx.WriteFile(directory+"validator.go", bytes, 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -637,14 +716,13 @@ func (v *generator_) processFactor(
 func (v *generator_) processGrammar(
 	grammar GrammarLike,
 ) mod.ModelLike {
-	// Initialize the Package.go file template.
-	var source = packageTemplate_
+	// Initialize the Package.go file model template.
+	var source = modelTemplate_
 	var notice = v.extractNotice(grammar)
 	source = sts.ReplaceAll(source, "<Notice>", notice)
 	var className = v.extractName(grammar)
 	var parameterName = sts.ToLower(className)
-	var packageName = v.makePlural(parameterName)
-	source = sts.ReplaceAll(source, "<packagename>", packageName)
+	source = sts.ReplaceAll(source, "<packagename>", parameterName)
 	source = sts.ReplaceAll(source, "<Class>", className)
 	source = sts.ReplaceAll(source, "<class>", parameterName)
 	var parser = mod.Parser().Make()

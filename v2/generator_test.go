@@ -26,11 +26,12 @@ const packageName = "example"
 func TestInitialization(t *tes.T) {
 	var generator = gra.Generator().Make()
 
-	var directoryName = generatedDirectory + packageName + "/"
-	var err = osx.RemoveAll(directoryName)
+	var err = osx.RemoveAll(generatedDirectory)
 	if err != nil {
 		panic(err)
 	}
+
+	var directoryName = generatedDirectory + packageName + "/"
 	err = osx.MkdirAll(directoryName, 0755)
 	if err != nil {
 		panic(err)
