@@ -10,7 +10,7 @@
 ................................................................................
 */
 
-package grammars
+package grammar
 
 const modelTemplate_ = `
 <Notice>
