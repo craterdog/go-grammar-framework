@@ -18,7 +18,7 @@
 *.swp
 
 # Dependency directories (remove the comment below to include it)
-generated/
+output/
 
 # Go workspace file
 go.work
