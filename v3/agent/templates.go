@@ -32,7 +32,7 @@ on interfaces, not on each other.
 package <packagename>
 
 import (
-	col "github.com/craterdog/go-collection-framework/v3"
+	col "github.com/craterdog/go-collection-framework/v3/collection"
 )
 
 // Types
@@ -266,7 +266,7 @@ package <packagename>
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v3"
+	col "github.com/craterdog/go-collection-framework/v3/collection"
 	reg "regexp"
 	sts "strings"
 )
@@ -478,7 +478,7 @@ package <packagename>
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v3"
+	col "github.com/craterdog/go-collection-framework/v3/collection"
 	sts "strings"
 )
 
@@ -527,18 +527,18 @@ type parser_ struct {
 
 // Public
 
-func (v *parser_) ParseSource(source string) <RuleName>Like {
+func (v *parser_) ParseSource(source string) <ClassName>Like {
 	// The scanner runs in a separate Go routine.
 	v.source_ = source
 	Scanner().Make(v.source_, v.tokens_)
 
 	// Attempt to parse a model.
-	var model, token, ok = v.parse<RuleName>()
+	var model, token, ok = v.parse<ClassName>()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("<RuleName>",
-			"Source",
-			"<RuleName>",
+		message += v.generateGrammar("<ClassName>",
+			"<PackageName>",
+			"<ClassName>",
 		)
 		panic(message)
 	}
@@ -553,8 +553,8 @@ func (v *parser_) ParseSource(source string) <RuleName>Like {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateGrammar("EOF",
-			"Source",
-			"<RuleName>",
+			"<PackageName>",
+			"<ClassName>",
 		)
 		panic(message)
 	}
@@ -644,13 +644,13 @@ func (v *parser_) getNextToken() TokenLike {
 	return token
 }
 
-func (v *parser_) parse<RuleName>() (
-	<ruleName> <RuleName>Like,
+func (v *parser_) parse<ClassName>() (
+	<className> <ClassName>Like,
 	token TokenLike,
 	ok bool,
 ) {
 	// TBA - Add real method implementation.
-	return <ruleName>, token, ok
+	return <className>, token, ok
 }
 
 func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
@@ -680,7 +680,7 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var grammar = map[string]string{
-	"Source": "<RuleName> EOL* EOF  ! Terminated with an end-of-file marker.",
+	"<PackageName>": "<ClassName> EOL* EOF  ! Terminated with an end-of-file marker.",
 }
 `
 
@@ -731,8 +731,8 @@ type formatter_ struct {
 
 // Public
 
-func (v *formatter_) Format<RuleName>(<ruleName> <RuleName>Like) string {
-	v.format<RuleName>(<ruleName>)
+func (v *formatter_) Format<ClassName>(<className> <ClassName>Like) string {
+	v.format<ClassName>(<className>)
 	return v.getResult()
 }
 
@@ -751,7 +751,7 @@ func (v *formatter_) appendString(s string) {
 	v.result_.WriteString(s)
 }
 
-func (v *formatter_) format<RuleName>(<ruleName> <RuleName>Like) {
+func (v *formatter_) format<ClassName>(<className> <ClassName>Like) {
 	// TBA - Add real method implementation.
 	v.depth_++
 	v.appendString("test")
@@ -812,7 +812,7 @@ type validator_ struct {
 
 // Public
 
-func (v *validator_) Validate<RuleName>(<ruleName> <RuleName>Like) {
+func (v *validator_) Validate<ClassName>(<className> <ClassName>Like) {
 	// TBA - Add method implementation.
 }
 

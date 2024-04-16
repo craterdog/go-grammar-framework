@@ -10,18 +10,18 @@
 ................................................................................
 */
 
-package agent_test
+package cdsn_test
 
 import (
 	fmt "fmt"
-	gra "github.com/craterdog/go-grammar-framework/v3/cdsn"
+	cds "github.com/craterdog/go-grammar-framework/v3/cdsn"
 	ass "github.com/stretchr/testify/assert"
 	osx "os"
 	sts "strings"
 	tes "testing"
 )
 
-const inputDirectory = "./input/"
+const inputDirectory = "../test/input/"
 
 func TestRoundtrips(t *tes.T) {
 	var files, err = osx.ReadDir(inputDirectory)
@@ -30,9 +30,9 @@ func TestRoundtrips(t *tes.T) {
 	}
 
 	for _, file := range files {
-		var parser = gra.Parser().Make()
-		var validator = gra.Validator().Make()
-		var formatter = gra.Formatter().Make()
+		var parser = cds.Parser().Make()
+		var validator = cds.Validator().Make()
+		var formatter = cds.Formatter().Make()
 		var filename = inputDirectory + file.Name()
 		if sts.HasSuffix(filename, ".cdsn") {
 			fmt.Println(filename)
@@ -56,8 +56,8 @@ HEADER
 `
 
 func TestRuleInTokenDefinition(t *tes.T) {
-	var parser = gra.Parser().Make()
-	var validator = gra.Validator().Make()
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
 	var source = header + `bad: Rule
 Rule: "bad"
 `
@@ -77,8 +77,8 @@ Rule: "bad"
 }
 
 func TestDoubleInversion(t *tes.T) {
-	var parser = gra.Parser().Make()
-	var validator = gra.Validator().Make()
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
 	var source = header + `Bad: ~~[CONTROL]
 `
 	defer func() {
@@ -97,8 +97,8 @@ func TestDoubleInversion(t *tes.T) {
 }
 
 func TestInvertedString(t *tes.T) {
-	var parser = gra.Parser().Make()
-	var validator = gra.Validator().Make()
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
 	var source = header + `Bad: ~"ow"
 `
 	defer func() {
@@ -117,8 +117,8 @@ func TestInvertedString(t *tes.T) {
 }
 
 func TestInvertedRule(t *tes.T) {
-	var parser = gra.Parser().Make()
-	var validator = gra.Validator().Make()
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
 	var source = header + `bad: ~rule
 rule: "rule"
 `
@@ -138,8 +138,8 @@ rule: "rule"
 }
 
 func TestMissingRule(t *tes.T) {
-	var parser = gra.Parser().Make()
-	var validator = gra.Validator().Make()
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
 	var source = header + `bad: rule
 `
 	defer func() {
@@ -158,8 +158,8 @@ func TestMissingRule(t *tes.T) {
 }
 
 func TestDuplicateRule(t *tes.T) {
-	var parser = gra.Parser().Make()
-	var validator = gra.Validator().Make()
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
 	var source = header + `bad: "bad"
 bad: "worse"
 `
@@ -179,8 +179,8 @@ bad: "worse"
 }
 
 func TestNestedFilters(t *tes.T) {
-	var parser = gra.Parser().Make()
-	var validator = gra.Validator().Make()
+	var parser = cds.Parser().Make()
+	var validator = cds.Validator().Make()
 	var source = header + `Bad: ~(Worse | ~Bad)
 Worse: CONTROL
 `

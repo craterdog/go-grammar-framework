@@ -16,7 +16,7 @@ This document contains a formal definition of an example grammar notation using
 Crater Dog Syntax Notation™ (CDSN).  It demonstrates each of the possible kinds
 of token and rule definition.
 
-A language grammar consists of a set of token definitions and rule definitions.
+A language grammar consists of a set of rule definitions and token definitions.
 
 The following intrinsic character types are context specific:
  * ANY - Any language specific character.
@@ -49,7 +49,7 @@ matched by the parser in the order listed.  A rule definition may also be
 directly or indirectly recursive.  The sequence of factors within in a rule
 definition may be separated by spaces which are ignored by the parser.
 <!
-Source: Example EOL* EOF  ! Terminated with an end-of-file marker.
+Test: Example EOL* EOF  ! Terminated with an end-of-file marker.
 
 Example: Default | Primitive | List{3..5}
 

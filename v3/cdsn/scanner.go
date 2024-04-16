@@ -14,7 +14,7 @@ package cdsn
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v3"
+	col "github.com/craterdog/go-collection-framework/v3/collection"
 	reg "regexp"
 	sts "strings"
 	uni "unicode"

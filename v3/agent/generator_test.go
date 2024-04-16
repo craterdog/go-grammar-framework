@@ -20,8 +20,9 @@ import (
 	tes "testing"
 )
 
-const outputDirectory = "./output/"
-const packageName = "example"
+const inputDirectory = "../test/input/"
+const outputDirectory = "../test/output/"
+const grammarName = "Example"
 
 func TestInitialization(t *tes.T) {
 	var generator = gra.Generator().Make()
@@ -31,15 +32,13 @@ func TestInitialization(t *tes.T) {
 		panic(err)
 	}
 
-	var directoryName = outputDirectory + packageName + "/"
-	err = osx.MkdirAll(directoryName, 0755)
+	err = osx.MkdirAll(outputDirectory, 0755)
 	if err != nil {
 		panic(err)
 	}
 
 	var copyright string
-	var name = "Example"
-	generator.CreateGrammar(directoryName, name, copyright)
+	generator.CreateGrammar(outputDirectory, grammarName, copyright)
 }
 
 func TestGeneration(t *tes.T) {

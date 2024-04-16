@@ -13,7 +13,7 @@
 package cdsn
 
 import (
-	col "github.com/craterdog/go-collection-framework/v3"
+	col "github.com/craterdog/go-collection-framework/v3/collection"
 )
 
 // CLASS ACCESS
