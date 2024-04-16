@@ -208,7 +208,7 @@ const grammarTemplate_ = `
 <NAME> NOTATION
 This document contains a formal definition of the <Name> Notation
 using Crater Dog Syntax Notation™ (CDSN):
- * https://github.com/craterdog/go-grammar-framework/blob/main/v3/Grammar.cdsn
+ * https://github.com/craterdog/go-grammar-framework/blob/main/v3/cdsn/Grammar.cdsn
 
 A language grammar consists of a set of rule definitions and token definitions.
 

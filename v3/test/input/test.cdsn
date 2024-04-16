@@ -13,8 +13,10 @@
 !>
 GO EXAMPLE NOTATION
 This document contains a formal definition of an example grammar notation using
-Crater Dog Syntax Notation™ (CDSN).  It demonstrates each of the possible kinds
-of token and rule definition.
+Crater Dog Syntax Notation™ (CDSN):
+ * https://github.com/craterdog/go-grammar-framework/blob/main/v3/cdsn/Grammar.cdsn
+
+It demonstrates each of the possible kinds of token and rule definition.
 
 A language grammar consists of a set of rule definitions and token definitions.
 
