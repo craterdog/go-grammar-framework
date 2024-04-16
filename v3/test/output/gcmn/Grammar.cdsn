@@ -13,7 +13,8 @@
 !>
 GO CLASS MODEL NOTATION
 This document contains a formal definition of the Go Class Model Notation™
-(GCMN) using Crater Dog Syntax Notation™ (CDSN).
+(GCMN) using Crater Dog Syntax Notation™ (CDSN):
+ * https://github.com/craterdog/go-grammar-framework/blob/main/v3/cdsn/Grammar.cdsn
 
 A language grammar consists of a set of rule definitions and token definitions.
 
