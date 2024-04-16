@@ -65,18 +65,18 @@ type parser_ struct {
 
 // Public
 
-func (v *parser_) ParseSource(source string) GrammarLike {
+func (v *parser_) ParseSource(source string) SyntaxLike {
 	// The scanner runs in a separate Go routine.
 	v.source_ = source
 	Scanner().Make(v.source_, v.tokens_)
 
 	// Attempt to parse a model.
-	var model, token, ok = v.parseGrammar()
+	var model, token, ok = v.parseSyntax()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("Grammar",
+		message += v.generateSyntax("Syntax",
 			"Cdsn",
-			"Grammar",
+			"Syntax",
 		)
 		panic(message)
 	}
@@ -90,9 +90,9 @@ func (v *parser_) ParseSource(source string) GrammarLike {
 	_, token, ok = v.parseToken(EOFToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("EOF",
+		message += v.generateSyntax("EOF",
 			"Cdsn",
-			"Grammar",
+			"Syntax",
 		)
 		panic(message)
 	}
@@ -145,13 +145,13 @@ func (v *parser_) formatError(token TokenLike) string {
 This private instance method is useful when creating scanner and parser error
 messages that include the required grammatical rules.
 */
-func (v *parser_) generateGrammar(expected string, names ...string) string {
+func (v *parser_) generateSyntax(expected string, names ...string) string {
 	var message = "Was expecting '" + expected + "' from:\n"
 	for _, name := range names {
 		message += fmt.Sprintf(
 			"  \033[32m%v: \033[33m%v\033[0m\n\n",
 			name,
-			grammar[name],
+			syntax[name],
 		)
 	}
 	return message
@@ -182,13 +182,13 @@ func (v *parser_) getNextToken() TokenLike {
 	return token
 }
 
-func (v *parser_) parseGrammar() (
-	grammar GrammarLike,
+func (v *parser_) parseSyntax() (
+	syntax SyntaxLike,
 	token TokenLike,
 	ok bool,
 ) {
 	// TBA - Add real method implementation.
-	return grammar, token, ok
+	return syntax, token, ok
 }
 
 func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
@@ -217,6 +217,6 @@ func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var grammar = map[string]string{
-	"Cdsn": "Grammar EOL* EOF  ! Terminated with an end-of-file marker.",
+var syntax = map[string]string{
+	"Cdsn": "Syntax EOL* EOF  ! Terminated with an end-of-file marker.",
 }

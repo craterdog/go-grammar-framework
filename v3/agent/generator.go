@@ -64,28 +64,28 @@ type generator_ struct {
 
 // Public
 
-func (v *generator_) CreateGrammar(
+func (v *generator_) CreateSyntax(
 	directory string,
 	name string,
 	copyright string,
 ) {
-	// Create a new directory for the grammar.
+	// Create a new directory for the syntax.
 	directory = v.createDirectory(directory, sts.ToLower(name))
 
-	// Center and insert the copyright notice into the grammar template.
+	// Center and insert the copyright notice into the syntax template.
 	copyright = v.expandCopyright(copyright)
-	var template = sts.ReplaceAll(grammarTemplate_, "<Copyright>", copyright)
+	var template = sts.ReplaceAll(syntaxTemplate_, "<Copyright>", copyright)
 	template = sts.ReplaceAll(template, "<NAME>", sts.ToUpper(name))
 	template = sts.ReplaceAll(template, "<Name>", name)
 
-	// Save the new grammar template into the directory.
-	var grammarFile = directory + "Grammar.cdsn"
+	// Save the new syntax template into the directory.
+	var syntaxFile = directory + "Syntax.cdsn"
 	fmt.Printf(
-		"The grammar file %q does not exist, creating a template for it.\n",
-		grammarFile,
+		"The syntax file %q does not exist, creating a template for it.\n",
+		syntaxFile,
 	)
 	var bytes = []byte(template[1:]) // Remove leading "\n".
-	var err = osx.WriteFile(grammarFile, bytes, 0644)
+	var err = osx.WriteFile(syntaxFile, bytes, 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -103,18 +103,18 @@ func (v *generator_) GenerateModel(directory string) {
 	v.classes_ = col.Catalog[string, gcm.ClassLike]().Make()
 	v.instances_ = col.Catalog[string, gcm.InstanceLike]().Make()
 
-	// Parse the grammar file.
+	// Parse the syntax file.
 	if !sts.HasSuffix(directory, "/") {
 		directory += "/"
 	}
-	var grammar = v.parseGrammar(directory)
-	if grammar == nil {
+	var syntax = v.parseSyntax(directory)
+	if syntax == nil {
 		return
 	}
 
 	// Generate the Package.go file.
-	var className = v.extractClassName(grammar)
-	var model = v.processGrammar(grammar)
+	var className = v.extractClassName(syntax)
+	var model = v.processSyntax(syntax)
 	v.generateModel(directory, model)
 	v.generateScanner(directory, model)
 	v.generateParser(directory, model, className)
@@ -302,8 +302,8 @@ func (v *generator_) extractAlternatives(expression cds.ExpressionLike) col.List
 	return alternatives
 }
 
-func (v *generator_) extractClassName(grammar cds.GrammarLike) string {
-	var definition = grammar.GetDefinitions().GetValue(1)
+func (v *generator_) extractClassName(syntax cds.SyntaxLike) string {
+	var definition = syntax.GetDefinitions().GetValue(1)
 	var expression = definition.GetExpression()
 	var alternatives = v.extractAlternatives(expression)
 	var alternative = alternatives.GetIterator().GetNext()
@@ -315,11 +315,11 @@ func (v *generator_) extractClassName(grammar cds.GrammarLike) string {
 	return name
 }
 
-func (v *generator_) extractNotice(grammar cds.GrammarLike) string {
-	var header = grammar.GetHeaders().GetValue(1)
+func (v *generator_) extractNotice(syntax cds.SyntaxLike) string {
+	var header = syntax.GetHeaders().GetValue(1)
 	var comment = header.GetComment()
 
-	// Strip off the grammar style comment delimiters.
+	// Strip off the syntax style comment delimiters.
 	var notice = cds.Scanner().MatchToken(cds.CommentToken, comment).GetValue(2)
 
 	// Add the Go style comment delimiters.
@@ -328,8 +328,8 @@ func (v *generator_) extractNotice(grammar cds.GrammarLike) string {
 	return notice
 }
 
-func (v *generator_) extractPackageName(grammar cds.GrammarLike) string {
-	var definition = grammar.GetDefinitions().GetValue(1)
+func (v *generator_) extractPackageName(syntax cds.SyntaxLike) string {
+	var definition = syntax.GetDefinitions().GetValue(1)
 	var name = sts.ToLower(definition.GetName())
 	return name
 }
@@ -545,22 +545,22 @@ func (v *generator_) makeUppercase(identifier string) string {
 	return string(runes)
 }
 
-func (v *generator_) parseGrammar(directory string) cds.GrammarLike {
-	var grammarFile = directory + "Grammar.cdsn"
-	var bytes, err = osx.ReadFile(grammarFile)
+func (v *generator_) parseSyntax(directory string) cds.SyntaxLike {
+	var syntaxFile = directory + "Syntax.cdsn"
+	var bytes, err = osx.ReadFile(syntaxFile)
 	if err != nil {
 		var message = fmt.Sprintf(
-			"The specified directory is missing a grammar file: %v",
-			grammarFile,
+			"The specified directory is missing a syntax file: %v",
+			syntaxFile,
 		)
 		panic(message)
 	}
 	var source = string(bytes)
 	var parser = cds.Parser().Make()
-	var grammar = parser.ParseSource(source)
+	var syntax = parser.ParseSource(source)
 	var validator = cds.Validator().Make()
-	validator.ValidateGrammar(grammar)
-	return grammar
+	validator.ValidateSyntax(syntax)
+	return syntax
 }
 
 func (v *generator_) processAlternative(
@@ -734,15 +734,15 @@ func (v *generator_) processFactor(
 	return attributes
 }
 
-func (v *generator_) processGrammar(
-	grammar cds.GrammarLike,
+func (v *generator_) processSyntax(
+	syntax cds.SyntaxLike,
 ) gcm.ModelLike {
 	// Initialize the Package.go file model template.
 	var source = modelTemplate_
-	var notice = v.extractNotice(grammar)
+	var notice = v.extractNotice(syntax)
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var packageName = v.extractPackageName(grammar)
-	var className = v.extractClassName(grammar)
+	var packageName = v.extractPackageName(syntax)
+	var className = v.extractClassName(syntax)
 	var parameterName = sts.ToLower(className)
 	source = sts.ReplaceAll(source, "<packagename>", packageName)
 	source = sts.ReplaceAll(source, "<Class>", className)
@@ -750,8 +750,8 @@ func (v *generator_) processGrammar(
 	var parser = gcm.Parser().Make()
 	var model = parser.ParseSource(source)
 
-	// Process the grammar definitions.
-	var iterator = grammar.GetDefinitions().GetIterator()
+	// Process the syntax definitions.
+	var iterator = syntax.GetDefinitions().GetIterator()
 	iterator.GetNext() // Skip the first rule.
 	for iterator.HasNext() {
 		var definition = iterator.GetNext()

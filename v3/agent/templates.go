@@ -191,7 +191,7 @@ instance of a concrete <class-name>-like class.
 */
 `
 
-const grammarTemplate_ = `
+const syntaxTemplate_ = `
 !>
 ................................................................................
 <Copyright>
@@ -208,9 +208,9 @@ const grammarTemplate_ = `
 <NAME> NOTATION
 This document contains a formal definition of the <Name> Notation
 using Crater Dog Syntax Notation™ (CDSN):
- * https://github.com/craterdog/go-grammar-framework/blob/main/v3/cdsn/Grammar.cdsn
+ * https://github.com/craterdog/go-grammar-framework/blob/main/v3/cdsn/Syntax.cdsn
 
-A language grammar consists of a set of rule definitions and token definitions.
+A language syntax consists of a set of rule definitions and token definitions.
 
 The following intrinsic character types are context specific:
  * ANY - Any language specific character.
@@ -243,7 +243,7 @@ by the parser in the order listed.  A rule definition may also be directly or
 indirectly recursive.  The sequence of factors within in a rule definition may
 be separated by spaces which are ignored by the parser.
 <!
-Source: Rule EOF  ! Terminated with an end-of-file marker.
+<Name>: Rule EOF  ! Terminated with an end-of-file marker.
 
 Rule: token+
 
@@ -536,7 +536,7 @@ func (v *parser_) ParseSource(source string) <ClassName>Like {
 	var model, token, ok = v.parse<ClassName>()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("<ClassName>",
+		message += v.generateSyntax("<ClassName>",
 			"<PackageName>",
 			"<ClassName>",
 		)
@@ -552,7 +552,7 @@ func (v *parser_) ParseSource(source string) <ClassName>Like {
 	_, token, ok = v.parseToken(EOFToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("EOF",
+		message += v.generateSyntax("EOF",
 			"<PackageName>",
 			"<ClassName>",
 		)
@@ -607,13 +607,13 @@ func (v *parser_) formatError(token TokenLike) string {
 This private instance method is useful when creating scanner and parser error
 messages that include the required grammatical rules.
 */
-func (v *parser_) generateGrammar(expected string, names ...string) string {
+func (v *parser_) generateSyntax(expected string, names ...string) string {
 	var message = "Was expecting '" + expected + "' from:\n"
 	for _, name := range names {
 		message += fmt.Sprintf(
 			"  \033[32m%v: \033[33m%v\033[0m\n\n",
 			name,
-			grammar[name],
+			syntax[name],
 		)
 	}
 	return message
@@ -679,7 +679,7 @@ func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var grammar = map[string]string{
+var syntax = map[string]string{
 	"<PackageName>": "<ClassName> EOL* EOF  ! Terminated with an end-of-file marker.",
 }
 `

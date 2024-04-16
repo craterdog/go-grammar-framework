@@ -15,7 +15,7 @@ CRATER DOG SYNTAX NOTATION
 This document contains a formal definition of the Crater Dog Syntax Notation™
 (CDSN) using CDSN itself in homage to Douglas Hofstadter.
 
-A language grammar consists of a set of rule definitions and token definitions.
+A language syntax consists of a set of rule definitions and token definitions.
 
 The following intrinsic character types are context specific:
  * ANY - Any language specific character.
@@ -48,9 +48,9 @@ by the parser in the order listed.  A rule definition may also be directly or
 indirectly recursive.  The sequence of factors within in a rule definition may
 be separated by spaces which are ignored by the parser.
 <!
-Cdsn: Grammar EOL* EOF  ! Terminated with an end-of-file marker.
+Cdsn: Syntax EOL* EOF  ! Terminated with an end-of-file marker.
 
-Grammar: Header+ Definition+
+Syntax: Header+ Definition+
 
 Header: comment EOL+
 

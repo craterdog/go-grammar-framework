@@ -60,8 +60,8 @@ func (v *formatter_) FormatDefinition(definition DefinitionLike) string {
 	return v.getResult()
 }
 
-func (v *formatter_) FormatGrammar(grammar GrammarLike) string {
-	v.formatGrammar(grammar)
+func (v *formatter_) FormatSyntax(syntax SyntaxLike) string {
+	v.formatSyntax(syntax)
 	return v.getResult()
 }
 
@@ -218,16 +218,16 @@ func (v *formatter_) formatGlyph(glyph GlyphLike) {
 	}
 }
 
-func (v *formatter_) formatGrammar(grammar GrammarLike) {
+func (v *formatter_) formatSyntax(syntax SyntaxLike) {
 	// Format the headers.
-	var headerIterator = grammar.GetHeaders().GetIterator()
+	var headerIterator = syntax.GetHeaders().GetIterator()
 	for headerIterator.HasNext() {
 		var header = headerIterator.GetNext()
 		v.formatHeader(header)
 	}
 
 	// Format the definitions.
-	var definitionIterator = grammar.GetDefinitions().GetIterator()
+	var definitionIterator = syntax.GetDefinitions().GetIterator()
 	for definitionIterator.HasNext() {
 		var definition = definitionIterator.GetNext()
 		v.formatDefinition(definition)

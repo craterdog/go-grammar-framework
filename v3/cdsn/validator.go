@@ -59,10 +59,10 @@ type validator_ struct {
 
 // Public
 
-func (v *validator_) ValidateGrammar(grammar GrammarLike) {
+func (v *validator_) ValidateSyntax(syntax SyntaxLike) {
 	v.stack_ = col.Stack[DefinitionLike]().Make()
 	v.names_ = col.Catalog[string, ExpressionLike]().Make()
-	v.validateGrammar(grammar)
+	v.validateSyntax(syntax)
 	var iterator = v.names_.GetIterator()
 	for iterator.HasNext() {
 		var association = iterator.GetNext()
@@ -70,7 +70,7 @@ func (v *validator_) ValidateGrammar(grammar GrammarLike) {
 		var expression = association.GetValue()
 		if expression == nil {
 			var message = fmt.Sprintf(
-				"The grammar is missing a definition for the symbol: %v\n",
+				"The syntax is missing a definition for the symbol: %v\n",
 				symbol,
 			)
 			panic(message)
@@ -279,10 +279,10 @@ func (v *validator_) validateGlyph(glyph GlyphLike) {
 	}
 }
 
-func (v *validator_) validateGrammar(grammar GrammarLike) {
-	var headers = grammar.GetHeaders()
+func (v *validator_) validateSyntax(syntax SyntaxLike) {
+	var headers = syntax.GetHeaders()
 	if headers == nil || headers.IsEmpty() {
-		var message = "The grammar must contain at least one header.\n"
+		var message = "The syntax must contain at least one header.\n"
 		panic(message)
 	}
 	var headerIterator = headers.GetIterator()
@@ -290,9 +290,9 @@ func (v *validator_) validateGrammar(grammar GrammarLike) {
 		var header = headerIterator.GetNext()
 		v.validateHeader(header)
 	}
-	var definitions = grammar.GetDefinitions()
+	var definitions = syntax.GetDefinitions()
 	if definitions == nil || definitions.IsEmpty() {
-		var message = "The grammar must contain at least one definition.\n"
+		var message = "The syntax must contain at least one definition.\n"
 		panic(message)
 	}
 	var definitionIterator = definitions.GetIterator()

@@ -177,19 +177,6 @@ type GlyphClassLike interface {
 }
 
 /*
-GrammarClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete grammar-like class.
-*/
-type GrammarClassLike interface {
-	// Constructors
-	MakeWithAttributes(
-		headers col.ListLike[HeaderLike],
-		definitions col.ListLike[DefinitionLike],
-	) GrammarLike
-}
-
-/*
 HeaderClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete header-like class.
@@ -293,6 +280,19 @@ type ScannerClassLike interface {
 		type_ TokenType,
 		text string,
 	) col.ListLike[string]
+}
+
+/*
+SyntaxClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete syntax-like class.
+*/
+type SyntaxClassLike interface {
+	// Constructors
+	MakeWithAttributes(
+		headers col.ListLike[HeaderLike],
+		definitions col.ListLike[DefinitionLike],
+	) SyntaxLike
 }
 
 /*
@@ -425,7 +425,7 @@ instance of a concrete formatter-like class.
 */
 type FormatterLike interface {
 	// Methods
-	FormatGrammar(grammar GrammarLike) string
+	FormatSyntax(syntax SyntaxLike) string
 }
 
 /*
@@ -436,17 +436,6 @@ instance of a concrete glyph-like class.
 type GlyphLike interface {
 	// Attributes
 	GetCharacters() col.ListLike[string]
-}
-
-/*
-GrammarLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete grammar-like class.
-*/
-type GrammarLike interface {
-	// Attributes
-	GetHeaders() col.ListLike[HeaderLike]
-	GetDefinitions() col.ListLike[DefinitionLike]
 }
 
 /*
@@ -498,7 +487,7 @@ instance of a concrete parser-like class.
 */
 type ParserLike interface {
 	// Methods
-	ParseSource(source string) GrammarLike
+	ParseSource(source string) SyntaxLike
 }
 
 /*
@@ -533,6 +522,17 @@ type ScannerLike interface {
 }
 
 /*
+SyntaxLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete syntax-like class.
+*/
+type SyntaxLike interface {
+	// Attributes
+	GetHeaders() col.ListLike[HeaderLike]
+	GetDefinitions() col.ListLike[DefinitionLike]
+}
+
+/*
 TokenLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete token-like class.
@@ -552,5 +552,5 @@ instance of a concrete validator-like class.
 */
 type ValidatorLike interface {
 	// Methods
-	ValidateGrammar(grammar GrammarLike)
+	ValidateSyntax(syntax SyntaxLike)
 }

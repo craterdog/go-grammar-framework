@@ -11,7 +11,7 @@
 */
 
 /*
-Package "agent" provides a parser and formatter for language grammars defined
+Package "agent" provides a parser and formatter for language syntaxes defined
 using Crater Dog Syntax Notation™ (CDSN).  The parser performs validation on the
 resulting parse tree.  The formatter takes a validated parse tree and generates
 the corresponding CDSN source using the canonical format.
@@ -53,7 +53,7 @@ all generator-like instances.
 */
 type GeneratorLike interface {
 	// Methods
-	CreateGrammar(
+	CreateSyntax(
 		directory string,
 		name string,
 		copyright string,

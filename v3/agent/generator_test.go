@@ -22,7 +22,7 @@ import (
 
 const inputDirectory = "../test/input/"
 const outputDirectory = "../test/output/"
-const grammarName = "Example"
+const syntaxName = "Example"
 
 func TestInitialization(t *tes.T) {
 	var generator = gra.Generator().Make()
@@ -38,7 +38,7 @@ func TestInitialization(t *tes.T) {
 	}
 
 	var copyright string
-	generator.CreateGrammar(outputDirectory, grammarName, copyright)
+	generator.CreateSyntax(outputDirectory, syntaxName, copyright)
 }
 
 func TestGeneration(t *tes.T) {
@@ -66,7 +66,7 @@ func TestGeneration(t *tes.T) {
 		if err != nil {
 			panic(err)
 		}
-		err = osx.WriteFile(directoryName+"Grammar.cdsn", bytes, 0644)
+		err = osx.WriteFile(directoryName+"Syntax.cdsn", bytes, 0644)
 		if err != nil {
 			panic(err)
 		}

@@ -41,9 +41,9 @@ func TestRoundtrips(t *tes.T) {
 				panic(err)
 			}
 			var expected = string(bytes)
-			var grammar = parser.ParseSource(expected)
-			validator.ValidateGrammar(grammar)
-			var actual = formatter.FormatGrammar(grammar)
+			var syntax = parser.ParseSource(expected)
+			validator.ValidateSyntax(syntax)
+			var actual = formatter.FormatSyntax(syntax)
 			ass.Equal(t, expected, actual)
 		}
 	}
@@ -73,7 +73,7 @@ Rule: "bad"
 		}
 	}()
 
-	validator.ValidateGrammar(parser.ParseSource(source))
+	validator.ValidateSyntax(parser.ParseSource(source))
 }
 
 func TestDoubleInversion(t *tes.T) {
@@ -93,7 +93,7 @@ func TestDoubleInversion(t *tes.T) {
 		}
 	}()
 
-	validator.ValidateGrammar(parser.ParseSource(source))
+	validator.ValidateSyntax(parser.ParseSource(source))
 }
 
 func TestInvertedString(t *tes.T) {
@@ -113,7 +113,7 @@ func TestInvertedString(t *tes.T) {
 		}
 	}()
 
-	validator.ValidateGrammar(parser.ParseSource(source))
+	validator.ValidateSyntax(parser.ParseSource(source))
 }
 
 func TestInvertedRule(t *tes.T) {
@@ -134,7 +134,7 @@ rule: "rule"
 		}
 	}()
 
-	validator.ValidateGrammar(parser.ParseSource(source))
+	validator.ValidateSyntax(parser.ParseSource(source))
 }
 
 func TestMissingRule(t *tes.T) {
@@ -146,7 +146,7 @@ func TestMissingRule(t *tes.T) {
 		if e := recover(); e != nil {
 			ass.Equal(
 				t,
-				"The grammar is missing a definition for the symbol: rule\n",
+				"The syntax is missing a definition for the symbol: rule\n",
 				e,
 			)
 		} else {
@@ -154,7 +154,7 @@ func TestMissingRule(t *tes.T) {
 		}
 	}()
 
-	validator.ValidateGrammar(parser.ParseSource(source))
+	validator.ValidateSyntax(parser.ParseSource(source))
 }
 
 func TestDuplicateRule(t *tes.T) {
@@ -175,7 +175,7 @@ bad: "worse"
 		}
 	}()
 
-	validator.ValidateGrammar(parser.ParseSource(source))
+	validator.ValidateSyntax(parser.ParseSource(source))
 }
 
 func TestNestedFilters(t *tes.T) {
@@ -196,5 +196,5 @@ Worse: CONTROL
 		}
 	}()
 
-	validator.ValidateGrammar(parser.ParseSource(source))
+	validator.ValidateSyntax(parser.ParseSource(source))
 }

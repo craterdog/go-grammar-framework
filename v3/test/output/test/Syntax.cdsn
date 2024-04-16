@@ -11,12 +11,14 @@
 <!
 
 !>
-CRATER DOG COLLECTION NOTATION
-This document contains a formal definition of the Crater Dog Collection
-Notation™ (CDCN) using Crater Dog Syntax Notation™ (CDSN):
- * https://github.com/craterdog/go-grammar-framework/blob/main/v3/cdsn/Grammar.cdsn
+GO EXAMPLE NOTATION
+This document contains a formal definition of an example syntax notation using
+Crater Dog Syntax Notation™ (CDSN):
+ * https://github.com/craterdog/go-grammar-framework/blob/main/v3/cdsn/Syntax.cdsn
 
-A language grammar consists of a set of rule definitions and token definitions.
+It demonstrates each of the possible kinds of token and rule definition.
+
+A language syntax consists of a set of rule definitions and token definitions.
 
 The following intrinsic character types are context specific:
  * ANY - Any language specific character.
@@ -49,35 +51,19 @@ matched by the parser in the order listed.  A rule definition may also be
 directly or indirectly recursive.  The sequence of factors within in a rule
 definition may be separated by spaces which are ignored by the parser.
 <!
-Cdcn: Collection EOL* EOF  ! Terminated with an end-of-file marker.
+Test: Example EOL* EOF  ! Terminated with an end-of-file marker.
 
-Collection: "[" (Associations | Values) "]" "(" context ")"
+Example: Default | Primitive | List{3..5}
 
-Associations:
-    Association ("," Association)*
-    (EOL Association)+ EOL
-    ":"  ! No associations.
-
-Association: Key ":" Value
-
-Key: Primitive
-
-Value: Primitive | Collection
+Default: "default"
 
 Primitive:
-    boolean
-    complex
-    float
-    hexadecimal
+    character
+    text
     integer
-    nil
-    rune
-    string
+    anything
 
-Values:
-    Value ("," Value)*
-    (EOL Value)+ EOL
-    " "  ! No values.
+List: "[" Example (',' Example)* "]"
 
 !>
 TOKEN DEFINITIONS
@@ -89,52 +75,16 @@ the name of other tokens.  Token definitions cannot be recursive and the
 scanning of tokens is NOT greedy.  And any spaces within a token definition
 are NOT ignored.
 <!
-base10: '0'..'9'
+character: "'" ~[CONTROL] "'"  ! Any single printable character.
 
-base16: '0'..'9' | 'a'..'f'
+text: '"' (
+    ESCAPE
+    ~['"' CONTROL]{2..}
+)+ '"'
 
-boolean: "false" | "true"
+integer:
+    '0'{4}
+    '-'? '1'..'9' DIGIT*
 
-complex: "(" float sign float "i)"
-
-context:
-    "array"
-    "Array"
-    "Catalog"
-    "List"
-    "map"
-    "Map"
-    "Queue"
-    "Set"
-    "Stack"
-
-delimiter: "[" | "]" | "(" | ")" | ":" | ","
-
-exponent: ('e' | 'E') sign ordinal
-
-float: sign? scalar exponent?
-
-fraction: '.' base10+
-
-hexadecimal: "0x" base16+
-
-integer: zero | sign? ordinal
-
-letter: LOWER | UPPER
-
-nil: "nil"
-
-ordinal: '1'..'9' '0'..'9'*
-
-rune: "'" ~[CONTROL] "'"  ! Any single printable character.
-
-scalar: (zero | ordinal) fraction
-
-sign: '+' | '-'
-
-string: '"' (ESCAPE | ~['"' CONTROL])* '"'
-
-unicode: 'x' base16{2} | 'u' base16{4} | 'U' base16{8}
-
-zero: '0'
+anything: ANY
 

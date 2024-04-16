@@ -20,21 +20,21 @@ import (
 
 // Reference
 
-var grammarClass = &grammarClass_{
+var syntaxClass = &syntaxClass_{
 	// This class has no private constants to initialize.
 }
 
 // Function
 
-func Grammar() GrammarClassLike {
-	return grammarClass
+func Syntax() SyntaxClassLike {
+	return syntaxClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type grammarClass_ struct {
+type syntaxClass_ struct {
 	// This class has no private constants.
 }
 
@@ -42,11 +42,11 @@ type grammarClass_ struct {
 
 // Constructors
 
-func (c *grammarClass_) MakeWithAttributes(
+func (c *syntaxClass_) MakeWithAttributes(
 	headers col.ListLike[HeaderLike],
 	definitions col.ListLike[DefinitionLike],
-) GrammarLike {
-	return &grammar_{
+) SyntaxLike {
+	return &syntax_{
 		headers_: headers,
 		definitions_: definitions,
 	}
@@ -58,18 +58,18 @@ func (c *grammarClass_) MakeWithAttributes(
 
 // Target
 
-type grammar_ struct {
+type syntax_ struct {
 	headers_ col.ListLike[HeaderLike]
 	definitions_ col.ListLike[DefinitionLike]
 }
 
 // Attributes
 
-func (v *grammar_) GetHeaders() col.ListLike[HeaderLike] {
+func (v *syntax_) GetHeaders() col.ListLike[HeaderLike] {
 	return v.headers_
 }
 
-func (v *grammar_) GetDefinitions() col.ListLike[DefinitionLike] {
+func (v *syntax_) GetDefinitions() col.ListLike[DefinitionLike] {
 	return v.definitions_
 }
 

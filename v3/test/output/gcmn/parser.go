@@ -74,7 +74,7 @@ func (v *parser_) ParseSource(source string) ModelLike {
 	var model, token, ok = v.parseModel()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("Model",
+		message += v.generateSyntax("Model",
 			"Gcmn",
 			"Model",
 		)
@@ -90,7 +90,7 @@ func (v *parser_) ParseSource(source string) ModelLike {
 	_, token, ok = v.parseToken(EOFToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("EOF",
+		message += v.generateSyntax("EOF",
 			"Gcmn",
 			"Model",
 		)
@@ -145,13 +145,13 @@ func (v *parser_) formatError(token TokenLike) string {
 This private instance method is useful when creating scanner and parser error
 messages that include the required grammatical rules.
 */
-func (v *parser_) generateGrammar(expected string, names ...string) string {
+func (v *parser_) generateSyntax(expected string, names ...string) string {
 	var message = "Was expecting '" + expected + "' from:\n"
 	for _, name := range names {
 		message += fmt.Sprintf(
 			"  \033[32m%v: \033[33m%v\033[0m\n\n",
 			name,
-			grammar[name],
+			syntax[name],
 		)
 	}
 	return message
@@ -217,6 +217,6 @@ func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var grammar = map[string]string{
+var syntax = map[string]string{
 	"Gcmn": "Model EOL* EOF  ! Terminated with an end-of-file marker.",
 }

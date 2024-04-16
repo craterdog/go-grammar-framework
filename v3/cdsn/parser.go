@@ -63,18 +63,18 @@ type parser_ struct {
 
 // Public
 
-func (v *parser_) ParseSource(source string) GrammarLike {
+func (v *parser_) ParseSource(source string) SyntaxLike {
 	// The scanner runs in a separate Go routine.
 	v.source_ = source
 	Scanner().Make(v.source_, v.tokens_)
 
-	// Attempt to parse a grammar.
-	var grammar, token, ok = v.parseGrammar()
+	// Attempt to parse a syntax.
+	var syntax, token, ok = v.parseSyntax()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("Grammar",
-			"Source",
-			"Grammar",
+		message += v.generateSyntax("Syntax",
+			"Cdsn",
+			"Syntax",
 		)
 		panic(message)
 	}
@@ -88,15 +88,15 @@ func (v *parser_) ParseSource(source string) GrammarLike {
 	_, token, ok = v.parseToken(EOFToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("EOF",
-			"Source",
-			"Grammar",
+		message += v.generateSyntax("EOF",
+			"Cdsn",
+			"Syntax",
 		)
 		panic(message)
 	}
 
-	// Found a grammar.
-	return grammar
+	// Found a syntax.
+	return syntax
 }
 
 // Private
@@ -143,13 +143,13 @@ func (v *parser_) formatError(token TokenLike) string {
 This private instance method is useful when creating scanner and parser error
 messages that include the required grammatical rules.
 */
-func (v *parser_) generateGrammar(expected string, names ...string) string {
+func (v *parser_) generateSyntax(expected string, names ...string) string {
 	var message = "Was expecting '" + expected + "' from:\n"
 	for _, name := range names {
 		message += fmt.Sprintf(
 			"  \033[32m%v: \033[33m%v\033[0m\n\n",
 			name,
-			grammar[name],
+			syntax[name],
 		)
 	}
 	return message
@@ -271,7 +271,7 @@ func (v *parser_) parseCardinality() (
 	constraint, token, ok = v.parseConstraint()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("Constraint",
+		message += v.generateSyntax("Constraint",
 			"Cardinality",
 			"Constraint",
 		)
@@ -280,7 +280,7 @@ func (v *parser_) parseCardinality() (
 	_, token, ok = v.parseToken(DelimiterToken, "}")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("}",
+		message += v.generateSyntax("}",
 			"Cardinality",
 			"Constraint",
 		)
@@ -344,7 +344,7 @@ func (v *parser_) parseDefinition() (
 	_, token, ok = v.parseToken(DelimiterToken, ":")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar(":",
+		message += v.generateSyntax(":",
 			"Definition",
 			"Expression",
 		)
@@ -355,7 +355,7 @@ func (v *parser_) parseDefinition() (
 	expression, token, ok = v.parseExpression()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("Expression",
+		message += v.generateSyntax("Expression",
 			"Definition",
 			"Expression",
 		)
@@ -366,7 +366,7 @@ func (v *parser_) parseDefinition() (
 	_, token, ok = v.parseToken(EOLToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("EOL",
+		message += v.generateSyntax("EOL",
 			"Definition",
 			"Expression",
 		)
@@ -474,7 +474,7 @@ func (v *parser_) parseFilter() (
 			return filter, token, false
 		} else {
 			var message = v.formatError(token)
-			message += v.generateGrammar("[",
+			message += v.generateSyntax("[",
 				"Filter",
 				"Atom",
 			)
@@ -487,7 +487,7 @@ func (v *parser_) parseFilter() (
 	atom, token, ok = v.parseAtom()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("Atom",
+		message += v.generateSyntax("Atom",
 			"Filter",
 			"Atom",
 		)
@@ -503,7 +503,7 @@ func (v *parser_) parseFilter() (
 	_, token, ok = v.parseToken(DelimiterToken, "]")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("]",
+		message += v.generateSyntax("]",
 			"Filter",
 			"Atom",
 		)
@@ -536,7 +536,7 @@ func (v *parser_) parseGlyph() (
 		last, token, ok = v.parseToken(CharacterToken, "")
 		if !ok {
 			var message = v.formatError(token)
-			message += v.generateGrammar("character",
+			message += v.generateSyntax("character",
 				"Glyph",
 			)
 			panic(message)
@@ -548,8 +548,8 @@ func (v *parser_) parseGlyph() (
 	return glyph, token, true
 }
 
-func (v *parser_) parseGrammar() (
-	grammar GrammarLike,
+func (v *parser_) parseSyntax() (
+	syntax SyntaxLike,
 	token TokenLike,
 	ok bool,
 ) {
@@ -557,7 +557,7 @@ func (v *parser_) parseGrammar() (
 	var header HeaderLike
 	header, token, ok = v.parseHeader()
 	if !ok {
-		return grammar, token, false
+		return syntax, token, false
 	}
 	var headers = col.List[HeaderLike]().Make()
 	for ok {
@@ -570,8 +570,8 @@ func (v *parser_) parseGrammar() (
 	definition, token, ok = v.parseDefinition()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("Definition",
-			"Grammar",
+		message += v.generateSyntax("Definition",
+			"Syntax",
 			"Header",
 			"Definition",
 		)
@@ -583,9 +583,9 @@ func (v *parser_) parseGrammar() (
 		definition, token, ok = v.parseDefinition()
 	}
 
-	// Found a grammar.
-	grammar = Grammar().MakeWithAttributes(headers, definitions)
-	return grammar, token, true
+	// Found a syntax.
+	syntax = Syntax().MakeWithAttributes(headers, definitions)
+	return syntax, token, true
 }
 
 func (v *parser_) parseHeader() (
@@ -637,7 +637,7 @@ func (v *parser_) parseInline() (
 			alternative, token, ok = v.parseAlternative()
 			if !ok {
 				var message = v.formatError(token)
-				message += v.generateGrammar("Alternative",
+				message += v.generateSyntax("Alternative",
 					"Inline",
 					"Alternative",
 				)
@@ -726,7 +726,7 @@ func (v *parser_) parsePrecedence() (
 	expression, token, ok = v.parseExpression()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar("Expression",
+		message += v.generateSyntax("Expression",
 			"Precedence",
 			"Expression",
 		)
@@ -740,7 +740,7 @@ func (v *parser_) parsePrecedence() (
 	_, token, ok = v.parseToken(DelimiterToken, ")")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateGrammar(")",
+		message += v.generateSyntax(")",
 			"Precedence",
 			"Expression",
 		)
@@ -817,9 +817,9 @@ func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var grammar = map[string]string{
-	"Source":      `Grammar EOL* EOF  ! Terminated with an end-of-file marker.`,
-	"Grammar":     `Header+ Definition+`,
+var syntax = map[string]string{
+	"Cdsn":        `Syntax EOL* EOF  ! Terminated with an end-of-file marker.`,
+	"Syntax":      `Header+ Definition+`,
 	"Header":      `comment EOL+`,
 	"Definition":  `comment? name ":" Expression EOL+`,
 	"Expression":  `Inline | Multiline`,

@@ -57,8 +57,8 @@ type formatter_ struct {
 
 // Public
 
-func (v *formatter_) FormatGrammar(grammar GrammarLike) string {
-	v.formatGrammar(grammar)
+func (v *formatter_) FormatSyntax(syntax SyntaxLike) string {
+	v.formatSyntax(syntax)
 	return v.getResult()
 }
 
@@ -77,7 +77,7 @@ func (v *formatter_) appendString(s string) {
 	v.result_.WriteString(s)
 }
 
-func (v *formatter_) formatGrammar(grammar GrammarLike) {
+func (v *formatter_) formatSyntax(syntax SyntaxLike) {
 	// TBA - Add real method implementation.
 	v.depth_++
 	v.appendString("test")
