@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var headerClass = &headerClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,7 +33,7 @@ func Header() HeaderClassLike {
 // Target
 
 type headerClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
@@ -51,10 +53,15 @@ func (c *headerClass_) MakeWithComment(comment string) HeaderLike {
 // Target
 
 type header_ struct {
+	class_   HeaderClassLike
 	comment_ string
 }
 
 // Attributes
+
+func (v *header_) GetClass() HeaderClassLike {
+	return v.class_
+}
 
 func (v *header_) GetComment() string {
 	return v.comment_

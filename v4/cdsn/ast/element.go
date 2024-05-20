@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var elementClass = &elementClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,7 +33,7 @@ func Element() ElementClassLike {
 // Target
 
 type elementClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
@@ -57,11 +59,16 @@ func (c *elementClass_) MakeWithName(name string) ElementLike {
 // Target
 
 type element_ struct {
+	class_   ElementClassLike
 	literal_ string
 	name_    string
 }
 
 // Attributes
+
+func (v *element_) GetClass() ElementClassLike {
+	return v.class_
+}
 
 func (v *element_) GetLiteral() string {
 	return v.literal_

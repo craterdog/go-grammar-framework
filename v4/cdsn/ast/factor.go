@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var factorClass = &factorClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,14 +33,17 @@ func Factor() FactorClassLike {
 // Target
 
 type factorClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
 
 // Constructors
 
-func (c *factorClass_) MakeWithAttributes(predicate PredicateLike, cardinality CardinalityLike) FactorLike {
+func (c *factorClass_) MakeWithAttributes(
+	predicate PredicateLike,
+	cardinality CardinalityLike,
+) FactorLike {
 	return &factor_{
 		predicate_:   predicate,
 		cardinality_: cardinality,
@@ -52,11 +57,16 @@ func (c *factorClass_) MakeWithAttributes(predicate PredicateLike, cardinality C
 // Target
 
 type factor_ struct {
+	class_       FactorClassLike
 	predicate_   PredicateLike
 	cardinality_ CardinalityLike
 }
 
 // Attributes
+
+func (v *factor_) GetClass() FactorClassLike {
+	return v.class_
+}
 
 func (v *factor_) GetPredicate() PredicateLike {
 	return v.predicate_

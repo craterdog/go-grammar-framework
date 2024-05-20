@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var cardinalityClass = &cardinalityClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,7 +33,7 @@ func Cardinality() CardinalityClassLike {
 // Target
 
 type cardinalityClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
@@ -51,10 +53,15 @@ func (c *cardinalityClass_) MakeWithConstraint(constraint ConstraintLike) Cardin
 // Target
 
 type cardinality_ struct {
+	class_      CardinalityClassLike
 	constraint_ ConstraintLike
 }
 
 // Attributes
+
+func (v *cardinality_) GetClass() CardinalityClassLike {
+	return v.class_
+}
 
 func (v *cardinality_) GetConstraint() ConstraintLike {
 	return v.constraint_

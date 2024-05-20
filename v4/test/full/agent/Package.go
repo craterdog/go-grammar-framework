@@ -28,8 +28,8 @@ on interfaces, not on each other.
 package agent
 
 import (
-	ast "github.com/craterdog/go-grammar-framework/v4/test/full/ast"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
+	ast "github.com/craterdog/go-grammar-framework/v4/test/full/ast"
 )
 
 // Types

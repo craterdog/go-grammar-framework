@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var definitionClass = &definitionClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,7 +33,7 @@ func Definition() DefinitionClassLike {
 // Target
 
 type definitionClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
@@ -57,12 +59,17 @@ func (c *definitionClass_) MakeWithAttributes(
 // Target
 
 type definition_ struct {
+	class_      DefinitionClassLike
 	comment_    string
 	name_       string
 	expression_ ExpressionLike
 }
 
 // Attributes
+
+func (v *definition_) GetClass() DefinitionClassLike {
+	return v.class_
+}
 
 func (v *definition_) GetComment() string {
 	return v.comment_

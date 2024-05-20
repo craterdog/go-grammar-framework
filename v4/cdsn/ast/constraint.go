@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var constraintClass = &constraintClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,14 +33,17 @@ func Constraint() ConstraintClassLike {
 // Target
 
 type constraintClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
 
 // Constructors
 
-func (c *constraintClass_) MakeWithAttributes(first string, last string) ConstraintLike {
+func (c *constraintClass_) MakeWithAttributes(
+	first string,
+	last string,
+) ConstraintLike {
 	return &constraint_{
 		first_: first,
 		last_:  last,
@@ -52,11 +57,16 @@ func (c *constraintClass_) MakeWithAttributes(first string, last string) Constra
 // Target
 
 type constraint_ struct {
+	class_ ConstraintClassLike
 	first_ string
 	last_  string
 }
 
 // Attributes
+
+func (v *constraint_) GetClass() ConstraintClassLike {
+	return v.class_
+}
 
 func (v *constraint_) GetFirst() string {
 	return v.first_

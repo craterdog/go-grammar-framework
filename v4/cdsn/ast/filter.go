@@ -21,7 +21,7 @@ import (
 // Reference
 
 var filterClass = &filterClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -35,7 +35,7 @@ func Filter() FilterClassLike {
 // Target
 
 type filterClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
@@ -59,11 +59,16 @@ func (c *filterClass_) MakeWithAttributes(
 // Target
 
 type filter_ struct {
+	class_    FilterClassLike
 	inverted_ bool
 	atoms_    col.ListLike[AtomLike]
 }
 
 // Attributes
+
+func (v *filter_) GetClass() FilterClassLike {
+	return v.class_
+}
 
 func (v *filter_) IsInverted() bool {
 	return v.inverted_

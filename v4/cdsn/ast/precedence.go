@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var precedenceClass = &precedenceClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,7 +33,7 @@ func Precedence() PrecedenceClassLike {
 // Target
 
 type precedenceClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
@@ -51,10 +53,15 @@ func (c *precedenceClass_) MakeWithExpression(expression ExpressionLike) Precede
 // Target
 
 type precedence_ struct {
+	class_      PrecedenceClassLike
 	expression_ ExpressionLike
 }
 
 // Attributes
+
+func (v *precedence_) GetClass() PrecedenceClassLike {
+	return v.class_
+}
 
 func (v *precedence_) GetExpression() ExpressionLike {
 	return v.expression_

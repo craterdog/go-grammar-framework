@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var expressionClass = &expressionClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,7 +33,7 @@ func Expression() ExpressionClassLike {
 // Target
 
 type expressionClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
@@ -57,11 +59,16 @@ func (c *expressionClass_) MakeWithMultiline(multiline MultilineLike) Expression
 // Target
 
 type expression_ struct {
+	class_     ExpressionClassLike
 	inline_    InlineLike
 	multiline_ MultilineLike
 }
 
 // Attributes
+
+func (v *expression_) GetClass() ExpressionClassLike {
+	return v.class_
+}
 
 func (v *expression_) GetInline() InlineLike {
 	return v.inline_

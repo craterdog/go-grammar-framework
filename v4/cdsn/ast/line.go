@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var lineClass = &lineClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,14 +33,17 @@ func Line() LineClassLike {
 // Target
 
 type lineClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(alternative AlternativeLike, note string) LineLike {
+func (c *lineClass_) MakeWithAttributes(
+	alternative AlternativeLike,
+	note string,
+) LineLike {
 	return &line_{
 		alternative_: alternative,
 		note_:        note,
@@ -52,11 +57,16 @@ func (c *lineClass_) MakeWithAttributes(alternative AlternativeLike, note string
 // Target
 
 type line_ struct {
+	class_       LineClassLike
 	alternative_ AlternativeLike
 	note_        string
 }
 
 // Attributes
+
+func (v *line_) GetClass() LineClassLike {
+	return v.class_
+}
 
 func (v *line_) GetAlternative() AlternativeLike {
 	return v.alternative_

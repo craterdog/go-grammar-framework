@@ -21,7 +21,7 @@ import (
 // Reference
 
 var alternativeClass = &alternativeClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -35,7 +35,7 @@ func Alternative() AlternativeClassLike {
 // Target
 
 type alternativeClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
@@ -55,10 +55,15 @@ func (c *alternativeClass_) MakeWithFactors(factors col.ListLike[FactorLike]) Al
 // Target
 
 type alternative_ struct {
+	class_   AlternativeClassLike
 	factors_ col.ListLike[FactorLike]
 }
 
 // Attributes
+
+func (v *alternative_) GetClass() AlternativeClassLike {
+	return v.class_
+}
 
 func (v *alternative_) GetFactors() col.ListLike[FactorLike] {
 	return v.factors_

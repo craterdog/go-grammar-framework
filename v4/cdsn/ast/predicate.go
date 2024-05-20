@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var predicateClass = &predicateClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,7 +33,7 @@ func Predicate() PredicateClassLike {
 // Target
 
 type predicateClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
@@ -69,6 +71,7 @@ func (c *predicateClass_) MakeWithPrecedence(precedence PrecedenceLike) Predicat
 // Target
 
 type predicate_ struct {
+	class_      PredicateClassLike
 	atom_       AtomLike
 	element_    ElementLike
 	filter_     FilterLike
@@ -76,6 +79,10 @@ type predicate_ struct {
 }
 
 // Attributes
+
+func (v *predicate_) GetClass() PredicateClassLike {
+	return v.class_
+}
 
 func (v *predicate_) GetAtom() AtomLike {
 	return v.atom_

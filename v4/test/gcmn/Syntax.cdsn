@@ -57,7 +57,7 @@ Notice: comment
 
 Header: comment "package" identifier
 
-Modules: "import" "(" Module+ ")"
+Modules: "import" "(" Module* ")"
 
 Module: identifier text
 

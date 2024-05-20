@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var atomClass = &atomClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,24 +33,20 @@ func Atom() AtomClassLike {
 // Target
 
 type atomClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
 
 // Constructors
 
-func (c *atomClass_) MakeWithGlyph(
-	glyph GlyphLike,
-) AtomLike {
+func (c *atomClass_) MakeWithGlyph(glyph GlyphLike) AtomLike {
 	return &atom_{
 		glyph_: glyph,
 	}
 }
 
-func (c *atomClass_) MakeWithIntrinsic(
-	intrinsic string,
-) AtomLike {
+func (c *atomClass_) MakeWithIntrinsic(intrinsic string) AtomLike {
 	return &atom_{
 		intrinsic_: intrinsic,
 	}
@@ -61,11 +59,16 @@ func (c *atomClass_) MakeWithIntrinsic(
 // Target
 
 type atom_ struct {
+	class_     AtomClassLike
 	glyph_     GlyphLike
 	intrinsic_ string
 }
 
 // Attributes
+
+func (v *atom_) GetClass() AtomClassLike {
+	return v.class_
+}
 
 func (v *atom_) GetGlyph() GlyphLike {
 	return v.glyph_

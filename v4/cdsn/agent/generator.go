@@ -16,9 +16,9 @@ import (
 	fmt "fmt"
 	gcf "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
-	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
-	age "github.com/craterdog/go-model-framework/v4/agent"
-	gcm "github.com/craterdog/go-model-framework/v4/gcmn"
+	cds "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
+	age "github.com/craterdog/go-model-framework/v4/gcmn/agent"
+	gcm "github.com/craterdog/go-model-framework/v4/gcmn/ast"
 	osx "os"
 	sts "strings"
 	tim "time"
@@ -329,8 +329,8 @@ func (v *generator_) expandCopyright(copyright string) string {
 	return copyright
 }
 
-func (v *generator_) extractAlternatives(expression ast.ExpressionLike) col.ListLike[ast.AlternativeLike] {
-	var alternatives = gcf.List[ast.AlternativeLike]()
+func (v *generator_) extractAlternatives(expression cds.ExpressionLike) col.ListLike[cds.AlternativeLike] {
+	var alternatives = gcf.List[cds.AlternativeLike]()
 	var inline = expression.GetInline()
 	if inline != nil {
 		var iterator = inline.GetAlternatives().GetIterator()
@@ -351,7 +351,7 @@ func (v *generator_) extractAlternatives(expression ast.ExpressionLike) col.List
 	return alternatives
 }
 
-func (v *generator_) extractClassName(syntax ast.SyntaxLike) string {
+func (v *generator_) extractClassName(syntax cds.SyntaxLike) string {
 	var definition = syntax.GetDefinitions().GetValue(1)
 	var expression = definition.GetExpression()
 	var alternatives = v.extractAlternatives(expression)
@@ -378,7 +378,7 @@ func (v *generator_) extractModule(directory string, name string) string {
 	return module
 }
 
-func (v *generator_) extractNotice(syntax ast.SyntaxLike) string {
+func (v *generator_) extractNotice(syntax cds.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetValue(1)
 	var comment = header.GetComment()
 
@@ -642,7 +642,7 @@ func (v *generator_) outputFile(file, source string) {
 	}
 }
 
-func (v *generator_) parseSyntax(directory string) ast.SyntaxLike {
+func (v *generator_) parseSyntax(directory string) cds.SyntaxLike {
 	var syntaxFile = directory + "Syntax.cdsn"
 	var bytes, err = osx.ReadFile(syntaxFile)
 	if err != nil {
@@ -662,7 +662,7 @@ func (v *generator_) parseSyntax(directory string) ast.SyntaxLike {
 
 func (v *generator_) processAlternative(
 	name string,
-	alternative ast.AlternativeLike,
+	alternative cds.AlternativeLike,
 ) (
 	constructor gcm.ConstructorLike,
 	attributes col.ListLike[gcm.AttributeLike],
@@ -704,7 +704,7 @@ func (v *generator_) processAlternative(
 }
 
 func (v *generator_) processDefinition(
-	definition ast.DefinitionLike,
+	definition cds.DefinitionLike,
 ) {
 	var name = definition.GetName()
 	var expression = definition.GetExpression()
@@ -717,7 +717,7 @@ func (v *generator_) processDefinition(
 
 func (v *generator_) processExpression(
 	name string,
-	expression ast.ExpressionLike,
+	expression cds.ExpressionLike,
 ) (
 	constructors col.ListLike[gcm.ConstructorLike],
 	attributes col.ListLike[gcm.AttributeLike],
@@ -763,7 +763,7 @@ func (v *generator_) processExpression(
 
 func (v *generator_) processFactor(
 	name string,
-	factor ast.FactorLike,
+	factor cds.FactorLike,
 ) (attributes col.ListLike[gcm.AttributeLike]) {
 	var isSequential bool
 	var cardinality = factor.GetCardinality()
@@ -826,7 +826,7 @@ func (v *generator_) processFactor(
 
 func (v *generator_) processRule(
 	name string,
-	expression ast.ExpressionLike,
+	expression cds.ExpressionLike,
 ) {
 	// Process the full expression first.
 	var constructors, attributes = v.processExpression(name, expression)
@@ -840,7 +840,7 @@ func (v *generator_) processRule(
 	v.instances_.SetValue(name, instance)
 }
 
-func (v *generator_) processSyntax(syntax ast.SyntaxLike) {
+func (v *generator_) processSyntax(syntax cds.SyntaxLike) {
 	// Initialize the collections.
 	var array = []string{
 		"DelimiterToken",
@@ -864,7 +864,7 @@ func (v *generator_) processSyntax(syntax ast.SyntaxLike) {
 
 func (v *generator_) processToken(
 	name string,
-	expression ast.ExpressionLike,
+	expression cds.ExpressionLike,
 ) {
 	// Ignore token definitions for now.
 }

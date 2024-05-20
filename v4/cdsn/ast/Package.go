@@ -156,19 +156,6 @@ type GlyphClassLike interface {
 }
 
 /*
-SyntaxClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete syntax-like class.
-*/
-type SyntaxClassLike interface {
-	// Constructors
-	MakeWithAttributes(
-		headers col.ListLike[HeaderLike],
-		definitions col.ListLike[DefinitionLike],
-	) SyntaxLike
-}
-
-/*
 HeaderClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete header-like class.
@@ -237,6 +224,19 @@ type PredicateClassLike interface {
 	MakeWithPrecedence(precedence PrecedenceLike) PredicateLike
 }
 
+/*
+SyntaxClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete syntax-like class.
+*/
+type SyntaxClassLike interface {
+	// Constructors
+	MakeWithAttributes(
+		headers col.ListLike[HeaderLike],
+		definitions col.ListLike[DefinitionLike],
+	) SyntaxLike
+}
+
 // Instances
 
 /*
@@ -246,6 +246,7 @@ instance of a concrete alternative-like class.
 */
 type AlternativeLike interface {
 	// Attributes
+	GetClass() AlternativeClassLike
 	GetFactors() col.ListLike[FactorLike]
 }
 
@@ -256,6 +257,7 @@ instance of a concrete atom-like class.
 */
 type AtomLike interface {
 	// Attributes
+	GetClass() AtomClassLike
 	GetGlyph() GlyphLike
 	GetIntrinsic() string
 }
@@ -267,6 +269,7 @@ instance of a concrete cardinality-like class.
 */
 type CardinalityLike interface {
 	// Attributes
+	GetClass() CardinalityClassLike
 	GetConstraint() ConstraintLike
 }
 
@@ -277,6 +280,7 @@ instance of a concrete constraint-like class.
 */
 type ConstraintLike interface {
 	// Attributes
+	GetClass() ConstraintClassLike
 	GetFirst() string
 	GetLast() string
 }
@@ -288,6 +292,7 @@ instance of a concrete definition-like class.
 */
 type DefinitionLike interface {
 	// Attributes
+	GetClass() DefinitionClassLike
 	GetComment() string
 	GetName() string
 	GetExpression() ExpressionLike
@@ -300,6 +305,7 @@ instance of a concrete element-like class.
 */
 type ElementLike interface {
 	// Attributes
+	GetClass() ElementClassLike
 	GetLiteral() string
 	GetName() string
 }
@@ -311,6 +317,7 @@ instance of a concrete expression-like class.
 */
 type ExpressionLike interface {
 	// Attributes
+	GetClass() ExpressionClassLike
 	GetInline() InlineLike
 	GetMultiline() MultilineLike
 }
@@ -322,6 +329,7 @@ instance of a concrete factor-like class.
 */
 type FactorLike interface {
 	// Attributes
+	GetClass() FactorClassLike
 	GetPredicate() PredicateLike
 	GetCardinality() CardinalityLike
 }
@@ -333,6 +341,7 @@ instance of a concrete filter-like class.
 */
 type FilterLike interface {
 	// Attributes
+	GetClass() FilterClassLike
 	IsInverted() bool
 	GetAtoms() col.ListLike[AtomLike]
 }
@@ -344,19 +353,9 @@ instance of a concrete glyph-like class.
 */
 type GlyphLike interface {
 	// Attributes
+	GetClass() GlyphClassLike
 	GetFirst() string
 	GetLast() string
-}
-
-/*
-SyntaxLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete syntax-like class.
-*/
-type SyntaxLike interface {
-	// Attributes
-	GetHeaders() col.ListLike[HeaderLike]
-	GetDefinitions() col.ListLike[DefinitionLike]
 }
 
 /*
@@ -366,6 +365,7 @@ instance of a concrete header-like class.
 */
 type HeaderLike interface {
 	// Attributes
+	GetClass() HeaderClassLike
 	GetComment() string
 }
 
@@ -376,6 +376,7 @@ instance of a concrete inline-like class.
 */
 type InlineLike interface {
 	// Attributes
+	GetClass() InlineClassLike
 	GetAlternatives() col.ListLike[AlternativeLike]
 	GetNote() string
 }
@@ -387,6 +388,7 @@ instance of a concrete line-like class.
 */
 type LineLike interface {
 	// Attributes
+	GetClass() LineClassLike
 	GetAlternative() AlternativeLike
 	GetNote() string
 }
@@ -398,6 +400,7 @@ instance of a concrete multiline-like class.
 */
 type MultilineLike interface {
 	// Attributes
+	GetClass() MultilineClassLike
 	GetLines() col.ListLike[LineLike]
 }
 
@@ -408,6 +411,7 @@ instance of a concrete precedence-like class.
 */
 type PrecedenceLike interface {
 	// Attributes
+	GetClass() PrecedenceClassLike
 	GetExpression() ExpressionLike
 }
 
@@ -418,8 +422,21 @@ instance of a concrete predicate-like class.
 */
 type PredicateLike interface {
 	// Attributes
+	GetClass() PredicateClassLike
 	GetAtom() AtomLike
 	GetElement() ElementLike
 	GetFilter() FilterLike
 	GetPrecedence() PrecedenceLike
+}
+
+/*
+SyntaxLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete syntax-like class.
+*/
+type SyntaxLike interface {
+	// Attributes
+	GetClass() SyntaxClassLike
+	GetHeaders() col.ListLike[HeaderLike]
+	GetDefinitions() col.ListLike[DefinitionLike]
 }

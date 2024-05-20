@@ -12,12 +12,14 @@
 
 package ast
 
+import ()
+
 // CLASS ACCESS
 
 // Reference
 
 var glyphClass = &glyphClass_{
-	// TBA - Assign constant values.
+	// Any private class constants should be initialized here.
 }
 
 // Function
@@ -31,14 +33,17 @@ func Glyph() GlyphClassLike {
 // Target
 
 type glyphClass_ struct {
-	// TBA - Add private class constants.
+	// This class has no private constants.
 }
 
 // Constants
 
 // Constructors
 
-func (c *glyphClass_) MakeWithAttributes(first string, last string) GlyphLike {
+func (c *glyphClass_) MakeWithAttributes(
+	first string,
+	last string,
+) GlyphLike {
 	return &glyph_{
 		first_: first,
 		last_:  last,
@@ -52,11 +57,16 @@ func (c *glyphClass_) MakeWithAttributes(first string, last string) GlyphLike {
 // Target
 
 type glyph_ struct {
+	class_ GlyphClassLike
 	first_ string
 	last_  string
 }
 
 // Attributes
+
+func (v *glyph_) GetClass() GlyphClassLike {
+	return v.class_
+}
 
 func (v *glyph_) GetFirst() string {
 	return v.first_
