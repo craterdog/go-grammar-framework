@@ -31,7 +31,7 @@ on interfaces, not on each other.
 package agent
 
 import (
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
 )
 

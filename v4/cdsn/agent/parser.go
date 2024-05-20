@@ -14,8 +14,7 @@ package agent
 
 import (
 	fmt "fmt"
-	gcf "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
 	sts "strings"
 )
@@ -49,8 +48,8 @@ type parserClass_ struct {
 func (c *parserClass_) Make() ParserLike {
 	return &parser_{
 		class_:  c,
-		tokens_: gcf.Queue[TokenLike](c.queueSize_),
-		next_:   gcf.Stack[TokenLike](c.stackSize_),
+		tokens_: col.Queue[TokenLike](c.queueSize_),
+		next_:   col.Stack[TokenLike](c.stackSize_),
 	}
 }
 
@@ -202,7 +201,7 @@ func (v *parser_) parseAlternative() (
 		// This is not an alternative.
 		return alternative, token, false
 	}
-	var factors = gcf.List[ast.FactorLike]()
+	var factors = col.List[ast.FactorLike]()
 	for ok {
 		factors.AppendValue(factor)
 		factor, token, ok = v.parseFactor()
@@ -503,7 +502,7 @@ func (v *parser_) parseFilter() (
 		)
 		panic(message)
 	}
-	var atoms = gcf.List[ast.AtomLike]()
+	var atoms = col.List[ast.AtomLike]()
 	for ok {
 		atoms.AppendValue(atom)
 		atom, _, ok = v.parseAtom()
@@ -569,7 +568,7 @@ func (v *parser_) parseSyntax() (
 	if !ok {
 		return syntax, token, false
 	}
-	var headers = gcf.List[ast.HeaderLike]()
+	var headers = col.List[ast.HeaderLike]()
 	for ok {
 		headers.AppendValue(header)
 		header, _, ok = v.parseHeader()
@@ -587,7 +586,7 @@ func (v *parser_) parseSyntax() (
 		)
 		panic(message)
 	}
-	var definitions = gcf.List[ast.DefinitionLike]()
+	var definitions = col.List[ast.DefinitionLike]()
 	for ok {
 		definitions.AppendValue(definition)
 		definition, token, ok = v.parseDefinition()
@@ -638,7 +637,7 @@ func (v *parser_) parseInline() (
 	if !ok {
 		return inline, token, false
 	}
-	var alternatives = gcf.List[ast.AlternativeLike]()
+	var alternatives = col.List[ast.AlternativeLike]()
 	for ok {
 		alternatives.AppendValue(alternative)
 		_, _, ok = v.parseToken(DelimiterToken, "|")
@@ -708,7 +707,7 @@ func (v *parser_) parseMultiline() (
 		// This is not a multi-line expression.
 		return multiline, token, false
 	}
-	var lines = gcf.List[ast.LineLike]()
+	var lines = col.List[ast.LineLike]()
 	for ok {
 		lines.AppendValue(line)
 		line, token, ok = v.parseLine()

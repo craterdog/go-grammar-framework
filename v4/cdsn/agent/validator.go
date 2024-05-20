@@ -14,8 +14,7 @@ package agent
 
 import (
 	fmt "fmt"
-	gcf "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
 	stc "strconv"
 	uni "unicode"
@@ -71,8 +70,8 @@ func (v *validator_) GetClass() ValidatorClassLike {
 // Public
 
 func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
-	v.stack_ = gcf.Stack[ast.DefinitionLike]()
-	v.names_ = gcf.Catalog[string, ast.ExpressionLike]()
+	v.stack_ = col.Stack[ast.DefinitionLike]()
+	v.names_ = col.Catalog[string, ast.ExpressionLike]()
 	v.validateSyntax(syntax)
 	var iterator = v.names_.GetIterator()
 	for iterator.HasNext() {

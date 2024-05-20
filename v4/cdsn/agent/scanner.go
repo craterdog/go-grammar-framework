@@ -14,8 +14,7 @@ package agent
 
 import (
 	fmt "fmt"
-	gcf "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
 	reg "regexp"
 	sts "strings"
 	uni "unicode"
@@ -109,7 +108,7 @@ func (c *scannerClass_) MatchToken(
 ) col.ListLike[string] {
 	var matcher = c.matchers_[type_]
 	var matches = matcher.FindStringSubmatch(text)
-	return gcf.List[string](matches)
+	return col.List[string](matches)
 }
 
 // INSTANCE METHODS

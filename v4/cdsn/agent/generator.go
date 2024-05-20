@@ -14,8 +14,7 @@ package agent
 
 import (
 	fmt "fmt"
-	gcf "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
 	cds "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
 	age "github.com/craterdog/go-model-framework/v4/gcmn/agent"
 	gcm "github.com/craterdog/go-model-framework/v4/gcmn/ast"
@@ -330,7 +329,7 @@ func (v *generator_) expandCopyright(copyright string) string {
 }
 
 func (v *generator_) extractAlternatives(expression cds.ExpressionLike) col.ListLike[cds.AlternativeLike] {
-	var alternatives = gcf.List[cds.AlternativeLike]()
+	var alternatives = col.List[cds.AlternativeLike]()
 	var inline = expression.GetInline()
 	if inline != nil {
 		var iterator = inline.GetAlternatives().GetIterator()
@@ -394,7 +393,7 @@ func (v *generator_) extractNotice(syntax cds.SyntaxLike) string {
 func (v *generator_) extractParameters(
 	attributes col.ListLike[gcm.AttributeLike],
 ) col.ListLike[gcm.ParameterLike] {
-	var parameters = gcf.List[gcm.ParameterLike]()
+	var parameters = col.List[gcm.ParameterLike]()
 	var iterator = attributes.GetIterator()
 	for iterator.HasNext() {
 		var attribute = iterator.GetNext()
@@ -589,7 +588,7 @@ func (v *generator_) makeList(attribute gcm.AttributeLike) gcm.AttributeLike {
 	var identifier = attribute.GetIdentifier()
 	identifier = v.makePlural(identifier)
 	var abstraction = attribute.GetAbstraction()
-	var arguments = gcf.List[gcm.AbstractionLike]()
+	var arguments = col.List[gcm.AbstractionLike]()
 	arguments.AppendValue(abstraction)
 	abstraction = gcm.Abstraction().MakeWithAttributes(
 		gcm.Prefix().MakeWithAttributes(prefix, gcm.AliasPrefix),
@@ -668,7 +667,7 @@ func (v *generator_) processAlternative(
 	attributes col.ListLike[gcm.AttributeLike],
 ) {
 	// Extract the attributes.
-	attributes = gcf.List[gcm.AttributeLike]()
+	attributes = col.List[gcm.AttributeLike]()
 	var iterator = alternative.GetFactors().GetIterator()
 	for iterator.HasNext() {
 		var factor = iterator.GetNext()
@@ -723,8 +722,8 @@ func (v *generator_) processExpression(
 	attributes col.ListLike[gcm.AttributeLike],
 ) {
 	// Process the expression alternatives.
-	constructors = gcf.List[gcm.ConstructorLike]()
-	attributes = gcf.List[gcm.AttributeLike]()
+	constructors = col.List[gcm.ConstructorLike]()
+	attributes = col.List[gcm.AttributeLike]()
 	var alternatives = v.extractAlternatives(expression)
 	var iterator = alternatives.GetIterator()
 	for iterator.HasNext() {
@@ -774,7 +773,7 @@ func (v *generator_) processFactor(
 	var identifier string
 	var abstraction gcm.AbstractionLike
 	var attribute gcm.AttributeLike
-	attributes = gcf.List[gcm.AttributeLike]()
+	attributes = col.List[gcm.AttributeLike]()
 	var predicate = factor.GetPredicate()
 	var atom = predicate.GetAtom()
 	var element = predicate.GetElement()
@@ -848,10 +847,10 @@ func (v *generator_) processSyntax(syntax cds.SyntaxLike) {
 		"EOLToken",
 		"SpaceToken",
 	}
-	v.tokens_ = gcf.Set[string](array)
-	v.modules_ = gcf.Catalog[string, gcm.ModuleLike]()
-	v.classes_ = gcf.Catalog[string, gcm.ClassLike]()
-	v.instances_ = gcf.Catalog[string, gcm.InstanceLike]()
+	v.tokens_ = col.Set[string](array)
+	v.modules_ = col.Catalog[string, gcm.ModuleLike]()
+	v.classes_ = col.Catalog[string, gcm.ClassLike]()
+	v.instances_ = col.Catalog[string, gcm.InstanceLike]()
 
 	// Process the syntax definitions.
 	var iterator = syntax.GetDefinitions().GetIterator()
