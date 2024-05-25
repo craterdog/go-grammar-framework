@@ -32,7 +32,7 @@ package agent
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4/collection"
-	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	mod "github.com/craterdog/go-model-framework/v4"
 )
 

@@ -16,7 +16,7 @@ import (
 	fmt "fmt"
 	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
-	cds "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
+	cds "github.com/craterdog/go-grammar-framework/v4/ast"
 	mod "github.com/craterdog/go-model-framework/v4"
 	sts "strings"
 	tim "time"
@@ -82,7 +82,6 @@ func (v *generator_) CreateSyntax(
 	var source = sts.ReplaceAll(syntaxTemplate_, "<Copyright>", copyright)
 	source = sts.ReplaceAll(source, "<NAME>", sts.ToUpper(name))
 	source = sts.ReplaceAll(source, "<Name>", name)
-	source = source[1:] // Strip off the leading "\n".
 
 	// Parse the syntax.
 	var parser = Parser().Make()
@@ -417,8 +416,7 @@ func (v *generator_) generateClass(
 	name string,
 	constructors col.ListLike[mod.ConstructorLike],
 ) mod.ClassLike {
-	var comment = classCommentTemplate_[1:] // Strip off leading newline.
-	comment = sts.ReplaceAll(comment, "<Class>", name)
+	var comment = sts.ReplaceAll(classCommentTemplate_, "<Class>", name)
 	comment = sts.ReplaceAll(comment, "<class>", sts.ToLower(name))
 	var declaration = mod.Declaration(
 		comment,
@@ -435,8 +433,7 @@ func (v *generator_) generateInstance(
 	name string,
 	attributes col.ListLike[mod.AttributeLike],
 ) mod.InstanceLike {
-	var comment = instanceCommentTemplate_[1:] // Strip off leading newline.
-	comment = sts.ReplaceAll(comment, "<Class>", name)
+	var comment = sts.ReplaceAll(instanceCommentTemplate_, "<Class>", name)
 	comment = sts.ReplaceAll(comment, "<class>", sts.ToLower(name))
 	var declaration = mod.Declaration(
 		comment,

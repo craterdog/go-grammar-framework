@@ -13,7 +13,7 @@
 package agent
 
 import (
-	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	sts "strings"
 )
 

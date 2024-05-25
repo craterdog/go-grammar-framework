@@ -16,7 +16,7 @@ import (
 	fmt "fmt"
 	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
-	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	sts "strings"
 )
 

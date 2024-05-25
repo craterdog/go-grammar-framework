@@ -211,24 +211,21 @@ type ValidatorLike interface {
 }
 `
 
-const classCommentTemplate_ = `
-/*
+const classCommentTemplate_ = `/*
 <Class>ClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete <class>-like class.
 */
 `
 
-const instanceCommentTemplate_ = `
-/*
+const instanceCommentTemplate_ = `/*
 <Class>Like is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete <class>-like class.
 */
 `
 
-const syntaxTemplate_ = `
-!>
+const syntaxTemplate_ = `!>
 ................................................................................
 <Copyright>
 ................................................................................
@@ -244,7 +241,7 @@ const syntaxTemplate_ = `
 <NAME> NOTATION
 This document contains a formal definition of the <Name> Notation
 using Crater Dog Syntax Notation™ (CDSN):
- * https://github.com/craterdog/go-grammar-framework/blob/main/v4/cdsn/Syntax.cdsn
+ * https://github.com/craterdog/go-grammar-framework/blob/main/v4/Syntax.cdsn
 
 A language syntax consists of a set of rule definitions and token definitions.
 
@@ -317,8 +314,7 @@ anything: ANY
 
 `
 
-const tokenTemplate_ = `
-<Notice>
+const tokenTemplate_ = `<Notice>
 package agent
 
 // CLASS ACCESS
@@ -395,8 +391,7 @@ func (v *token_) GetValue() string {
 }
 `
 
-const scannerTemplate_ = `
-<Notice>
+const scannerTemplate_ = `<Notice>
 package agent
 
 import (
@@ -615,8 +610,7 @@ const (
 )
 `
 
-const parserTemplate_ = `
-<Notice>
+const parserTemplate_ = `<Notice>
 package agent
 
 import (
@@ -835,8 +829,7 @@ var syntax = map[string]string{
 }
 `
 
-const formatterTemplate_ = `
-<Notice>
+const formatterTemplate_ = `<Notice>
 package agent
 
 import (
@@ -925,8 +918,7 @@ func (v *formatter_) getResult() string {
 }
 `
 
-const validatorTemplate_ = `
-<Notice>
+const validatorTemplate_ = `<Notice>
 package agent
 
 import (

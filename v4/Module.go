@@ -31,8 +31,8 @@ package module
 import (
 	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
-	age "github.com/craterdog/go-grammar-framework/v4/cdsn/agent"
-	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
+	age "github.com/craterdog/go-grammar-framework/v4/agent"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	str "strings"
 )
 
@@ -42,22 +42,22 @@ import (
 
 type (
 	AlternativeLike = ast.AlternativeLike
-	AtomLike = ast.AtomLike
+	AtomLike        = ast.AtomLike
 	CardinalityLike = ast.CardinalityLike
-	ConstraintLike = ast.ConstraintLike
-	DefinitionLike = ast.DefinitionLike
-	ElementLike = ast.ElementLike
-	ExpressionLike = ast.ExpressionLike
-	FactorLike = ast.FactorLike
-	FilterLike = ast.FilterLike
-	GlyphLike = ast.GlyphLike
-	HeaderLike = ast.HeaderLike
-	InlineLike = ast.InlineLike
-	LineLike = ast.LineLike
-	MultilineLike = ast.MultilineLike
-	PrecedenceLike = ast.PrecedenceLike
-	PredicateLike = ast.PredicateLike
-	SyntaxLike = ast.SyntaxLike
+	ConstraintLike  = ast.ConstraintLike
+	DefinitionLike  = ast.DefinitionLike
+	ElementLike     = ast.ElementLike
+	ExpressionLike  = ast.ExpressionLike
+	FactorLike      = ast.FactorLike
+	FilterLike      = ast.FilterLike
+	GlyphLike       = ast.GlyphLike
+	HeaderLike      = ast.HeaderLike
+	InlineLike      = ast.InlineLike
+	LineLike        = ast.LineLike
+	MultilineLike   = ast.MultilineLike
+	PrecedenceLike  = ast.PrecedenceLike
+	PredicateLike   = ast.PredicateLike
+	SyntaxLike      = ast.SyntaxLike
 )
 
 // Agents
