@@ -31,8 +31,9 @@ on interfaces, not on each other.
 package agent
 
 import (
-	col "github.com/craterdog/go-collection-framework/v4"
+	col "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
+	mod "github.com/craterdog/go-model-framework/v4"
 )
 
 // Types
@@ -167,12 +168,16 @@ type GeneratorLike interface {
 
 	// Methods
 	CreateSyntax(
-		directory string,
 		name string,
 		copyright string,
-	)
-	GenerateAST(directory string, name string)
-	GenerateAgents(directory string, name string)
+	) ast.SyntaxLike
+	GenerateAST(syntax ast.SyntaxLike) mod.ModelLike
+	GenerateAgent(syntax ast.SyntaxLike) mod.ModelLike
+	GenerateFormatter(model mod.ModelLike) string
+	GenerateParser(model mod.ModelLike) string
+	GenerateScanner(model mod.ModelLike) string
+	GenerateToken(model mod.ModelLike) string
+	GenerateValidator(model mod.ModelLike) string
 }
 
 /*

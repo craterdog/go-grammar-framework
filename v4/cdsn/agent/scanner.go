@@ -14,7 +14,8 @@ package agent
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v4"
+	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	col "github.com/craterdog/go-collection-framework/v4/collection"
 	reg "regexp"
 	sts "strings"
 	uni "unicode"
@@ -108,7 +109,8 @@ func (c *scannerClass_) MatchToken(
 ) col.ListLike[string] {
 	var matcher = c.matchers_[type_]
 	var matches = matcher.FindStringSubmatch(text)
-	return col.List[string](matches)
+	var notation = cdc.Notation().Make()
+	return col.List[string](notation).MakeFromArray(matches)
 }
 
 // INSTANCE METHODS

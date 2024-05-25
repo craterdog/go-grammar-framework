@@ -279,9 +279,19 @@ by the parser in the order listed.  A rule definition may also be directly or
 indirectly recursive.  The sequence of factors within in a rule definition may
 be separated by spaces which are ignored by the parser.
 <!
-AST: Root EOF  ! Terminated with an end-of-file marker.
+AST: Component EOL* EOF  ! Terminated with an end-of-file marker.
 
-Root: leaf+
+Component: Default | Primitive | List{3..5}
+
+Default: "default"
+
+Primitive:
+    character
+    text
+    integer
+    anything
+
+List: "[" Component (',' Component)* "]"
 
 !>
 TOKEN DEFINITIONS
@@ -292,7 +302,18 @@ specify the name of a rule within its definition but it can specify the name of
 other tokens.  Token definitions cannot be recursive and the scanning of tokens
 is NOT greedy.  Any spaces within a token definition are NOT ignored.
 <!
-leaf: UPPER (LOWER | UPPER)*
+character: "'" ~[CONTROL] "'"  ! Any single printable character.
+
+text: '"' (
+    ESCAPE
+    ~['"' CONTROL]{2..}
+)+ '"'
+
+integer:
+    '0'{4}
+    '-'? '1'..'9' DIGIT*
+
+anything: ANY
 
 `
 

@@ -14,7 +14,8 @@ package agent
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v4"
+	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	col "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
 	sts "strings"
 )
@@ -46,10 +47,11 @@ type parserClass_ struct {
 // Constructors
 
 func (c *parserClass_) Make() ParserLike {
+	var notation = cdc.Notation().Make()
 	return &parser_{
 		class_:  c,
-		tokens_: col.Queue[TokenLike](c.queueSize_),
-		next_:   col.Stack[TokenLike](c.stackSize_),
+		tokens_: col.Queue[TokenLike](notation).MakeWithCapacity(c.queueSize_),
+		next_:   col.Stack[TokenLike](notation).MakeWithCapacity(c.stackSize_),
 	}
 }
 
@@ -201,7 +203,8 @@ func (v *parser_) parseAlternative() (
 		// This is not an alternative.
 		return alternative, token, false
 	}
-	var factors = col.List[ast.FactorLike]()
+	var notation = cdc.Notation().Make()
+	var factors = col.List[ast.FactorLike](notation).Make()
 	for ok {
 		factors.AppendValue(factor)
 		factor, token, ok = v.parseFactor()
@@ -502,7 +505,8 @@ func (v *parser_) parseFilter() (
 		)
 		panic(message)
 	}
-	var atoms = col.List[ast.AtomLike]()
+	var notation = cdc.Notation().Make()
+	var atoms = col.List[ast.AtomLike](notation).Make()
 	for ok {
 		atoms.AppendValue(atom)
 		atom, _, ok = v.parseAtom()
@@ -568,7 +572,8 @@ func (v *parser_) parseSyntax() (
 	if !ok {
 		return syntax, token, false
 	}
-	var headers = col.List[ast.HeaderLike]()
+	var notation = cdc.Notation().Make()
+	var headers = col.List[ast.HeaderLike](notation).Make()
 	for ok {
 		headers.AppendValue(header)
 		header, _, ok = v.parseHeader()
@@ -586,7 +591,7 @@ func (v *parser_) parseSyntax() (
 		)
 		panic(message)
 	}
-	var definitions = col.List[ast.DefinitionLike]()
+	var definitions = col.List[ast.DefinitionLike](notation).Make()
 	for ok {
 		definitions.AppendValue(definition)
 		definition, token, ok = v.parseDefinition()
@@ -637,7 +642,8 @@ func (v *parser_) parseInline() (
 	if !ok {
 		return inline, token, false
 	}
-	var alternatives = col.List[ast.AlternativeLike]()
+	var notation = cdc.Notation().Make()
+	var alternatives = col.List[ast.AlternativeLike](notation).Make()
 	for ok {
 		alternatives.AppendValue(alternative)
 		_, _, ok = v.parseToken(DelimiterToken, "|")
@@ -707,7 +713,8 @@ func (v *parser_) parseMultiline() (
 		// This is not a multi-line expression.
 		return multiline, token, false
 	}
-	var lines = col.List[ast.LineLike]()
+	var notation = cdc.Notation().Make()
+	var lines = col.List[ast.LineLike](notation).Make()
 	for ok {
 		lines.AppendValue(line)
 		line, token, ok = v.parseLine()

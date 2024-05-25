@@ -14,11 +14,10 @@ package agent
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v4"
+	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	col "github.com/craterdog/go-collection-framework/v4/collection"
 	cds "github.com/craterdog/go-grammar-framework/v4/cdsn/ast"
-	age "github.com/craterdog/go-model-framework/v4/gcmn/agent"
-	gcm "github.com/craterdog/go-model-framework/v4/gcmn/ast"
-	osx "os"
+	mod "github.com/craterdog/go-model-framework/v4"
 	sts "strings"
 	tim "time"
 	uni "unicode"
@@ -61,9 +60,9 @@ func (c *generatorClass_) Make() GeneratorLike {
 type generator_ struct {
 	class_     GeneratorClassLike
 	tokens_    col.SetLike[string]
-	modules_   col.CatalogLike[string, gcm.ModuleLike]
-	classes_   col.CatalogLike[string, gcm.ClassLike]
-	instances_ col.CatalogLike[string, gcm.InstanceLike]
+	modules_   col.CatalogLike[string, mod.ModuleLike]
+	classes_   col.CatalogLike[string, mod.ClassLike]
+	instances_ col.CatalogLike[string, mod.InstanceLike]
 }
 
 // Attributes
@@ -75,115 +74,145 @@ func (v *generator_) GetClass() GeneratorClassLike {
 // Public
 
 func (v *generator_) CreateSyntax(
-	directory string,
 	name string,
 	copyright string,
-) {
-	// Create a new directory for the syntax.
-	var syntaxDirectory = v.createDirectory(directory, sts.ToLower(name))
-
+) cds.SyntaxLike {
 	// Center and insert the copyright notice into the syntax template.
 	copyright = v.expandCopyright(copyright)
-	var template = sts.ReplaceAll(syntaxTemplate_, "<Copyright>", copyright)
-	template = sts.ReplaceAll(template, "<NAME>", sts.ToUpper(name))
-	template = sts.ReplaceAll(template, "<Name>", name)
+	var source = sts.ReplaceAll(syntaxTemplate_, "<Copyright>", copyright)
+	source = sts.ReplaceAll(source, "<NAME>", sts.ToUpper(name))
+	source = sts.ReplaceAll(source, "<Name>", name)
+	source = source[1:] // Strip off the leading "\n".
 
-	// Save the new syntax template into the directory.
-	var syntaxFile = syntaxDirectory + "Syntax.cdsn"
-	v.outputFile(syntaxFile, template[1:]) // Remove leading "\n".
+	// Parse the syntax.
+	var parser = Parser().Make()
+	var syntax = parser.ParseSource(source)
+	return syntax
 }
 
-func (v *generator_) GenerateAST(directory string, name string) {
-	// Create a new directory for the AST.
-	var syntaxDirectory = v.createDirectory(directory, name)
-	var astDirectory = v.createDirectory(syntaxDirectory, "ast")
-
-	// Parse the syntax file.
-	var syntax = v.parseSyntax(syntaxDirectory)
-	if syntax == nil {
-		return
-	}
-
-	// Create the ast/Package.go file model template.
+func (v *generator_) GenerateAST(syntax cds.SyntaxLike) mod.ModelLike {
+	// Create the AST class model template.
 	v.processSyntax(syntax)
 	var source = modelTemplate_ + astTemplate_
 	var notice = v.extractNotice(syntax)
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = v.extractModule(directory, name)
+	var module = "<module>"
 	source = sts.ReplaceAll(source, "<module>", module)
 	source = sts.ReplaceAll(source, "<package>", "ast")
-	var parser = age.Parser().Make()
+
+	// Parse the AST class model template.
+	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
 
-	// Add additional definitions to the class model.
+	// Add additional definitions to the AST class model.
 	v.addModules(model)
 	v.addClasses(model)
 	v.addInstances(model)
 
-	// Generate the class model for the syntax directory.
-	v.formatModel(astDirectory, model)
-	v.generatePackage(astDirectory)
+	return model
 }
 
-func (v *generator_) GenerateAgents(directory string, name string) {
-	// Create a new directory for the agents.
-	var syntaxDirectory = v.createDirectory(directory, name)
-	var agentDirectory = v.createDirectory(syntaxDirectory, "agent")
-
-	// Parse the syntax file.
-	var syntax = v.parseSyntax(syntaxDirectory)
-	if syntax == nil {
-		return
-	}
-
-	// Create the agent/Package.go file model template.
+func (v *generator_) GenerateAgent(syntax cds.SyntaxLike) mod.ModelLike {
+	// Create the agent class model template.
 	v.processSyntax(syntax)
 	var source = modelTemplate_ + agentTemplate_
 	var notice = v.extractNotice(syntax)
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = v.extractModule(directory, name)
+	var module = "<module>"
 	source = sts.ReplaceAll(source, "<module>", module)
 	source = sts.ReplaceAll(source, "<package>", "agent")
 	var class = v.extractClassName(syntax)
 	source = sts.ReplaceAll(source, "<Class>", class)
 	var parameter = v.makeLowercase(class)
 	source = sts.ReplaceAll(source, "<parameter>", parameter)
-	var parser = age.Parser().Make()
+
+	// Parse the agent class model template.
+	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
 
 	// Add additional definitions to the class model.
 	v.addTokens(model)
 
-	// Generate the Package.go file for the agent directory.
-	v.formatModel(agentDirectory, model)
-	v.generateToken(directory, name, model)
-	v.generateScanner(directory, name, model)
-	v.generateParser(directory, name, model, class)
-	v.generateValidator(directory, name, model, class)
-	v.generateFormatter(directory, name, model, class)
+	return model
+}
+
+func (v *generator_) GenerateFormatter(model mod.ModelLike) string {
+	var source = formatterTemplate_
+	var notice = model.GetNotice().GetComment()
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var module = "<module>"
+	source = sts.ReplaceAll(source, "<module>", module)
+	var class = "<class>"
+	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
+	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
+	return source
+}
+
+func (v *generator_) GenerateParser(model mod.ModelLike) string {
+	var source = parserTemplate_
+	var notice = model.GetNotice().GetComment()
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var module = "<module>"
+	source = sts.ReplaceAll(source, "<module>", module)
+	var packageName = model.GetHeader().GetIdentifier()
+	source = sts.ReplaceAll(source, "<Package>", v.makeUppercase(packageName))
+	var class = "<class>"
+	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
+	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
+	return source
+}
+
+func (v *generator_) GenerateScanner(model mod.ModelLike) string {
+	var source = scannerTemplate_
+	var notice = model.GetNotice().GetComment()
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var module = "<module>"
+	source = sts.ReplaceAll(source, "<module>", module)
+	return source
+}
+
+func (v *generator_) GenerateToken(model mod.ModelLike) string {
+	var source = tokenTemplate_
+	var notice = model.GetNotice().GetComment()
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var module = "<module>"
+	source = sts.ReplaceAll(source, "<module>", module)
+	return source
+}
+
+func (v *generator_) GenerateValidator(model mod.ModelLike) string {
+	var source = validatorTemplate_
+	var notice = model.GetNotice().GetComment()
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	var module = "<module>"
+	source = sts.ReplaceAll(source, "<module>", module)
+	var class = "<class>"
+	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
+	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
+	return source
 }
 
 // Private
 
-func (v *generator_) addClasses(model gcm.ModelLike) {
+func (v *generator_) addClasses(model mod.ModelLike) {
 	var classes = model.GetClasses()
 	classes.RemoveAll() // Remove the dummy placeholder.
 	classes.AppendValues(v.classes_.GetValues(v.classes_.GetKeys()))
 }
 
-func (v *generator_) addModules(model gcm.ModelLike) {
+func (v *generator_) addModules(model mod.ModelLike) {
 	var modules = model.GetModules()
 	modules.RemoveAll() // Remove the dummy placeholder.
 	modules.AppendValues(v.modules_.GetValues(v.modules_.GetKeys()))
 }
 
-func (v *generator_) addInstances(model gcm.ModelLike) {
+func (v *generator_) addInstances(model mod.ModelLike) {
 	var instances = model.GetInstances()
 	instances.RemoveAll() // Remove the dummy placeholder.
 	instances.AppendValues(v.instances_.GetValues(v.instances_.GetKeys()))
 }
 
-func (v *generator_) addTokens(model gcm.ModelLike) {
+func (v *generator_) addTokens(model mod.ModelLike) {
 	var types = model.GetTypes()
 	var enumeration = types.GetValue(1).GetEnumeration()
 	var identifiers = enumeration.GetIdentifiers()
@@ -191,7 +220,7 @@ func (v *generator_) addTokens(model gcm.ModelLike) {
 }
 
 func (v *generator_) consolidateAttributes(
-	attributes col.ListLike[gcm.AttributeLike],
+	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Compare each attribute and remove duplicates.
 	for i := 1; i <= attributes.GetSize(); i++ {
@@ -223,7 +252,7 @@ func (v *generator_) consolidateAttributes(
 }
 
 func (v *generator_) consolidateConstructors(
-	constructors col.ListLike[gcm.ConstructorLike],
+	constructors col.ListLike[mod.ConstructorLike],
 ) {
 	// Compare each constructor and remove duplicates.
 	for i := 1; i <= constructors.GetSize(); i++ {
@@ -255,7 +284,7 @@ func (v *generator_) consolidateConstructors(
 }
 
 func (v *generator_) consolidateLists(
-	attributes col.ListLike[gcm.AttributeLike],
+	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Compare each attribute and make lists out of duplicates.
 	for i := 1; i <= attributes.GetSize(); i++ {
@@ -288,18 +317,6 @@ func (v *generator_) consolidateLists(
 	}
 }
 
-func (v *generator_) createDirectory(directory string, name string) string {
-	if !sts.HasSuffix(directory, "/") {
-		directory += "/"
-	}
-	directory += name + "/"
-	var err = osx.MkdirAll(directory, 0755)
-	if err != nil {
-		panic(err)
-	}
-	return directory
-}
-
 func (v *generator_) expandCopyright(copyright string) string {
 	var maximum = 78
 	var length = len(copyright)
@@ -329,7 +346,8 @@ func (v *generator_) expandCopyright(copyright string) string {
 }
 
 func (v *generator_) extractAlternatives(expression cds.ExpressionLike) col.ListLike[cds.AlternativeLike] {
-	var alternatives = col.List[cds.AlternativeLike]()
+	var notation = cdc.Notation().Make()
+	var alternatives = col.List[cds.AlternativeLike](notation).Make()
 	var inline = expression.GetInline()
 	if inline != nil {
 		var iterator = inline.GetAlternatives().GetIterator()
@@ -363,20 +381,6 @@ func (v *generator_) extractClassName(syntax cds.SyntaxLike) string {
 	return name
 }
 
-func (v *generator_) extractModule(directory string, name string) string {
-	if !sts.HasSuffix(directory, "/") {
-		directory += "/"
-	}
-	var modFile = directory + "go.mod"
-	var bytes, err = osx.ReadFile(modFile)
-	if err != nil {
-		panic(err)
-	}
-	var line = sts.Split(string(bytes), "\n")[0]
-	var module = sts.TrimPrefix(line, "module ") + "/" + name
-	return module
-}
-
 func (v *generator_) extractNotice(syntax cds.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetValue(1)
 	var comment = header.GetComment()
@@ -385,21 +389,22 @@ func (v *generator_) extractNotice(syntax cds.SyntaxLike) string {
 	var notice = Scanner().MatchToken(CommentToken, comment).GetValue(2)
 
 	// Add the Go style comment delimiters.
-	notice = "/*\n" + notice + "\n*/\n"
+	notice = "/*\n" + notice + "\n*/"
 
 	return notice
 }
 
 func (v *generator_) extractParameters(
-	attributes col.ListLike[gcm.AttributeLike],
-) col.ListLike[gcm.ParameterLike] {
-	var parameters = col.List[gcm.ParameterLike]()
+	attributes col.ListLike[mod.AttributeLike],
+) col.ListLike[mod.ParameterLike] {
+	var notation = cdc.Notation().Make()
+	var parameters = col.List[mod.ParameterLike](notation).Make()
 	var iterator = attributes.GetIterator()
 	for iterator.HasNext() {
 		var attribute = iterator.GetNext()
 		var identifier = sts.TrimPrefix(attribute.GetIdentifier(), "Get")
 		var abstraction = attribute.GetAbstraction()
-		var parameter = gcm.Parameter().MakeWithAttributes(
+		var parameter = mod.Parameter(
 			v.makeLowercase(identifier),
 			abstraction,
 		)
@@ -408,165 +413,48 @@ func (v *generator_) extractParameters(
 	return parameters
 }
 
-func (v *generator_) formatModel(
-	directory string,
-	model gcm.ModelLike,
-) {
-	var validator = age.Validator().Make()
-	validator.ValidateModel(model)
-	var formatter = age.Formatter().Make()
-	var source = formatter.FormatModel(model)
-	v.outputFile(directory+"Package.go", source)
-}
-
 func (v *generator_) generateClass(
 	name string,
-	constructors col.ListLike[gcm.ConstructorLike],
-) gcm.ClassLike {
+	constructors col.ListLike[mod.ConstructorLike],
+) mod.ClassLike {
 	var comment = classCommentTemplate_[1:] // Strip off leading newline.
 	comment = sts.ReplaceAll(comment, "<Class>", name)
 	comment = sts.ReplaceAll(comment, "<class>", sts.ToLower(name))
-	var parameters col.ListLike[gcm.ParameterLike]
-	var declaration = gcm.Declaration().MakeWithAttributes(
+	var declaration = mod.Declaration(
 		comment,
 		name+"ClassLike",
-		parameters,
 	)
-	var constants col.ListLike[gcm.ConstantLike]
-	var functions col.ListLike[gcm.FunctionLike]
-	var class = gcm.Class().MakeWithAttributes(
+	var class = mod.Class(
 		declaration,
-		constants,
 		constructors,
-		functions,
 	)
 	return class
 }
 
-func (v *generator_) generateFormatter(
-	directory string,
-	name string,
-	model gcm.ModelLike,
-	class string,
-) {
-	var source = formatterTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = v.extractModule(directory, name)
-	source = sts.ReplaceAll(source, "<module>", module)
-	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
-	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
-	var file = directory + name + "/agent/formatter.go"
-	v.outputFile(file, source)
-}
-
 func (v *generator_) generateInstance(
 	name string,
-	attributes col.ListLike[gcm.AttributeLike],
-) gcm.InstanceLike {
+	attributes col.ListLike[mod.AttributeLike],
+) mod.InstanceLike {
 	var comment = instanceCommentTemplate_[1:] // Strip off leading newline.
 	comment = sts.ReplaceAll(comment, "<Class>", name)
 	comment = sts.ReplaceAll(comment, "<class>", sts.ToLower(name))
-	var parameters col.ListLike[gcm.ParameterLike]
-	var declaration = gcm.Declaration().MakeWithAttributes(
+	var declaration = mod.Declaration(
 		comment,
 		name+"Like",
-		parameters,
 	)
-	var parameter gcm.ParameterLike
-	var prefix gcm.PrefixLike
-	var arguments col.ListLike[gcm.AbstractionLike]
-	var abstraction = gcm.Abstraction().MakeWithAttributes(
-		prefix,
-		name+"ClassLike",
-		arguments,
+	var abstraction = mod.Abstraction(
+		name + "ClassLike",
 	)
-	var attribute = gcm.Attribute().MakeWithAttributes(
+	var attribute = mod.Attribute(
 		"GetClass",
-		parameter,
 		abstraction,
 	)
 	attributes.InsertValue(0, attribute)
-	var abstractions col.ListLike[gcm.AbstractionLike]
-	var methods col.ListLike[gcm.MethodLike]
-	var instance = gcm.Instance().MakeWithAttributes(
+	var instance = mod.Instance(
 		declaration,
 		attributes,
-		abstractions,
-		methods,
 	)
 	return instance
-}
-
-func (v *generator_) generatePackage(
-	directory string,
-) {
-	var generator = age.Generator().Make()
-	generator.GeneratePackage(directory)
-}
-
-func (v *generator_) generateParser(
-	directory string,
-	name string,
-	model gcm.ModelLike,
-	class string,
-) {
-	var source = parserTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = v.extractModule(directory, name)
-	source = sts.ReplaceAll(source, "<module>", module)
-	var packageName = model.GetHeader().GetIdentifier()
-	source = sts.ReplaceAll(source, "<Package>", v.makeUppercase(packageName))
-	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
-	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
-	var file = directory + name + "/agent/parser.go"
-	v.outputFile(file, source)
-}
-
-func (v *generator_) generateScanner(
-	directory string,
-	name string,
-	model gcm.ModelLike,
-) {
-	var source = scannerTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = v.extractModule(directory, name)
-	source = sts.ReplaceAll(source, "<module>", module)
-	var file = directory + name + "/agent/scanner.go"
-	v.outputFile(file, source)
-}
-
-func (v *generator_) generateToken(
-	directory string,
-	name string,
-	model gcm.ModelLike,
-) {
-	var source = tokenTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = v.extractModule(directory, name)
-	source = sts.ReplaceAll(source, "<module>", module)
-	var file = directory + name + "/agent/token.go"
-	v.outputFile(file, source)
-}
-
-func (v *generator_) generateValidator(
-	directory string,
-	name string,
-	model gcm.ModelLike,
-	class string,
-) {
-	var source = validatorTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = v.extractModule(directory, name)
-	source = sts.ReplaceAll(source, "<module>", module)
-	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
-	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
-	var file = directory + name + "/agent/validator.go"
-	v.outputFile(file, source)
 }
 
 func (v *generator_) isLowercase(identifier string) bool {
@@ -577,10 +465,10 @@ func (v *generator_) isUppercase(identifier string) bool {
 	return uni.IsUpper([]rune(identifier)[0])
 }
 
-func (v *generator_) makeList(attribute gcm.AttributeLike) gcm.AttributeLike {
+func (v *generator_) makeList(attribute mod.AttributeLike) mod.AttributeLike {
 	var prefix = "col"
 	var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
-	var module = gcm.Module().MakeWithAttributes(
+	var module = mod.Module(
 		prefix,
 		path,
 	)
@@ -588,15 +476,15 @@ func (v *generator_) makeList(attribute gcm.AttributeLike) gcm.AttributeLike {
 	var identifier = attribute.GetIdentifier()
 	identifier = v.makePlural(identifier)
 	var abstraction = attribute.GetAbstraction()
-	var arguments = col.List[gcm.AbstractionLike]()
+	var notation = cdc.Notation().Make()
+	var arguments = col.List[mod.AbstractionLike](notation).Make()
 	arguments.AppendValue(abstraction)
-	abstraction = gcm.Abstraction().MakeWithAttributes(
-		gcm.Prefix().MakeWithAttributes(prefix, gcm.AliasPrefix),
+	abstraction = mod.Abstraction(
+		mod.Prefix(prefix, mod.AliasPrefix),
 		"ListLike",
 		arguments,
 	)
-	var parameter gcm.ParameterLike
-	attribute = gcm.Attribute().MakeWithAttributes(identifier, parameter, abstraction)
+	attribute = mod.Attribute(identifier, abstraction)
 	return attribute
 }
 
@@ -625,49 +513,16 @@ func (v *generator_) makeUppercase(identifier string) string {
 	return string(runes)
 }
 
-func (v *generator_) outputFile(file, source string) {
-	var _, err = osx.ReadFile(file)
-	if err == nil {
-		// Don't overwrite an existing class file.
-		fmt.Printf(
-			"The file %q already exists, leaving it alone.\n",
-			file,
-		)
-		return
-	}
-	err = osx.WriteFile(file, []byte(source), 0644)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (v *generator_) parseSyntax(directory string) cds.SyntaxLike {
-	var syntaxFile = directory + "Syntax.cdsn"
-	var bytes, err = osx.ReadFile(syntaxFile)
-	if err != nil {
-		var message = fmt.Sprintf(
-			"The specified directory is missing a syntax file: %v",
-			syntaxFile,
-		)
-		panic(message)
-	}
-	var source = string(bytes)
-	var parser = Parser().Make()
-	var syntax = parser.ParseSource(source)
-	var validator = Validator().Make()
-	validator.ValidateSyntax(syntax)
-	return syntax
-}
-
 func (v *generator_) processAlternative(
 	name string,
 	alternative cds.AlternativeLike,
 ) (
-	constructor gcm.ConstructorLike,
-	attributes col.ListLike[gcm.AttributeLike],
+	constructor mod.ConstructorLike,
+	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Extract the attributes.
-	attributes = col.List[gcm.AttributeLike]()
+	var notation = cdc.Notation().Make()
+	attributes = col.List[mod.AttributeLike](notation).Make()
 	var iterator = alternative.GetFactors().GetIterator()
 	for iterator.HasNext() {
 		var factor = iterator.GetNext()
@@ -677,13 +532,7 @@ func (v *generator_) processAlternative(
 	v.consolidateLists(attributes)
 
 	// Extract the constructor.
-	var prefix gcm.PrefixLike
-	var arguments col.ListLike[gcm.AbstractionLike]
-	var abstraction = gcm.Abstraction().MakeWithAttributes(
-		prefix,
-		name+"Like",
-		arguments,
-	)
+	var abstraction = mod.Abstraction(name + "Like")
 	if !attributes.IsEmpty() {
 		var identifier = "MakeWithAttributes"
 		if attributes.GetSize() == 1 {
@@ -692,7 +541,7 @@ func (v *generator_) processAlternative(
 			identifier = "MakeWith" + identifier
 		}
 		var parameters = v.extractParameters(attributes)
-		constructor = gcm.Constructor().MakeWithAttributes(
+		constructor = mod.Constructor(
 			identifier,
 			parameters,
 			abstraction,
@@ -718,12 +567,13 @@ func (v *generator_) processExpression(
 	name string,
 	expression cds.ExpressionLike,
 ) (
-	constructors col.ListLike[gcm.ConstructorLike],
-	attributes col.ListLike[gcm.AttributeLike],
+	constructors col.ListLike[mod.ConstructorLike],
+	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Process the expression alternatives.
-	constructors = col.List[gcm.ConstructorLike]()
-	attributes = col.List[gcm.AttributeLike]()
+	var notation = cdc.Notation().Make()
+	constructors = col.List[mod.ConstructorLike](notation).Make()
+	attributes = col.List[mod.AttributeLike](notation).Make()
 	var alternatives = v.extractAlternatives(expression)
 	var iterator = alternatives.GetIterator()
 	for iterator.HasNext() {
@@ -737,17 +587,11 @@ func (v *generator_) processExpression(
 
 	// Add a default constructor if necessary.
 	if constructors.IsEmpty() {
-		var prefix gcm.PrefixLike
-		var arguments col.ListLike[gcm.AbstractionLike]
-		var abstraction = gcm.Abstraction().MakeWithAttributes(
-			prefix,
-			name+"Like",
-			arguments,
+		var abstraction = mod.Abstraction(
+			name + "Like",
 		)
-		var parameters col.ListLike[gcm.ParameterLike]
-		var constructor = gcm.Constructor().MakeWithAttributes(
+		var constructor = mod.Constructor(
 			"Make",
-			parameters,
 			abstraction,
 		)
 		constructors.AppendValue(constructor)
@@ -763,7 +607,7 @@ func (v *generator_) processExpression(
 func (v *generator_) processFactor(
 	name string,
 	factor cds.FactorLike,
-) (attributes col.ListLike[gcm.AttributeLike]) {
+) (attributes col.ListLike[mod.AttributeLike]) {
 	var isSequential bool
 	var cardinality = factor.GetCardinality()
 	if cardinality != nil {
@@ -771,9 +615,10 @@ func (v *generator_) processFactor(
 		isSequential = constraint.GetFirst() != "0" || constraint.GetLast() != "1"
 	}
 	var identifier string
-	var abstraction gcm.AbstractionLike
-	var attribute gcm.AttributeLike
-	attributes = col.List[gcm.AttributeLike]()
+	var abstraction mod.AbstractionLike
+	var attribute mod.AttributeLike
+	var notation = cdc.Notation().Make()
+	attributes = col.List[mod.AttributeLike](notation).Make()
 	var predicate = factor.GetPredicate()
 	var atom = predicate.GetAtom()
 	var element = predicate.GetElement()
@@ -784,27 +629,15 @@ func (v *generator_) processFactor(
 	case element != nil:
 		identifier = element.GetName()
 		if len(identifier) > 0 {
-			var prefix gcm.PrefixLike
-			var arguments col.ListLike[gcm.AbstractionLike]
 			if v.isUppercase(identifier) {
-				abstraction = gcm.Abstraction().MakeWithAttributes(
-					prefix,
-					identifier+"Like",
-					arguments,
-				)
+				abstraction = mod.Abstraction(identifier + "Like")
 			} else {
 				var tokenType = v.makeUppercase(identifier) + "Token"
 				v.tokens_.AddValue(tokenType)
-				abstraction = gcm.Abstraction().MakeWithAttributes(
-					prefix,
-					"string",
-					arguments,
-				)
+				abstraction = mod.Abstraction("string")
 			}
-			var parameter gcm.ParameterLike
-			attribute = gcm.Attribute().MakeWithAttributes(
+			attribute = mod.Attribute(
 				"Get"+v.makeUppercase(identifier),
-				parameter,
 				abstraction,
 			)
 			if isSequential {
@@ -847,10 +680,11 @@ func (v *generator_) processSyntax(syntax cds.SyntaxLike) {
 		"EOLToken",
 		"SpaceToken",
 	}
-	v.tokens_ = col.Set[string](array)
-	v.modules_ = col.Catalog[string, gcm.ModuleLike]()
-	v.classes_ = col.Catalog[string, gcm.ClassLike]()
-	v.instances_ = col.Catalog[string, gcm.InstanceLike]()
+	var notation = cdc.Notation().Make()
+	v.tokens_ = col.Set[string](notation).MakeFromArray(array)
+	v.modules_ = col.Catalog[string, mod.ModuleLike](notation).Make()
+	v.classes_ = col.Catalog[string, mod.ClassLike](notation).Make()
+	v.instances_ = col.Catalog[string, mod.InstanceLike](notation).Make()
 
 	// Process the syntax definitions.
 	var iterator = syntax.GetDefinitions().GetIterator()
