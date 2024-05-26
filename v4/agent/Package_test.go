@@ -21,6 +21,7 @@ import (
 
 func TestLifecycle(t *tes.T) {
 	var generator = age.Generator().Make()
+	var module = "github.com/craterdog/go-grammar-framework/v4"
 	var name = "example"
 
 	// Generate a new syntax with a default copyright.
@@ -40,31 +41,31 @@ func TestLifecycle(t *tes.T) {
 	validator.ValidateSyntax(syntax)
 
 	// Generate the AST model for the syntax.
-	var model = generator.GenerateAST(syntax)
+	var model = generator.GenerateAST(module, syntax)
 	mod.Validator().ValidateModel(model)
 
 	// Generate the agent model for the syntax.
-	model = generator.GenerateAgent(syntax)
+	model = generator.GenerateAgent(module, syntax)
 	mod.Validator().ValidateModel(model)
 
 	// Generate the formatter class for the syntax.
-	source = generator.GenerateFormatter(model)
+	source = generator.GenerateFormatter(module, syntax, model)
 	ass.Equal(t, modelFormatter, source)
 
 	// Generate the parser class for the syntax.
-	source = generator.GenerateParser(model)
+	source = generator.GenerateParser(module, syntax, model)
 	ass.Equal(t, modelParser, source)
 
 	// Generate the scanner class for the syntax.
-	source = generator.GenerateScanner(model)
+	source = generator.GenerateScanner(module, syntax, model)
 	ass.Equal(t, modelScanner, source)
 
 	// Generate the token class for the syntax.
-	source = generator.GenerateToken(model)
+	source = generator.GenerateToken(module, syntax, model)
 	ass.Equal(t, modelToken, source)
 
 	// Generate the validator class for the syntax.
-	source = generator.GenerateValidator(model)
+	source = generator.GenerateValidator(module, syntax, model)
 	ass.Equal(t, modelValidator, source)
 }
 
@@ -84,7 +85,7 @@ package agent
 
 import (
 	sts "strings"
-	ast "<module>/ast"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 )
 
 // CLASS ACCESS
@@ -133,8 +134,8 @@ func (v *formatter_) GetClass() FormatterClassLike {
 
 // Public
 
-func (v *formatter_) Format<class>(<class> ast.<class>Like) string {
-	v.format<class>(<class>)
+func (v *formatter_) FormatComponent(component ast.ComponentLike) string {
+	v.formatComponent(component)
 	return v.getResult()
 }
 
@@ -153,7 +154,7 @@ func (v *formatter_) appendString(s string) {
 	v.result_.WriteString(s)
 }
 
-func (v *formatter_) format<class>(<class> ast.<class>Like) {
+func (v *formatter_) formatComponent(component ast.ComponentLike) {
 	// TBA - Add real method implementation.
 	v.depth_++
 	v.appendString("test")
@@ -185,7 +186,7 @@ package agent
 import (
 	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v4"
-	ast "<module>/ast"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	sts "strings"
 )
 
@@ -241,18 +242,18 @@ func (v *parser_) GetClass() ParserClassLike {
 
 // Public
 
-func (v *parser_) ParseSource(source string) ast.<class>Like {
+func (v *parser_) ParseSource(source string) ast.ComponentLike {
 	// The scanner runs in a separate Go routine.
 	v.source_ = source
 	Scanner().Make(v.source_, v.tokens_)
 
 	// Attempt to parse a model.
-	var model, token, ok = v.parse<class>()
+	var model, token, ok = v.parseComponent()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("<class>",
+		message += v.generateSyntax("Component",
 			"Agent",
-			"<class>",
+			"Component",
 		)
 		panic(message)
 	}
@@ -268,7 +269,7 @@ func (v *parser_) ParseSource(source string) ast.<class>Like {
 		var message = v.formatError(token)
 		message += v.generateSyntax("EOF",
 			"Agent",
-			"<class>",
+			"Component",
 		)
 		panic(message)
 	}
@@ -358,13 +359,13 @@ func (v *parser_) getNextToken() TokenLike {
 	return token
 }
 
-func (v *parser_) parse<class>() (
-	<class> ast.<class>Like,
+func (v *parser_) parseComponent() (
+	component ast.ComponentLike,
 	token TokenLike,
 	ok bool,
 ) {
 	// TBA - Add real method implementation.
-	return <class>, token, ok
+	return component, token, ok
 }
 
 func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
@@ -394,7 +395,7 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var syntax = map[string]string{
-	"Agent": "<class> EOL* EOF  ! Terminated with an end-of-file marker.",
+	"Agent": "Component EOL* EOF  ! Terminated with an end-of-file marker.",
 }
 `
 
@@ -731,7 +732,7 @@ const modelValidator = `/*
 package agent
 
 import (
-	ast "<module>/ast"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 )
 
 // CLASS ACCESS
@@ -780,7 +781,7 @@ func (v *validator_) GetClass() ValidatorClassLike {
 
 // Public
 
-func (v *validator_) Validate<class>(<class> ast.<class>Like) {
+func (v *validator_) ValidateComponent(component ast.ComponentLike) {
 	// TBA - Add method implementation.
 }
 

@@ -171,13 +171,39 @@ type GeneratorLike interface {
 		name string,
 		copyright string,
 	) ast.SyntaxLike
-	GenerateAST(syntax ast.SyntaxLike) mod.ModelLike
-	GenerateAgent(syntax ast.SyntaxLike) mod.ModelLike
-	GenerateFormatter(model mod.ModelLike) string
-	GenerateParser(model mod.ModelLike) string
-	GenerateScanner(model mod.ModelLike) string
-	GenerateToken(model mod.ModelLike) string
-	GenerateValidator(model mod.ModelLike) string
+	GenerateAST(
+		module string,
+		syntax ast.SyntaxLike,
+	) mod.ModelLike
+	GenerateAgent(
+		module string,
+		syntax ast.SyntaxLike,
+	) mod.ModelLike
+	GenerateFormatter(
+		module string,
+		syntax ast.SyntaxLike,
+		model mod.ModelLike,
+	) string
+	GenerateParser(
+		module string,
+		syntax ast.SyntaxLike,
+		model mod.ModelLike,
+	) string
+	GenerateScanner(
+		module string,
+		syntax ast.SyntaxLike,
+		model mod.ModelLike,
+	) string
+	GenerateToken(
+		module string,
+		syntax ast.SyntaxLike,
+		model mod.ModelLike,
+	) string
+	GenerateValidator(
+		module string,
+		syntax ast.SyntaxLike,
+		model mod.ModelLike,
+	) string
 }
 
 /*

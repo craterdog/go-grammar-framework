@@ -20,6 +20,7 @@ import (
 
 func TestLifecycle(t *tes.T) {
 	var generator = gra.Generator()
+	var module = "github.com/craterdog/go-grammar-framework/v4"
 	var name = "example"
 
 	// Generate a new syntax with a default copyright.
@@ -39,28 +40,28 @@ func TestLifecycle(t *tes.T) {
 	syntax = parser.ParseSource(source)
 
 	// Generate the AST model for the syntax.
-	generator.GenerateAST(syntax)
+	generator.GenerateAST(module, syntax)
 
 	// Generate the agent model for the syntax.
-	var model = generator.GenerateAgent(syntax)
+	var model = generator.GenerateAgent(module, syntax)
 
 	// Generate the formatter class for the syntax.
-	source = generator.GenerateFormatter(model)
+	source = generator.GenerateFormatter(module, syntax, model)
 	fmt.Printf("FORMATTER CLASS: %v\n", source)
 
 	// Generate the parser class for the syntax.
-	source = generator.GenerateParser(model)
+	source = generator.GenerateParser(module, syntax, model)
 	fmt.Printf("PARSER CLASS: %v\n", source)
 
 	// Generate the scanner class for the syntax.
-	source = generator.GenerateScanner(model)
+	source = generator.GenerateScanner(module, syntax, model)
 	fmt.Printf("SCANNER CLASS: %v\n", source)
 
 	// Generate the token class for the syntax.
-	source = generator.GenerateToken(model)
+	source = generator.GenerateToken(module, syntax, model)
 	fmt.Printf("TOKEN CLASS: %v\n", source)
 
 	// Generate the validator class for the syntax.
-	source = generator.GenerateValidator(model)
+	source = generator.GenerateValidator(module, syntax, model)
 	fmt.Printf("VALIDATOR CLASS: %v\n", source)
 }

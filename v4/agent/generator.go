@@ -89,13 +89,15 @@ func (v *generator_) CreateSyntax(
 	return syntax
 }
 
-func (v *generator_) GenerateAST(syntax cds.SyntaxLike) mod.ModelLike {
+func (v *generator_) GenerateAST(
+	module string,
+	syntax cds.SyntaxLike,
+) mod.ModelLike {
 	// Create the AST class model template.
 	v.processSyntax(syntax)
 	var source = modelTemplate_ + astTemplate_
 	var notice = v.extractNotice(syntax)
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = "<module>"
 	source = sts.ReplaceAll(source, "<module>", module)
 	source = sts.ReplaceAll(source, "<package>", "ast")
 
@@ -111,13 +113,15 @@ func (v *generator_) GenerateAST(syntax cds.SyntaxLike) mod.ModelLike {
 	return model
 }
 
-func (v *generator_) GenerateAgent(syntax cds.SyntaxLike) mod.ModelLike {
+func (v *generator_) GenerateAgent(
+	module string,
+	syntax cds.SyntaxLike,
+) mod.ModelLike {
 	// Create the agent class model template.
 	v.processSyntax(syntax)
 	var source = modelTemplate_ + agentTemplate_
 	var notice = v.extractNotice(syntax)
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = "<module>"
 	source = sts.ReplaceAll(source, "<module>", module)
 	source = sts.ReplaceAll(source, "<package>", "agent")
 	var class = v.extractClassName(syntax)
@@ -135,57 +139,72 @@ func (v *generator_) GenerateAgent(syntax cds.SyntaxLike) mod.ModelLike {
 	return model
 }
 
-func (v *generator_) GenerateFormatter(model mod.ModelLike) string {
+func (v *generator_) GenerateFormatter(
+	module string,
+	syntax cds.SyntaxLike,
+	model mod.ModelLike,
+) string {
 	var source = formatterTemplate_
 	var notice = model.GetNotice().GetComment()
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = "<module>"
 	source = sts.ReplaceAll(source, "<module>", module)
-	var class = "<class>"
+	var class = v.extractClassName(syntax)
 	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
 	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
 	return source
 }
 
-func (v *generator_) GenerateParser(model mod.ModelLike) string {
+func (v *generator_) GenerateParser(
+	module string,
+	syntax cds.SyntaxLike,
+	model mod.ModelLike,
+) string {
 	var source = parserTemplate_
 	var notice = model.GetNotice().GetComment()
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = "<module>"
 	source = sts.ReplaceAll(source, "<module>", module)
 	var packageName = model.GetHeader().GetIdentifier()
 	source = sts.ReplaceAll(source, "<Package>", v.makeUppercase(packageName))
-	var class = "<class>"
+	var class = v.extractClassName(syntax)
 	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
 	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
 	return source
 }
 
-func (v *generator_) GenerateScanner(model mod.ModelLike) string {
+func (v *generator_) GenerateScanner(
+	module string,
+	syntax cds.SyntaxLike,
+	model mod.ModelLike,
+) string {
 	var source = scannerTemplate_
 	var notice = model.GetNotice().GetComment()
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = "<module>"
 	source = sts.ReplaceAll(source, "<module>", module)
 	return source
 }
 
-func (v *generator_) GenerateToken(model mod.ModelLike) string {
+func (v *generator_) GenerateToken(
+	module string,
+	syntax cds.SyntaxLike,
+	model mod.ModelLike,
+) string {
 	var source = tokenTemplate_
 	var notice = model.GetNotice().GetComment()
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = "<module>"
 	source = sts.ReplaceAll(source, "<module>", module)
 	return source
 }
 
-func (v *generator_) GenerateValidator(model mod.ModelLike) string {
+func (v *generator_) GenerateValidator(
+	module string,
+	syntax cds.SyntaxLike,
+	model mod.ModelLike,
+) string {
 	var source = validatorTemplate_
 	var notice = model.GetNotice().GetComment()
 	source = sts.ReplaceAll(source, "<Notice>", notice)
-	var module = "<module>"
 	source = sts.ReplaceAll(source, "<module>", module)
-	var class = "<class>"
+	var class = v.extractClassName(syntax)
 	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
 	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
 	return source
@@ -368,15 +387,8 @@ func (v *generator_) extractAlternatives(expression cds.ExpressionLike) col.List
 }
 
 func (v *generator_) extractClassName(syntax cds.SyntaxLike) string {
-	var definition = syntax.GetDefinitions().GetValue(1)
-	var expression = definition.GetExpression()
-	var alternatives = v.extractAlternatives(expression)
-	var alternative = alternatives.GetIterator().GetNext()
-	var factors = alternative.GetFactors()
-	var factor = factors.GetIterator().GetNext()
-	var predicate = factor.GetPredicate()
-	var element = predicate.GetElement()
-	var name = element.GetName()
+	var definition = syntax.GetDefinitions().GetValue(2)
+	var name = definition.GetName()
 	return name
 }
 
