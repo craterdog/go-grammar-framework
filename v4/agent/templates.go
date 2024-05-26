@@ -396,7 +396,8 @@ package agent
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v4"
+	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	col "github.com/craterdog/go-collection-framework/v4/collection"
 	reg "regexp"
 	sts "strings"
 )
@@ -476,7 +477,8 @@ func (c *scannerClass_) MatchToken(
 ) col.ListLike[string] {
 	var matcher = c.matchers_[type_]
 	var matches = matcher.FindStringSubmatch(text)
-	return col.List[string](matches)
+	var notation = cdc.Notation().Make()
+	return col.List[string](notation).MakeFromArray(matches)
 }
 
 // INSTANCE METHODS
@@ -615,7 +617,8 @@ package agent
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v4"
+	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	col "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "<module>/ast"
 	sts "strings"
 )
@@ -647,9 +650,10 @@ type parserClass_ struct {
 // Constructors
 
 func (c *parserClass_) Make() ParserLike {
+	var notation = cdc.Notation().Make()
 	return &parser_{
-		tokens_: col.Queue[TokenLike](c.queueSize_),
-		next_:   col.Stack[TokenLike](c.stackSize_),
+		tokens_: col.Queue[TokenLike](notation).MakeWithCapacity(c.queueSize_),
+		next_:   col.Stack[TokenLike](notation).MakeWithCapacity(c.stackSize_),
 	}
 }
 
