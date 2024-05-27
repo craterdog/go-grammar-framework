@@ -47,11 +47,8 @@ type parserClass_ struct {
 // Constructors
 
 func (c *parserClass_) Make() ParserLike {
-	var notation = cdc.Notation().Make()
 	return &parser_{
-		class_:  c,
-		tokens_: col.Queue[TokenLike](notation).MakeWithCapacity(c.queueSize_),
-		next_:   col.Stack[TokenLike](notation).MakeWithCapacity(c.stackSize_),
+		class_: c,
 	}
 }
 
@@ -75,8 +72,12 @@ func (v *parser_) GetClass() ParserClassLike {
 // Public
 
 func (v *parser_) ParseSource(source string) ast.SyntaxLike {
-	// The scanner runs in a separate Go routine.
 	v.source_ = source
+	var notation = cdc.Notation().Make()
+	v.tokens_ = col.Queue[TokenLike](notation).MakeWithCapacity(parserClass.queueSize_)
+	v.next_ = col.Stack[TokenLike](notation).MakeWithCapacity(parserClass.stackSize_)
+
+	// The scanner runs in a separate Go routine.
 	Scanner().Make(v.source_, v.tokens_)
 
 	// Attempt to parse a syntax.
@@ -818,8 +819,9 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 	token = v.getNextToken()
 	if token.GetType() == expectedType {
 		value = token.GetValue()
-		if len(expectedValue) == 0 || expectedValue == value {
-			// Found the expected token.
+		var notConstrained = len(expectedValue) == 0
+		if notConstrained || value == expectedValue {
+			// Found the right token.
 			return value, token, true
 		}
 	}
