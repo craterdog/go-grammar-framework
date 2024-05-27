@@ -681,8 +681,8 @@ func (v *parser_) ParseSource(source string) ast.<Class>Like {
 	v.source_ = source
 	Scanner().Make(v.source_, v.tokens_)
 
-	// Attempt to parse a model.
-	var model, token, ok = v.parse<Class>()
+	// Attempt to parse the <class>.
+	var <class>, token, ok = v.parse<Class>()
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("<Class>",
@@ -708,16 +708,12 @@ func (v *parser_) ParseSource(source string) ast.<Class>Like {
 		panic(message)
 	}
 
-	// Found a model.
-	return model
+	// Found the <class>.
+	return <class>
 }
 
 // Private
 
-/*
-This private instance method returns an error message containing the context for
-a parsing error.
-*/
 func (v *parser_) formatError(token TokenLike) string {
 	// Format the error message.
 	var message = fmt.Sprintf(
@@ -752,10 +748,6 @@ func (v *parser_) formatError(token TokenLike) string {
 	return message
 }
 
-/*
-This private instance method is useful when creating scanner and parser error
-messages that include the required grammatical rules.
-*/
 func (v *parser_) generateSyntax(expected string, names ...string) string {
 	var message = "Was expecting '" + expected + "' from:\n"
 	for _, name := range names {
@@ -768,10 +760,6 @@ func (v *parser_) generateSyntax(expected string, names ...string) string {
 	return message
 }
 
-/*
-This private instance method attempts to read the next token from the token
-stream and return it.
-*/
 func (v *parser_) getNextToken() TokenLike {
 	// Check for any read, but unprocessed tokens.
 	if !v.next_.IsEmpty() {
@@ -811,20 +799,19 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 	token = v.getNextToken()
 	value = token.GetValue()
 	if token.GetType() == expectedType {
-		var constrained = len(expectedValue) > 0
-		if !constrained || value == expectedValue {
-			// Found the expected token.
+		var notConstrained = len(expectedValue) == 0
+		if notConstrained || value == expectedValue {
+			// Found the right token.
 			return value, token, true
 		}
 	}
 
 	// This is not the right token.
 	v.putBack(token)
-	return "", token, false
+	return value, token, false
 }
 
 func (v *parser_) putBack(token TokenLike) {
-	//fmt.Printf("Put Back %v\n", token)
 	v.next_.AddValue(token)
 }
 
