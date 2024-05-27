@@ -688,7 +688,7 @@ func (v *parser_) ParseSource(source string) ast.<Class>Like {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("<Class>",
-			"<Package>",
+			"AST",
 			"<Class>",
 		)
 		panic(message)
@@ -704,7 +704,7 @@ func (v *parser_) ParseSource(source string) ast.<Class>Like {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("EOF",
-			"<Package>",
+			"AST",
 			"<Class>",
 		)
 		panic(message)

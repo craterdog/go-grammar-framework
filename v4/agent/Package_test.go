@@ -256,7 +256,7 @@ func (v *parser_) ParseSource(source string) ast.ComponentLike {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("Component",
-			"Agent",
+			"AST",
 			"Component",
 		)
 		panic(message)
@@ -272,7 +272,7 @@ func (v *parser_) ParseSource(source string) ast.ComponentLike {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("EOF",
-			"Agent",
+			"AST",
 			"Component",
 		)
 		panic(message)

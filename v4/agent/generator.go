@@ -163,8 +163,6 @@ func (v *generator_) GenerateParser(
 	var notice = model.GetNotice().GetComment()
 	source = sts.ReplaceAll(source, "<Notice>", notice)
 	source = sts.ReplaceAll(source, "<module>", module)
-	var packageName = model.GetHeader().GetIdentifier()
-	source = sts.ReplaceAll(source, "<Package>", v.makeUppercase(packageName))
 	var class = v.extractClassName(syntax)
 	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
 	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
