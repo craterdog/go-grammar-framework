@@ -85,7 +85,7 @@ func (v *parser_) ParseSource(source string) ast.SyntaxLike {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("Syntax",
-			"Cdsn",
+			"AST",
 			"Syntax",
 		)
 		panic(message)
@@ -101,7 +101,7 @@ func (v *parser_) ParseSource(source string) ast.SyntaxLike {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("EOF",
-			"Cdsn",
+			"AST",
 			"Syntax",
 		)
 		panic(message)
@@ -836,7 +836,7 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var syntax = map[string]string{
-	"Cdsn":        `Syntax EOL* EOF  ! Terminated with an end-of-file marker.`,
+	"AST":         `Syntax EOL* EOF  ! Terminated with an end-of-file marker.`,
 	"Syntax":      `Header+ Definition+`,
 	"Header":      `comment EOL+`,
 	"Definition":  `comment? name ":" Expression EOL+`,
@@ -846,11 +846,11 @@ var syntax = map[string]string{
 	"Line":        `EOL Alternative note?`,
 	"Alternative": `Factor+`,
 	"Factor":      `Predicate Cardinality?  ! The default cardinality is one.`,
-	"Predicate":   `Element | Filter | Precedence`,
-	"Element":     `literal | name`,
-	"Filter":      `"~"? Atom`,
+	"Predicate":   `Atom | Element | Filter | Precedence`,
 	"Atom":        `Glyph | intrinsic`,
 	"Glyph":       `character (".." character)?  ! The range of characters is inclusive.`,
+	"Element":     `literal | name`,
+	"Filter":      `"~"? "[" Atom+ "]"`,
 	"Precedence":  `"(" Expression EOL? ")"`,
 	"Cardinality": `
     "?"  ! Zero or one instance of a predicate.
