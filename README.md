@@ -3,24 +3,25 @@
 ## Go Language Grammar Framework
 
 ### Overview
-This project provides a Go based framework for writing, validating and formatting
-language syntaxes defined using the Crater Dog Syntax Notation™.  This notation
-is based on
+This project provides a Go based framework for writing, validating and
+formatting language syntaxes defined using Crater Dog Syntax Notation™ (CDSN).
+This notation is based on
 [Wirth Syntax Notation (WSN)](https://en.wikipedia.org/wiki/Wirth_syntax_notation)
-but adds support for comments and negation.
+and adds additional support for comments and text filters.
+
+### Quick Links
+For more information on this project click on the following links:
+ * [project documentation](https://github.com/craterdog/go-grammar-framework/wiki)
+ * [coding conventions](https://github.com/craterdog/go-model-framework/wiki)
+ * [command-line tools](https://github.com/craterdog/go-grammar-tools/wiki)
 
 ### Getting Started
-The general development process—in a nutshell—is as follows:
- 1. Install the
-    [go-grammar-tools](https://github.com/craterdog/go-grammar-tools) module.
- 1. Run the `bin/initialize` program to create a `Syntax.cdsn` syntax notation
-    template file in your package directory.
- 1. Fill in the `Syntax.cdsn` template with the rule and token definitions for
-    the language syntax that this package will support.
- 1. Run the `bin/generate` program to generate the corresponding `Package.go`
-    class model file in your package directory.
- 1. Fill in specific method implementations for the generated scanner, parser,
-    validator and formatter classes.
+To include the Go packages for this module use the following import statement:
+```go
+import (
+	col "github.com/craterdog/go-grammar-framework/v4"
+)
+```
 
 ### Contributing
 Project contributors are always welcome. Check out the contributing guidelines
