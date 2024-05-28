@@ -835,7 +835,7 @@ import (
 // Reference
 
 var formatterClass = &formatterClass_{
-	// This class does not initialize any private class constants.
+	defaultMaximum_: 8,
 }
 
 // Function
@@ -849,13 +849,31 @@ func Formatter() FormatterClassLike {
 // Target
 
 type formatterClass_ struct {
-	// This class does not define any private class constants.
+	defaultMaximum_ int
+}
+
+// Constants
+
+func (c *formatterClass_) DefaultMaximum() int {
+	return c.defaultMaximum_
 }
 
 // Constructors
 
 func (c *formatterClass_) Make() FormatterLike {
-	return &formatter_{}
+	return &formatter_{
+		maximum_: c.defaultMaximum_,
+	}
+}
+
+func (c *formatterClass_) MakeWithMaximum(maximum int) FormatterLike {
+	if maximum < 0 {
+		maximum = c.defaultMaximum_
+	}
+	return &formatter_{
+		class_:   c,
+		maximum_: maximum,
+	}
 }
 
 // INSTANCE METHODS
@@ -863,15 +881,24 @@ func (c *formatterClass_) Make() FormatterLike {
 // Target
 
 type formatter_ struct {
-	class_  FormatterClassLike
-	depth_  int
-	result_ sts.Builder
+	class_   FormatterClassLike
+	depth_   int
+	maximum_ int
+	result_  sts.Builder
 }
 
 // Attributes
 
 func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
+}
+
+func (v *formatter_) GetDepth() int {
+	return v.depth_
+}
+
+func (v *formatter_) GetMaximum() int {
+	return v.maximum_
 }
 
 // Public
