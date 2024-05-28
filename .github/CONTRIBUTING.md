@@ -1,6 +1,6 @@
 <img src="https://craterdog.com/images/CraterDog.png" width="50%">
 
-## Contributing to the Go Class Framework
+## Contributing to the Go Language Grammar Framework
 Thanks for taking time to contribute to this project. We would appreciate help
 with any of the following:
  * Finding and reporting problems
@@ -11,7 +11,7 @@ with any of the following:
 
 ### Submitting a Bug or Enhancement Request
 Please follow the normal Github process for submitting
-[tickets](https://github.com/craterdog/go-class-framework/issues)
+[tickets](https://github.com/craterdog/go-grammar-framework/issues)
 for this project. Include the following with each ticket:
  1. Label it as a _bug_ or _enhancement_.
  1. Provide a brief summary of the problem or suggestion.
@@ -30,14 +30,14 @@ following:
     new code.
  1. Make the changes to the existing code and add any new code that is required.
  1. Make sure that all code changes and new code meet the coding conventions for
-    the [class framework](https://github.com/craterdog/go-class-framework/wiki)
+    the [class model framework](https://github.com/craterdog/go-model-framework/wiki)
     and that all unit tests pass.
  1. Create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) for your proposed changes.
  1. We will review the pull request and then merge the changes into the main branch.
 
 ### Project Related Discussions
 Most project related discussions can happen in the Github
-[discussion area](https://github.com/craterdog/go-class-framework/discussions)
+[discussion area](https://github.com/craterdog/go-grammar-framework/discussions)
 for this project.
 
 Please submit questions and comments to this discussion area rather than
