@@ -15,6 +15,7 @@ package module_test
 import (
 	fmt "fmt"
 	gra "github.com/craterdog/go-grammar-framework/v4"
+	mod "github.com/craterdog/go-model-framework/v4"
 	tes "testing"
 )
 
@@ -40,28 +41,30 @@ func TestLifecycle(t *tes.T) {
 	syntax = parser.ParseSource(source)
 
 	// Generate the AST model for the syntax.
-	generator.GenerateAST(module, syntax)
+	var model = generator.GenerateAST(module, syntax)
+	var formatter2 = mod.Formatter()
+	source = formatter2.FormatModel(model)
+	fmt.Println("AST Model:")
+	fmt.Println(source)
 
 	// Generate the agent model for the syntax.
-	var model = generator.GenerateAgent(module, syntax)
+	model = generator.GenerateAgent(module, syntax)
+	source = formatter2.FormatModel(model)
+	fmt.Println("Agent Model:")
+	fmt.Println(source)
 
 	// Generate the formatter class for the syntax.
-	source = generator.GenerateFormatter(module, syntax, model)
-	fmt.Printf("FORMATTER CLASS: %v\n", source)
+	generator.GenerateFormatter(module, syntax, model)
 
 	// Generate the parser class for the syntax.
-	source = generator.GenerateParser(module, syntax, model)
-	fmt.Printf("PARSER CLASS: %v\n", source)
+	generator.GenerateParser(module, syntax, model)
 
 	// Generate the scanner class for the syntax.
-	source = generator.GenerateScanner(module, syntax, model)
-	fmt.Printf("SCANNER CLASS: %v\n", source)
+	generator.GenerateScanner(module, syntax, model)
 
 	// Generate the token class for the syntax.
-	source = generator.GenerateToken(module, syntax, model)
-	fmt.Printf("TOKEN CLASS: %v\n", source)
+	generator.GenerateToken(module, syntax, model)
 
 	// Generate the validator class for the syntax.
-	source = generator.GenerateValidator(module, syntax, model)
-	fmt.Printf("VALIDATOR CLASS: %v\n", source)
+	generator.GenerateValidator(module, syntax, model)
 }

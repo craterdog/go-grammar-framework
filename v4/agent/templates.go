@@ -221,15 +221,13 @@ const classCommentTemplate_ = `/*
 <Class>ClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete <class>-like class.
-*/
-`
+*/`
 
 const instanceCommentTemplate_ = `/*
 <Class>Like is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete <class>-like class.
-*/
-`
+*/`
 
 const syntaxTemplate_ = `!>
 ................................................................................
