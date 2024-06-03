@@ -25,6 +25,7 @@ import (
 // Reference
 
 var parserClass = &parserClass_{
+	// Initialize class constants.
 	queueSize_: 16,
 	stackSize_: 4,
 }
@@ -40,6 +41,7 @@ func Parser() ParserClassLike {
 // Target
 
 type parserClass_ struct {
+	// Define class constants.
 	queueSize_ int
 	stackSize_ int
 }
@@ -48,6 +50,7 @@ type parserClass_ struct {
 
 func (c *parserClass_) Make() ParserLike {
 	return &parser_{
+		// Initialize instance attributes.
 		class_: c,
 	}
 }
@@ -57,6 +60,7 @@ func (c *parserClass_) Make() ParserLike {
 // Target
 
 type parser_ struct {
+	// Define instance attributes.
 	class_  ParserClassLike
 	source_ string                   // The original source code.
 	tokens_ col.QueueLike[TokenLike] // A queue of unread tokens from the scanner.

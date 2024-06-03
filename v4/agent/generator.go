@@ -16,7 +16,7 @@ import (
 	fmt "fmt"
 	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
-	cds "github.com/craterdog/go-grammar-framework/v4/ast"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	mod "github.com/craterdog/go-model-framework/v4"
 	sts "strings"
 	tim "time"
@@ -28,7 +28,7 @@ import (
 // Reference
 
 var generatorClass = &generatorClass_{
-	// This class does not initialize any class constants.
+	// Initialize class constants.
 }
 
 // Function
@@ -42,13 +42,14 @@ func Generator() GeneratorClassLike {
 // Target
 
 type generatorClass_ struct {
-	// This class does not define any class constants.
+	// Define class constants.
 }
 
 // Constructors
 
 func (c *generatorClass_) Make() GeneratorLike {
 	return &generator_{
+		// Initialize instance attributes.
 		class_: c,
 	}
 }
@@ -58,6 +59,7 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
+	// Define instance attributes.
 	class_     GeneratorClassLike
 	tokens_    col.SetLike[string]
 	modules_   col.CatalogLike[string, mod.ModuleLike]
@@ -76,7 +78,7 @@ func (v *generator_) GetClass() GeneratorClassLike {
 func (v *generator_) CreateSyntax(
 	name string,
 	copyright string,
-) cds.SyntaxLike {
+) ast.SyntaxLike {
 	// Center and insert the copyright notice into the syntax template.
 	copyright = v.expandCopyright(copyright)
 	var source = sts.ReplaceAll(syntaxTemplate_, "<Copyright>", copyright)
@@ -91,7 +93,7 @@ func (v *generator_) CreateSyntax(
 
 func (v *generator_) GenerateAST(
 	module string,
-	syntax cds.SyntaxLike,
+	syntax ast.SyntaxLike,
 ) mod.ModelLike {
 	// Create the AST class model template.
 	v.processSyntax(syntax)
@@ -115,7 +117,7 @@ func (v *generator_) GenerateAST(
 
 func (v *generator_) GenerateAgent(
 	module string,
-	syntax cds.SyntaxLike,
+	syntax ast.SyntaxLike,
 ) mod.ModelLike {
 	// Create the agent class model template.
 	v.processSyntax(syntax)
@@ -141,7 +143,7 @@ func (v *generator_) GenerateAgent(
 
 func (v *generator_) GenerateFormatter(
 	module string,
-	syntax cds.SyntaxLike,
+	syntax ast.SyntaxLike,
 	model mod.ModelLike,
 ) string {
 	var source = formatterTemplate_
@@ -156,7 +158,7 @@ func (v *generator_) GenerateFormatter(
 
 func (v *generator_) GenerateParser(
 	module string,
-	syntax cds.SyntaxLike,
+	syntax ast.SyntaxLike,
 	model mod.ModelLike,
 ) string {
 	var source = parserTemplate_
@@ -171,7 +173,7 @@ func (v *generator_) GenerateParser(
 
 func (v *generator_) GenerateScanner(
 	module string,
-	syntax cds.SyntaxLike,
+	syntax ast.SyntaxLike,
 	model mod.ModelLike,
 ) string {
 	var source = scannerTemplate_
@@ -183,7 +185,7 @@ func (v *generator_) GenerateScanner(
 
 func (v *generator_) GenerateToken(
 	module string,
-	syntax cds.SyntaxLike,
+	syntax ast.SyntaxLike,
 	model mod.ModelLike,
 ) string {
 	var source = tokenTemplate_
@@ -195,7 +197,7 @@ func (v *generator_) GenerateToken(
 
 func (v *generator_) GenerateValidator(
 	module string,
-	syntax cds.SyntaxLike,
+	syntax ast.SyntaxLike,
 	model mod.ModelLike,
 ) string {
 	var source = validatorTemplate_
@@ -361,9 +363,9 @@ func (v *generator_) expandCopyright(copyright string) string {
 	return copyright
 }
 
-func (v *generator_) extractAlternatives(expression cds.ExpressionLike) col.ListLike[cds.AlternativeLike] {
+func (v *generator_) extractAlternatives(expression ast.ExpressionLike) col.ListLike[ast.AlternativeLike] {
 	var notation = cdc.Notation().Make()
-	var alternatives = col.List[cds.AlternativeLike](notation).Make()
+	var alternatives = col.List[ast.AlternativeLike](notation).Make()
 	var inline = expression.GetInline()
 	if inline != nil {
 		var iterator = inline.GetAlternatives().GetIterator()
@@ -384,13 +386,13 @@ func (v *generator_) extractAlternatives(expression cds.ExpressionLike) col.List
 	return alternatives
 }
 
-func (v *generator_) extractClassName(syntax cds.SyntaxLike) string {
+func (v *generator_) extractClassName(syntax ast.SyntaxLike) string {
 	var definition = syntax.GetDefinitions().GetValue(2)
 	var name = definition.GetName()
 	return name
 }
 
-func (v *generator_) extractNotice(syntax cds.SyntaxLike) string {
+func (v *generator_) extractNotice(syntax ast.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetValue(1)
 	var comment = header.GetComment()
 
@@ -522,7 +524,7 @@ func (v *generator_) makeUppercase(identifier string) string {
 
 func (v *generator_) processAlternative(
 	name string,
-	alternative cds.AlternativeLike,
+	alternative ast.AlternativeLike,
 ) (
 	constructor mod.ConstructorLike,
 	attributes col.ListLike[mod.AttributeLike],
@@ -559,7 +561,7 @@ func (v *generator_) processAlternative(
 }
 
 func (v *generator_) processDefinition(
-	definition cds.DefinitionLike,
+	definition ast.DefinitionLike,
 ) {
 	var name = definition.GetName()
 	var expression = definition.GetExpression()
@@ -572,7 +574,7 @@ func (v *generator_) processDefinition(
 
 func (v *generator_) processExpression(
 	name string,
-	expression cds.ExpressionLike,
+	expression ast.ExpressionLike,
 ) (
 	constructors col.ListLike[mod.ConstructorLike],
 	attributes col.ListLike[mod.AttributeLike],
@@ -613,7 +615,7 @@ func (v *generator_) processExpression(
 
 func (v *generator_) processFactor(
 	name string,
-	factor cds.FactorLike,
+	factor ast.FactorLike,
 ) (attributes col.ListLike[mod.AttributeLike]) {
 	var isSequential bool
 	var cardinality = factor.GetCardinality()
@@ -665,7 +667,7 @@ func (v *generator_) processFactor(
 
 func (v *generator_) processRule(
 	name string,
-	expression cds.ExpressionLike,
+	expression ast.ExpressionLike,
 ) {
 	// Process the full expression first.
 	var constructors, attributes = v.processExpression(name, expression)
@@ -679,7 +681,7 @@ func (v *generator_) processRule(
 	v.instances_.SetValue(name, instance)
 }
 
-func (v *generator_) processSyntax(syntax cds.SyntaxLike) {
+func (v *generator_) processSyntax(syntax ast.SyntaxLike) {
 	// Initialize the collections.
 	var array = []string{
 		"DelimiterToken",
@@ -704,7 +706,7 @@ func (v *generator_) processSyntax(syntax cds.SyntaxLike) {
 
 func (v *generator_) processToken(
 	name string,
-	expression cds.ExpressionLike,
+	expression ast.ExpressionLike,
 ) {
 	// Ignore token definitions for now.
 }

@@ -17,7 +17,7 @@ package agent
 // Reference
 
 var tokenClass = &tokenClass_{
-	// This class has no private constants to initialize.
+	// Initialize class constants.
 }
 
 // Function
@@ -31,7 +31,7 @@ func Token() TokenClassLike {
 // Target
 
 type tokenClass_ struct {
-	// This class has no private constants.
+	// Define class constants.
 }
 
 // Constructors
@@ -43,6 +43,7 @@ func (c *tokenClass_) MakeWithAttributes(
 	value string,
 ) TokenLike {
 	return &token_{
+		// Initialize instance attributes.
 		class_:    c,
 		line_:     line,
 		position_: position,
@@ -56,6 +57,7 @@ func (c *tokenClass_) MakeWithAttributes(
 // Target
 
 type token_ struct {
+	// Define instance attributes.
 	class_    TokenClassLike
 	line_     int
 	position_ int

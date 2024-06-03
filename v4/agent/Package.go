@@ -218,6 +218,9 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete parser-like class.
 */
 type ParserLike interface {
+	// Attributes
+	GetClass() ParserClassLike
+
 	// Methods
 	ParseSource(source string) ast.SyntaxLike
 }

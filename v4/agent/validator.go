@@ -26,7 +26,7 @@ import (
 // Reference
 
 var validatorClass = &validatorClass_{
-	// This class does not initialize any class constants.
+	// Initialize class constants.
 }
 
 // Function
@@ -40,13 +40,14 @@ func Validator() ValidatorClassLike {
 // Target
 
 type validatorClass_ struct {
-	// This class does not define any class constants.
+	// Define class constants.
 }
 
 // Constructors
 
 func (c *validatorClass_) Make() ValidatorLike {
 	return &validator_{
+		// Initialize instance attributes.
 		class_: c,
 	}
 }
@@ -56,6 +57,7 @@ func (c *validatorClass_) Make() ValidatorLike {
 // Target
 
 type validator_ struct {
+	// Define instance attributes.
 	class_   ValidatorClassLike
 	isToken_ bool
 	stack_   col.StackLike[ast.DefinitionLike]

@@ -26,6 +26,7 @@ import (
 // Reference
 
 var scannerClass = &scannerClass_{
+	// Initialize class constants.
 	tokens_: map[TokenType]string{
 		ErrorToken:     "error",
 		CharacterToken: "character",
@@ -65,6 +66,7 @@ func Scanner() ScannerClassLike {
 // Target
 
 type scannerClass_ struct {
+	// Define class constants.
 	tokens_   map[TokenType]string
 	matchers_ map[TokenType]*reg.Regexp
 }
@@ -76,6 +78,7 @@ func (c *scannerClass_) Make(
 	tokens col.QueueLike[TokenLike],
 ) ScannerLike {
 	var scanner = &scanner_{
+		// Initialize instance attributes.
 		class_:    c,
 		line_:     1,
 		position_: 1,
@@ -118,6 +121,7 @@ func (c *scannerClass_) MatchToken(
 // Target
 
 type scanner_ struct {
+	// Define instance attributes.
 	class_    ScannerClassLike
 	first_    int // A zero based index of the first possible rune in the next token.
 	next_     int // A zero based index of the next possible rune in the next token.
