@@ -19,7 +19,7 @@ import ()
 // Reference
 
 var glyphClass = &glyphClass_{
-	// Any private class constants should be initialized here.
+	// Initialize class constants.
 }
 
 // Function
@@ -33,10 +33,10 @@ func Glyph() GlyphClassLike {
 // Target
 
 type glyphClass_ struct {
+	// Define class constants.
 	// This class has no private constants.
-}
 
-// Constants
+}
 
 // Constructors
 
@@ -45,18 +45,19 @@ func (c *glyphClass_) MakeWithAttributes(
 	last string,
 ) GlyphLike {
 	return &glyph_{
+		// Initialize instance attributes.
+		class_: c,
 		first_: first,
 		last_:  last,
 	}
 }
-
-// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type glyph_ struct {
+	// Define instance attributes.
 	class_ GlyphClassLike
 	first_ string
 	last_  string
@@ -75,7 +76,5 @@ func (v *glyph_) GetFirst() string {
 func (v *glyph_) GetLast() string {
 	return v.last_
 }
-
-// Public
 
 // Private

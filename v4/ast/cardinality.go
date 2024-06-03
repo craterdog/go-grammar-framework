@@ -19,7 +19,7 @@ import ()
 // Reference
 
 var cardinalityClass = &cardinalityClass_{
-	// Any private class constants should be initialized here.
+	// Initialize class constants.
 }
 
 // Function
@@ -33,26 +33,27 @@ func Cardinality() CardinalityClassLike {
 // Target
 
 type cardinalityClass_ struct {
+	// Define class constants.
 	// This class has no private constants.
-}
 
-// Constants
+}
 
 // Constructors
 
 func (c *cardinalityClass_) MakeWithConstraint(constraint ConstraintLike) CardinalityLike {
 	return &cardinality_{
+		// Initialize instance attributes.
+		class_:      c,
 		constraint_: constraint,
 	}
 }
-
-// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type cardinality_ struct {
+	// Define instance attributes.
 	class_      CardinalityClassLike
 	constraint_ ConstraintLike
 }
@@ -66,7 +67,5 @@ func (v *cardinality_) GetClass() CardinalityClassLike {
 func (v *cardinality_) GetConstraint() ConstraintLike {
 	return v.constraint_
 }
-
-// Public
 
 // Private

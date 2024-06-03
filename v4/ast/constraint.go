@@ -19,7 +19,7 @@ import ()
 // Reference
 
 var constraintClass = &constraintClass_{
-	// Any private class constants should be initialized here.
+	// Initialize class constants.
 }
 
 // Function
@@ -33,10 +33,10 @@ func Constraint() ConstraintClassLike {
 // Target
 
 type constraintClass_ struct {
+	// Define class constants.
 	// This class has no private constants.
-}
 
-// Constants
+}
 
 // Constructors
 
@@ -45,18 +45,19 @@ func (c *constraintClass_) MakeWithAttributes(
 	last string,
 ) ConstraintLike {
 	return &constraint_{
+		// Initialize instance attributes.
+		class_: c,
 		first_: first,
 		last_:  last,
 	}
 }
-
-// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type constraint_ struct {
+	// Define instance attributes.
 	class_ ConstraintClassLike
 	first_ string
 	last_  string
@@ -75,7 +76,5 @@ func (v *constraint_) GetFirst() string {
 func (v *constraint_) GetLast() string {
 	return v.last_
 }
-
-// Public
 
 // Private

@@ -19,7 +19,7 @@ import ()
 // Reference
 
 var predicateClass = &predicateClass_{
-	// Any private class constants should be initialized here.
+	// Initialize class constants.
 }
 
 // Function
@@ -33,44 +33,51 @@ func Predicate() PredicateClassLike {
 // Target
 
 type predicateClass_ struct {
+	// Define class constants.
 	// This class has no private constants.
-}
 
-// Constants
+}
 
 // Constructors
 
 func (c *predicateClass_) MakeWithAtom(atom AtomLike) PredicateLike {
 	return &predicate_{
-		atom_: atom,
+		// Initialize instance attributes.
+		class_: c,
+		atom_:  atom,
 	}
 }
 
 func (c *predicateClass_) MakeWithElement(element ElementLike) PredicateLike {
 	return &predicate_{
+		// Initialize instance attributes.
+		class_:   c,
 		element_: element,
 	}
 }
 
 func (c *predicateClass_) MakeWithFilter(filter FilterLike) PredicateLike {
 	return &predicate_{
+		// Initialize instance attributes.
+		class_:  c,
 		filter_: filter,
 	}
 }
 
 func (c *predicateClass_) MakeWithPrecedence(precedence PrecedenceLike) PredicateLike {
 	return &predicate_{
+		// Initialize instance attributes.
+		class_:      c,
 		precedence_: precedence,
 	}
 }
-
-// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type predicate_ struct {
+	// Define instance attributes.
 	class_      PredicateClassLike
 	atom_       AtomLike
 	element_    ElementLike
@@ -99,7 +106,5 @@ func (v *predicate_) GetFilter() FilterLike {
 func (v *predicate_) GetPrecedence() PrecedenceLike {
 	return v.precedence_
 }
-
-// Public
 
 // Private

@@ -19,7 +19,7 @@ import ()
 // Reference
 
 var atomClass = &atomClass_{
-	// Any private class constants should be initialized here.
+	// Initialize class constants.
 }
 
 // Function
@@ -33,32 +33,35 @@ func Atom() AtomClassLike {
 // Target
 
 type atomClass_ struct {
+	// Define class constants.
 	// This class has no private constants.
-}
 
-// Constants
+}
 
 // Constructors
 
 func (c *atomClass_) MakeWithGlyph(glyph GlyphLike) AtomLike {
 	return &atom_{
+		// Initialize instance attributes.
+		class_: c,
 		glyph_: glyph,
 	}
 }
 
 func (c *atomClass_) MakeWithIntrinsic(intrinsic string) AtomLike {
 	return &atom_{
+		// Initialize instance attributes.
+		class_:     c,
 		intrinsic_: intrinsic,
 	}
 }
-
-// Functions
 
 // INSTANCE METHODS
 
 // Target
 
 type atom_ struct {
+	// Define instance attributes.
 	class_     AtomClassLike
 	glyph_     GlyphLike
 	intrinsic_ string
@@ -77,7 +80,5 @@ func (v *atom_) GetGlyph() GlyphLike {
 func (v *atom_) GetIntrinsic() string {
 	return v.intrinsic_
 }
-
-// Public
 
 // Private
