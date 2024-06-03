@@ -54,7 +54,7 @@ Syntax: Header+ Definition+
 
 Header: comment EOL+
 
-Definition: comment? name ":" Expression EOL+
+Definition: (comment EOL)? name ":" Expression EOL+
 
 Expression: Inline | Multiline
 
@@ -99,7 +99,7 @@ is NOT greedy.  Any spaces within a token definition are NOT ignored.
 <!
 character: "'" ~[CONTROL] "'"  ! Any printable single character.
 
-comment: "!>" EOL ANY* EOL "<!" EOL  ! Chooses the shortest possible match.
+comment: "!>" EOL ANY* EOL "<!"  ! Chooses the shortest possible match.
 
 delimiter:
     "~"

@@ -178,6 +178,7 @@ func (v *formatter_) formatDefinition(definition ast.DefinitionLike) {
 	var comment = definition.GetComment()
 	if len(comment) > 0 {
 		v.appendString(comment)
+		v.appendNewline()
 	}
 	var name = definition.GetName()
 	v.appendString(name)
@@ -272,6 +273,7 @@ func (v *formatter_) formatSyntax(syntax ast.SyntaxLike) {
 func (v *formatter_) formatHeader(header ast.HeaderLike) {
 	var comment = header.GetComment()
 	v.appendString(comment)
+	v.appendNewline()
 	v.appendNewline()
 }
 

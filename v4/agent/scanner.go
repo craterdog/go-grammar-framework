@@ -243,18 +243,10 @@ way.  We append an underscore to each name to lessen the chance of a name
 collision with other private Go class constants in this package.
 */
 const (
-	_any_      = `a^`
-	_control_  = `\P{Cc}`
-	_digit_    = `\P{Nd}`
-	_eof_      = `[^\z]`
-	_eol_      = `[^\n]`
-	_escape_   = `[^\\]`
-	_lower_    = `\P{Ll}`
-	_upper_    = `\P{Lu}`
 	any_       = `.|` + eol_
 	base16_    = `[0-9a-f]`
 	character_ = `['][^` + control_ + `][']`
-	comment_   = `!>` + eol_ + `((?:` + any_ + `)*?)` + eol_ + `<!` + eol_
+	comment_   = `!>` + eol_ + `((?:` + any_ + `)*?)` + eol_ + `<!`
 	control_   = `\p{Cc}`
 	delimiter_ = `[~?*+:|()[\]{}]|\.\.`
 	digit_     = `\p{Nd}`

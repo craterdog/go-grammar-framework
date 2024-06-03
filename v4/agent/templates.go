@@ -12,8 +12,8 @@
 
 package agent
 
-const modelTemplate_ = `
-<Notice>
+const modelTemplate_ = `<Notice>
+
 /*
 Package "<package>" provides...
 
@@ -321,6 +321,7 @@ anything: ANY
 `
 
 const tokenTemplate_ = `<Notice>
+
 package agent
 
 // CLASS ACCESS
@@ -398,6 +399,7 @@ func (v *token_) GetValue() string {
 `
 
 const scannerTemplate_ = `<Notice>
+
 package agent
 
 import (
@@ -619,6 +621,7 @@ const (
 `
 
 const parserTemplate_ = `<Notice>
+
 package agent
 
 import (
@@ -829,6 +832,7 @@ var syntax = map[string]string{
 `
 
 const formatterTemplate_ = `<Notice>
+
 package agent
 
 import (
@@ -945,6 +949,7 @@ func (v *formatter_) getResult() string {
 `
 
 const validatorTemplate_ = `<Notice>
+
 package agent
 
 import (

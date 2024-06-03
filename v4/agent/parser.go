@@ -332,7 +332,18 @@ func (v *parser_) parseDefinition() (
 	var expression ast.ExpressionLike
 
 	// Attempt to parse an optional comment.
-	comment, _, _ = v.parseToken(CommentToken, "")
+	comment, _, ok = v.parseToken(CommentToken, "")
+	if ok {
+		_, token, ok = v.parseToken(EOLToken, "")
+		if !ok {
+			var message = v.formatError(token)
+			message += v.generateSyntax("EOL",
+				"Definition",
+				"Expression",
+			)
+			panic(message)
+		}
+	}
 
 	// Attempt to parse a name.
 	name, token, ok = v.parseToken(NameToken, "")
