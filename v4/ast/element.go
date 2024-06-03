@@ -34,8 +34,6 @@ func Element() ElementClassLike {
 
 type elementClass_ struct {
 	// Define class constants.
-	// This class has no private constants.
-
 }
 
 // Constructors

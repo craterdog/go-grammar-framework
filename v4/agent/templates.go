@@ -329,7 +329,7 @@ package agent
 // Reference
 
 var tokenClass = &tokenClass_{
-	// This class has no private constants to initialize.
+	// Initialize class constants.
 }
 
 // Function
@@ -343,7 +343,7 @@ func Token() TokenClassLike {
 // Target
 
 type tokenClass_ struct {
-	// This class has no private constants.
+	// Define class constants.
 }
 
 // Constructors

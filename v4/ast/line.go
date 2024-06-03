@@ -34,8 +34,6 @@ func Line() LineClassLike {
 
 type lineClass_ struct {
 	// Define class constants.
-	// This class has no private constants.
-
 }
 
 // Constructors

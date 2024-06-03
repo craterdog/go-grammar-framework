@@ -36,8 +36,6 @@ func Multiline() MultilineClassLike {
 
 type multilineClass_ struct {
 	// Define class constants.
-	// This class has no private constants.
-
 }
 
 // Constructors

@@ -34,8 +34,6 @@ func Atom() AtomClassLike {
 
 type atomClass_ struct {
 	// Define class constants.
-	// This class has no private constants.
-
 }
 
 // Constructors

@@ -34,8 +34,6 @@ func Header() HeaderClassLike {
 
 type headerClass_ struct {
 	// Define class constants.
-	// This class has no private constants.
-
 }
 
 // Constructors

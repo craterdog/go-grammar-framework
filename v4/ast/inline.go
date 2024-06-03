@@ -36,8 +36,6 @@ func Inline() InlineClassLike {
 
 type inlineClass_ struct {
 	// Define class constants.
-	// This class has no private constants.
-
 }
 
 // Constructors
