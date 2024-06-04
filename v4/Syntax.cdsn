@@ -52,7 +52,7 @@ AST: Syntax EOL* EOF  ! Terminated with an end-of-file marker.
 
 Syntax: Header+ Definition+
 
-Header: comment EOL+
+Header: comment EOL{2}
 
 Definition: (comment EOL)? name ":" Expression EOL+
 

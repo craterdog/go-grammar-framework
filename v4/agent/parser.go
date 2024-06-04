@@ -619,15 +619,20 @@ func (v *parser_) parseHeader() (
 		return header, commentToken, false
 	}
 
-	// Attempt to parse one or more end-of-line characters.
-	_, token, ok = v.parseToken(EOLToken, "")
+	// Attempt to parse two end-of-line characters.
+	var eolToken TokenLike
+	_, eolToken, ok = v.parseToken(EOLToken, "")
 	if !ok {
 		// This is not a header, put back the comment token.
 		v.putBack(commentToken)
-		return header, token, false
+		return header, eolToken, false
 	}
-	for ok {
-		_, token, ok = v.parseToken(EOLToken, "")
+	_, token, ok = v.parseToken(EOLToken, "")
+	if !ok {
+		// This is not a header, put back the comment and end-of-line tokens.
+		v.putBack(eolToken)
+		v.putBack(commentToken)
+		return header, token, false
 	}
 
 	// Found a header.

@@ -35,6 +35,8 @@ func TestLifecycle(t *tes.T) {
 	// Format the syntax.
 	var formatter = gra.Formatter()
 	var source = formatter.FormatSyntax(syntax)
+	fmt.Println("Syntax:")
+	fmt.Println(source)
 
 	// Parse the source code for the syntax.
 	var parser = gra.Parser()
