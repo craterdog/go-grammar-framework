@@ -80,11 +80,11 @@ concrete formatter-like class.
 */
 type FormatterClassLike interface {
 	// Constants
-	DefaultMaximum() int
+	DefaultMaximum() uint
 
 	// Constructors
 	Make() FormatterLike
-	MakeWithMaximum(maximum int) FormatterLike
+	MakeWithMaximum(maximum uint) FormatterLike
 }
 
 /*
@@ -159,8 +159,8 @@ instance of a concrete formatter-like class.
 type FormatterLike interface {
 	// Attributes
 	GetClass() FormatterClassLike
-	GetDepth() int
-	GetMaximum() int
+	GetDepth() uint
+	GetMaximum() uint
 
 	// Methods
 	Format<Class>(<parameter> ast.<Class>Like) string
@@ -650,8 +650,8 @@ func Parser() ParserClassLike {
 // Target
 
 type parserClass_ struct {
-	queueSize_ int
-	stackSize_ int
+	queueSize_ uint
+	stackSize_ uint
 }
 
 // Constructors
@@ -857,12 +857,12 @@ func Formatter() FormatterClassLike {
 // Target
 
 type formatterClass_ struct {
-	defaultMaximum_ int
+	defaultMaximum_ uint
 }
 
 // Constants
 
-func (c *formatterClass_) DefaultMaximum() int {
+func (c *formatterClass_) DefaultMaximum() uint {
 	return c.defaultMaximum_
 }
 
@@ -874,7 +874,7 @@ func (c *formatterClass_) Make() FormatterLike {
 	}
 }
 
-func (c *formatterClass_) MakeWithMaximum(maximum int) FormatterLike {
+func (c *formatterClass_) MakeWithMaximum(maximum uint) FormatterLike {
 	if maximum < 0 {
 		maximum = c.defaultMaximum_
 	}
@@ -890,8 +890,8 @@ func (c *formatterClass_) MakeWithMaximum(maximum int) FormatterLike {
 
 type formatter_ struct {
 	class_   FormatterClassLike
-	depth_   int
-	maximum_ int
+	depth_   uint
+	maximum_ uint
 	result_  sts.Builder
 }
 
@@ -901,11 +901,11 @@ func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
 }
 
-func (v *formatter_) GetDepth() int {
+func (v *formatter_) GetDepth() uint {
 	return v.depth_
 }
 
-func (v *formatter_) GetMaximum() int {
+func (v *formatter_) GetMaximum() uint {
 	return v.maximum_
 }
 
