@@ -125,7 +125,7 @@ func (c *formatterClass_) Make() FormatterLike {
 }
 
 func (c *formatterClass_) MakeWithMaximum(maximum uint) FormatterLike {
-	if maximum < 0 {
+	if maximum == 0 {
 		maximum = c.defaultMaximum_
 	}
 	return &formatter_{
