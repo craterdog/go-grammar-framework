@@ -42,8 +42,8 @@ func Parser() ParserClassLike {
 
 type parserClass_ struct {
 	// Define class constants.
-	queueSize_ int
-	stackSize_ int
+	queueSize_ uint
+	stackSize_ uint
 }
 
 // Constructors
