@@ -921,7 +921,8 @@ func (v *formatter_) Format<Class>(<class> ast.<Class>Like) string {
 func (v *formatter_) appendNewline() {
 	var separator = "\n"
 	var indentation = "\t"
-	for level := 0; level < v.depth_; level++ {
+	var level uint
+	for ; level < v.depth_; level++ {
 		separator += indentation
 	}
 	v.appendString(separator)
