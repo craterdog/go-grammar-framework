@@ -84,7 +84,7 @@ Cardinality:
     Constrained
     quantified
 
-Constrained "{" Minimum Maximum? "}"  ! The range of numbers is inclusive.
+Constrained: "{" Minimum Maximum? "}"  ! The range of numbers is inclusive.
 
 Minimum: number
 
