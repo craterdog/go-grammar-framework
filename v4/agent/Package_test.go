@@ -445,7 +445,6 @@ import (
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	reg "regexp"
 	sts "strings"
-	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -599,17 +598,6 @@ func (v *scanner_) foundToken(type_ TokenType) bool {
 		var match = matches.GetValue(1)
 		var token = []rune(match)
 		var length = len(token)
-
-		// Check for false intrinsic match.
-		var nextIndex = v.next_ + length
-		if nextIndex < len(v.runes_) {
-			var nextRune = v.runes_[v.next_+length]
-			if type_ == IntrinsicToken && (uni.IsLetter(nextRune) ||
-				uni.IsDigit(nextRune) || nextRune == rune('_')) {
-				// This is not an intrinsic token.
-				return false
-			}
-		}
 
 		// Found the requested token type.
 		v.next_ += length
