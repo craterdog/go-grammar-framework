@@ -792,9 +792,7 @@ package agent
 
 import (
 	fmt "fmt"
-	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
-	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	ast "github.com/craterdog/example/cdsn/ast"
 )
 
 // CLASS ACCESS
@@ -846,7 +844,12 @@ func (v *validator_) GetClass() ValidatorClassLike {
 // Public
 
 func (v *validator_) ValidateDocument(document ast.DocumentLike) {
-	// TBA - Add method implementation.
+	// TBA - Add a real method implementation.
+	var name = "foobar"
+	if !v.matchesToken(ErrorToken, name) {
+		var message = v.formatError(name, "Oops!")
+		panic(message)
+	}
 }
 
 // Private
