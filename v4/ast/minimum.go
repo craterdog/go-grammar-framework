@@ -18,35 +18,31 @@ import ()
 
 // Reference
 
-var lineClass = &lineClass_{
+var minimumClass = &minimumClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Line() LineClassLike {
-	return lineClass
+func Minimum() MinimumClassLike {
+	return minimumClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type lineClass_ struct {
+type minimumClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(
-	identifier IdentifierLike,
-	note string,
-) LineLike {
-	return &line_{
+func (c *minimumClass_) MakeWithNumber(number string) MinimumLike {
+	return &minimum_{
 		// Initialize instance attributes.
-		class_:      c,
-		identifier_: identifier,
-		note_:       note,
+		class_:  c,
+		number_: number,
 	}
 }
 
@@ -54,25 +50,20 @@ func (c *lineClass_) MakeWithAttributes(
 
 // Target
 
-type line_ struct {
+type minimum_ struct {
 	// Define instance attributes.
-	class_      LineClassLike
-	identifier_ IdentifierLike
-	note_       string
+	class_  MinimumClassLike
+	number_ string
 }
 
 // Attributes
 
-func (v *line_) GetClass() LineClassLike {
+func (v *minimum_) GetClass() MinimumClassLike {
 	return v.class_
 }
 
-func (v *line_) GetIdentifier() IdentifierLike {
-	return v.identifier_
-}
-
-func (v *line_) GetNote() string {
-	return v.note_
+func (v *minimum_) GetNumber() string {
+	return v.number_
 }
 
 // Private

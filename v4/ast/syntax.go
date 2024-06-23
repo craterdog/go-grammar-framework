@@ -42,13 +42,15 @@ type syntaxClass_ struct {
 
 func (c *syntaxClass_) MakeWithAttributes(
 	headers col.ListLike[HeaderLike],
-	definitions col.ListLike[DefinitionLike],
+	rules col.ListLike[RuleLike],
+	lexigrams col.ListLike[LexigramLike],
 ) SyntaxLike {
 	return &syntax_{
 		// Initialize instance attributes.
-		class_:       c,
-		headers_:     headers,
-		definitions_: definitions,
+		class_:     c,
+		headers_:   headers,
+		rules_:     rules,
+		lexigrams_: lexigrams,
 	}
 }
 
@@ -58,9 +60,10 @@ func (c *syntaxClass_) MakeWithAttributes(
 
 type syntax_ struct {
 	// Define instance attributes.
-	class_       SyntaxClassLike
-	headers_     col.ListLike[HeaderLike]
-	definitions_ col.ListLike[DefinitionLike]
+	class_     SyntaxClassLike
+	headers_   col.ListLike[HeaderLike]
+	rules_     col.ListLike[RuleLike]
+	lexigrams_ col.ListLike[LexigramLike]
 }
 
 // Attributes
@@ -73,8 +76,12 @@ func (v *syntax_) GetHeaders() col.ListLike[HeaderLike] {
 	return v.headers_
 }
 
-func (v *syntax_) GetDefinitions() col.ListLike[DefinitionLike] {
-	return v.definitions_
+func (v *syntax_) GetRules() col.ListLike[RuleLike] {
+	return v.rules_
+}
+
+func (v *syntax_) GetLexigrams() col.ListLike[LexigramLike] {
+	return v.lexigrams_
 }
 
 // Private

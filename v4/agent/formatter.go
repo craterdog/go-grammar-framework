@@ -22,8 +22,7 @@ import (
 // Reference
 
 var formatterClass = &formatterClass_{
-	// Initialize class constants.
-	defaultMaximum_: 8,
+	// Initialize the class constants.
 }
 
 // Function
@@ -37,34 +36,15 @@ func Formatter() FormatterClassLike {
 // Target
 
 type formatterClass_ struct {
-	// Define class constants.
-	defaultMaximum_ int
-}
-
-// Constants
-
-func (c *formatterClass_) DefaultMaximum() int {
-	return c.defaultMaximum_
+	// Define the class constants.
 }
 
 // Constructors
 
 func (c *formatterClass_) Make() FormatterLike {
 	return &formatter_{
-		// Initialize instance attributes.
-		class_:   c,
-		maximum_: c.defaultMaximum_,
-	}
-}
-
-func (c *formatterClass_) MakeWithMaximum(maximum int) FormatterLike {
-	if maximum < 0 {
-		maximum = c.defaultMaximum_
-	}
-	return &formatter_{
-		// Initialize instance attributes.
-		class_:   c,
-		maximum_: maximum,
+		// Initialize the instance attributes.
+		class_: c,
 	}
 }
 
@@ -73,11 +53,10 @@ func (c *formatterClass_) MakeWithMaximum(maximum int) FormatterLike {
 // Target
 
 type formatter_ struct {
-	// Define instance attributes.
-	class_   FormatterClassLike
-	depth_   int
-	maximum_ int
-	result_  sts.Builder
+	// Define the instance attributes.
+	class_  FormatterClassLike
+	depth_  int
+	result_ sts.Builder
 }
 
 // Attributes
@@ -90,16 +69,7 @@ func (v *formatter_) GetDepth() int {
 	return v.depth_
 }
 
-func (v *formatter_) GetMaximum() int {
-	return v.maximum_
-}
-
 // Public
-
-func (v *formatter_) FormatDefinition(definition ast.DefinitionLike) string {
-	v.formatDefinition(definition)
-	return v.getResult()
-}
 
 func (v *formatter_) FormatSyntax(syntax ast.SyntaxLike) string {
 	v.formatSyntax(syntax)
@@ -109,12 +79,12 @@ func (v *formatter_) FormatSyntax(syntax ast.SyntaxLike) string {
 // Private
 
 func (v *formatter_) appendNewline() {
-	var separator = "\n"
+	var newline = "\n"
 	var indentation = "    "
 	for level := 0; level < v.depth_; level++ {
-		separator += indentation
+		newline += indentation
 	}
-	v.appendString(separator)
+	v.appendString(newline)
 }
 
 func (v *formatter_) appendString(s string) {
@@ -122,103 +92,78 @@ func (v *formatter_) appendString(s string) {
 }
 
 func (v *formatter_) formatAlternative(alternative ast.AlternativeLike) {
-	var factors = alternative.GetFactors()
-	var iterator = factors.GetIterator()
-	var factor = iterator.GetNext()
-	v.formatFactor(factor)
+	v.appendString(" |")
+	var iterator = alternative.GetParts().GetIterator()
 	for iterator.HasNext() {
+		var part = iterator.GetNext()
 		v.appendString(" ")
-		factor = iterator.GetNext()
-		v.formatFactor(factor)
+		v.formatPart(part)
 	}
 }
 
-func (v *formatter_) formatAtom(atom ast.AtomLike) {
-	var glyph = atom.GetGlyph()
-	var intrinsic = atom.GetIntrinsic()
-	switch {
-	case glyph != nil:
-		v.formatGlyph(glyph)
-	case len(intrinsic) > 0:
-		v.appendString(intrinsic)
+func (v *formatter_) formatBounded(bounded ast.BoundedLike) {
+	var initial = bounded.GetInitial()
+	v.formatInitial(initial)
+	var extent = bounded.GetExtent()
+	if extent != nil {
+		v.formatExtent(extent)
+	}
+}
+
+func (v *formatter_) formatCharacter(character ast.CharacterLike) {
+	switch actual := character.GetAny().(type) {
+	case ast.BoundedLike:
+		v.formatBounded(actual)
+	case string:
+		v.appendString(actual)
 	default:
-		panic("Attempted to format an empty atom.")
+		panic("Attempted to format an empty character.")
 	}
 }
 
 func (v *formatter_) formatCardinality(cardinality ast.CardinalityLike) {
-	var constraint = cardinality.GetConstraint()
-	var first = constraint.GetFirst()
-	var last = constraint.GetLast()
-	switch {
-	case first == "1" && last == "1":
-		// This is the default case so do nothing.
-	case first == "0" && last == "1":
-		v.appendString("?")
-	case first == "0" && len(last) == 0:
-		v.appendString("*")
-	case first == "1" && len(last) == 0:
-		v.appendString("+")
-	case len(first) > 0:
-		v.appendString("{")
-		v.formatConstraint(constraint)
-		v.appendString("}")
+	switch actual := cardinality.GetAny().(type) {
+	case ast.ConstrainedLike:
+		v.formatConstrained(actual)
+	case string:
+		v.appendString(actual)
 	default:
-		panic("Attempted to format an invalid cardinality.")
+		panic("Attempted to format an empty cardinality.")
 	}
 }
 
-func (v *formatter_) formatConstraint(constraint ast.ConstraintLike) {
-	var first = constraint.GetFirst()
-	var last = constraint.GetLast()
-	v.appendString(first)
-	if first != last {
-		v.appendString("..")
-		if len(last) > 0 {
-			v.appendString(last)
-		}
+func (v *formatter_) formatConstrained(constrained ast.ConstrainedLike) {
+	v.appendString("{")
+	var minimum = constrained.GetMinimum()
+	v.formatMinimum(minimum)
+	var maximum = constrained.GetMaximum()
+	if maximum != nil {
+		v.formatMaximum(maximum)
 	}
-}
-
-func (v *formatter_) formatDefinition(definition ast.DefinitionLike) {
-	var comment = definition.GetComment()
-	if len(comment) > 0 {
-		v.appendString(comment)
-		v.appendNewline()
-	}
-	var name = definition.GetName()
-	v.appendString(name)
-	v.appendString(":")
-	var expression = definition.GetExpression()
-	if expression.GetInline() != nil {
-		v.appendString(" ")
-	}
-	v.formatExpression(expression)
-	v.appendNewline()
-	v.appendNewline()
+	v.appendString("}")
 }
 
 func (v *formatter_) formatElement(element ast.ElementLike) {
-	var literal = element.GetLiteral()
-	var name = element.GetName()
-	switch {
-	case len(literal) > 0:
-		v.appendString(literal)
-	case len(name) > 0:
-		v.appendString(name)
+	switch actual := element.GetAny().(type) {
+	case ast.GroupedLike:
+		v.formatGrouped(actual)
+	case ast.FilteredLike:
+		v.formatFiltered(actual)
+	case ast.BoundedLike:
+		v.formatBounded(actual)
+	case string:
+		v.appendString(actual)
 	default:
 		panic("Attempted to format an empty element.")
 	}
 }
 
 func (v *formatter_) formatExpression(expression ast.ExpressionLike) {
-	var inline = expression.GetInline()
-	var multiline = expression.GetMultiline()
-	switch {
-	case inline != nil:
-		v.formatInline(inline)
-	case multiline != nil:
-		v.formatMultiline(multiline)
+	switch actual := expression.GetAny().(type) {
+	case ast.InlinedLike:
+		v.formatInlined(actual)
+	case ast.MultilinedLike:
+		v.formatMultilined(actual)
 	default:
 		panic("Attempted to format an empty expression.")
 	}
@@ -233,31 +178,171 @@ func (v *formatter_) formatFactor(factor ast.FactorLike) {
 	}
 }
 
-func (v *formatter_) formatFilter(filter ast.FilterLike) {
-	if filter.IsInverted() {
-		v.appendString("~")
+func (v *formatter_) formatFiltered(filtered ast.FilteredLike) {
+	var negation = filtered.GetNegation()
+	if len(negation) > 0 {
+		v.appendString(negation)
 	}
 	v.appendString("[")
-	var atoms = filter.GetAtoms()
-	var iterator = atoms.GetIterator()
-	var atom = iterator.GetNext()
-	v.formatAtom(atom)
+	var iterator = filtered.GetCharacters().GetIterator()
+	var character = iterator.GetNext()
+	v.formatCharacter(character) // The first one is not prepended with a space.
 	for iterator.HasNext() {
-		atom = iterator.GetNext()
+		character = iterator.GetNext()
 		v.appendString(" ")
-		v.formatAtom(atom)
+		v.formatCharacter(character)
 	}
 	v.appendString("]")
 }
 
-func (v *formatter_) formatGlyph(glyph ast.GlyphLike) {
-	var first = glyph.GetFirst()
-	v.appendString(first)
-	var last = glyph.GetLast()
-	if len(last) > 0 {
-		v.appendString("..")
-		v.appendString(last) // The last character may be empty.
+func (v *formatter_) formatInitial(initial ast.InitialLike) {
+	var rune_ = initial.GetRune()
+	v.appendString(rune_)
+}
+
+func (v *formatter_) formatGrouped(grouped ast.GroupedLike) {
+	v.appendString("(")
+	var pattern = grouped.GetPattern()
+	v.formatPattern(pattern)
+	v.appendString(")")
+}
+
+func (v *formatter_) formatHeader(header ast.HeaderLike) {
+	var comment = header.GetComment()
+	v.appendString(comment)
+	v.appendNewline()
+}
+
+func (v *formatter_) formatIdentifier(identifier ast.IdentifierLike) {
+	switch actual := identifier.GetAny().(type) {
+	case string:
+		v.appendString(actual)
+	default:
+		panic("Attempted to format an empty identifier.")
 	}
+}
+
+func (v *formatter_) formatInlined(inlined ast.InlinedLike) {
+	v.appendString(" ") // Need this space following the ":" character.
+	var iterator = inlined.GetFactors().GetIterator()
+	for iterator.HasNext() {
+		var factor = iterator.GetNext()
+		v.formatFactor(factor)
+	}
+	var note = inlined.GetNote()
+	if len(note) > 0 {
+		v.appendString("  ")
+		v.appendString(note)
+	}
+}
+
+func (v *formatter_) formatExtent(extent ast.ExtentLike) {
+	v.appendString("..")
+	var rune_ = extent.GetRune()
+	v.appendString(rune_)
+}
+
+func (v *formatter_) formatLexigram(lexigram ast.LexigramLike) {
+	var comment = lexigram.GetComment()
+	if len(comment) > 0 {
+		v.appendString(comment)
+	}
+	var lower = lexigram.GetLowercase()
+	v.appendString(lower)
+	v.appendString(": ")
+	var pattern = lexigram.GetPattern()
+	v.formatPattern(pattern)
+	var note = lexigram.GetNote()
+	if len(note) > 0 {
+		v.appendString("  ")
+		v.appendString(note)
+	}
+	v.appendNewline()
+	v.appendNewline()
+}
+
+func (v *formatter_) formatLine(line ast.LineLike) {
+	v.appendNewline()
+	var identifier = line.GetIdentifier()
+	v.formatIdentifier(identifier)
+	var note = line.GetNote()
+	if len(note) > 0 {
+		v.appendString("  ")
+		v.appendString(note)
+	}
+}
+
+func (v *formatter_) formatMaximum(maximum ast.MaximumLike) {
+	v.appendString("..")
+	var number = maximum.GetNumber()
+	if len(number) > 0 {
+		v.appendString(number)
+	}
+}
+
+func (v *formatter_) formatMinimum(minimum ast.MinimumLike) {
+	var number = minimum.GetNumber()
+	v.appendString(number)
+}
+
+func (v *formatter_) formatMultilined(multilined ast.MultilinedLike) {
+	var iterator = multilined.GetLines().GetIterator()
+	v.depth_++
+	for iterator.HasNext() {
+		var line = iterator.GetNext()
+		v.formatLine(line)
+	}
+	v.depth_--
+	v.appendNewline()
+}
+
+func (v *formatter_) formatPart(part ast.PartLike) {
+	var element = part.GetElement()
+	v.formatElement(element)
+	var cardinality = part.GetCardinality()
+	if cardinality != nil {
+		v.formatCardinality(cardinality)
+	}
+}
+
+func (v *formatter_) formatPattern(pattern ast.PatternLike) {
+	var partIterator = pattern.GetParts().GetIterator()
+	var part = partIterator.GetNext()
+	v.formatPart(part) // The first one is not prepended with a space.
+	for partIterator.HasNext() {
+		part = partIterator.GetNext()
+		v.appendString(" ")
+		v.formatPart(part)
+	}
+	var alternativeIterator = pattern.GetAlternatives().GetIterator()
+	for alternativeIterator.HasNext() {
+		var alternative = alternativeIterator.GetNext()
+		v.appendString(" ")
+		v.formatAlternative(alternative)
+	}
+}
+
+func (v *formatter_) formatPredicate(predicate ast.PredicateLike) {
+	switch actual := predicate.GetAny().(type) {
+	case string:
+		v.appendString(actual)
+	default:
+		panic("Attempted to format an empty predicate.")
+	}
+}
+
+func (v *formatter_) formatRule(rule ast.RuleLike) {
+	var comment = rule.GetComment()
+	if len(comment) > 0 {
+		v.appendString(comment)
+	}
+	var upper = rule.GetUppercase()
+	v.appendString(upper)
+	v.appendString(":")
+	var expression = rule.GetExpression()
+	v.formatExpression(expression)
+	v.appendNewline()
+	v.appendNewline()
 }
 
 func (v *formatter_) formatSyntax(syntax ast.SyntaxLike) {
@@ -268,89 +353,18 @@ func (v *formatter_) formatSyntax(syntax ast.SyntaxLike) {
 		v.formatHeader(header)
 	}
 
-	// Format the definitions.
-	var definitionIterator = syntax.GetDefinitions().GetIterator()
-	for definitionIterator.HasNext() {
-		var definition = definitionIterator.GetNext()
-		v.formatDefinition(definition)
+	// Format the rules.
+	var ruleIterator = syntax.GetRules().GetIterator()
+	for ruleIterator.HasNext() {
+		var rule = ruleIterator.GetNext()
+		v.formatRule(rule)
 	}
-}
 
-func (v *formatter_) formatHeader(header ast.HeaderLike) {
-	var comment = header.GetComment()
-	v.appendString(comment)
-	v.appendNewline()
-	v.appendNewline()
-}
-
-func (v *formatter_) formatInline(inline ast.InlineLike) {
-	var iterator = inline.GetAlternatives().GetIterator()
-	var alternative = iterator.GetNext()
-	v.formatAlternative(alternative)
-	for iterator.HasNext() {
-		v.appendString(" | ")
-		alternative = iterator.GetNext()
-		v.formatAlternative(alternative)
-	}
-	var note = inline.GetNote()
-	if len(note) > 0 {
-		v.appendString("  ")
-		v.appendString(note)
-	}
-}
-
-func (v *formatter_) formatLine(line ast.LineLike) {
-	v.appendNewline()
-	var alternative = line.GetAlternative()
-	v.formatAlternative(alternative)
-	var note = line.GetNote()
-	if len(note) > 0 {
-		v.appendString("  ")
-		v.appendString(note)
-	}
-}
-
-func (v *formatter_) formatMultiline(multiline ast.MultilineLike) {
-	v.depth_++
-	if v.depth_ == v.maximum_ {
-		// Truncate the recursion.
-		v.appendString("...")
-	} else {
-		var iterator = multiline.GetLines().GetIterator()
-		for iterator.HasNext() {
-			var line = iterator.GetNext()
-			v.formatLine(line)
-		}
-	}
-	v.depth_--
-}
-
-func (v *formatter_) formatPrecedence(precedence ast.PrecedenceLike) {
-	v.appendString("(")
-	var expression = precedence.GetExpression()
-	v.formatExpression(expression)
-	if expression.GetMultiline() != nil {
-		v.appendNewline()
-	}
-	v.appendString(")")
-}
-
-func (v *formatter_) formatPredicate(predicate ast.PredicateLike) {
-	var atom = predicate.GetAtom()
-	var element = predicate.GetElement()
-	var filter = predicate.GetFilter()
-	var precedence = predicate.GetPrecedence()
-	switch {
-	case atom != nil:
-		v.formatAtom(atom)
-	case element != nil:
-		v.formatElement(element)
-	case filter != nil:
-		v.formatFilter(filter)
-	case precedence != nil:
-		v.formatPrecedence(precedence)
-	default:
-		panic("Attempted to format an empty predicate.")
+	// Format the lexigrams.
+	var lexigramIterator = syntax.GetLexigrams().GetIterator()
+	for lexigramIterator.HasNext() {
+		var lexigram = lexigramIterator.GetNext()
+		v.formatLexigram(lexigram)
 	}
 }
 

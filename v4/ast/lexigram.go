@@ -18,35 +18,39 @@ import ()
 
 // Reference
 
-var glyphClass = &glyphClass_{
+var lexigramClass = &lexigramClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Glyph() GlyphClassLike {
-	return glyphClass
+func Lexigram() LexigramClassLike {
+	return lexigramClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type glyphClass_ struct {
+type lexigramClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *glyphClass_) MakeWithAttributes(
-	first string,
-	last string,
-) GlyphLike {
-	return &glyph_{
+func (c *lexigramClass_) MakeWithAttributes(
+	comment string,
+	lowercase string,
+	pattern PatternLike,
+	note string,
+) LexigramLike {
+	return &lexigram_{
 		// Initialize instance attributes.
-		class_: c,
-		first_: first,
-		last_:  last,
+		class_:     c,
+		comment_:   comment,
+		lowercase_: lowercase,
+		pattern_:   pattern,
+		note_:      note,
 	}
 }
 
@@ -54,25 +58,35 @@ func (c *glyphClass_) MakeWithAttributes(
 
 // Target
 
-type glyph_ struct {
+type lexigram_ struct {
 	// Define instance attributes.
-	class_ GlyphClassLike
-	first_ string
-	last_  string
+	class_     LexigramClassLike
+	comment_   string
+	lowercase_ string
+	pattern_   PatternLike
+	note_      string
 }
 
 // Attributes
 
-func (v *glyph_) GetClass() GlyphClassLike {
+func (v *lexigram_) GetClass() LexigramClassLike {
 	return v.class_
 }
 
-func (v *glyph_) GetFirst() string {
-	return v.first_
+func (v *lexigram_) GetComment() string {
+	return v.comment_
 }
 
-func (v *glyph_) GetLast() string {
-	return v.last_
+func (v *lexigram_) GetLowercase() string {
+	return v.lowercase_
+}
+
+func (v *lexigram_) GetPattern() PatternLike {
+	return v.pattern_
+}
+
+func (v *lexigram_) GetNote() string {
+	return v.note_
 }
 
 // Private

@@ -26,32 +26,38 @@ import (
 // Reference
 
 var scannerClass = &scannerClass_{
-	// Initialize class constants.
+	// Initialize the class constants.
 	tokens_: map[TokenType]string{
-		ErrorToken:     "error",
-		CharacterToken: "character",
-		CommentToken:   "comment",
-		DelimiterToken: "delimiter",
-		EOFToken:       "EOF",
-		EOLToken:       "EOL",
-		IntrinsicToken: "intrinsic",
-		LiteralToken:   "literal",
-		NameToken:      "name",
-		NoteToken:      "note",
-		NumberToken:    "number",
-		SpaceToken:     "space",
+		ErrorToken:      "error",
+		CommentToken:    "comment",
+		DelimiterToken:  "delimiter",
+		EOFToken:        "EOF",
+		EOLToken:        "EOL",
+		IntrinsicToken:  "intrinsic",
+		LiteralToken:    "literal",
+		LowercaseToken:  "lowercase",
+		NegationToken:   "negation",
+		NoteToken:       "note",
+		NumberToken:     "number",
+		QuantifiedToken: "quantified",
+		RuneToken:       "rune",
+		SpaceToken:      "space",
+		UppercaseToken:  "uppercase",
 	},
 	matchers_: map[TokenType]*reg.Regexp{
-		CharacterToken: reg.MustCompile(`^(?:` + character_ + `)`),
-		CommentToken:   reg.MustCompile(`^(?:` + comment_ + `)`),
-		DelimiterToken: reg.MustCompile(`^(?:` + delimiter_ + `)`),
-		EOLToken:       reg.MustCompile(`^(?:` + eol_ + `)`),
-		IntrinsicToken: reg.MustCompile(`^(?:` + intrinsic_ + `)`),
-		LiteralToken:   reg.MustCompile(`^(?:` + literal_ + `)`),
-		NameToken:      reg.MustCompile(`^(?:` + name_ + `)`),
-		NoteToken:      reg.MustCompile(`^(?:` + note_ + `)`),
-		NumberToken:    reg.MustCompile(`^(?:` + number_ + `)`),
-		SpaceToken:     reg.MustCompile(`^(?:` + space_ + `)`),
+		CommentToken:    reg.MustCompile(`^(?:` + comment_ + `)`),
+		DelimiterToken:  reg.MustCompile(`^(?:` + delimiter_ + `)`),
+		EOLToken:        reg.MustCompile(`^(?:` + eol_ + `)`),
+		IntrinsicToken:  reg.MustCompile(`^(?:` + intrinsic_ + `)`),
+		LiteralToken:    reg.MustCompile(`^(?:` + literal_ + `)`),
+		LowercaseToken:  reg.MustCompile(`^(?:` + lowercase_ + `)`),
+		NegationToken:   reg.MustCompile(`^(?:` + negation_ + `)`),
+		NoteToken:       reg.MustCompile(`^(?:` + note_ + `)`),
+		NumberToken:     reg.MustCompile(`^(?:` + number_ + `)`),
+		QuantifiedToken: reg.MustCompile(`^(?:` + quantified_ + `)`),
+		RuneToken:       reg.MustCompile(`^(?:` + rune_ + `)`),
+		SpaceToken:      reg.MustCompile(`^(?:` + space_ + `)`),
+		UppercaseToken:  reg.MustCompile(`^(?:` + uppercase_ + `)`),
 	},
 }
 
@@ -66,7 +72,7 @@ func Scanner() ScannerClassLike {
 // Target
 
 type scannerClass_ struct {
-	// Define class constants.
+	// Define the class constants.
 	tokens_   map[TokenType]string
 	matchers_ map[TokenType]*reg.Regexp
 }
@@ -78,7 +84,7 @@ func (c *scannerClass_) Make(
 	tokens col.QueueLike[TokenLike],
 ) ScannerLike {
 	var scanner = &scanner_{
-		// Initialize instance attributes.
+		// Initialize the instance attributes.
 		class_:    c,
 		line_:     1,
 		position_: 1,
@@ -90,6 +96,10 @@ func (c *scannerClass_) Make(
 }
 
 // Functions
+
+func (c *scannerClass_) AsString(type_ TokenType) string {
+	return c.tokens_[type_]
+}
 
 func (c *scannerClass_) FormatToken(token TokenLike) string {
 	var value = token.GetValue()
@@ -121,7 +131,7 @@ func (c *scannerClass_) MatchToken(
 // Target
 
 type scanner_ struct {
-	// Define instance attributes.
+	// Define the instance attributes.
 	class_    ScannerClassLike
 	first_    int // A zero based index of the first possible rune in the next token.
 	next_     int // A zero based index of the next possible rune in the next token.
@@ -180,6 +190,8 @@ func (v *scanner_) foundToken(type_ TokenType) bool {
 		var match = matches.GetValue(1)
 		var token = []rune(match)
 		var length = len(token)
+
+		// Check for false intrinsic match.
 		var nextIndex = v.next_ + length
 		if nextIndex < len(v.runes_) {
 			var nextRune = v.runes_[v.next_+length]
@@ -189,6 +201,8 @@ func (v *scanner_) foundToken(type_ TokenType) bool {
 				return false
 			}
 		}
+
+		// Found the requested token type.
 		v.next_ += length
 		if type_ != SpaceToken {
 			v.emitToken(type_)
@@ -203,6 +217,8 @@ func (v *scanner_) foundToken(type_ TokenType) bool {
 		v.first_ = v.next_
 		return true
 	}
+
+	// The next token is not the requested token type.
 	return false
 }
 
@@ -220,16 +236,19 @@ func (v *scanner_) scanTokens() {
 loop:
 	for v.next_ < len(v.runes_) {
 		switch {
-		case v.foundToken(CharacterToken):
 		case v.foundToken(CommentToken):
 		case v.foundToken(DelimiterToken):
 		case v.foundToken(EOLToken):
 		case v.foundToken(IntrinsicToken):
 		case v.foundToken(LiteralToken):
-		case v.foundToken(NameToken):
+		case v.foundToken(LowercaseToken):
+		case v.foundToken(NegationToken):
 		case v.foundToken(NoteToken):
 		case v.foundToken(NumberToken):
+		case v.foundToken(QuantifiedToken):
+		case v.foundToken(RuneToken):
 		case v.foundToken(SpaceToken):
+		case v.foundToken(UppercaseToken):
 		default:
 			v.foundError()
 			break loop
@@ -247,24 +266,27 @@ way.  We append an underscore to each name to lessen the chance of a name
 collision with other private Go class constants in this package.
 */
 const (
-	any_       = `.|` + eol_
-	base16_    = `[0-9a-f]`
-	character_ = `['][^` + control_ + `][']`
-	comment_   = `!>` + eol_ + `((?:` + any_ + `)*?)` + eol_ + `<!`
-	control_   = `\p{Cc}`
-	delimiter_ = `[~?*+:|()[\]{}]|\.\.`
-	digit_     = `\p{Nd}`
-	eof_       = `\z`
-	eol_       = `\n`
-	escape_    = `\\(?:(?:` + unicode_ + `)|[abfnrtv'"\\])`
-	intrinsic_ = `ANY|LOWER|UPPER|DIGIT|ESCAPE|CONTROL|EOL|EOF`
-	letter_    = lower_ + `|` + upper_
-	literal_   = `["](?:` + escape_ + `|[^"` + control_ + `])+?["]`
-	lower_     = `\p{Ll}`
-	name_      = `(?:` + letter_ + `)(?:` + letter_ + `|` + digit_ + `)*`
-	note_      = `! [^` + control_ + `]*`
-	number_    = `(?:` + digit_ + `)+`
-	space_     = `[ \t]+`
-	unicode_   = `x` + base16_ + `{2}|u` + base16_ + `{4}|U` + base16_ + `{8}`
-	upper_     = `\p{Lu}`
+	any_        = `.|` + eol_
+	base16_     = `[0-9a-f]`
+	comment_    = `!>` + eol_ + `((?:` + any_ + `)*?)` + eol_ + `<!` + eol_
+	control_    = `\p{Cc}`
+	delimiter_  = `[:|()[\]{}]|\.\.`
+	digit_      = `\p{Nd}`
+	eof_        = `\z`
+	eol_        = `\n`
+	escape_     = `\\(?:(?:` + unicode_ + `)|[abfnrtv'"\\])`
+	intrinsic_  = `ANY|LOWER|UPPER|DIGIT|ESCAPE|CONTROL|EOL|EOF`
+	letter_     = lower_ + `|` + upper_
+	literal_    = `["](?:` + escape_ + `|[^"` + control_ + `])+?["]`
+	lower_      = `\p{Ll}`
+	lowercase_  = `(?:` + lower_ + `)(?:` + letter_ + `|` + digit_ + `)*`
+	negation_   = `[~]`
+	note_       = `! [^` + control_ + `]*`
+	number_     = `(?:` + digit_ + `)+`
+	quantified_ = `[?*+]`
+	rune_       = `['][^` + control_ + `][']`
+	space_      = `[ \t]+`
+	unicode_    = `x` + base16_ + `{2}|u` + base16_ + `{4}|U` + base16_ + `{8}`
+	upper_      = `\p{Lu}`
+	uppercase_  = `(?:` + upper_ + `)(?:` + letter_ + `|` + digit_ + `)*`
 )

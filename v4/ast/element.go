@@ -38,19 +38,51 @@ type elementClass_ struct {
 
 // Constructors
 
-func (c *elementClass_) MakeWithLiteral(literal string) ElementLike {
-	return &element_{
-		// Initialize instance attributes.
-		class_:   c,
-		literal_: literal,
-	}
-}
-
-func (c *elementClass_) MakeWithName(name string) ElementLike {
+func (c *elementClass_) MakeWithGrouped(grouped GroupedLike) ElementLike {
 	return &element_{
 		// Initialize instance attributes.
 		class_: c,
-		name_:  name,
+		any_:   grouped,
+	}
+}
+
+func (c *elementClass_) MakeWithFiltered(filtered FilteredLike) ElementLike {
+	return &element_{
+		// Initialize instance attributes.
+		class_: c,
+		any_:   filtered,
+	}
+}
+
+func (c *elementClass_) MakeWithBounded(bounded BoundedLike) ElementLike {
+	return &element_{
+		// Initialize instance attributes.
+		class_: c,
+		any_:   bounded,
+	}
+}
+
+func (c *elementClass_) MakeWithIntrinsic(intrinsic string) ElementLike {
+	return &element_{
+		// Initialize instance attributes.
+		class_: c,
+		any_:   intrinsic,
+	}
+}
+
+func (c *elementClass_) MakeWithLowercase(lowercase string) ElementLike {
+	return &element_{
+		// Initialize instance attributes.
+		class_: c,
+		any_:   lowercase,
+	}
+}
+
+func (c *elementClass_) MakeWithLiteral(literal string) ElementLike {
+	return &element_{
+		// Initialize instance attributes.
+		class_: c,
+		any_:   literal,
 	}
 }
 
@@ -60,9 +92,8 @@ func (c *elementClass_) MakeWithName(name string) ElementLike {
 
 type element_ struct {
 	// Define instance attributes.
-	class_   ElementClassLike
-	literal_ string
-	name_    string
+	class_ ElementClassLike
+	any_   any
 }
 
 // Attributes
@@ -71,12 +102,8 @@ func (v *element_) GetClass() ElementClassLike {
 	return v.class_
 }
 
-func (v *element_) GetLiteral() string {
-	return v.literal_
-}
-
-func (v *element_) GetName() string {
-	return v.name_
+func (v *element_) GetAny() any {
+	return v.any_
 }
 
 // Private

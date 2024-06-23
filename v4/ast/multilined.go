@@ -12,41 +12,39 @@
 
 package ast
 
-import ()
+import (
+	col "github.com/craterdog/go-collection-framework/v4/collection"
+)
 
 // CLASS ACCESS
 
 // Reference
 
-var lineClass = &lineClass_{
+var multilinedClass = &multilinedClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Line() LineClassLike {
-	return lineClass
+func Multilined() MultilinedClassLike {
+	return multilinedClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type lineClass_ struct {
+type multilinedClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(
-	identifier IdentifierLike,
-	note string,
-) LineLike {
-	return &line_{
+func (c *multilinedClass_) MakeWithLines(lines col.ListLike[LineLike]) MultilinedLike {
+	return &multilined_{
 		// Initialize instance attributes.
-		class_:      c,
-		identifier_: identifier,
-		note_:       note,
+		class_: c,
+		lines_: lines,
 	}
 }
 
@@ -54,25 +52,20 @@ func (c *lineClass_) MakeWithAttributes(
 
 // Target
 
-type line_ struct {
+type multilined_ struct {
 	// Define instance attributes.
-	class_      LineClassLike
-	identifier_ IdentifierLike
-	note_       string
+	class_ MultilinedClassLike
+	lines_ col.ListLike[LineLike]
 }
 
 // Attributes
 
-func (v *line_) GetClass() LineClassLike {
+func (v *multilined_) GetClass() MultilinedClassLike {
 	return v.class_
 }
 
-func (v *line_) GetIdentifier() IdentifierLike {
-	return v.identifier_
-}
-
-func (v *line_) GetNote() string {
-	return v.note_
+func (v *multilined_) GetLines() col.ListLike[LineLike] {
+	return v.lines_
 }
 
 // Private

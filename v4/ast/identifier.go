@@ -18,39 +18,39 @@ import ()
 
 // Reference
 
-var atomClass = &atomClass_{
+var identifierClass = &identifierClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Atom() AtomClassLike {
-	return atomClass
+func Identifier() IdentifierClassLike {
+	return identifierClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type atomClass_ struct {
+type identifierClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *atomClass_) MakeWithGlyph(glyph GlyphLike) AtomLike {
-	return &atom_{
+func (c *identifierClass_) MakeWithLowercase(lowercase string) IdentifierLike {
+	return &identifier_{
 		// Initialize instance attributes.
 		class_: c,
-		glyph_: glyph,
+		any_:   lowercase,
 	}
 }
 
-func (c *atomClass_) MakeWithIntrinsic(intrinsic string) AtomLike {
-	return &atom_{
+func (c *identifierClass_) MakeWithUppercase(uppercase string) IdentifierLike {
+	return &identifier_{
 		// Initialize instance attributes.
-		class_:     c,
-		intrinsic_: intrinsic,
+		class_: c,
+		any_:   uppercase,
 	}
 }
 
@@ -58,25 +58,20 @@ func (c *atomClass_) MakeWithIntrinsic(intrinsic string) AtomLike {
 
 // Target
 
-type atom_ struct {
+type identifier_ struct {
 	// Define instance attributes.
-	class_     AtomClassLike
-	glyph_     GlyphLike
-	intrinsic_ string
+	class_ IdentifierClassLike
+	any_   any
 }
 
 // Attributes
 
-func (v *atom_) GetClass() AtomClassLike {
+func (v *identifier_) GetClass() IdentifierClassLike {
 	return v.class_
 }
 
-func (v *atom_) GetGlyph() GlyphLike {
-	return v.glyph_
-}
-
-func (v *atom_) GetIntrinsic() string {
-	return v.intrinsic_
+func (v *identifier_) GetAny() any {
+	return v.any_
 }
 
 // Private

@@ -12,41 +12,43 @@
 
 package ast
 
-import ()
+import (
+	col "github.com/craterdog/go-collection-framework/v4/collection"
+)
 
 // CLASS ACCESS
 
 // Reference
 
-var constraintClass = &constraintClass_{
+var filteredClass = &filteredClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Constraint() ConstraintClassLike {
-	return constraintClass
+func Filtered() FilteredClassLike {
+	return filteredClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type constraintClass_ struct {
+type filteredClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *constraintClass_) MakeWithAttributes(
-	first string,
-	last string,
-) ConstraintLike {
-	return &constraint_{
+func (c *filteredClass_) MakeWithAttributes(
+	negation string,
+	characters col.ListLike[CharacterLike],
+) FilteredLike {
+	return &filtered_{
 		// Initialize instance attributes.
-		class_: c,
-		first_: first,
-		last_:  last,
+		class_:      c,
+		negation_:   negation,
+		characters_: characters,
 	}
 }
 
@@ -54,25 +56,25 @@ func (c *constraintClass_) MakeWithAttributes(
 
 // Target
 
-type constraint_ struct {
+type filtered_ struct {
 	// Define instance attributes.
-	class_ ConstraintClassLike
-	first_ string
-	last_  string
+	class_      FilteredClassLike
+	negation_   string
+	characters_ col.ListLike[CharacterLike]
 }
 
 // Attributes
 
-func (v *constraint_) GetClass() ConstraintClassLike {
+func (v *filtered_) GetClass() FilteredClassLike {
 	return v.class_
 }
 
-func (v *constraint_) GetFirst() string {
-	return v.first_
+func (v *filtered_) GetNegation() string {
+	return v.negation_
 }
 
-func (v *constraint_) GetLast() string {
-	return v.last_
+func (v *filtered_) GetCharacters() col.ListLike[CharacterLike] {
+	return v.characters_
 }
 
 // Private

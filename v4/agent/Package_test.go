@@ -84,8 +84,8 @@ const modelFormatter = `/*
 package agent
 
 import (
-	sts "strings"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	sts "strings"
 )
 
 // CLASS ACCESS
@@ -93,6 +93,7 @@ import (
 // Reference
 
 var formatterClass = &formatterClass_{
+	// Initialize the class constants.
 	defaultMaximum_: 8,
 }
 
@@ -107,6 +108,7 @@ func Formatter() FormatterClassLike {
 // Target
 
 type formatterClass_ struct {
+	// Define the class constants.
 	defaultMaximum_ uint
 }
 
@@ -120,6 +122,8 @@ func (c *formatterClass_) DefaultMaximum() uint {
 
 func (c *formatterClass_) Make() FormatterLike {
 	return &formatter_{
+		// Initialize the instance attributes.
+		class_:   c,
 		maximum_: c.defaultMaximum_,
 	}
 }
@@ -129,6 +133,7 @@ func (c *formatterClass_) MakeWithMaximum(maximum uint) FormatterLike {
 		maximum = c.defaultMaximum_
 	}
 	return &formatter_{
+		// Initialize the instance attributes.
 		class_:   c,
 		maximum_: maximum,
 	}
@@ -139,6 +144,7 @@ func (c *formatterClass_) MakeWithMaximum(maximum uint) FormatterLike {
 // Target
 
 type formatter_ struct {
+	// Define the instance attributes.
 	class_   FormatterClassLike
 	depth_   uint
 	maximum_ uint
@@ -161,28 +167,28 @@ func (v *formatter_) GetMaximum() uint {
 
 // Public
 
-func (v *formatter_) FormatComponent(component ast.ComponentLike) string {
-	v.formatComponent(component)
+func (v *formatter_) FormatDocument(document ast.DocumentLike) string {
+	v.formatDocument(document)
 	return v.getResult()
 }
 
 // Private
 
 func (v *formatter_) appendNewline() {
-	var separator = "\n"
+	var newline = "\n"
 	var indentation = "\t"
 	var level uint
 	for ; level < v.depth_; level++ {
-		separator += indentation
+		newline += indentation
 	}
-	v.appendString(separator)
+	v.appendString(newline)
 }
 
 func (v *formatter_) appendString(s string) {
 	v.result_.WriteString(s)
 }
 
-func (v *formatter_) formatComponent(component ast.ComponentLike) {
+func (v *formatter_) formatDocument(document ast.DocumentLike) {
 	// TBA - Add real method implementation.
 	v.depth_++
 	v.appendString("test")
@@ -224,6 +230,7 @@ import (
 // Reference
 
 var parserClass = &parserClass_{
+	// Initialize the class constants.
 	queueSize_: 16,
 	stackSize_: 4,
 }
@@ -239,6 +246,7 @@ func Parser() ParserClassLike {
 // Target
 
 type parserClass_ struct {
+	// Define the class constants.
 	queueSize_ uint
 	stackSize_ uint
 }
@@ -247,6 +255,7 @@ type parserClass_ struct {
 
 func (c *parserClass_) Make() ParserLike {
 	return &parser_{
+		// Initialize the instance attributes.
 		class_: c,
 	}
 }
@@ -256,6 +265,7 @@ func (c *parserClass_) Make() ParserLike {
 // Target
 
 type parser_ struct {
+	// Define the instance attributes.
 	class_  ParserClassLike
 	source_ string                   // The original source code.
 	tokens_ col.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
@@ -270,7 +280,7 @@ func (v *parser_) GetClass() ParserClassLike {
 
 // Public
 
-func (v *parser_) ParseSource(source string) ast.ComponentLike {
+func (v *parser_) ParseSource(source string) ast.DocumentLike {
 	v.source_ = source
 	var notation = cdc.Notation().Make()
 	v.tokens_ = col.Queue[TokenLike](notation).MakeWithCapacity(parserClass.queueSize_)
@@ -279,13 +289,12 @@ func (v *parser_) ParseSource(source string) ast.ComponentLike {
 	// The scanner runs in a separate Go routine.
 	Scanner().Make(v.source_, v.tokens_)
 
-	// Attempt to parse the component.
-	var component, token, ok = v.parseComponent()
+	// Attempt to parse the document.
+	var document, token, ok = v.parseDocument()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("Component",
-			"AST",
-			"Component",
+		message += v.generateSyntax("Document",
+			"Document",
 		)
 		panic(message)
 	}
@@ -300,14 +309,13 @@ func (v *parser_) ParseSource(source string) ast.ComponentLike {
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("EOF",
-			"AST",
-			"Component",
+			"Document",
 		)
 		panic(message)
 	}
 
-	// Found the component.
-	return component
+	// Found the document.
+	return document
 }
 
 // Private
@@ -379,13 +387,13 @@ func (v *parser_) getNextToken() TokenLike {
 	return token
 }
 
-func (v *parser_) parseComponent() (
-	component ast.ComponentLike,
+func (v *parser_) parseDocument() (
+	document ast.DocumentLike,
 	token TokenLike,
 	ok bool,
 ) {
 	// TBA - Add real method implementation.
-	return component, token, ok
+	return document, token, ok
 }
 
 func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
@@ -414,7 +422,7 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var syntax = map[string]string{
-	"AST": "Component EOL* EOF  ! Terminated with an end-of-file marker.",
+	"Document": "uppercase+ EOL* EOF  ! Terminated with an end-of-file marker.",
 }
 `
 
@@ -429,7 +437,6 @@ const modelScanner = `/*
 .  Initiative. (See https://opensource.org/license/MIT)                        .
 ................................................................................
 */
-
 package agent
 
 import (
@@ -438,6 +445,7 @@ import (
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	reg "regexp"
 	sts "strings"
+	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -445,15 +453,17 @@ import (
 // Reference
 
 var scannerClass = &scannerClass_{
+	// Initialize the class constants.
 	tokens_: map[TokenType]string{
+		// TBA - Add additional token types.
 		ErrorToken:     "error",
 		DelimiterToken: "delimiter",
 		EOFToken:       "EOF",
 		EOLToken:       "EOL",
 		SpaceToken:     "space",
-		// TBA - Add additional token types.
 	},
 	matchers_: map[TokenType]*reg.Regexp{
+		// TBA - Add additional token types.
 		DelimiterToken: reg.MustCompile("^(?:" + delimiter_ + ")"),
 		EOLToken:       reg.MustCompile("^(?:" + eol_ + ")"),
 		SpaceToken:     reg.MustCompile("^(?:" + space_ + ")"),
@@ -471,6 +481,7 @@ func Scanner() ScannerClassLike {
 // Target
 
 type scannerClass_ struct {
+	// Define the class constants.
 	tokens_   map[TokenType]string
 	matchers_ map[TokenType]*reg.Regexp
 }
@@ -482,6 +493,7 @@ func (c *scannerClass_) Make(
 	tokens col.QueueLike[TokenLike],
 ) ScannerLike {
 	var scanner = &scanner_{
+		// Initialize the instance attributes.
 		class_:    c,
 		line_:     1,
 		position_: 1,
@@ -493,6 +505,10 @@ func (c *scannerClass_) Make(
 }
 
 // Functions
+
+func (c *scannerClass_) AsString(type_ TokenType) string {
+	return c.tokens_[type_]
+}
 
 func (c *scannerClass_) FormatToken(token TokenLike) string {
 	var value = token.GetValue()
@@ -524,6 +540,7 @@ func (c *scannerClass_) MatchToken(
 // Target
 
 type scanner_ struct {
+	// Define the instance attributes.
 	class_    ScannerClassLike
 	first_    int // A zero based index of the first possible rune in the next token.
 	next_     int // A zero based index of the next possible rune in the next token.
@@ -582,6 +599,19 @@ func (v *scanner_) foundToken(type_ TokenType) bool {
 		var match = matches.GetValue(1)
 		var token = []rune(match)
 		var length = len(token)
+
+		// Check for false intrinsic match.
+		var nextIndex = v.next_ + length
+		if nextIndex < len(v.runes_) {
+			var nextRune = v.runes_[v.next_+length]
+			if type_ == IntrinsicToken && (uni.IsLetter(nextRune) ||
+				uni.IsDigit(nextRune) || nextRune == rune('_')) {
+				// This is not an intrinsic token.
+				return false
+			}
+		}
+
+		// Found the requested token type.
 		v.next_ += length
 		if type_ != SpaceToken {
 			v.emitToken(type_)
@@ -596,6 +626,8 @@ func (v *scanner_) foundToken(type_ TokenType) bool {
 		v.first_ = v.next_
 		return true
 	}
+
+	// The next token is not the requested token type.
 	return false
 }
 
@@ -634,19 +666,23 @@ way.  We append an underscore to each name to lessen the chance of a name
 collision with other private Go class constants in this package.
 */
 const (
+	// TBA - Add additional token types.
 	any_       = ` + "`" + `.|` + "`" + ` + eol_
 	base16_    = ` + "`" + `[0-9a-f]` + "`" + `
 	control_   = ` + "`" + `\p{Cc}` + "`" + `
-	delimiter_ = ` + "`" + `[:;,\.=]` + "`" + `
+	delimiter_ = ` + "`" + `[:;,\.=]` + "`" + ` // TBA - Replace with the actual delimeters.
 	digit_     = ` + "`" + `\p{Nd}` + "`" + `
 	eof_       = ` + "`" + `\z` + "`" + `
 	eol_       = ` + "`" + `\n` + "`" + `
 	escape_    = ` + "`" + `\\(?:(?:` + "`" + ` + unicode_ + ` + "`" + `)|[abfnrtv'"\\])` + "`" + `
+	letter_    = lower_ + ` + "`" + `|` + "`" + ` + upper_
 	lower_     = ` + "`" + `\p{Ll}` + "`" + `
+	number_    = ` + "`" + `(?:` + "`" + ` + digit_ + ` + "`" + `)+` + "`" + `
+	rune_      = ` + "`" + `['][^` + "`" + ` + control_ + ` + "`" + `][']` + "`" + `
 	space_     = ` + "`" + `[ \t]+` + "`" + `
+	string_    = ` + "`" + `["](?:` + "`" + ` + escape_ + ` + "`" + `|[^"` + "`" + ` + control_ + ` + "`" + `])+?["]` + "`" + `
 	unicode_   = ` + "`" + `x` + "`" + ` + base16_ + ` + "`" + `{2}|u` + "`" + ` + base16_ + ` + "`" + `{4}|U` + "`" + ` + base16_ + ` + "`" + `{8}` + "`" + `
 	upper_     = ` + "`" + `\p{Lu}` + "`" + `
-	// TBA - Add additional regular expression definitions.
 )
 `
 
@@ -669,7 +705,7 @@ package agent
 // Reference
 
 var tokenClass = &tokenClass_{
-	// Initialize class constants.
+	// Initialize the class constants.
 }
 
 // Function
@@ -683,7 +719,7 @@ func Token() TokenClassLike {
 // Target
 
 type tokenClass_ struct {
-	// Define class constants.
+	// Define the class constants.
 }
 
 // Constructors
@@ -695,6 +731,7 @@ func (c *tokenClass_) MakeWithAttributes(
 	value string,
 ) TokenLike {
 	return &token_{
+		// Initialize the instance attributes.
 		class_:    c,
 		line_:     line,
 		position_: position,
@@ -708,6 +745,7 @@ func (c *tokenClass_) MakeWithAttributes(
 // Target
 
 type token_ struct {
+	// Define the instance attributes.
 	class_    TokenClassLike
 	line_     int
 	position_ int
@@ -753,6 +791,9 @@ const modelValidator = `/*
 package agent
 
 import (
+	fmt "fmt"
+	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	col "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 )
 
@@ -761,7 +802,7 @@ import (
 // Reference
 
 var validatorClass = &validatorClass_{
-	// This class does not initialize any private class constants.
+	// Initialize the class constants.
 }
 
 // Function
@@ -775,14 +816,15 @@ func Validator() ValidatorClassLike {
 // Target
 
 type validatorClass_ struct {
-	// This class does not define any private class constants.
+	// Define the class constants.
 }
 
 // Constructors
 
 func (c *validatorClass_) Make() ValidatorLike {
 	return &validator_{
-		// TBA - Initialize private instance attributes.
+		// Initialize the instance attributes.
+		class_: c,
 	}
 }
 
@@ -791,6 +833,7 @@ func (c *validatorClass_) Make() ValidatorLike {
 // Target
 
 type validator_ struct {
+	// Define the instance attributes.
 	class_    ValidatorClassLike
 }
 
@@ -802,9 +845,23 @@ func (v *validator_) GetClass() ValidatorClassLike {
 
 // Public
 
-func (v *validator_) ValidateComponent(component ast.ComponentLike) {
+func (v *validator_) ValidateDocument(document ast.DocumentLike) {
 	// TBA - Add method implementation.
 }
 
 // Private
+
+func (v *validator_) formatError(name, message string) string {
+	message = fmt.Sprintf(
+		"The definition for %v is invalid:\n%v\n",
+		name,
+		message,
+	)
+	return message
+}
+
+func (v *validator_) matchesToken(type_ TokenType, value string) bool {
+	var matches = Scanner().MatchToken(type_, value)
+	return !matches.IsEmpty()
+}
 `

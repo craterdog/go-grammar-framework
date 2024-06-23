@@ -18,35 +18,39 @@ import ()
 
 // Reference
 
-var lineClass = &lineClass_{
+var characterClass = &characterClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Line() LineClassLike {
-	return lineClass
+func Character() CharacterClassLike {
+	return characterClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type lineClass_ struct {
+type characterClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(
-	identifier IdentifierLike,
-	note string,
-) LineLike {
-	return &line_{
+func (c *characterClass_) MakeWithBounded(bounded BoundedLike) CharacterLike {
+	return &character_{
 		// Initialize instance attributes.
-		class_:      c,
-		identifier_: identifier,
-		note_:       note,
+		class_: c,
+		any_:   bounded,
+	}
+}
+
+func (c *characterClass_) MakeWithIntrinsic(intrinsic string) CharacterLike {
+	return &character_{
+		// Initialize instance attributes.
+		class_: c,
+		any_:   intrinsic,
 	}
 }
 
@@ -54,25 +58,20 @@ func (c *lineClass_) MakeWithAttributes(
 
 // Target
 
-type line_ struct {
+type character_ struct {
 	// Define instance attributes.
-	class_      LineClassLike
-	identifier_ IdentifierLike
-	note_       string
+	class_ CharacterClassLike
+	any_   any
 }
 
 // Attributes
 
-func (v *line_) GetClass() LineClassLike {
+func (v *character_) GetClass() CharacterClassLike {
 	return v.class_
 }
 
-func (v *line_) GetIdentifier() IdentifierLike {
-	return v.identifier_
-}
-
-func (v *line_) GetNote() string {
-	return v.note_
+func (v *character_) GetAny() any {
+	return v.any_
 }
 
 // Private

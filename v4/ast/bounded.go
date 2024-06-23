@@ -18,37 +18,35 @@ import ()
 
 // Reference
 
-var definitionClass = &definitionClass_{
+var boundedClass = &boundedClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Definition() DefinitionClassLike {
-	return definitionClass
+func Bounded() BoundedClassLike {
+	return boundedClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type definitionClass_ struct {
+type boundedClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *definitionClass_) MakeWithAttributes(
-	comment string,
-	name string,
-	expression ExpressionLike,
-) DefinitionLike {
-	return &definition_{
+func (c *boundedClass_) MakeWithAttributes(
+	initial InitialLike,
+	extent ExtentLike,
+) BoundedLike {
+	return &bounded_{
 		// Initialize instance attributes.
-		class_:      c,
-		comment_:    comment,
-		name_:       name,
-		expression_: expression,
+		class_:   c,
+		initial_: initial,
+		extent_:  extent,
 	}
 }
 
@@ -56,30 +54,25 @@ func (c *definitionClass_) MakeWithAttributes(
 
 // Target
 
-type definition_ struct {
+type bounded_ struct {
 	// Define instance attributes.
-	class_      DefinitionClassLike
-	comment_    string
-	name_       string
-	expression_ ExpressionLike
+	class_   BoundedClassLike
+	initial_ InitialLike
+	extent_  ExtentLike
 }
 
 // Attributes
 
-func (v *definition_) GetClass() DefinitionClassLike {
+func (v *bounded_) GetClass() BoundedClassLike {
 	return v.class_
 }
 
-func (v *definition_) GetComment() string {
-	return v.comment_
+func (v *bounded_) GetInitial() InitialLike {
+	return v.initial_
 }
 
-func (v *definition_) GetName() string {
-	return v.name_
-}
-
-func (v *definition_) GetExpression() ExpressionLike {
-	return v.expression_
+func (v *bounded_) GetExtent() ExtentLike {
+	return v.extent_
 }
 
 // Private

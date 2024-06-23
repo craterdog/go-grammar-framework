@@ -18,35 +18,37 @@ import ()
 
 // Reference
 
-var lineClass = &lineClass_{
+var ruleClass = &ruleClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Line() LineClassLike {
-	return lineClass
+func Rule() RuleClassLike {
+	return ruleClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type lineClass_ struct {
+type ruleClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(
-	identifier IdentifierLike,
-	note string,
-) LineLike {
-	return &line_{
+func (c *ruleClass_) MakeWithAttributes(
+	comment string,
+	uppercase string,
+	expression ExpressionLike,
+) RuleLike {
+	return &rule_{
 		// Initialize instance attributes.
 		class_:      c,
-		identifier_: identifier,
-		note_:       note,
+		comment_:    comment,
+		uppercase_:  uppercase,
+		expression_: expression,
 	}
 }
 
@@ -54,25 +56,30 @@ func (c *lineClass_) MakeWithAttributes(
 
 // Target
 
-type line_ struct {
+type rule_ struct {
 	// Define instance attributes.
-	class_      LineClassLike
-	identifier_ IdentifierLike
-	note_       string
+	class_      RuleClassLike
+	comment_    string
+	uppercase_  string
+	expression_ ExpressionLike
 }
 
 // Attributes
 
-func (v *line_) GetClass() LineClassLike {
+func (v *rule_) GetClass() RuleClassLike {
 	return v.class_
 }
 
-func (v *line_) GetIdentifier() IdentifierLike {
-	return v.identifier_
+func (v *rule_) GetComment() string {
+	return v.comment_
 }
 
-func (v *line_) GetNote() string {
-	return v.note_
+func (v *rule_) GetUppercase() string {
+	return v.uppercase_
+}
+
+func (v *rule_) GetExpression() ExpressionLike {
+	return v.expression_
 }
 
 // Private

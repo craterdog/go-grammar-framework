@@ -18,35 +18,35 @@ import ()
 
 // Reference
 
-var lineClass = &lineClass_{
+var constrainedClass = &constrainedClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Line() LineClassLike {
-	return lineClass
+func Constrained() ConstrainedClassLike {
+	return constrainedClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type lineClass_ struct {
+type constrainedClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(
-	identifier IdentifierLike,
-	note string,
-) LineLike {
-	return &line_{
+func (c *constrainedClass_) MakeWithAttributes(
+	minimum MinimumLike,
+	maximum MaximumLike,
+) ConstrainedLike {
+	return &constrained_{
 		// Initialize instance attributes.
-		class_:      c,
-		identifier_: identifier,
-		note_:       note,
+		class_:   c,
+		minimum_: minimum,
+		maximum_: maximum,
 	}
 }
 
@@ -54,25 +54,25 @@ func (c *lineClass_) MakeWithAttributes(
 
 // Target
 
-type line_ struct {
+type constrained_ struct {
 	// Define instance attributes.
-	class_      LineClassLike
-	identifier_ IdentifierLike
-	note_       string
+	class_   ConstrainedClassLike
+	minimum_ MinimumLike
+	maximum_ MaximumLike
 }
 
 // Attributes
 
-func (v *line_) GetClass() LineClassLike {
+func (v *constrained_) GetClass() ConstrainedClassLike {
 	return v.class_
 }
 
-func (v *line_) GetIdentifier() IdentifierLike {
-	return v.identifier_
+func (v *constrained_) GetMinimum() MinimumLike {
+	return v.minimum_
 }
 
-func (v *line_) GetNote() string {
-	return v.note_
+func (v *constrained_) GetMaximum() MaximumLike {
+	return v.maximum_
 }
 
 // Private

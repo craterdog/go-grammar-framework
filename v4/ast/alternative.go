@@ -40,11 +40,11 @@ type alternativeClass_ struct {
 
 // Constructors
 
-func (c *alternativeClass_) MakeWithFactors(factors col.ListLike[FactorLike]) AlternativeLike {
+func (c *alternativeClass_) MakeWithParts(parts col.ListLike[PartLike]) AlternativeLike {
 	return &alternative_{
 		// Initialize instance attributes.
-		class_:   c,
-		factors_: factors,
+		class_: c,
+		parts_: parts,
 	}
 }
 
@@ -54,8 +54,8 @@ func (c *alternativeClass_) MakeWithFactors(factors col.ListLike[FactorLike]) Al
 
 type alternative_ struct {
 	// Define instance attributes.
-	class_   AlternativeClassLike
-	factors_ col.ListLike[FactorLike]
+	class_ AlternativeClassLike
+	parts_ col.ListLike[PartLike]
 }
 
 // Attributes
@@ -64,8 +64,8 @@ func (v *alternative_) GetClass() AlternativeClassLike {
 	return v.class_
 }
 
-func (v *alternative_) GetFactors() col.ListLike[FactorLike] {
-	return v.factors_
+func (v *alternative_) GetParts() col.ListLike[PartLike] {
+	return v.parts_
 }
 
 // Private

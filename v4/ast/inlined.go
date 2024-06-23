@@ -12,41 +12,43 @@
 
 package ast
 
-import ()
+import (
+	col "github.com/craterdog/go-collection-framework/v4/collection"
+)
 
 // CLASS ACCESS
 
 // Reference
 
-var lineClass = &lineClass_{
+var inlinedClass = &inlinedClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Line() LineClassLike {
-	return lineClass
+func Inlined() InlinedClassLike {
+	return inlinedClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type lineClass_ struct {
+type inlinedClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(
-	identifier IdentifierLike,
+func (c *inlinedClass_) MakeWithAttributes(
+	factors col.ListLike[FactorLike],
 	note string,
-) LineLike {
-	return &line_{
+) InlinedLike {
+	return &inlined_{
 		// Initialize instance attributes.
-		class_:      c,
-		identifier_: identifier,
-		note_:       note,
+		class_:   c,
+		factors_: factors,
+		note_:    note,
 	}
 }
 
@@ -54,24 +56,24 @@ func (c *lineClass_) MakeWithAttributes(
 
 // Target
 
-type line_ struct {
+type inlined_ struct {
 	// Define instance attributes.
-	class_      LineClassLike
-	identifier_ IdentifierLike
-	note_       string
+	class_   InlinedClassLike
+	factors_ col.ListLike[FactorLike]
+	note_    string
 }
 
 // Attributes
 
-func (v *line_) GetClass() LineClassLike {
+func (v *inlined_) GetClass() InlinedClassLike {
 	return v.class_
 }
 
-func (v *line_) GetIdentifier() IdentifierLike {
-	return v.identifier_
+func (v *inlined_) GetFactors() col.ListLike[FactorLike] {
+	return v.factors_
 }
 
-func (v *line_) GetNote() string {
+func (v *inlined_) GetNote() string {
 	return v.note_
 }
 

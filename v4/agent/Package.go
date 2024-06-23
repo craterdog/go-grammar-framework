@@ -46,17 +46,20 @@ type TokenType uint8
 
 const (
 	ErrorToken TokenType = iota
-	CharacterToken
 	CommentToken
 	DelimiterToken
 	EOFToken
 	EOLToken
 	IntrinsicToken
 	LiteralToken
-	NameToken
+	LowercaseToken
+	NegationToken
 	NoteToken
 	NumberToken
+	QuantifiedToken
+	RuneToken
 	SpaceToken
+	UppercaseToken
 )
 
 // Classes
@@ -67,12 +70,8 @@ class constants, constructors and functions that must be supported by each
 concrete formatter-like class.
 */
 type FormatterClassLike interface {
-	// Constants
-	DefaultMaximum() int
-
 	// Constructors
 	Make() FormatterLike
-	MakeWithMaximum(maximum int) FormatterLike
 }
 
 /*
@@ -114,6 +113,7 @@ type ScannerClassLike interface {
 	) ScannerLike
 
 	// Functions
+	AsString(type_ TokenType) string
 	FormatToken(token TokenLike) string
 	MatchToken(
 		type_ TokenType,
@@ -157,10 +157,8 @@ type FormatterLike interface {
 	// Attributes
 	GetClass() FormatterClassLike
 	GetDepth() int
-	GetMaximum() int
 
 	// Methods
-	FormatDefinition(definition ast.DefinitionLike) string
 	FormatSyntax(syntax ast.SyntaxLike) string
 }
 

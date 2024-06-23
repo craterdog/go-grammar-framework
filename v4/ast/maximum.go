@@ -18,35 +18,31 @@ import ()
 
 // Reference
 
-var lineClass = &lineClass_{
+var maximumClass = &maximumClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Line() LineClassLike {
-	return lineClass
+func Maximum() MaximumClassLike {
+	return maximumClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type lineClass_ struct {
+type maximumClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(
-	identifier IdentifierLike,
-	note string,
-) LineLike {
-	return &line_{
+func (c *maximumClass_) MakeWithNumber(number string) MaximumLike {
+	return &maximum_{
 		// Initialize instance attributes.
-		class_:      c,
-		identifier_: identifier,
-		note_:       note,
+		class_:  c,
+		number_: number,
 	}
 }
 
@@ -54,25 +50,20 @@ func (c *lineClass_) MakeWithAttributes(
 
 // Target
 
-type line_ struct {
+type maximum_ struct {
 	// Define instance attributes.
-	class_      LineClassLike
-	identifier_ IdentifierLike
-	note_       string
+	class_  MaximumClassLike
+	number_ string
 }
 
 // Attributes
 
-func (v *line_) GetClass() LineClassLike {
+func (v *maximum_) GetClass() MaximumClassLike {
 	return v.class_
 }
 
-func (v *line_) GetIdentifier() IdentifierLike {
-	return v.identifier_
-}
-
-func (v *line_) GetNote() string {
-	return v.note_
+func (v *maximum_) GetNumber() string {
+	return v.number_
 }
 
 // Private

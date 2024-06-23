@@ -12,43 +12,37 @@
 
 package ast
 
-import (
-	col "github.com/craterdog/go-collection-framework/v4/collection"
-)
+import ()
 
 // CLASS ACCESS
 
 // Reference
 
-var inlineClass = &inlineClass_{
+var extentClass = &extentClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Inline() InlineClassLike {
-	return inlineClass
+func Extent() ExtentClassLike {
+	return extentClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type inlineClass_ struct {
+type extentClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *inlineClass_) MakeWithAttributes(
-	alternatives col.ListLike[AlternativeLike],
-	note string,
-) InlineLike {
-	return &inline_{
+func (c *extentClass_) MakeWithRune(rune_ string) ExtentLike {
+	return &extent_{
 		// Initialize instance attributes.
-		class_:        c,
-		alternatives_: alternatives,
-		note_:         note,
+		class_: c,
+		rune_:  rune_,
 	}
 }
 
@@ -56,25 +50,20 @@ func (c *inlineClass_) MakeWithAttributes(
 
 // Target
 
-type inline_ struct {
+type extent_ struct {
 	// Define instance attributes.
-	class_        InlineClassLike
-	alternatives_ col.ListLike[AlternativeLike]
-	note_         string
+	class_ ExtentClassLike
+	rune_  string
 }
 
 // Attributes
 
-func (v *inline_) GetClass() InlineClassLike {
+func (v *extent_) GetClass() ExtentClassLike {
 	return v.class_
 }
 
-func (v *inline_) GetAlternatives() col.ListLike[AlternativeLike] {
-	return v.alternatives_
-}
-
-func (v *inline_) GetNote() string {
-	return v.note_
+func (v *extent_) GetRune() string {
+	return v.rune_
 }
 
 // Private

@@ -12,37 +12,43 @@
 
 package ast
 
-import ()
+import (
+	col "github.com/craterdog/go-collection-framework/v4/collection"
+)
 
 // CLASS ACCESS
 
 // Reference
 
-var precedenceClass = &precedenceClass_{
+var patternClass = &patternClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Precedence() PrecedenceClassLike {
-	return precedenceClass
+func Pattern() PatternClassLike {
+	return patternClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type precedenceClass_ struct {
+type patternClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *precedenceClass_) MakeWithExpression(expression ExpressionLike) PrecedenceLike {
-	return &precedence_{
+func (c *patternClass_) MakeWithAttributes(
+	parts col.ListLike[PartLike],
+	alternatives col.ListLike[AlternativeLike],
+) PatternLike {
+	return &pattern_{
 		// Initialize instance attributes.
-		class_:      c,
-		expression_: expression,
+		class_:        c,
+		parts_:        parts,
+		alternatives_: alternatives,
 	}
 }
 
@@ -50,20 +56,25 @@ func (c *precedenceClass_) MakeWithExpression(expression ExpressionLike) Precede
 
 // Target
 
-type precedence_ struct {
+type pattern_ struct {
 	// Define instance attributes.
-	class_      PrecedenceClassLike
-	expression_ ExpressionLike
+	class_        PatternClassLike
+	parts_        col.ListLike[PartLike]
+	alternatives_ col.ListLike[AlternativeLike]
 }
 
 // Attributes
 
-func (v *precedence_) GetClass() PrecedenceClassLike {
+func (v *pattern_) GetClass() PatternClassLike {
 	return v.class_
 }
 
-func (v *precedence_) GetExpression() ExpressionLike {
-	return v.expression_
+func (v *pattern_) GetParts() col.ListLike[PartLike] {
+	return v.parts_
+}
+
+func (v *pattern_) GetAlternatives() col.ListLike[AlternativeLike] {
+	return v.alternatives_
 }
 
 // Private

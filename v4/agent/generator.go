@@ -61,7 +61,7 @@ func (c *generatorClass_) Make() GeneratorLike {
 type generator_ struct {
 	// Define instance attributes.
 	class_     GeneratorClassLike
-	tokens_    col.SetLike[string]
+	lexigrams_ col.SetLike[string]
 	modules_   col.CatalogLike[string, mod.ModuleLike]
 	classes_   col.CatalogLike[string, mod.ClassLike]
 	instances_ col.CatalogLike[string, mod.InstanceLike]
@@ -126,9 +126,10 @@ func (v *generator_) GenerateAgent(
 	source = sts.ReplaceAll(source, "<Notice>", notice)
 	source = sts.ReplaceAll(source, "<module>", module)
 	source = sts.ReplaceAll(source, "<package>", "agent")
-	var class = v.extractClassName(syntax)
-	source = sts.ReplaceAll(source, "<Class>", class)
-	var parameter = v.makeLowercase(class)
+	var name = v.extractSyntaxName(syntax)
+	source = sts.ReplaceAll(source, "<Name>", v.makeUppercase(name))
+	source = sts.ReplaceAll(source, "<name>", v.makeLowercase(name))
+	var parameter = v.makeLowercase(name)
 	source = sts.ReplaceAll(source, "<parameter>", parameter)
 
 	// Parse the agent class model template.
@@ -136,7 +137,7 @@ func (v *generator_) GenerateAgent(
 	var model = parser.ParseSource(source)
 
 	// Add additional definitions to the class model.
-	v.addTokens(model)
+	v.addLexigrams(model)
 
 	return model
 }
@@ -150,9 +151,9 @@ func (v *generator_) GenerateFormatter(
 	var notice = model.GetNotice().GetComment()
 	source = sts.ReplaceAll(source, "<Notice>", notice)
 	source = sts.ReplaceAll(source, "<module>", module)
-	var class = v.extractClassName(syntax)
-	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
-	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
+	var name = v.extractSyntaxName(syntax)
+	source = sts.ReplaceAll(source, "<Name>", v.makeUppercase(name))
+	source = sts.ReplaceAll(source, "<name>", v.makeLowercase(name))
 	return source
 }
 
@@ -165,9 +166,9 @@ func (v *generator_) GenerateParser(
 	var notice = model.GetNotice().GetComment()
 	source = sts.ReplaceAll(source, "<Notice>", notice)
 	source = sts.ReplaceAll(source, "<module>", module)
-	var class = v.extractClassName(syntax)
-	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
-	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
+	var name = v.extractSyntaxName(syntax)
+	source = sts.ReplaceAll(source, "<Name>", v.makeUppercase(name))
+	source = sts.ReplaceAll(source, "<name>", v.makeLowercase(name))
 	return source
 }
 
@@ -204,9 +205,9 @@ func (v *generator_) GenerateValidator(
 	var notice = model.GetNotice().GetComment()
 	source = sts.ReplaceAll(source, "<Notice>", notice)
 	source = sts.ReplaceAll(source, "<module>", module)
-	var class = v.extractClassName(syntax)
-	source = sts.ReplaceAll(source, "<Class>", v.makeUppercase(class))
-	source = sts.ReplaceAll(source, "<class>", v.makeLowercase(class))
+	var name = v.extractSyntaxName(syntax)
+	source = sts.ReplaceAll(source, "<Name>", v.makeUppercase(name))
+	source = sts.ReplaceAll(source, "<name>", v.makeLowercase(name))
 	return source
 }
 
@@ -230,78 +231,14 @@ func (v *generator_) addInstances(model mod.ModelLike) {
 	instances.AppendValues(v.instances_.GetValues(v.instances_.GetKeys()))
 }
 
-func (v *generator_) addTokens(model mod.ModelLike) {
+func (v *generator_) addLexigrams(model mod.ModelLike) {
 	var types = model.GetTypes()
 	var enumeration = types.GetValue(1).GetEnumeration()
 	var identifiers = enumeration.GetIdentifiers()
-	identifiers.AppendValues(v.tokens_)
+	identifiers.AppendValues(v.lexigrams_)
 }
 
 func (v *generator_) consolidateAttributes(
-	attributes col.ListLike[mod.AttributeLike],
-) {
-	// Compare each attribute and remove duplicates.
-	for i := 1; i <= attributes.GetSize(); i++ {
-		var attribute = attributes.GetValue(i)
-		var first = attribute.GetIdentifier()
-		for j := i + 1; j <= attributes.GetSize(); {
-			var second = attributes.GetValue(j).GetIdentifier()
-			switch {
-			case first == second:
-				attributes.RemoveValue(j)
-			case first == second[:len(second)-1] && sts.HasSuffix(second, "s"):
-				attribute = attributes.GetValue(j)
-				attributes.SetValue(i, attribute)
-				attributes.RemoveValue(j)
-			case first == second[:len(second)-2] && sts.HasSuffix(second, "es"):
-				attribute = attributes.GetValue(j)
-				attributes.SetValue(i, attribute)
-				attributes.RemoveValue(j)
-			case second == first[:len(first)-1] && sts.HasSuffix(first, "s"):
-				attributes.RemoveValue(j)
-			case second == first[:len(first)-2] && sts.HasSuffix(first, "es"):
-				attributes.RemoveValue(j)
-			default:
-				// We only increment the index j if we didn't remove anything.
-				j++
-			}
-		}
-	}
-}
-
-func (v *generator_) consolidateConstructors(
-	constructors col.ListLike[mod.ConstructorLike],
-) {
-	// Compare each constructor and remove duplicates.
-	for i := 1; i <= constructors.GetSize(); i++ {
-		var constructor = constructors.GetValue(i)
-		var first = constructor.GetIdentifier()
-		for j := i + 1; j <= constructors.GetSize(); {
-			var second = constructors.GetValue(j).GetIdentifier()
-			switch {
-			case first == second:
-				constructors.RemoveValue(j)
-			case first == second[:len(second)-1] && sts.HasSuffix(second, "s"):
-				constructor = constructors.GetValue(j)
-				constructors.SetValue(i, constructor)
-				constructors.RemoveValue(j)
-			case first == second[:len(second)-2] && sts.HasSuffix(second, "es"):
-				constructor = constructors.GetValue(j)
-				constructors.SetValue(i, constructor)
-				constructors.RemoveValue(j)
-			case second == first[:len(first)-1] && sts.HasSuffix(first, "s"):
-				constructors.RemoveValue(j)
-			case second == first[:len(first)-2] && sts.HasSuffix(first, "es"):
-				constructors.RemoveValue(j)
-			default:
-				// We only increment the index j if we didn't remove anything.
-				j++
-			}
-		}
-	}
-}
-
-func (v *generator_) consolidateLists(
 	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Compare each attribute and make lists out of duplicates.
@@ -363,32 +300,9 @@ func (v *generator_) expandCopyright(copyright string) string {
 	return copyright
 }
 
-func (v *generator_) extractAlternatives(expression ast.ExpressionLike) col.ListLike[ast.AlternativeLike] {
-	var notation = cdc.Notation().Make()
-	var alternatives = col.List[ast.AlternativeLike](notation).Make()
-	var inline = expression.GetInline()
-	if inline != nil {
-		var iterator = inline.GetAlternatives().GetIterator()
-		for iterator.HasNext() {
-			var alternative = iterator.GetNext()
-			alternatives.AppendValue(alternative)
-		}
-	}
-	var multiline = expression.GetMultiline()
-	if multiline != nil {
-		var iterator = multiline.GetLines().GetIterator()
-		for iterator.HasNext() {
-			var line = iterator.GetNext()
-			var alternative = line.GetAlternative()
-			alternatives.AppendValue(alternative)
-		}
-	}
-	return alternatives
-}
-
-func (v *generator_) extractClassName(syntax ast.SyntaxLike) string {
-	var definition = syntax.GetDefinitions().GetValue(2)
-	var name = definition.GetName()
+func (v *generator_) extractSyntaxName(syntax ast.SyntaxLike) string {
+	var rule = syntax.GetRules().GetValue(1)
+	var name = rule.GetUppercase()
 	return name
 }
 
@@ -466,14 +380,6 @@ func (v *generator_) generateInstance(
 	return instance
 }
 
-func (v *generator_) isLowercase(identifier string) bool {
-	return uni.IsLower([]rune(identifier)[0])
-}
-
-func (v *generator_) isUppercase(identifier string) bool {
-	return uni.IsUpper([]rune(identifier)[0])
-}
-
 func (v *generator_) makeList(attribute mod.AttributeLike) mod.AttributeLike {
 	var prefix = "col"
 	var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
@@ -522,54 +428,31 @@ func (v *generator_) makeUppercase(identifier string) string {
 	return string(runes)
 }
 
-func (v *generator_) processAlternative(
+func (v *generator_) processLine(
 	name string,
-	alternative ast.AlternativeLike,
-) (
-	constructor mod.ConstructorLike,
-	attributes col.ListLike[mod.AttributeLike],
+	line ast.LineLike,
+	constructors col.ListLike[mod.ConstructorLike],
 ) {
-	// Extract the attributes.
-	var notation = cdc.Notation().Make()
-	attributes = col.List[mod.AttributeLike](notation).Make()
-	var iterator = alternative.GetFactors().GetIterator()
-	for iterator.HasNext() {
-		var factor = iterator.GetNext()
-		var values = v.processFactor(name, factor)
-		attributes.AppendValues(values)
-	}
-	v.consolidateLists(attributes)
+	// Extract the attribute.
+	var identifier = line.GetIdentifier()
+	var attribute = v.extractAttribute(identifier)
 
-	// Extract the constructor.
+	// Create the constructor.
 	var abstraction = mod.Abstraction(name + "Like")
-	if !attributes.IsEmpty() {
-		var identifier = "MakeWithAttributes"
-		if attributes.GetSize() == 1 {
-			identifier = attributes.GetValue(1).GetIdentifier()
-			identifier = sts.TrimPrefix(identifier, "Get")
-			identifier = "MakeWith" + identifier
-		}
-		var parameters = v.extractParameters(attributes)
-		constructor = mod.Constructor(
-			identifier,
-			parameters,
-			abstraction,
-		)
-	}
-
-	return constructor, attributes
-}
-
-func (v *generator_) processDefinition(
-	definition ast.DefinitionLike,
-) {
-	var name = definition.GetName()
-	var expression = definition.GetExpression()
-	if v.isLowercase(name) {
-		v.processToken(name, expression)
-	} else {
-		v.processRule(name, expression)
-	}
+	var string_ = attribute.GetIdentifier()
+	string_ = sts.TrimPrefix(string_, "Get")
+	string_ = "MakeWith" + string_
+	var notation = cdc.Notation().Make()
+	var attributes = col.List[mod.AttributeLike](notation).MakeFromArray(
+		[]mod.AttributeLike{attribute},
+	)
+	var parameters = v.extractParameters(attributes)
+	var constructor = mod.Constructor(
+		string_,
+		parameters,
+		abstraction,
+	)
+	constructors.AppendValue(constructor)
 }
 
 func (v *generator_) processExpression(
@@ -579,97 +462,124 @@ func (v *generator_) processExpression(
 	constructors col.ListLike[mod.ConstructorLike],
 	attributes col.ListLike[mod.AttributeLike],
 ) {
-	// Process the expression alternatives.
+	// Create the method lists.
 	var notation = cdc.Notation().Make()
 	constructors = col.List[mod.ConstructorLike](notation).Make()
 	attributes = col.List[mod.AttributeLike](notation).Make()
-	var alternatives = v.extractAlternatives(expression)
-	var iterator = alternatives.GetIterator()
-	for iterator.HasNext() {
-		var alternative = iterator.GetNext()
-		var constructor, values = v.processAlternative(name, alternative)
-		if constructor != nil {
-			constructors.AppendValue(constructor)
-		}
-		attributes.AppendValues(values)
+
+	// Process the expression.
+	switch actual := expression.GetAny().(type) {
+	case ast.InlinedLike:
+		v.processInlined(name, actual, constructors, attributes)
+	case ast.MultilinedLike:
+		v.processMultilined(name, actual, constructors, attributes)
+	default:
+		panic("Found an empty expression.")
 	}
 
-	// Add a default constructor if necessary.
-	if constructors.IsEmpty() {
-		var abstraction = mod.Abstraction(
-			name + "Like",
-		)
+	// Return the method lists.
+	return constructors, attributes
+}
+
+func (v *generator_) processInlined(
+	name string,
+	inlined ast.InlinedLike,
+	constructors col.ListLike[mod.ConstructorLike],
+	attributes col.ListLike[mod.AttributeLike],
+) {
+	// Extract the attributes.
+	var iterator = inlined.GetFactors().GetIterator()
+	for iterator.HasNext() {
+		var factor = iterator.GetNext()
+		v.processFactor(name, factor, constructors, attributes)
+	}
+	v.consolidateAttributes(attributes)
+
+	// Create the constructor.
+	var abstraction = mod.Abstraction(name + "Like")
+	if !attributes.IsEmpty() {
+		var identifier = "MakeWithAttributes"
+		if attributes.GetSize() == 1 {
+			identifier = attributes.GetValue(1).GetIdentifier()
+			identifier = sts.TrimPrefix(identifier, "Get")
+			identifier = "MakeWith" + identifier
+		}
+		var parameters = v.extractParameters(attributes)
 		var constructor = mod.Constructor(
-			"Make",
+			identifier,
+			parameters,
 			abstraction,
 		)
 		constructors.AppendValue(constructor)
 	}
+}
 
-	// Consolidate any duplicate methods.
-	v.consolidateConstructors(constructors)
-	v.consolidateAttributes(attributes)
+func (v *generator_) processMultilined(
+	name string,
+	multilined ast.MultilinedLike,
+	constructors col.ListLike[mod.ConstructorLike],
+	attributes col.ListLike[mod.AttributeLike],
+) {
+	// Extract the constructors and attributes.
+	var iterator = multilined.GetLines().GetIterator()
+	for iterator.HasNext() {
+		var line = iterator.GetNext()
+		v.processLine(name, line, constructors)
+	}
+	var abstraction = mod.Abstraction("any")
+	var attribute = mod.Attribute(
+		"GetAny",
+		abstraction,
+	)
+	attributes.AppendValue(attribute)
+}
 
-	return constructors, attributes
+func (v *generator_) extractAttribute(
+	identifier ast.IdentifierLike,
+) mod.AttributeLike {
+	var name = identifier.GetAny().(string)
+	var abstraction mod.AbstractionLike
+	switch {
+	case !Scanner().MatchToken(UppercaseToken, name).IsEmpty():
+		abstraction = mod.Abstraction(name + "Like")
+	case !Scanner().MatchToken(LowercaseToken, name).IsEmpty():
+		var tokenType = v.makeUppercase(name) + "Token"
+		v.lexigrams_.AddValue(tokenType)
+		abstraction = mod.Abstraction("string")
+	default:
+		var message = fmt.Sprintf("Found an invalide name: %v", name)
+		panic(message)
+	}
+	var attribute = mod.Attribute(
+		"Get"+v.makeUppercase(name),
+		abstraction,
+	)
+	return attribute
 }
 
 func (v *generator_) processFactor(
 	name string,
 	factor ast.FactorLike,
-) (attributes col.ListLike[mod.AttributeLike]) {
-	var isSequential bool
-	var cardinality = factor.GetCardinality()
-	if cardinality != nil {
-		var constraint = cardinality.GetConstraint()
-		isSequential = constraint.GetFirst() != "0" || constraint.GetLast() != "1"
-	}
-	var identifier string
-	var abstraction mod.AbstractionLike
-	var attribute mod.AttributeLike
-	var notation = cdc.Notation().Make()
-	attributes = col.List[mod.AttributeLike](notation).Make()
+	constructors col.ListLike[mod.ConstructorLike],
+	attributes col.ListLike[mod.AttributeLike],
+) {
 	var predicate = factor.GetPredicate()
-	var atom = predicate.GetAtom()
-	var element = predicate.GetElement()
-	var filter = predicate.GetFilter()
-	var precedence = predicate.GetPrecedence()
-	switch {
-	case atom != nil:
-	case element != nil:
-		identifier = element.GetName()
-		if len(identifier) > 0 {
-			if v.isUppercase(identifier) {
-				abstraction = mod.Abstraction(identifier + "Like")
-			} else {
-				var tokenType = v.makeUppercase(identifier) + "Token"
-				v.tokens_.AddValue(tokenType)
-				abstraction = mod.Abstraction("string")
-			}
-			attribute = mod.Attribute(
-				"Get"+v.makeUppercase(identifier),
-				abstraction,
-			)
-			if isSequential {
-				attribute = v.makeList(attribute)
-			}
+	switch actual := predicate.GetAny().(type) {
+	case ast.IdentifierLike:
+		var attribute = v.extractAttribute(actual)
+		if factor.GetCardinality() != nil {
+			attribute = v.makeList(attribute)
 			attributes.AppendValue(attribute)
 		}
-	case filter != nil:
-	case precedence != nil:
-		var expression = precedence.GetExpression()
-		var _, values = v.processExpression(name, expression)
-		attributes.AppendValues(values)
 	default:
-		panic("Found an empty predicate.")
+		// Ignore the other types.
 	}
-	return attributes
 }
 
-func (v *generator_) processRule(
-	name string,
-	expression ast.ExpressionLike,
-) {
-	// Process the full expression first.
+func (v *generator_) processRule(rule ast.RuleLike) {
+	// Process the expression.
+	var name = rule.GetUppercase()
+	var expression = rule.GetExpression()
 	var constructors, attributes = v.processExpression(name, expression)
 
 	// Create the class interface.
@@ -690,25 +600,30 @@ func (v *generator_) processSyntax(syntax ast.SyntaxLike) {
 		"SpaceToken",
 	}
 	var notation = cdc.Notation().Make()
-	v.tokens_ = col.Set[string](notation).MakeFromArray(array)
+	v.lexigrams_ = col.Set[string](notation).MakeFromArray(array)
 	v.modules_ = col.Catalog[string, mod.ModuleLike](notation).Make()
 	v.classes_ = col.Catalog[string, mod.ClassLike](notation).Make()
 	v.instances_ = col.Catalog[string, mod.InstanceLike](notation).Make()
 
-	// Process the syntax definitions.
-	var iterator = syntax.GetDefinitions().GetIterator()
-	iterator.GetNext() // Skip the first rule.
-	for iterator.HasNext() {
-		var definition = iterator.GetNext()
-		v.processDefinition(definition)
+	// Process the syntax rule definitions.
+	var rulesIterator = syntax.GetRules().GetIterator()
+	for rulesIterator.HasNext() {
+		var rule = rulesIterator.GetNext()
+		v.processRule(rule)
+	}
+
+	// Process the syntax lexigram definitions.
+	var lexigramIterator = syntax.GetLexigrams().GetIterator()
+	for lexigramIterator.HasNext() {
+		var lexigram = lexigramIterator.GetNext()
+		v.processLexigram(lexigram)
 	}
 }
 
-func (v *generator_) processToken(
-	name string,
-	expression ast.ExpressionLike,
+func (v *generator_) processLexigram(
+	lexigram ast.LexigramLike,
 ) {
-	// Ignore token definitions for now.
+	// Ignore lexigram definitions for now.
 }
 
 var reserved_ = map[string]bool{

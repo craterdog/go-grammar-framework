@@ -18,35 +18,31 @@ import ()
 
 // Reference
 
-var lineClass = &lineClass_{
+var groupedClass = &groupedClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Line() LineClassLike {
-	return lineClass
+func Grouped() GroupedClassLike {
+	return groupedClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type lineClass_ struct {
+type groupedClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(
-	identifier IdentifierLike,
-	note string,
-) LineLike {
-	return &line_{
+func (c *groupedClass_) MakeWithPattern(pattern PatternLike) GroupedLike {
+	return &grouped_{
 		// Initialize instance attributes.
-		class_:      c,
-		identifier_: identifier,
-		note_:       note,
+		class_:   c,
+		pattern_: pattern,
 	}
 }
 
@@ -54,25 +50,20 @@ func (c *lineClass_) MakeWithAttributes(
 
 // Target
 
-type line_ struct {
+type grouped_ struct {
 	// Define instance attributes.
-	class_      LineClassLike
-	identifier_ IdentifierLike
-	note_       string
+	class_   GroupedClassLike
+	pattern_ PatternLike
 }
 
 // Attributes
 
-func (v *line_) GetClass() LineClassLike {
+func (v *grouped_) GetClass() GroupedClassLike {
 	return v.class_
 }
 
-func (v *line_) GetIdentifier() IdentifierLike {
-	return v.identifier_
-}
-
-func (v *line_) GetNote() string {
-	return v.note_
+func (v *grouped_) GetPattern() PatternLike {
+	return v.pattern_
 }
 
 // Private
