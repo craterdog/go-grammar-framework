@@ -492,7 +492,7 @@ func (v *generator_) processInlined(
 	var iterator = inlined.GetFactors().GetIterator()
 	for iterator.HasNext() {
 		var factor = iterator.GetNext()
-		v.processFactor(name, factor, constructors, attributes)
+		v.processFactor(name, factor, attributes)
 	}
 	v.consolidateAttributes(attributes)
 
@@ -551,28 +551,33 @@ func (v *generator_) extractAttribute(name string) mod.AttributeLike {
 		v.lexigrams_.AddValue(tokenType)
 		abstraction = mod.Abstraction("string")
 	default:
-		// Ignore the other types of tokens.
-	}
-	var attribute mod.AttributeLike
-	if abstraction != nil {
-		attribute = mod.Attribute(
-			"Get"+v.makeUppercase(name),
-			abstraction,
+		var message = fmt.Sprintf(
+			"Found an invalid attribute name: %q",
+			name,
 		)
+		panic(message)
 	}
+	var attribute = mod.Attribute(
+		"Get"+v.makeUppercase(name),
+		abstraction,
+	)
 	return attribute
 }
 
 func (v *generator_) processFactor(
 	name string,
 	factor ast.FactorLike,
-	constructors col.ListLike[mod.ConstructorLike],
 	attributes col.ListLike[mod.AttributeLike],
 ) {
 	var predicate = factor.GetPredicate()
 	var actual = predicate.GetAny().(string)
-	var attribute = v.extractAttribute(actual)
-	if attribute != nil {
+	switch {
+	case !Scanner().MatchToken(IntrinsicToken, actual).IsEmpty():
+		// NOTE: We must check for intrinsics first and ignore them.
+	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
+		// Ignore literals as well.
+	default:
+		var attribute = v.extractAttribute(actual)
 		if factor.GetCardinality() != nil {
 			attribute = v.makeList(attribute)
 		}

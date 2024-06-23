@@ -223,10 +223,10 @@ func (v *formatter_) formatIdentifier(identifier ast.IdentifierLike) {
 }
 
 func (v *formatter_) formatInlined(inlined ast.InlinedLike) {
-	v.appendString(" ") // Need this space following the ":" character.
 	var iterator = inlined.GetFactors().GetIterator()
 	for iterator.HasNext() {
 		var factor = iterator.GetNext()
+		v.appendString(" ")
 		v.formatFactor(factor)
 	}
 	var note = inlined.GetNote()
