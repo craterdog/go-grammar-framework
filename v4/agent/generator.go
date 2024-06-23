@@ -435,7 +435,8 @@ func (v *generator_) processLine(
 ) {
 	// Extract the attribute.
 	var identifier = line.GetIdentifier()
-	var attribute = v.extractAttribute(identifier)
+	var actual = identifier.GetAny().(string)
+	var attribute = v.extractAttribute(actual)
 
 	// Create the constructor.
 	var abstraction = mod.Abstraction(name + "Like")
@@ -496,6 +497,7 @@ func (v *generator_) processInlined(
 	v.consolidateAttributes(attributes)
 
 	// Create the constructor.
+	var constructor mod.ConstructorLike
 	var abstraction = mod.Abstraction(name + "Like")
 	if !attributes.IsEmpty() {
 		var identifier = "MakeWithAttributes"
@@ -505,13 +507,18 @@ func (v *generator_) processInlined(
 			identifier = "MakeWith" + identifier
 		}
 		var parameters = v.extractParameters(attributes)
-		var constructor = mod.Constructor(
+		constructor = mod.Constructor(
 			identifier,
 			parameters,
 			abstraction,
 		)
-		constructors.AppendValue(constructor)
+	} else {
+		constructor = mod.Constructor(
+			"Make",
+			abstraction,
+		)
 	}
+	constructors.AppendValue(constructor)
 }
 
 func (v *generator_) processMultilined(
@@ -534,10 +541,7 @@ func (v *generator_) processMultilined(
 	attributes.AppendValue(attribute)
 }
 
-func (v *generator_) extractAttribute(
-	identifier ast.IdentifierLike,
-) mod.AttributeLike {
-	var name = identifier.GetAny().(string)
+func (v *generator_) extractAttribute(name string) mod.AttributeLike {
 	var abstraction mod.AbstractionLike
 	switch {
 	case !Scanner().MatchToken(UppercaseToken, name).IsEmpty():
@@ -547,13 +551,15 @@ func (v *generator_) extractAttribute(
 		v.lexigrams_.AddValue(tokenType)
 		abstraction = mod.Abstraction("string")
 	default:
-		var message = fmt.Sprintf("Found an invalide name: %v", name)
-		panic(message)
+		// Ignore the other types of tokens.
 	}
-	var attribute = mod.Attribute(
-		"Get"+v.makeUppercase(name),
-		abstraction,
-	)
+	var attribute mod.AttributeLike
+	if abstraction != nil {
+		attribute = mod.Attribute(
+			"Get"+v.makeUppercase(name),
+			abstraction,
+		)
+	}
 	return attribute
 }
 
@@ -564,15 +570,13 @@ func (v *generator_) processFactor(
 	attributes col.ListLike[mod.AttributeLike],
 ) {
 	var predicate = factor.GetPredicate()
-	switch actual := predicate.GetAny().(type) {
-	case ast.IdentifierLike:
-		var attribute = v.extractAttribute(actual)
+	var actual = predicate.GetAny().(string)
+	var attribute = v.extractAttribute(actual)
+	if attribute != nil {
 		if factor.GetCardinality() != nil {
 			attribute = v.makeList(attribute)
-			attributes.AppendValue(attribute)
 		}
-	default:
-		// Ignore the other types.
+		attributes.AppendValue(attribute)
 	}
 }
 
