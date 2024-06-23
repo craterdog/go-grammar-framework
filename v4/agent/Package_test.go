@@ -780,7 +780,7 @@ package agent
 
 import (
 	fmt "fmt"
-	ast "github.com/craterdog/example/cdsn/ast"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 )
 
 // CLASS ACCESS

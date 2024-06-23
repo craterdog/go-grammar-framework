@@ -985,7 +985,7 @@ package agent
 
 import (
 	fmt "fmt"
-	ast "github.com/craterdog/example/cdsn/ast"
+	ast "<module>/ast"
 )
 
 // CLASS ACCESS
