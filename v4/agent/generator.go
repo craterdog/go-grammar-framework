@@ -491,8 +491,19 @@ func (v *generator_) processFactor(
 		// Ignore literals as well.
 	default:
 		var attribute = v.extractAttribute(actual)
-		if factor.GetCardinality() != nil {
-			attribute = v.makeList(attribute)
+		var cardinality = factor.GetCardinality()
+		if cardinality != nil {
+			switch actual := cardinality.GetAny().(type) {
+			case ast.ConstrainedLike:
+				attribute = v.makeList(attribute)
+			case string:
+				switch actual {
+				case "?":
+					// Don't make a list for zero or one.
+				case "*", "+":
+					attribute = v.makeList(attribute)
+				}
+			}
 		}
 		attributes.AppendValue(attribute)
 	}

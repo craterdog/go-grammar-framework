@@ -287,19 +287,15 @@ are ignored by the parser.
 Document: Component EOL* EOF  ! Terminated with an end-of-file marker.
 
 Component:
-    Default
     Primitive
     List
 
-Default: "default"
-
 Primitive:
+    integer
     rune
     text
-    integer
-    anything
 
-List: "[" Component{3..5} Additional* "]"
+List: "[" Component Additional* "]"
 
 Additional: "," Component
 
@@ -314,13 +310,11 @@ definitions cannot be recursive and the scanning of lexigrams is NOT greedy.
 Any spaces within a lexigram definition are part of the lexigram and are NOT
 ignored.
 <!
+integer: '0' | '-'? '1'..'9' DIGIT*
+
 rune: "'" ~[CONTROL] "'"  ! Any single printable unicode character.
 
-text: '"' (ESCAPE ~['"' CONTROL]{2..})+ '"'
-
-integer: '0'{4} | '-'? '1'..'9' DIGIT*
-
-anything: ANY
+text: '"' (ESCAPE ~['"' CONTROL])+ '"'
 
 `
 
