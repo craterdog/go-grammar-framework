@@ -40,7 +40,7 @@ type filteredClass_ struct {
 
 // Constructors
 
-func (c *filteredClass_) MakeWithAttributes(
+func (c *filteredClass_) Make(
 	negation string,
 	characters col.ListLike[CharacterLike],
 ) FilteredLike {

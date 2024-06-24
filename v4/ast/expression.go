@@ -38,19 +38,11 @@ type expressionClass_ struct {
 
 // Constructors
 
-func (c *expressionClass_) MakeWithInlined(inlined InlinedLike) ExpressionLike {
+func (c *expressionClass_) Make(any_ any) ExpressionLike {
 	return &expression_{
 		// Initialize instance attributes.
 		class_: c,
-		any_:   inlined,
-	}
-}
-
-func (c *expressionClass_) MakeWithMultilined(multilined MultilinedLike) ExpressionLike {
-	return &expression_{
-		// Initialize instance attributes.
-		class_: c,
-		any_:   multilined,
+		any_:   any_,
 	}
 }
 

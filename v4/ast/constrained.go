@@ -38,7 +38,7 @@ type constrainedClass_ struct {
 
 // Constructors
 
-func (c *constrainedClass_) MakeWithAttributes(
+func (c *constrainedClass_) Make(
 	minimum MinimumLike,
 	maximum MaximumLike,
 ) ConstrainedLike {

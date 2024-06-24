@@ -38,19 +38,11 @@ type identifierClass_ struct {
 
 // Constructors
 
-func (c *identifierClass_) MakeWithLowercase(lowercase string) IdentifierLike {
+func (c *identifierClass_) Make(any_ any) IdentifierLike {
 	return &identifier_{
 		// Initialize instance attributes.
 		class_: c,
-		any_:   lowercase,
-	}
-}
-
-func (c *identifierClass_) MakeWithUppercase(uppercase string) IdentifierLike {
-	return &identifier_{
-		// Initialize instance attributes.
-		class_: c,
-		any_:   uppercase,
+		any_:   any_,
 	}
 }
 

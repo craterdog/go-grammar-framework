@@ -11,13 +11,10 @@
 */
 
 /*
-Package "ast" provides a parser and formatter for language syntaxes defined
-using Crater Dog Syntax Notation™ (CDSN).  The parser performs validation on the
-resulting parse tree.  The formatter takes a validated parse tree and generates
-the corresponding CDSN source using the canonical format.
+Package "ast" provides...
 
 For detailed documentation on this package refer to the wiki:
-  - https://github.com/craterdog/go-grammar-framework/wiki
+  - <wiki>
 
 This package follows the Crater Dog Technologies™ Go Coding Conventions located
 here:
@@ -43,7 +40,7 @@ concrete alternative-like class.
 */
 type AlternativeClassLike interface {
 	// Constructors
-	MakeWithParts(parts col.ListLike[PartLike]) AlternativeLike
+	Make(parts col.ListLike[PartLike]) AlternativeLike
 }
 
 /*
@@ -53,7 +50,7 @@ concrete bounded-like class.
 */
 type BoundedClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		initial InitialLike,
 		extent ExtentLike,
 	) BoundedLike
@@ -66,8 +63,7 @@ concrete cardinality-like class.
 */
 type CardinalityClassLike interface {
 	// Constructors
-	MakeWithConstrained(constrained ConstrainedLike) CardinalityLike
-	MakeWithQuantified(quantified string) CardinalityLike
+	Make(any_ any) CardinalityLike
 }
 
 /*
@@ -77,8 +73,7 @@ concrete character-like class.
 */
 type CharacterClassLike interface {
 	// Constructors
-	MakeWithBounded(bounded BoundedLike) CharacterLike
-	MakeWithIntrinsic(intrinsic string) CharacterLike
+	Make(any_ any) CharacterLike
 }
 
 /*
@@ -88,7 +83,7 @@ concrete constrained-like class.
 */
 type ConstrainedClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		minimum MinimumLike,
 		maximum MaximumLike,
 	) ConstrainedLike
@@ -101,12 +96,7 @@ concrete element-like class.
 */
 type ElementClassLike interface {
 	// Constructors
-	MakeWithGrouped(grouped GroupedLike) ElementLike
-	MakeWithFiltered(filtered FilteredLike) ElementLike
-	MakeWithBounded(bounded BoundedLike) ElementLike
-	MakeWithIntrinsic(intrinsic string) ElementLike
-	MakeWithLowercase(lowercase string) ElementLike
-	MakeWithLiteral(literal string) ElementLike
+	Make(any_ any) ElementLike
 }
 
 /*
@@ -116,8 +106,7 @@ concrete expression-like class.
 */
 type ExpressionClassLike interface {
 	// Constructors
-	MakeWithInlined(inlined InlinedLike) ExpressionLike
-	MakeWithMultilined(multilined MultilinedLike) ExpressionLike
+	Make(any_ any) ExpressionLike
 }
 
 /*
@@ -127,7 +116,7 @@ concrete extent-like class.
 */
 type ExtentClassLike interface {
 	// Constructors
-	MakeWithRune(rune_ string) ExtentLike
+	Make(rune_ string) ExtentLike
 }
 
 /*
@@ -137,7 +126,7 @@ concrete factor-like class.
 */
 type FactorClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		predicate PredicateLike,
 		cardinality CardinalityLike,
 	) FactorLike
@@ -150,7 +139,7 @@ concrete filtered-like class.
 */
 type FilteredClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		negation string,
 		characters col.ListLike[CharacterLike],
 	) FilteredLike
@@ -163,7 +152,7 @@ concrete grouped-like class.
 */
 type GroupedClassLike interface {
 	// Constructors
-	MakeWithPattern(pattern PatternLike) GroupedLike
+	Make(pattern PatternLike) GroupedLike
 }
 
 /*
@@ -173,7 +162,7 @@ concrete header-like class.
 */
 type HeaderClassLike interface {
 	// Constructors
-	MakeWithComment(comment string) HeaderLike
+	Make(comment string) HeaderLike
 }
 
 /*
@@ -183,8 +172,7 @@ concrete identifier-like class.
 */
 type IdentifierClassLike interface {
 	// Constructors
-	MakeWithLowercase(lowercase string) IdentifierLike
-	MakeWithUppercase(uppercase string) IdentifierLike
+	Make(any_ any) IdentifierLike
 }
 
 /*
@@ -194,7 +182,7 @@ concrete initial-like class.
 */
 type InitialClassLike interface {
 	// Constructors
-	MakeWithRune(rune_ string) InitialLike
+	Make(rune_ string) InitialLike
 }
 
 /*
@@ -204,7 +192,7 @@ concrete inlined-like class.
 */
 type InlinedClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		factors col.ListLike[FactorLike],
 		note string,
 	) InlinedLike
@@ -217,7 +205,7 @@ concrete lexigram-like class.
 */
 type LexigramClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		comment string,
 		lowercase string,
 		pattern PatternLike,
@@ -232,7 +220,7 @@ concrete line-like class.
 */
 type LineClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		identifier IdentifierLike,
 		note string,
 	) LineLike
@@ -245,7 +233,7 @@ concrete maximum-like class.
 */
 type MaximumClassLike interface {
 	// Constructors
-	MakeWithNumber(number string) MaximumLike
+	Make(number string) MaximumLike
 }
 
 /*
@@ -255,7 +243,7 @@ concrete minimum-like class.
 */
 type MinimumClassLike interface {
 	// Constructors
-	MakeWithNumber(number string) MinimumLike
+	Make(number string) MinimumLike
 }
 
 /*
@@ -265,7 +253,7 @@ concrete multilined-like class.
 */
 type MultilinedClassLike interface {
 	// Constructors
-	MakeWithLines(lines col.ListLike[LineLike]) MultilinedLike
+	Make(lines col.ListLike[LineLike]) MultilinedLike
 }
 
 /*
@@ -275,7 +263,7 @@ concrete part-like class.
 */
 type PartClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		element ElementLike,
 		cardinality CardinalityLike,
 	) PartLike
@@ -288,7 +276,7 @@ concrete pattern-like class.
 */
 type PatternClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		parts col.ListLike[PartLike],
 		alternatives col.ListLike[AlternativeLike],
 	) PatternLike
@@ -301,10 +289,7 @@ concrete predicate-like class.
 */
 type PredicateClassLike interface {
 	// Constructors
-	MakeWithLowercase(lowercase string) PredicateLike
-	MakeWithUppercase(uppercase string) PredicateLike
-	MakeWithIntrinsic(intrinsic string) PredicateLike
-	MakeWithLiteral(literal string) PredicateLike
+	Make(any_ any) PredicateLike
 }
 
 /*
@@ -314,7 +299,7 @@ concrete rule-like class.
 */
 type RuleClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		comment string,
 		uppercase string,
 		expression ExpressionLike,
@@ -328,7 +313,7 @@ concrete syntax-like class.
 */
 type SyntaxClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		headers col.ListLike[HeaderLike],
 		rules col.ListLike[RuleLike],
 		lexigrams col.ListLike[LexigramLike],

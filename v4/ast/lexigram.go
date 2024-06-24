@@ -38,7 +38,7 @@ type lexigramClass_ struct {
 
 // Constructors
 
-func (c *lexigramClass_) MakeWithAttributes(
+func (c *lexigramClass_) Make(
 	comment string,
 	lowercase string,
 	pattern PatternLike,

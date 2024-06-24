@@ -40,7 +40,7 @@ type syntaxClass_ struct {
 
 // Constructors
 
-func (c *syntaxClass_) MakeWithAttributes(
+func (c *syntaxClass_) Make(
 	headers col.ListLike[HeaderLike],
 	rules col.ListLike[RuleLike],
 	lexigrams col.ListLike[LexigramLike],

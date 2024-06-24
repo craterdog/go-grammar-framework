@@ -38,7 +38,7 @@ type groupedClass_ struct {
 
 // Constructors
 
-func (c *groupedClass_) MakeWithPattern(pattern PatternLike) GroupedLike {
+func (c *groupedClass_) Make(pattern PatternLike) GroupedLike {
 	return &grouped_{
 		// Initialize instance attributes.
 		class_:   c,

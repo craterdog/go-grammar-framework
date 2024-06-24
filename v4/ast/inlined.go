@@ -40,7 +40,7 @@ type inlinedClass_ struct {
 
 // Constructors
 
-func (c *inlinedClass_) MakeWithAttributes(
+func (c *inlinedClass_) Make(
 	factors col.ListLike[FactorLike],
 	note string,
 ) InlinedLike {

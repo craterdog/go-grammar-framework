@@ -38,7 +38,7 @@ type lineClass_ struct {
 
 // Constructors
 
-func (c *lineClass_) MakeWithAttributes(
+func (c *lineClass_) Make(
 	identifier IdentifierLike,
 	note string,
 ) LineLike {

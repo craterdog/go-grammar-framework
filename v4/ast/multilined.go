@@ -40,7 +40,7 @@ type multilinedClass_ struct {
 
 // Constructors
 
-func (c *multilinedClass_) MakeWithLines(lines col.ListLike[LineLike]) MultilinedLike {
+func (c *multilinedClass_) Make(lines col.ListLike[LineLike]) MultilinedLike {
 	return &multilined_{
 		// Initialize instance attributes.
 		class_: c,

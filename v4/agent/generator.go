@@ -527,12 +527,7 @@ func (v *generator_) processInlined(
 	var constructor mod.ConstructorLike
 	var abstraction = mod.Abstraction(name + "Like")
 	if !attributes.IsEmpty() {
-		var identifier = "MakeWithAttributes"
-		if attributes.GetSize() == 1 {
-			identifier = attributes.GetValue(1).GetIdentifier()
-			identifier = sts.TrimPrefix(identifier, "Get")
-			identifier = "MakeWith" + identifier
-		}
+		var identifier = "Make"
 		var parameters = v.extractParameters(attributes)
 		constructor = mod.Constructor(
 			identifier,
@@ -568,7 +563,7 @@ func (v *generator_) processLine(
 	var abstraction = mod.Abstraction(name + "Like")
 	var string_ = attribute.GetIdentifier()
 	string_ = sts.TrimPrefix(string_, "Get")
-	string_ = "MakeWith" + string_
+	string_ = "MakeFrom" + string_
 	var notation = cdc.Notation().Make()
 	var attributes = col.List[mod.AttributeLike](notation).MakeFromArray(
 		[]mod.AttributeLike{attribute},

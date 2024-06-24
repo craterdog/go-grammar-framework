@@ -118,7 +118,7 @@ func Alternative(arguments ...any) AlternativeLike {
 	}
 
 	// Call the constructor.
-	var alternative = ast.Alternative().MakeWithParts(parts)
+	var alternative = ast.Alternative().Make(parts)
 	return alternative
 }
 
@@ -147,9 +147,9 @@ func Character(arguments ...any) CharacterLike {
 	var character CharacterLike
 	switch {
 	case bounded != nil:
-		character = ast.Character().MakeWithBounded(bounded)
+		character = ast.Character().Make(bounded)
 	case len(intrinsic) > 0:
-		character = ast.Character().MakeWithIntrinsic(intrinsic)
+		character = ast.Character().Make(intrinsic)
 	default:
 		panic("The constructor for a character requires an argument.")
 	}
@@ -181,9 +181,9 @@ func Cardinality(arguments ...any) CardinalityLike {
 	var cardinality CardinalityLike
 	switch {
 	case constrained != nil:
-		cardinality = ast.Cardinality().MakeWithConstrained(constrained)
+		cardinality = ast.Cardinality().Make(constrained)
 	case len(quantified) > 0:
-		cardinality = ast.Cardinality().MakeWithQuantified(quantified)
+		cardinality = ast.Cardinality().Make(quantified)
 	default:
 		panic("The constructor for a cardinality requires an argument.")
 	}
@@ -212,7 +212,7 @@ func Constrained(arguments ...any) ConstrainedLike {
 	}
 
 	// Call the constructor.
-	var constrained = ast.Constrained().MakeWithAttributes(
+	var constrained = ast.Constrained().Make(
 		minimum,
 		maximum,
 	)
@@ -247,7 +247,7 @@ func Rule(arguments ...any) RuleLike {
 	}
 
 	// Call the constructor.
-	var rule = ast.Rule().MakeWithAttributes(
+	var rule = ast.Rule().Make(
 		comment,
 		uppercase,
 		expression,
@@ -301,17 +301,17 @@ func Element(arguments ...any) ElementLike {
 	var element ElementLike
 	switch {
 	case grouped != nil:
-		element = ast.Element().MakeWithGrouped(grouped)
+		element = ast.Element().Make(grouped)
 	case filtered != nil:
-		element = ast.Element().MakeWithFiltered(filtered)
+		element = ast.Element().Make(filtered)
 	case bounded != nil:
-		element = ast.Element().MakeWithBounded(bounded)
+		element = ast.Element().Make(bounded)
 	case len(intrinsic) > 0:
-		element = ast.Element().MakeWithIntrinsic(intrinsic)
+		element = ast.Element().Make(intrinsic)
 	case len(lowercase) > 0:
-		element = ast.Element().MakeWithLowercase(lowercase)
+		element = ast.Element().Make(lowercase)
 	case len(literal) > 0:
-		element = ast.Element().MakeWithLiteral(literal)
+		element = ast.Element().Make(literal)
 	default:
 		panic("The constructor for an element requires an argument.")
 	}
@@ -343,9 +343,9 @@ func Expression(arguments ...any) ExpressionLike {
 	var expression ExpressionLike
 	switch {
 	case inlined != nil:
-		expression = ast.Expression().MakeWithInlined(inlined)
+		expression = ast.Expression().Make(inlined)
 	case multilined != nil:
-		expression = ast.Expression().MakeWithMultilined(multilined)
+		expression = ast.Expression().Make(multilined)
 	default:
 		panic("The constructor for an expression requires an argument.")
 	}
@@ -374,7 +374,7 @@ func Factor(arguments ...any) FactorLike {
 	}
 
 	// Call the constructor.
-	var factor = ast.Factor().MakeWithAttributes(
+	var factor = ast.Factor().Make(
 		predicate,
 		cardinality,
 	)
@@ -403,7 +403,7 @@ func Filtered(arguments ...any) FilteredLike {
 	}
 
 	// Call the constructor.
-	var filtered = ast.Filtered().MakeWithAttributes(
+	var filtered = ast.Filtered().Make(
 		negation,
 		characters,
 	)
@@ -429,7 +429,7 @@ func Initial(arguments ...any) InitialLike {
 	}
 
 	// Call the constructor.
-	var initial = ast.Initial().MakeWithRune(rune_)
+	var initial = ast.Initial().Make(rune_)
 	return initial
 }
 
@@ -455,7 +455,7 @@ func Bounded(arguments ...any) BoundedLike {
 	}
 
 	// Call the constructor.
-	var bounded = ast.Bounded().MakeWithAttributes(
+	var bounded = ast.Bounded().Make(
 		initial,
 		extent,
 	)
@@ -481,7 +481,7 @@ func Header(arguments ...any) HeaderLike {
 	}
 
 	// Call the constructor.
-	var header = ast.Header().MakeWithComment(comment)
+	var header = ast.Header().Make(comment)
 	return header
 }
 
@@ -514,9 +514,9 @@ func Identifier(arguments ...any) IdentifierLike {
 	var identifier IdentifierLike
 	switch {
 	case len(lowercase) > 0:
-		identifier = ast.Identifier().MakeWithLowercase(lowercase)
+		identifier = ast.Identifier().Make(lowercase)
 	case len(uppercase) > 0:
-		identifier = ast.Identifier().MakeWithUppercase(uppercase)
+		identifier = ast.Identifier().Make(uppercase)
 	default:
 		panic("The constructor for an identifier requires an argument.")
 	}
@@ -545,7 +545,7 @@ func Inlined(arguments ...any) InlinedLike {
 	}
 
 	// Call the constructor.
-	var inlined = ast.Inlined().MakeWithAttributes(
+	var inlined = ast.Inlined().Make(
 		factors,
 		note,
 	)
@@ -571,7 +571,7 @@ func Extent(arguments ...any) ExtentLike {
 	}
 
 	// Call the constructor.
-	var extent = ast.Extent().MakeWithRune(rune_)
+	var extent = ast.Extent().Make(rune_)
 	return extent
 }
 
@@ -606,7 +606,7 @@ func Lexigram(arguments ...any) LexigramLike {
 	}
 
 	// Call the constructor.
-	var lexigram = ast.Lexigram().MakeWithAttributes(
+	var lexigram = ast.Lexigram().Make(
 		comment,
 		lowercase,
 		pattern,
@@ -637,7 +637,7 @@ func Line(arguments ...any) LineLike {
 	}
 
 	// Call the constructor.
-	var line = ast.Line().MakeWithAttributes(
+	var line = ast.Line().Make(
 		identifier,
 		note,
 	)
@@ -663,7 +663,7 @@ func Maximum(arguments ...any) MaximumLike {
 	}
 
 	// Call the constructor.
-	var maximum = ast.Maximum().MakeWithNumber(number)
+	var maximum = ast.Maximum().Make(number)
 	return maximum
 }
 
@@ -686,7 +686,7 @@ func Minimum(arguments ...any) MinimumLike {
 	}
 
 	// Call the constructor.
-	var minimum = ast.Minimum().MakeWithNumber(number)
+	var minimum = ast.Minimum().Make(number)
 	return minimum
 }
 
@@ -709,7 +709,7 @@ func Multilined(arguments ...any) MultilinedLike {
 	}
 
 	// Call the constructor.
-	var multilined = ast.Multilined().MakeWithLines(lines)
+	var multilined = ast.Multilined().Make(lines)
 	return multilined
 }
 
@@ -732,7 +732,7 @@ func Grouped(arguments ...any) GroupedLike {
 	}
 
 	// Call the constructor.
-	var grouped = ast.Grouped().MakeWithPattern(pattern)
+	var grouped = ast.Grouped().Make(pattern)
 	return grouped
 }
 
@@ -758,7 +758,7 @@ func Part(arguments ...any) PartLike {
 	}
 
 	// Call the constructor.
-	var part = ast.Part().MakeWithAttributes(
+	var part = ast.Part().Make(
 		element,
 		cardinality,
 	)
@@ -799,13 +799,13 @@ func Predicate(arguments ...any) PredicateLike {
 	var predicate PredicateLike
 	switch {
 	case len(lowercase) > 0:
-		predicate = ast.Predicate().MakeWithLowercase(lowercase)
+		predicate = ast.Predicate().Make(lowercase)
 	case len(uppercase) > 0:
-		predicate = ast.Predicate().MakeWithUppercase(uppercase)
+		predicate = ast.Predicate().Make(uppercase)
 	case len(intrinsic) > 0:
-		predicate = ast.Predicate().MakeWithIntrinsic(intrinsic)
+		predicate = ast.Predicate().Make(intrinsic)
 	case len(literal) > 0:
-		predicate = ast.Predicate().MakeWithLiteral(literal)
+		predicate = ast.Predicate().Make(literal)
 	default:
 		panic("The constructor for a predicate requires an argument.")
 	}
@@ -837,7 +837,7 @@ func Syntax(arguments ...any) SyntaxLike {
 	}
 
 	// Call the constructor.
-	var syntax = ast.Syntax().MakeWithAttributes(
+	var syntax = ast.Syntax().Make(
 		headers,
 		rules,
 		lexigrams,
@@ -901,7 +901,7 @@ func Pattern(arguments ...any) PatternLike {
 	}
 
 	// Call the constructor.
-	var pattern = ast.Pattern().MakeWithAttributes(
+	var pattern = ast.Pattern().Make(
 		parts,
 		alternatives,
 	)

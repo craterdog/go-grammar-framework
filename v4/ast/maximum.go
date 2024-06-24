@@ -38,7 +38,7 @@ type maximumClass_ struct {
 
 // Constructors
 
-func (c *maximumClass_) MakeWithNumber(number string) MaximumLike {
+func (c *maximumClass_) Make(number string) MaximumLike {
 	return &maximum_{
 		// Initialize instance attributes.
 		class_:  c,

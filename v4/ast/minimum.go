@@ -38,7 +38,7 @@ type minimumClass_ struct {
 
 // Constructors
 
-func (c *minimumClass_) MakeWithNumber(number string) MinimumLike {
+func (c *minimumClass_) Make(number string) MinimumLike {
 	return &minimum_{
 		// Initialize instance attributes.
 		class_:  c,

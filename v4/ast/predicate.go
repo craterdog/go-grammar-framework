@@ -38,35 +38,11 @@ type predicateClass_ struct {
 
 // Constructors
 
-func (c *predicateClass_) MakeWithLowercase(lowercase string) PredicateLike {
+func (c *predicateClass_) Make(any_ any) PredicateLike {
 	return &predicate_{
 		// Initialize instance attributes.
 		class_: c,
-		any_:   lowercase,
-	}
-}
-
-func (c *predicateClass_) MakeWithUppercase(uppercase string) PredicateLike {
-	return &predicate_{
-		// Initialize instance attributes.
-		class_: c,
-		any_:   uppercase,
-	}
-}
-
-func (c *predicateClass_) MakeWithIntrinsic(intrinsic string) PredicateLike {
-	return &predicate_{
-		// Initialize instance attributes.
-		class_: c,
-		any_:   intrinsic,
-	}
-}
-
-func (c *predicateClass_) MakeWithLiteral(literal string) PredicateLike {
-	return &predicate_{
-		// Initialize instance attributes.
-		class_: c,
-		any_:   literal,
+		any_:   any_,
 	}
 }
 

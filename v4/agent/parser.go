@@ -198,7 +198,7 @@ func (v *parser_) parseAlternative() (
 	}
 
 	// Found the alternative.
-	alternative = ast.Alternative().MakeWithParts(parts)
+	alternative = ast.Alternative().Make(parts)
 	return alternative, token, true
 }
 
@@ -220,7 +220,7 @@ func (v *parser_) parseBounded() (
 	extent, token, _ = v.parseExtent()
 
 	// Found the bounded.
-	bounded = ast.Bounded().MakeWithAttributes(initial, extent)
+	bounded = ast.Bounded().Make(initial, extent)
 	return bounded, token, true
 }
 
@@ -234,7 +234,7 @@ func (v *parser_) parseCardinality() (
 	constrained, token, ok = v.parseConstrained()
 	if ok {
 		// Found the constrained cardinality.
-		cardinality = ast.Cardinality().MakeWithConstrained(constrained)
+		cardinality = ast.Cardinality().Make(constrained)
 		return cardinality, token, true
 	}
 
@@ -243,7 +243,7 @@ func (v *parser_) parseCardinality() (
 	quantified, token, ok = v.parseToken(QuantifiedToken, "")
 	if ok {
 		// Found the quantified cardinality.
-		cardinality = ast.Cardinality().MakeWithQuantified(quantified)
+		cardinality = ast.Cardinality().Make(quantified)
 		return cardinality, token, true
 	}
 
@@ -261,7 +261,7 @@ func (v *parser_) parseCharacter() (
 	bounded, token, ok = v.parseBounded()
 	if ok {
 		// Found the bounded character.
-		character = ast.Character().MakeWithBounded(bounded)
+		character = ast.Character().Make(bounded)
 		return character, token, true
 	}
 
@@ -270,7 +270,7 @@ func (v *parser_) parseCharacter() (
 	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
 	if ok {
 		// Found the intrinsic character.
-		character = ast.Character().MakeWithIntrinsic(intrinsic)
+		character = ast.Character().Make(intrinsic)
 		return character, token, true
 	}
 
@@ -320,7 +320,7 @@ func (v *parser_) parseConstrained() (
 	}
 
 	// Found the constrained.
-	constrained = ast.Constrained().MakeWithAttributes(minimum, maximum)
+	constrained = ast.Constrained().Make(minimum, maximum)
 	return constrained, token, true
 }
 
@@ -334,7 +334,7 @@ func (v *parser_) parseElement() (
 	grouped, token, ok = v.parseGrouped()
 	if ok {
 		// Found the grouped element.
-		element = ast.Element().MakeWithGrouped(grouped)
+		element = ast.Element().Make(grouped)
 		return element, token, true
 	}
 
@@ -343,7 +343,7 @@ func (v *parser_) parseElement() (
 	filtered, token, ok = v.parseFiltered()
 	if ok {
 		// Found the filtered element.
-		element = ast.Element().MakeWithFiltered(filtered)
+		element = ast.Element().Make(filtered)
 		return element, token, true
 	}
 
@@ -352,7 +352,7 @@ func (v *parser_) parseElement() (
 	bounded, token, ok = v.parseBounded()
 	if ok {
 		// Found the character element.
-		element = ast.Element().MakeWithBounded(bounded)
+		element = ast.Element().Make(bounded)
 		return element, token, true
 	}
 
@@ -361,7 +361,7 @@ func (v *parser_) parseElement() (
 	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
 	if ok {
 		// Found the intrinsic element.
-		element = ast.Element().MakeWithIntrinsic(intrinsic)
+		element = ast.Element().Make(intrinsic)
 		return element, token, true
 	}
 
@@ -370,7 +370,7 @@ func (v *parser_) parseElement() (
 	lowercase, token, ok = v.parseToken(LowercaseToken, "")
 	if ok {
 		// Found the lowercase element.
-		element = ast.Element().MakeWithLowercase(lowercase)
+		element = ast.Element().Make(lowercase)
 		return element, token, true
 	}
 
@@ -379,7 +379,7 @@ func (v *parser_) parseElement() (
 	literal, token, ok = v.parseToken(LiteralToken, "")
 	if ok {
 		// Found the literal element.
-		element = ast.Element().MakeWithLiteral(literal)
+		element = ast.Element().Make(literal)
 		return element, token, true
 	}
 
@@ -397,7 +397,7 @@ func (v *parser_) parseExpression() (
 	inlined, token, ok = v.parseInlined()
 	if ok {
 		// Found the in-line expression.
-		expression = ast.Expression().MakeWithInlined(inlined)
+		expression = ast.Expression().Make(inlined)
 		return expression, token, true
 	}
 
@@ -406,7 +406,7 @@ func (v *parser_) parseExpression() (
 	multilined, token, ok = v.parseMultilined()
 	if ok {
 		// Found the multi-line expression.
-		expression = ast.Expression().MakeWithMultilined(multilined)
+		expression = ast.Expression().Make(multilined)
 		return expression, token, true
 	}
 
@@ -438,7 +438,7 @@ func (v *parser_) parseExtent() (
 	}
 
 	// Found the extent rune.
-	extent = ast.Extent().MakeWithRune(rune_)
+	extent = ast.Extent().Make(rune_)
 	return extent, token, true
 }
 
@@ -460,7 +460,7 @@ func (v *parser_) parseFactor() (
 	cardinality, token, _ = v.parseCardinality()
 
 	// Found the factor.
-	factor = ast.Factor().MakeWithAttributes(predicate, cardinality)
+	factor = ast.Factor().Make(predicate, cardinality)
 	return factor, token, true
 }
 
@@ -510,7 +510,7 @@ func (v *parser_) parseFiltered() (
 	}
 
 	// Found the filtered element.
-	filtered = ast.Filtered().MakeWithAttributes(negation, characters)
+	filtered = ast.Filtered().Make(negation, characters)
 	return filtered, token, true
 }
 
@@ -553,7 +553,7 @@ func (v *parser_) parseGrouped() (
 	}
 
 	// Found the grouped.
-	grouped = ast.Grouped().MakeWithPattern(pattern)
+	grouped = ast.Grouped().Make(pattern)
 	return grouped, token, true
 }
 
@@ -580,7 +580,7 @@ func (v *parser_) parseHeader() (
 	}
 
 	// Found the header.
-	header = ast.Header().MakeWithComment(comment)
+	header = ast.Header().Make(comment)
 	return header, token, true
 }
 
@@ -593,7 +593,7 @@ func (v *parser_) parseIdentifier() (
 	var lowercase string
 	lowercase, token, ok = v.parseToken(LowercaseToken, "")
 	if ok {
-		identifier = ast.Identifier().MakeWithLowercase(lowercase)
+		identifier = ast.Identifier().Make(lowercase)
 		return identifier, token, true
 	}
 
@@ -601,7 +601,7 @@ func (v *parser_) parseIdentifier() (
 	var uppercase string
 	uppercase, token, ok = v.parseToken(UppercaseToken, "")
 	if ok {
-		identifier = ast.Identifier().MakeWithUppercase(uppercase)
+		identifier = ast.Identifier().Make(uppercase)
 		return identifier, token, true
 	}
 
@@ -623,7 +623,7 @@ func (v *parser_) parseInitial() (
 	}
 
 	// Found the initial rune.
-	initial = ast.Initial().MakeWithRune(rune_)
+	initial = ast.Initial().Make(rune_)
 	return initial, token, true
 }
 
@@ -651,7 +651,7 @@ func (v *parser_) parseInlined() (
 	note, token, _ = v.parseToken(NoteToken, "")
 
 	// Found the in-line expression.
-	inlined = ast.Inlined().MakeWithAttributes(factors, note)
+	inlined = ast.Inlined().Make(factors, note)
 	return inlined, token, true
 }
 
@@ -718,7 +718,7 @@ func (v *parser_) parseLexigram() (
 	}
 
 	// Found the lexigram.
-	lexigram = ast.Lexigram().MakeWithAttributes(comment, lowercase, pattern, note)
+	lexigram = ast.Lexigram().Make(comment, lowercase, pattern, note)
 	return lexigram, token, true
 }
 
@@ -749,7 +749,7 @@ func (v *parser_) parseLine() (
 	note, token, _ = v.parseToken(NoteToken, "")
 
 	// Found the line.
-	line = ast.Line().MakeWithAttributes(identifier, note)
+	line = ast.Line().Make(identifier, note)
 	return line, token, true
 }
 
@@ -770,7 +770,7 @@ func (v *parser_) parseMaximum() (
 	number, token, _ = v.parseToken(NumberToken, "")
 
 	// Found the maximum number.
-	maximum = ast.Maximum().MakeWithNumber(number)
+	maximum = ast.Maximum().Make(number)
 	return maximum, token, true
 }
 
@@ -788,7 +788,7 @@ func (v *parser_) parseMinimum() (
 	}
 
 	// Found the minimum number.
-	minimum = ast.Minimum().MakeWithNumber(number)
+	minimum = ast.Minimum().Make(number)
 	return minimum, token, true
 }
 
@@ -823,7 +823,7 @@ func (v *parser_) parseMultilined() (
 	}
 
 	// Found the multi-line expression.
-	multilined = ast.Multilined().MakeWithLines(lines)
+	multilined = ast.Multilined().Make(lines)
 	return multilined, token, true
 }
 
@@ -845,7 +845,7 @@ func (v *parser_) parsePart() (
 	cardinality, token, _ = v.parseCardinality()
 
 	// Found the part.
-	part = ast.Part().MakeWithAttributes(element, cardinality)
+	part = ast.Part().Make(element, cardinality)
 	return part, token, true
 }
 
@@ -878,7 +878,7 @@ func (v *parser_) parsePattern() (
 	}
 
 	// Found the pattern.
-	pattern = ast.Pattern().MakeWithAttributes(parts, alternatives)
+	pattern = ast.Pattern().Make(parts, alternatives)
 	return pattern, token, true
 }
 
@@ -891,7 +891,7 @@ func (v *parser_) parsePredicate() (
 	var lowercase string
 	lowercase, token, ok = v.parseToken(LowercaseToken, "")
 	if ok {
-		predicate = ast.Predicate().MakeWithLowercase(lowercase)
+		predicate = ast.Predicate().Make(lowercase)
 		return predicate, token, true
 	}
 
@@ -899,7 +899,7 @@ func (v *parser_) parsePredicate() (
 	var uppercase string
 	uppercase, token, ok = v.parseToken(UppercaseToken, "")
 	if ok {
-		predicate = ast.Predicate().MakeWithUppercase(uppercase)
+		predicate = ast.Predicate().Make(uppercase)
 		return predicate, token, true
 	}
 
@@ -907,7 +907,7 @@ func (v *parser_) parsePredicate() (
 	var intrinsic string
 	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
 	if ok {
-		predicate = ast.Predicate().MakeWithIntrinsic(intrinsic)
+		predicate = ast.Predicate().Make(intrinsic)
 		return predicate, token, true
 	}
 
@@ -915,7 +915,7 @@ func (v *parser_) parsePredicate() (
 	var literal string
 	literal, token, ok = v.parseToken(LiteralToken, "")
 	if ok {
-		predicate = ast.Predicate().MakeWithLiteral(literal)
+		predicate = ast.Predicate().Make(literal)
 		return predicate, token, true
 	}
 
@@ -982,7 +982,7 @@ func (v *parser_) parseRule() (
 	}
 
 	// Found the rule.
-	rule = ast.Rule().MakeWithAttributes(comment, uppercase, expression)
+	rule = ast.Rule().Make(comment, uppercase, expression)
 	return rule, token, true
 }
 
@@ -1062,7 +1062,7 @@ func (v *parser_) parseSyntax() (
 	}
 
 	// Found the syntax.
-	syntax = ast.Syntax().MakeWithAttributes(headers, rules, lexigrams)
+	syntax = ast.Syntax().Make(headers, rules, lexigrams)
 	return syntax, token, true
 }
 

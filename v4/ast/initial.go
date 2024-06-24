@@ -38,7 +38,7 @@ type initialClass_ struct {
 
 // Constructors
 
-func (c *initialClass_) MakeWithRune(rune_ string) InitialLike {
+func (c *initialClass_) Make(rune_ string) InitialLike {
 	return &initial_{
 		// Initialize instance attributes.
 		class_: c,

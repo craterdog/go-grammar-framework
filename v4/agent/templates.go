@@ -79,12 +79,8 @@ class constants, constructors and functions that must be supported by each
 concrete formatter-like class.
 */
 type FormatterClassLike interface {
-	// Constants
-	DefaultMaximum() uint
-
 	// Constructors
 	Make() FormatterLike
-	MakeWithMaximum(maximum uint) FormatterLike
 }
 
 /*
@@ -131,7 +127,7 @@ concrete token-like class.
 */
 type TokenClassLike interface {
 	// Constructors
-	MakeWithAttributes(
+	Make(
 		line int,
 		position int,
 		type_ TokenType,
@@ -346,7 +342,7 @@ type tokenClass_ struct {
 
 // Constructors
 
-func (c *tokenClass_) MakeWithAttributes(
+func (c *tokenClass_) Make(
 	line int,
 	position int,
 	type_ TokenType,
@@ -539,7 +535,7 @@ func (v *scanner_) emitToken(type_ TokenType) {
 	case "\v":
 		value = "<VTAB>"
 	}
-	var token = Token().MakeWithAttributes(v.line_, v.position_, type_, value)
+	var token = Token().Make(v.line_, v.position_, type_, value)
 	//fmt.Println(Scanner().FormatToken(token)) // Uncomment when debugging.
 	v.tokens_.AddValue(token) // This will block if the queue is full.
 }
@@ -882,30 +878,12 @@ type formatterClass_ struct {
 	defaultMaximum_ uint
 }
 
-// Constants
-
-func (c *formatterClass_) DefaultMaximum() uint {
-	return c.defaultMaximum_
-}
-
 // Constructors
 
 func (c *formatterClass_) Make() FormatterLike {
 	return &formatter_{
 		// Initialize the instance attributes.
 		class_:   c,
-		maximum_: c.defaultMaximum_,
-	}
-}
-
-func (c *formatterClass_) MakeWithMaximum(maximum uint) FormatterLike {
-	if maximum == 0 {
-		maximum = c.defaultMaximum_
-	}
-	return &formatter_{
-		// Initialize the instance attributes.
-		class_:   c,
-		maximum_: maximum,
 	}
 }
 
