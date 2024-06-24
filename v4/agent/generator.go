@@ -91,30 +91,6 @@ func (v *generator_) CreateSyntax(
 	return syntax
 }
 
-func (v *generator_) GenerateAST(
-	module string,
-	syntax ast.SyntaxLike,
-) mod.ModelLike {
-	// Create the AST class model template.
-	v.processSyntax(syntax)
-	var source = modelTemplate_ + astTemplate_
-	var notice = v.extractNotice(syntax)
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	source = sts.ReplaceAll(source, "<module>", module)
-	source = sts.ReplaceAll(source, "<package>", "ast")
-
-	// Parse the AST class model template.
-	var parser = mod.Parser()
-	var model = parser.ParseSource(source)
-
-	// Add additional definitions to the AST class model.
-	v.addModules(model)
-	v.addClasses(model)
-	v.addInstances(model)
-
-	return model
-}
-
 func (v *generator_) GenerateAgent(
 	module string,
 	syntax ast.SyntaxLike,
@@ -138,6 +114,30 @@ func (v *generator_) GenerateAgent(
 
 	// Add additional definitions to the class model.
 	v.addLexigrams(model)
+
+	return model
+}
+
+func (v *generator_) GenerateAST(
+	module string,
+	syntax ast.SyntaxLike,
+) mod.ModelLike {
+	// Create the AST class model template.
+	v.processSyntax(syntax)
+	var source = modelTemplate_ + astTemplate_
+	var notice = v.extractNotice(syntax)
+	source = sts.ReplaceAll(source, "<Notice>", notice)
+	source = sts.ReplaceAll(source, "<module>", module)
+	source = sts.ReplaceAll(source, "<package>", "ast")
+
+	// Parse the AST class model template.
+	var parser = mod.Parser()
+	var model = parser.ParseSource(source)
+
+	// Add additional definitions to the AST class model.
+	v.addModules(model)
+	v.addClasses(model)
+	v.addInstances(model)
 
 	return model
 }
@@ -219,12 +219,6 @@ func (v *generator_) addClasses(model mod.ModelLike) {
 	classes.AppendValues(v.classes_.GetValues(v.classes_.GetKeys()))
 }
 
-func (v *generator_) addModules(model mod.ModelLike) {
-	var modules = model.GetModules()
-	modules.RemoveAll() // Remove the dummy placeholder.
-	modules.AppendValues(v.modules_.GetValues(v.modules_.GetKeys()))
-}
-
 func (v *generator_) addInstances(model mod.ModelLike) {
 	var instances = model.GetInstances()
 	instances.RemoveAll() // Remove the dummy placeholder.
@@ -236,6 +230,12 @@ func (v *generator_) addLexigrams(model mod.ModelLike) {
 	var enumeration = types.GetValue(1).GetEnumeration()
 	var identifiers = enumeration.GetIdentifiers()
 	identifiers.AppendValues(v.lexigrams_)
+}
+
+func (v *generator_) addModules(model mod.ModelLike) {
+	var modules = model.GetModules()
+	modules.RemoveAll() // Remove the dummy placeholder.
+	modules.AppendValues(v.modules_.GetValues(v.modules_.GetKeys()))
 }
 
 func (v *generator_) consolidateAttributes(
@@ -300,10 +300,27 @@ func (v *generator_) expandCopyright(copyright string) string {
 	return copyright
 }
 
-func (v *generator_) extractSyntaxName(syntax ast.SyntaxLike) string {
-	var rule = syntax.GetRules().GetValue(1)
-	var name = rule.GetUppercase()
-	return name
+func (v *generator_) extractAttribute(name string) mod.AttributeLike {
+	var abstraction mod.AbstractionLike
+	switch {
+	case !Scanner().MatchToken(UppercaseToken, name).IsEmpty():
+		abstraction = mod.Abstraction(name + "Like")
+	case !Scanner().MatchToken(LowercaseToken, name).IsEmpty():
+		var tokenType = v.makeUppercase(name) + "Token"
+		v.lexigrams_.AddValue(tokenType)
+		abstraction = mod.Abstraction("string")
+	default:
+		var message = fmt.Sprintf(
+			"Found an invalid attribute name: %q",
+			name,
+		)
+		panic(message)
+	}
+	var attribute = mod.Attribute(
+		"Get"+v.makeUppercase(name),
+		abstraction,
+	)
+	return attribute
 }
 
 func (v *generator_) extractNotice(syntax ast.SyntaxLike) string {
@@ -336,6 +353,12 @@ func (v *generator_) extractParameters(
 		parameters.AppendValue(parameter)
 	}
 	return parameters
+}
+
+func (v *generator_) extractSyntaxName(syntax ast.SyntaxLike) string {
+	var rule = syntax.GetRules().GetValue(1)
+	var name = rule.GetUppercase()
+	return name
 }
 
 func (v *generator_) generateClass(
@@ -428,34 +451,6 @@ func (v *generator_) makeUppercase(identifier string) string {
 	return string(runes)
 }
 
-func (v *generator_) processLine(
-	name string,
-	line ast.LineLike,
-	constructors col.ListLike[mod.ConstructorLike],
-) {
-	// Extract the attribute.
-	var identifier = line.GetIdentifier()
-	var actual = identifier.GetAny().(string)
-	var attribute = v.extractAttribute(actual)
-
-	// Create the constructor.
-	var abstraction = mod.Abstraction(name + "Like")
-	var string_ = attribute.GetIdentifier()
-	string_ = sts.TrimPrefix(string_, "Get")
-	string_ = "MakeWith" + string_
-	var notation = cdc.Notation().Make()
-	var attributes = col.List[mod.AttributeLike](notation).MakeFromArray(
-		[]mod.AttributeLike{attribute},
-	)
-	var parameters = v.extractParameters(attributes)
-	var constructor = mod.Constructor(
-		string_,
-		parameters,
-		abstraction,
-	)
-	constructors.AppendValue(constructor)
-}
-
 func (v *generator_) processExpression(
 	name string,
 	expression ast.ExpressionLike,
@@ -480,6 +475,27 @@ func (v *generator_) processExpression(
 
 	// Return the method lists.
 	return constructors, attributes
+}
+
+func (v *generator_) processFactor(
+	name string,
+	factor ast.FactorLike,
+	attributes col.ListLike[mod.AttributeLike],
+) {
+	var predicate = factor.GetPredicate()
+	var actual = predicate.GetAny().(string)
+	switch {
+	case !Scanner().MatchToken(IntrinsicToken, actual).IsEmpty():
+		// NOTE: We must check for intrinsics first and ignore them.
+	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
+		// Ignore literals as well.
+	default:
+		var attribute = v.extractAttribute(actual)
+		if factor.GetCardinality() != nil {
+			attribute = v.makeList(attribute)
+		}
+		attributes.AppendValue(attribute)
+	}
 }
 
 func (v *generator_) processInlined(
@@ -521,6 +537,40 @@ func (v *generator_) processInlined(
 	constructors.AppendValue(constructor)
 }
 
+func (v *generator_) processLexigram(
+	lexigram ast.LexigramLike,
+) {
+	// Ignore lexigram definitions for now.
+}
+
+func (v *generator_) processLine(
+	name string,
+	line ast.LineLike,
+	constructors col.ListLike[mod.ConstructorLike],
+) {
+	// Extract the attribute.
+	var identifier = line.GetIdentifier()
+	var actual = identifier.GetAny().(string)
+	var attribute = v.extractAttribute(actual)
+
+	// Create the constructor.
+	var abstraction = mod.Abstraction(name + "Like")
+	var string_ = attribute.GetIdentifier()
+	string_ = sts.TrimPrefix(string_, "Get")
+	string_ = "MakeWith" + string_
+	var notation = cdc.Notation().Make()
+	var attributes = col.List[mod.AttributeLike](notation).MakeFromArray(
+		[]mod.AttributeLike{attribute},
+	)
+	var parameters = v.extractParameters(attributes)
+	var constructor = mod.Constructor(
+		string_,
+		parameters,
+		abstraction,
+	)
+	constructors.AppendValue(constructor)
+}
+
 func (v *generator_) processMultilined(
 	name string,
 	multilined ast.MultilinedLike,
@@ -539,50 +589,6 @@ func (v *generator_) processMultilined(
 		abstraction,
 	)
 	attributes.AppendValue(attribute)
-}
-
-func (v *generator_) extractAttribute(name string) mod.AttributeLike {
-	var abstraction mod.AbstractionLike
-	switch {
-	case !Scanner().MatchToken(UppercaseToken, name).IsEmpty():
-		abstraction = mod.Abstraction(name + "Like")
-	case !Scanner().MatchToken(LowercaseToken, name).IsEmpty():
-		var tokenType = v.makeUppercase(name) + "Token"
-		v.lexigrams_.AddValue(tokenType)
-		abstraction = mod.Abstraction("string")
-	default:
-		var message = fmt.Sprintf(
-			"Found an invalid attribute name: %q",
-			name,
-		)
-		panic(message)
-	}
-	var attribute = mod.Attribute(
-		"Get"+v.makeUppercase(name),
-		abstraction,
-	)
-	return attribute
-}
-
-func (v *generator_) processFactor(
-	name string,
-	factor ast.FactorLike,
-	attributes col.ListLike[mod.AttributeLike],
-) {
-	var predicate = factor.GetPredicate()
-	var actual = predicate.GetAny().(string)
-	switch {
-	case !Scanner().MatchToken(IntrinsicToken, actual).IsEmpty():
-		// NOTE: We must check for intrinsics first and ignore them.
-	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
-		// Ignore literals as well.
-	default:
-		var attribute = v.extractAttribute(actual)
-		if factor.GetCardinality() != nil {
-			attribute = v.makeList(attribute)
-		}
-		attributes.AppendValue(attribute)
-	}
 }
 
 func (v *generator_) processRule(rule ast.RuleLike) {
@@ -627,12 +633,6 @@ func (v *generator_) processSyntax(syntax ast.SyntaxLike) {
 		var lexigram = lexigramIterator.GetNext()
 		v.processLexigram(lexigram)
 	}
-}
-
-func (v *generator_) processLexigram(
-	lexigram ast.LexigramLike,
-) {
-	// Ignore lexigram definitions for now.
 }
 
 var reserved_ = map[string]bool{

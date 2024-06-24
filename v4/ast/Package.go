@@ -60,17 +60,6 @@ type BoundedClassLike interface {
 }
 
 /*
-CharacterClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete character-like class.
-*/
-type CharacterClassLike interface {
-	// Constructors
-	MakeWithBounded(bounded BoundedLike) CharacterLike
-	MakeWithIntrinsic(intrinsic string) CharacterLike
-}
-
-/*
 CardinalityClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete cardinality-like class.
@@ -79,6 +68,17 @@ type CardinalityClassLike interface {
 	// Constructors
 	MakeWithConstrained(constrained ConstrainedLike) CardinalityLike
 	MakeWithQuantified(quantified string) CardinalityLike
+}
+
+/*
+CharacterClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete character-like class.
+*/
+type CharacterClassLike interface {
+	// Constructors
+	MakeWithBounded(bounded BoundedLike) CharacterLike
+	MakeWithIntrinsic(intrinsic string) CharacterLike
 }
 
 /*
@@ -121,6 +121,16 @@ type ExpressionClassLike interface {
 }
 
 /*
+ExtentClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete extent-like class.
+*/
+type ExtentClassLike interface {
+	// Constructors
+	MakeWithRune(rune_ string) ExtentLike
+}
+
+/*
 FactorClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete factor-like class.
@@ -147,13 +157,13 @@ type FilteredClassLike interface {
 }
 
 /*
-InitialClassLike is a class interface that defines the complete set of
+GroupedClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
-concrete initial-like class.
+concrete grouped-like class.
 */
-type InitialClassLike interface {
+type GroupedClassLike interface {
 	// Constructors
-	MakeWithRune(rune_ string) InitialLike
+	MakeWithPattern(pattern PatternLike) GroupedLike
 }
 
 /*
@@ -178,6 +188,16 @@ type IdentifierClassLike interface {
 }
 
 /*
+InitialClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete initial-like class.
+*/
+type InitialClassLike interface {
+	// Constructors
+	MakeWithRune(rune_ string) InitialLike
+}
+
+/*
 InlinedClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete inlined-like class.
@@ -188,16 +208,6 @@ type InlinedClassLike interface {
 		factors col.ListLike[FactorLike],
 		note string,
 	) InlinedLike
-}
-
-/*
-ExtentClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete extent-like class.
-*/
-type ExtentClassLike interface {
-	// Constructors
-	MakeWithRune(rune_ string) ExtentLike
 }
 
 /*
@@ -285,16 +295,6 @@ type PatternClassLike interface {
 }
 
 /*
-GroupedClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete grouped-like class.
-*/
-type GroupedClassLike interface {
-	// Constructors
-	MakeWithPattern(pattern PatternLike) GroupedLike
-}
-
-/*
 PredicateClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete predicate-like class.
@@ -361,17 +361,6 @@ type BoundedLike interface {
 }
 
 /*
-CharacterLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete character-like class.
-*/
-type CharacterLike interface {
-	// Attributes
-	GetClass() CharacterClassLike
-	GetAny() any
-}
-
-/*
 CardinalityLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete cardinality-like class.
@@ -379,6 +368,17 @@ instance of a concrete cardinality-like class.
 type CardinalityLike interface {
 	// Attributes
 	GetClass() CardinalityClassLike
+	GetAny() any
+}
+
+/*
+CharacterLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete character-like class.
+*/
+type CharacterLike interface {
+	// Attributes
+	GetClass() CharacterClassLike
 	GetAny() any
 }
 
@@ -417,6 +417,17 @@ type ExpressionLike interface {
 }
 
 /*
+ExtentLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete extent-like class.
+*/
+type ExtentLike interface {
+	// Attributes
+	GetClass() ExtentClassLike
+	GetRune() string
+}
+
+/*
 FactorLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete factor-like class.
@@ -429,6 +440,17 @@ type FactorLike interface {
 }
 
 /*
+GroupedLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete grouped-like class.
+*/
+type GroupedLike interface {
+	// Attributes
+	GetClass() GroupedClassLike
+	GetPattern() PatternLike
+}
+
+/*
 FilteredLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete filtered-like class.
@@ -438,17 +460,6 @@ type FilteredLike interface {
 	GetClass() FilteredClassLike
 	GetNegation() string
 	GetCharacters() col.ListLike[CharacterLike]
-}
-
-/*
-InitialLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete initial-like class.
-*/
-type InitialLike interface {
-	// Attributes
-	GetClass() InitialClassLike
-	GetRune() string
 }
 
 /*
@@ -474,6 +485,17 @@ type IdentifierLike interface {
 }
 
 /*
+InitialLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete initial-like class.
+*/
+type InitialLike interface {
+	// Attributes
+	GetClass() InitialClassLike
+	GetRune() string
+}
+
+/*
 InlinedLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete inlined-like class.
@@ -483,17 +505,6 @@ type InlinedLike interface {
 	GetClass() InlinedClassLike
 	GetFactors() col.ListLike[FactorLike]
 	GetNote() string
-}
-
-/*
-ExtentLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete extent-like class.
-*/
-type ExtentLike interface {
-	// Attributes
-	GetClass() ExtentClassLike
-	GetRune() string
 }
 
 /*
@@ -577,17 +588,6 @@ type PatternLike interface {
 	GetClass() PatternClassLike
 	GetParts() col.ListLike[PartLike]
 	GetAlternatives() col.ListLike[AlternativeLike]
-}
-
-/*
-GroupedLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete grouped-like class.
-*/
-type GroupedLike interface {
-	// Attributes
-	GetClass() GroupedClassLike
-	GetPattern() PatternLike
 }
 
 /*

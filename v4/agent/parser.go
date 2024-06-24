@@ -414,6 +414,34 @@ func (v *parser_) parseExpression() (
 	return expression, token, false
 }
 
+func (v *parser_) parseExtent() (
+	extent ast.ExtentLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the dot-dot delimiter.
+	_, token, ok = v.parseToken(DelimiterToken, "..")
+	if !ok {
+		// This is not the extent rune.
+		return extent, token, false
+	}
+
+	// Attempt to parse the extent rune.
+	var rune_ string
+	rune_, token, ok = v.parseToken(RuneToken, "")
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateSyntax("rune",
+			"Extent",
+		)
+		panic(message)
+	}
+
+	// Found the extent rune.
+	extent = ast.Extent().MakeWithRune(rune_)
+	return extent, token, true
+}
+
 func (v *parser_) parseFactor() (
 	factor ast.FactorLike,
 	token TokenLike,
@@ -484,24 +512,6 @@ func (v *parser_) parseFiltered() (
 	// Found the filtered element.
 	filtered = ast.Filtered().MakeWithAttributes(negation, characters)
 	return filtered, token, true
-}
-
-func (v *parser_) parseInitial() (
-	initial ast.InitialLike,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse the initial rune.
-	var rune_ string
-	rune_, token, ok = v.parseToken(RuneToken, "")
-	if !ok {
-		// This is not the initial rune.
-		return initial, token, false
-	}
-
-	// Found the initial rune.
-	initial = ast.Initial().MakeWithRune(rune_)
-	return initial, token, true
 }
 
 func (v *parser_) parseGrouped() (
@@ -599,6 +609,24 @@ func (v *parser_) parseIdentifier() (
 	return identifier, token, false
 }
 
+func (v *parser_) parseInitial() (
+	initial ast.InitialLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the initial rune.
+	var rune_ string
+	rune_, token, ok = v.parseToken(RuneToken, "")
+	if !ok {
+		// This is not the initial rune.
+		return initial, token, false
+	}
+
+	// Found the initial rune.
+	initial = ast.Initial().MakeWithRune(rune_)
+	return initial, token, true
+}
+
 func (v *parser_) parseInlined() (
 	inlined ast.InlinedLike,
 	token TokenLike,
@@ -625,34 +653,6 @@ func (v *parser_) parseInlined() (
 	// Found the in-line expression.
 	inlined = ast.Inlined().MakeWithAttributes(factors, note)
 	return inlined, token, true
-}
-
-func (v *parser_) parseExtent() (
-	extent ast.ExtentLike,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse the dot-dot delimiter.
-	_, token, ok = v.parseToken(DelimiterToken, "..")
-	if !ok {
-		// This is not the extent rune.
-		return extent, token, false
-	}
-
-	// Attempt to parse the extent rune.
-	var rune_ string
-	rune_, token, ok = v.parseToken(RuneToken, "")
-	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("rune",
-			"Extent",
-		)
-		panic(message)
-	}
-
-	// Found the extent rune.
-	extent = ast.Extent().MakeWithRune(rune_)
-	return extent, token, true
 }
 
 func (v *parser_) parseLexigram() (

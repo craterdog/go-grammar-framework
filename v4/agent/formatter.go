@@ -110,17 +110,6 @@ func (v *formatter_) formatBounded(bounded ast.BoundedLike) {
 	}
 }
 
-func (v *formatter_) formatCharacter(character ast.CharacterLike) {
-	switch actual := character.GetAny().(type) {
-	case ast.BoundedLike:
-		v.formatBounded(actual)
-	case string:
-		v.appendString(actual)
-	default:
-		panic("Attempted to format an empty character.")
-	}
-}
-
 func (v *formatter_) formatCardinality(cardinality ast.CardinalityLike) {
 	switch actual := cardinality.GetAny().(type) {
 	case ast.ConstrainedLike:
@@ -129,6 +118,17 @@ func (v *formatter_) formatCardinality(cardinality ast.CardinalityLike) {
 		v.appendString(actual)
 	default:
 		panic("Attempted to format an empty cardinality.")
+	}
+}
+
+func (v *formatter_) formatCharacter(character ast.CharacterLike) {
+	switch actual := character.GetAny().(type) {
+	case ast.BoundedLike:
+		v.formatBounded(actual)
+	case string:
+		v.appendString(actual)
+	default:
+		panic("Attempted to format an empty character.")
 	}
 }
 
@@ -169,6 +169,12 @@ func (v *formatter_) formatExpression(expression ast.ExpressionLike) {
 	}
 }
 
+func (v *formatter_) formatExtent(extent ast.ExtentLike) {
+	v.appendString("..")
+	var rune_ = extent.GetRune()
+	v.appendString(rune_)
+}
+
 func (v *formatter_) formatFactor(factor ast.FactorLike) {
 	var predicate = factor.GetPredicate()
 	v.formatPredicate(predicate)
@@ -195,11 +201,6 @@ func (v *formatter_) formatFiltered(filtered ast.FilteredLike) {
 	v.appendString("]")
 }
 
-func (v *formatter_) formatInitial(initial ast.InitialLike) {
-	var rune_ = initial.GetRune()
-	v.appendString(rune_)
-}
-
 func (v *formatter_) formatGrouped(grouped ast.GroupedLike) {
 	v.appendString("(")
 	var pattern = grouped.GetPattern()
@@ -222,6 +223,11 @@ func (v *formatter_) formatIdentifier(identifier ast.IdentifierLike) {
 	}
 }
 
+func (v *formatter_) formatInitial(initial ast.InitialLike) {
+	var rune_ = initial.GetRune()
+	v.appendString(rune_)
+}
+
 func (v *formatter_) formatInlined(inlined ast.InlinedLike) {
 	var iterator = inlined.GetFactors().GetIterator()
 	for iterator.HasNext() {
@@ -234,12 +240,6 @@ func (v *formatter_) formatInlined(inlined ast.InlinedLike) {
 		v.appendString("  ")
 		v.appendString(note)
 	}
-}
-
-func (v *formatter_) formatExtent(extent ast.ExtentLike) {
-	v.appendString("..")
-	var rune_ = extent.GetRune()
-	v.appendString(rune_)
 }
 
 func (v *formatter_) formatLexigram(lexigram ast.LexigramLike) {

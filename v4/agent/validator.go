@@ -273,6 +273,17 @@ func (v *validator_) validateExpression(
 	}
 }
 
+func (v *validator_) validateExtent(
+	name string,
+	extent ast.ExtentLike,
+) {
+	// Validate the rune.
+	var rune_ = extent.GetRune()
+	if len(rune_) > 0 {
+		v.validateToken(name, RuneToken, rune_)
+	}
+}
+
 func (v *validator_) validateFactor(
 	name string,
 	factor ast.FactorLike,
@@ -319,22 +330,6 @@ func (v *validator_) validateFiltered(
 		var character = iterator.GetNext()
 		v.validateCharacter(name, character)
 	}
-}
-
-func (v *validator_) validateInitial(
-	name string,
-	initial ast.InitialLike,
-) {
-	// Validate the rune.
-	var rune_ = initial.GetRune()
-	if len(rune_) == 0 {
-		var message = v.formatError(
-			name,
-			"A initial must have a rune.",
-		)
-		panic(message)
-	}
-	v.validateToken(name, RuneToken, rune_)
 }
 
 func (v *validator_) validateGrouped(
@@ -387,6 +382,22 @@ func (v *validator_) validateIdentifier(
 	}
 }
 
+func (v *validator_) validateInitial(
+	name string,
+	initial ast.InitialLike,
+) {
+	// Validate the rune.
+	var rune_ = initial.GetRune()
+	if len(rune_) == 0 {
+		var message = v.formatError(
+			name,
+			"A initial must have a rune.",
+		)
+		panic(message)
+	}
+	v.validateToken(name, RuneToken, rune_)
+}
+
 func (v *validator_) validateInlined(
 	name string,
 	inlined ast.InlinedLike,
@@ -410,17 +421,6 @@ func (v *validator_) validateInlined(
 	var note = inlined.GetNote()
 	if len(note) > 0 {
 		v.validateToken(name, NoteToken, note)
-	}
-}
-
-func (v *validator_) validateExtent(
-	name string,
-	extent ast.ExtentLike,
-) {
-	// Validate the rune.
-	var rune_ = extent.GetRune()
-	if len(rune_) > 0 {
-		v.validateToken(name, RuneToken, rune_)
 	}
 }
 
