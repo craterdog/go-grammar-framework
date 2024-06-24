@@ -62,6 +62,7 @@ Expression:
     Inlined
     Multilined
 
+
 Inlined: Factor+ note?
 
 Multilined: Line+ EOL
@@ -72,6 +73,7 @@ Identifier:
     lowercase
     uppercase
 
+
 Factor: Predicate Cardinality?  ! The default cardinality is one.
 
 Predicate:
@@ -80,9 +82,11 @@ Predicate:
     intrinsic
     literal
 
+
 Cardinality:
     Constrained
     quantified
+
 
 Constrained: "{" Minimum Maximum? "}"  ! The range of numbers is inclusive.
 
@@ -104,6 +108,7 @@ Element:
     lowercase
     literal
 
+
 Alternative: "|" Part+
 
 Grouped: "(" Pattern ")"
@@ -113,6 +118,7 @@ Filtered: negation? "[" Character+ "]"
 Character:
     Bounded
     intrinsic
+
 
 Bounded: Initial Extent?  ! The range of runes is inclusive.
 
@@ -133,15 +139,15 @@ ignored.
 <!
 comment: "!>" EOL ANY* EOL "<!" EOL  ! Chooses the shortest possible match.
 
-delimiter: ":" | "|" | "(" | ")" | "[" | "]" | "{" | "}" | ".."
+delimiter: ":"  | "|"  | "("  | ")"  | "["  | "]"  | "{"  | "}"  | ".."
 
-intrinsic: "ANY" | "LOWER" | "UPPER" | "DIGIT" | "ESCAPE" | "CONTROL" | "EOL" | "EOF"
+intrinsic: "ANY"  | "LOWER"  | "UPPER"  | "DIGIT"  | "ESCAPE"  | "CONTROL"  | "EOL"  | "EOF"
 
 letter: [LOWER UPPER]
 
-literal: '"' (ESCAPE | ~['"' CONTROL])+ '"'
+literal: '"' (ESCAPE  | ~['"' CONTROL])+ '"'
 
-lowercase: LOWER (letter | DIGIT)*
+lowercase: LOWER (letter  | DIGIT)*
 
 negation: "~"
 
@@ -149,9 +155,9 @@ note: "! " ~[CONTROL]*
 
 number: DIGIT+
 
-quantified: "?" | "*" | "+"
+quantified: "?"  | "*"  | "+"
 
 rune: "'" ~[CONTROL] "'"  ! Any printable unicode character.
 
-uppercase: UPPER (letter | DIGIT)*
+uppercase: UPPER (letter  | DIGIT)*
 

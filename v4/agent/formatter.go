@@ -92,7 +92,7 @@ func (v *formatter_) appendString(s string) {
 }
 
 func (v *formatter_) formatAlternative(alternative ast.AlternativeLike) {
-	v.appendString(" |")
+	v.appendString("|")
 	var iterator = alternative.GetParts().GetIterator()
 	for iterator.HasNext() {
 		var part = iterator.GetNext()
@@ -293,7 +293,6 @@ func (v *formatter_) formatMultilined(multilined ast.MultilinedLike) {
 		v.formatLine(line)
 	}
 	v.depth_--
-	v.appendNewline()
 }
 
 func (v *formatter_) formatPart(part ast.PartLike) {
