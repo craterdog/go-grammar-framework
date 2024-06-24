@@ -363,7 +363,7 @@ func (v *generator_) extractSyntaxName(syntax ast.SyntaxLike) string {
 
 func (v *generator_) generateClass(
 	name string,
-	constructors col.ListLike[mod.ConstructorLike],
+	constructor mod.ConstructorLike,
 ) mod.ClassLike {
 	var comment = sts.ReplaceAll(classCommentTemplate_, "<Class>", name)
 	comment = sts.ReplaceAll(comment, "<class>", sts.ToLower(name))
@@ -371,6 +371,9 @@ func (v *generator_) generateClass(
 		comment,
 		name+"ClassLike",
 	)
+	var notation = cdc.Notation().Make()
+	var constructors = col.List[mod.ConstructorLike](notation).Make()
+	constructors.AppendValue(constructor)
 	var class = mod.Class(
 		declaration,
 		constructors,
@@ -455,26 +458,32 @@ func (v *generator_) processExpression(
 	name string,
 	expression ast.ExpressionLike,
 ) (
-	constructors col.ListLike[mod.ConstructorLike],
+	constructor mod.ConstructorLike,
 	attributes col.ListLike[mod.AttributeLike],
 ) {
-	// Create the method lists.
+	// Extract the attributes.
 	var notation = cdc.Notation().Make()
-	constructors = col.List[mod.ConstructorLike](notation).Make()
 	attributes = col.List[mod.AttributeLike](notation).Make()
-
-	// Process the expression.
 	switch actual := expression.GetAny().(type) {
 	case ast.InlinedLike:
-		v.processInlined(name, actual, constructors, attributes)
+		v.processInlined(name, actual, attributes)
 	case ast.MultilinedLike:
-		v.processMultilined(name, actual, constructors, attributes)
+		v.processMultilined(name, actual, attributes)
 	default:
 		panic("Found an empty expression.")
 	}
 
-	// Return the method lists.
-	return constructors, attributes
+	// Create the constructor.
+	var abstraction = mod.Abstraction(name + "Like")
+	var identifier = "Make"
+	var parameters = v.extractParameters(attributes)
+	constructor = mod.Constructor(
+		identifier,
+		parameters,
+		abstraction,
+	)
+
+	return constructor, attributes
 }
 
 func (v *generator_) processFactor(
@@ -512,7 +521,6 @@ func (v *generator_) processFactor(
 func (v *generator_) processInlined(
 	name string,
 	inlined ast.InlinedLike,
-	constructors col.ListLike[mod.ConstructorLike],
 	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Extract the attributes.
@@ -522,25 +530,6 @@ func (v *generator_) processInlined(
 		v.processFactor(name, factor, attributes)
 	}
 	v.consolidateAttributes(attributes)
-
-	// Create the constructor.
-	var constructor mod.ConstructorLike
-	var abstraction = mod.Abstraction(name + "Like")
-	if !attributes.IsEmpty() {
-		var identifier = "Make"
-		var parameters = v.extractParameters(attributes)
-		constructor = mod.Constructor(
-			identifier,
-			parameters,
-			abstraction,
-		)
-	} else {
-		constructor = mod.Constructor(
-			"Make",
-			abstraction,
-		)
-	}
-	constructors.AppendValue(constructor)
 }
 
 func (v *generator_) processLexigram(
@@ -549,46 +538,11 @@ func (v *generator_) processLexigram(
 	// Ignore lexigram definitions for now.
 }
 
-func (v *generator_) processLine(
-	name string,
-	line ast.LineLike,
-	constructors col.ListLike[mod.ConstructorLike],
-) {
-	// Extract the attribute.
-	var identifier = line.GetIdentifier()
-	var actual = identifier.GetAny().(string)
-	var attribute = v.extractAttribute(actual)
-
-	// Create the constructor.
-	var abstraction = mod.Abstraction(name + "Like")
-	var string_ = attribute.GetIdentifier()
-	string_ = sts.TrimPrefix(string_, "Get")
-	string_ = "MakeFrom" + string_
-	var notation = cdc.Notation().Make()
-	var attributes = col.List[mod.AttributeLike](notation).MakeFromArray(
-		[]mod.AttributeLike{attribute},
-	)
-	var parameters = v.extractParameters(attributes)
-	var constructor = mod.Constructor(
-		string_,
-		parameters,
-		abstraction,
-	)
-	constructors.AppendValue(constructor)
-}
-
 func (v *generator_) processMultilined(
 	name string,
 	multilined ast.MultilinedLike,
-	constructors col.ListLike[mod.ConstructorLike],
 	attributes col.ListLike[mod.AttributeLike],
 ) {
-	// Extract the constructors and attributes.
-	var iterator = multilined.GetLines().GetIterator()
-	for iterator.HasNext() {
-		var line = iterator.GetNext()
-		v.processLine(name, line, constructors)
-	}
 	var abstraction = mod.Abstraction("any")
 	var attribute = mod.Attribute(
 		"GetAny",
@@ -601,10 +555,10 @@ func (v *generator_) processRule(rule ast.RuleLike) {
 	// Process the expression.
 	var name = rule.GetUppercase()
 	var expression = rule.GetExpression()
-	var constructors, attributes = v.processExpression(name, expression)
+	var constructor, attributes = v.processExpression(name, expression)
 
 	// Create the class interface.
-	var class = v.generateClass(name, constructors)
+	var class = v.generateClass(name, constructor)
 	v.classes_.SetValue(name, class)
 
 	// Create the instance interface.
