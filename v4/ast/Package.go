@@ -440,17 +440,6 @@ type FactorLike interface {
 }
 
 /*
-GroupedLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete grouped-like class.
-*/
-type GroupedLike interface {
-	// Attributes
-	GetClass() GroupedClassLike
-	GetPattern() PatternLike
-}
-
-/*
 FilteredLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete filtered-like class.
@@ -460,6 +449,17 @@ type FilteredLike interface {
 	GetClass() FilteredClassLike
 	GetNegation() string
 	GetCharacters() col.ListLike[CharacterLike]
+}
+
+/*
+GroupedLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete grouped-like class.
+*/
+type GroupedLike interface {
+	// Attributes
+	GetClass() GroupedClassLike
+	GetPattern() PatternLike
 }
 
 /*
