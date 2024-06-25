@@ -28,7 +28,7 @@ import (
 // Reference
 
 var generatorClass = &generatorClass_{
-	// Initialize class constants.
+	// Initialize the class constants.
 }
 
 // Function
@@ -42,14 +42,14 @@ func Generator() GeneratorClassLike {
 // Target
 
 type generatorClass_ struct {
-	// Define class constants.
+	// Define the class constants.
 }
 
 // Constructors
 
 func (c *generatorClass_) Make() GeneratorLike {
 	return &generator_{
-		// Initialize instance attributes.
+		// Initialize the instance attributes.
 		class_: c,
 	}
 }
@@ -59,7 +59,7 @@ func (c *generatorClass_) Make() GeneratorLike {
 // Target
 
 type generator_ struct {
-	// Define instance attributes.
+	// Define the instance attributes.
 	class_     GeneratorClassLike
 	lexigrams_ col.SetLike[string]
 	modules_   col.CatalogLike[string, mod.ModuleLike]
