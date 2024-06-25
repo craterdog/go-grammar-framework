@@ -652,7 +652,7 @@ func (v *validator_) validateRule(
 	if rules.GetValue(uppercase) != nil {
 		var message = v.formatError(
 			name,
-			"The rule is defined more than once.",
+			fmt.Sprintf("The rule %q is defined more than once.", uppercase),
 		)
 		panic(message)
 	}
