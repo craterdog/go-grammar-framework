@@ -538,9 +538,6 @@ func (v *parser_) parseGrouped() (
 		panic(message)
 	}
 
-	// Attempt to parse the optional end-of-line character.
-	_, _, _ = v.parseToken(EOLToken, "")
-
 	// Attempt to parse the closing delimiter for the grouped.
 	_, token, ok = v.parseToken(DelimiterToken, ")")
 	if !ok {
@@ -809,17 +806,6 @@ func (v *parser_) parseMultilined() (
 	for ok {
 		lines.AppendValue(line)
 		line, _, ok = v.parseLine()
-	}
-
-	// Attempt to parse the end-of-line character.
-	_, token, ok = v.parseToken(EOLToken, "")
-	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("EOL",
-			"Multilined",
-			"Line",
-		)
-		panic(message)
 	}
 
 	// Found the multi-line expression.
@@ -1099,7 +1085,7 @@ var syntax = map[string]string{
     "Inlined
     "Multilined`,
 	"Inlined":    `Factor+ note?`,
-	"Multilined": `Line+ EOL`,
+	"Multilined": `Line+`,
 	"Line":       `EOL Identifier note?`,
 	"Identifier": `,
 	"lowercase

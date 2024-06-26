@@ -64,7 +64,7 @@ Expression:
 
 Inlined: Factor+ note?
 
-Multilined: Line+ EOL
+Multilined: Line+
 
 Line: EOL Identifier note?
 
