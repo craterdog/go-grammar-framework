@@ -14,7 +14,7 @@ package agent
 
 import (
 	fmt "fmt"
-	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	fwk "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 )
@@ -69,8 +69,8 @@ func (v *validator_) GetClass() ValidatorClassLike {
 
 func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
 	// Initialize the state.
-	var name = syntax.GetRules().GetValue(1).GetUppercase()
-	var notation = cdc.Notation().Make()
+	var name = syntax.GetRules().GetIterator().GetNext().GetUppercase()
+	var notation = fwk.CDCN()
 	var rules = col.Catalog[string, ast.ExpressionLike](notation).Make()
 	var lexigrams = col.Catalog[string, ast.PatternLike](notation).Make()
 
@@ -83,7 +83,7 @@ func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
 		var association = ruleIterator.GetNext()
 		var rule = association.GetKey()
 		var expression = association.GetValue()
-		if expression == nil {
+		if fwk.IsUndefined(expression) {
 			var message = fmt.Sprintf(
 				"The syntax is missing a definition for the rule: %v\n",
 				rule,
@@ -98,7 +98,7 @@ func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
 		var association = lexigramIterator.GetNext()
 		var lexigram = association.GetKey()
 		var expression = association.GetValue()
-		if expression == nil {
+		if fwk.IsUndefined(expression) {
 			var message = fmt.Sprintf(
 				"The syntax is missing a definition for the lexigram: %v\n",
 				lexigram,
@@ -130,7 +130,7 @@ func (v *validator_) validateAlternative(
 ) {
 	// Validate the parts.
 	var parts = alternative.GetParts()
-	if parts == nil || parts.IsEmpty() {
+	if parts.IsEmpty() {
 		var message = v.formatError(
 			name,
 			"Each alternative must have at least one part.",
@@ -150,18 +150,11 @@ func (v *validator_) validateBounded(
 ) {
 	// Validate the initial rune.
 	var initial = bounded.GetInitial()
-	if initial == nil {
-		var message = v.formatError(
-			name,
-			"A bounded must have an initial rune.",
-		)
-		panic(message)
-	}
 	v.validateInitial(name, initial)
 
 	// Validate the optional extent rune.
-	var extent = bounded.GetExtent()
-	if extent != nil {
+	var extent = bounded.GetOptionalExtent()
+	if fwk.IsDefined(extent) {
 		v.validateExtent(name, extent)
 		if initial.GetRune() > extent.GetRune() {
 			var message = v.formatError(
@@ -217,18 +210,11 @@ func (v *validator_) validateConstrained(
 ) {
 	// Validate the minimum value.
 	var minimum = constrained.GetMinimum()
-	if minimum == nil {
-		var message = v.formatError(
-			name,
-			"A constrained must have a minimum value.",
-		)
-		panic(message)
-	}
 	v.validateMinimum(name, minimum)
 
 	// Validate the optional maximum value.
-	var maximum = constrained.GetMaximum()
-	if maximum != nil {
+	var maximum = constrained.GetOptionalMaximum()
+	if fwk.IsDefined(maximum) {
 		v.validateMaximum(name, maximum)
 	}
 }
@@ -279,9 +265,7 @@ func (v *validator_) validateExtent(
 ) {
 	// Validate the rune.
 	var rune_ = extent.GetRune()
-	if len(rune_) > 0 {
-		v.validateToken(name, RuneToken, rune_)
-	}
+	v.validateToken(name, RuneToken, rune_)
 }
 
 func (v *validator_) validateFactor(
@@ -290,18 +274,11 @@ func (v *validator_) validateFactor(
 ) {
 	// Validate the predicate.
 	var predicate = factor.GetPredicate()
-	if predicate == nil {
-		var message = v.formatError(
-			name,
-			"A factor must contain a predicate.",
-		)
-		panic(message)
-	}
 	v.validatePredicate(name, predicate)
 
 	// Validate the optional cardinality.
-	var cardinality = factor.GetCardinality()
-	if cardinality != nil {
+	var cardinality = factor.GetOptionalCardinality()
+	if fwk.IsDefined(cardinality) {
 		v.validateCardinality(name, cardinality)
 	}
 }
@@ -311,14 +288,14 @@ func (v *validator_) validateFiltered(
 	filtered ast.FilteredLike,
 ) {
 	// Validate the optional negation.
-	var negation = filtered.GetNegation()
-	if len(negation) > 0 {
+	var negation = filtered.GetOptionalNegation()
+	if fwk.IsDefined(negation) {
 		v.validateToken(name, NegationToken, negation)
 	}
 
 	// Validate the characters.
 	var characters = filtered.GetCharacters()
-	if characters == nil || characters.IsEmpty() {
+	if characters.IsEmpty() {
 		var message = v.formatError(
 			name,
 			"A filtered element must contain at least one character.",
@@ -338,13 +315,6 @@ func (v *validator_) validateGrouped(
 ) {
 	// Validate the pattern.
 	var pattern = grouped.GetPattern()
-	if grouped == nil {
-		var message = v.formatError(
-			name,
-			"A grouped element must contain a pattern.",
-		)
-		panic(message)
-	}
 	v.validatePattern(name, pattern)
 }
 
@@ -354,13 +324,6 @@ func (v *validator_) validateHeader(
 ) {
 	// Validate the comment.
 	var comment = header.GetComment()
-	if len(comment) == 0 {
-		var message = v.formatError(
-			name,
-			"A header must contain a comment.",
-		)
-		panic(message)
-	}
 	v.validateToken(name, CommentToken, comment)
 }
 
@@ -388,13 +351,6 @@ func (v *validator_) validateInitial(
 ) {
 	// Validate the rune.
 	var rune_ = initial.GetRune()
-	if len(rune_) == 0 {
-		var message = v.formatError(
-			name,
-			"A initial must have a rune.",
-		)
-		panic(message)
-	}
 	v.validateToken(name, RuneToken, rune_)
 }
 
@@ -404,7 +360,7 @@ func (v *validator_) validateInlined(
 ) {
 	// Validate the factors.
 	var factors = inlined.GetFactors()
-	if factors == nil || factors.IsEmpty() {
+	if factors.IsEmpty() {
 		var message = v.formatError(
 			name,
 			"Each inlined expression must have at least one factor.",
@@ -418,8 +374,8 @@ func (v *validator_) validateInlined(
 	}
 
 	// Validate the optional note.
-	var note = inlined.GetNote()
-	if len(note) > 0 {
+	var note = inlined.GetOptionalNote()
+	if fwk.IsDefined(note) {
 		v.validateToken(name, NoteToken, note)
 	}
 }
@@ -430,35 +386,22 @@ func (v *validator_) validateLexigram(
 	lexigrams col.CatalogLike[string, ast.PatternLike],
 ) {
 	// Validate the optional comment.
-	var comment = lexigram.GetComment()
-	if len(comment) > 0 {
+	var comment = lexigram.GetOptionalComment()
+	if fwk.IsDefined(comment) {
 		v.validateToken(name, CommentToken, comment)
 	}
 
 	// Validate the lowercase identifier.
 	var lowercase = lexigram.GetLowercase()
-	if len(lowercase) == 0 {
-		var message = v.formatError(
-			name,
-			"A lexigram must contain a lowercase identifier.",
-		)
-		panic(message)
-	}
 	v.validateToken(name, LowercaseToken, lowercase)
 
 	// Validate the pattern.
 	var pattern = lexigram.GetPattern()
-	if pattern == nil {
-		var message = v.formatError(
-			name,
-			"A lexigram must contain a pattern.",
-		)
-		panic(message)
-	}
 	v.validatePattern(name, pattern)
 
 	// Check for duplicate lexigram definitions.
-	if lexigrams.GetValue(lowercase) != nil {
+	var duplicate = lexigrams.GetValue(lowercase)
+	if fwk.IsDefined(duplicate) {
 		var message = v.formatError(
 			name,
 			"The lexigram is defined more than once.",
@@ -468,8 +411,8 @@ func (v *validator_) validateLexigram(
 	lexigrams.SetValue(lowercase, pattern)
 
 	// Validate the optional note.
-	var note = lexigram.GetNote()
-	if len(note) > 0 {
+	var note = lexigram.GetOptionalNote()
+	if fwk.IsDefined(note) {
 		v.validateToken(name, NoteToken, note)
 	}
 }
@@ -480,18 +423,11 @@ func (v *validator_) validateLine(
 ) {
 	// Validate the identifier.
 	var identifier = line.GetIdentifier()
-	if identifier == nil {
-		var message = v.formatError(
-			name,
-			"An line must have an identifier.",
-		)
-		panic(message)
-	}
 	v.validateIdentifier(name, identifier)
 
 	// Validate the optional note.
-	var note = line.GetNote()
-	if len(note) > 0 {
+	var note = line.GetOptionalNote()
+	if fwk.IsDefined(note) {
 		v.validateToken(name, NoteToken, note)
 	}
 }
@@ -500,9 +436,9 @@ func (v *validator_) validateMaximum(
 	name string,
 	maximum ast.MaximumLike,
 ) {
-	// Validate the number.
-	var number = maximum.GetNumber()
-	if len(number) > 0 {
+	// Validate the optional number.
+	var number = maximum.GetOptionalNumber()
+	if fwk.IsDefined(number) {
 		v.validateToken(name, NumberToken, number)
 	}
 }
@@ -513,13 +449,6 @@ func (v *validator_) validateMinimum(
 ) {
 	// Validate the number.
 	var number = minimum.GetNumber()
-	if len(number) == 0 {
-		var message = v.formatError(
-			name,
-			"A minimum must have a number.",
-		)
-		panic(message)
-	}
 	v.validateToken(name, NumberToken, number)
 }
 
@@ -529,7 +458,7 @@ func (v *validator_) validateMultilined(
 ) {
 	// Validate the lines.
 	var lines = multilined.GetLines()
-	if lines == nil || lines.IsEmpty() {
+	if lines.IsEmpty() {
 		var message = v.formatError(
 			name,
 			"Each multi-line expression must have at least one line.",
@@ -549,18 +478,11 @@ func (v *validator_) validatePart(
 ) {
 	// Validate the element.
 	var element = part.GetElement()
-	if element == nil {
-		var message = v.formatError(
-			name,
-			"A part must contain an element.",
-		)
-		panic(message)
-	}
 	v.validateElement(name, element)
 
 	// Validate the optional cardinality.
-	var cardinality = part.GetCardinality()
-	if cardinality != nil {
+	var cardinality = part.GetOptionalCardinality()
+	if fwk.IsDefined(cardinality) {
 		v.validateCardinality(name, cardinality)
 	}
 }
@@ -571,27 +493,25 @@ func (v *validator_) validatePattern(
 ) {
 	// Validate the parts.
 	var parts = pattern.GetParts()
-	if parts == nil || parts.IsEmpty() {
+	if parts.IsEmpty() {
 		var message = v.formatError(
 			name,
 			"Each pattern must have at least one part.",
 		)
 		panic(message)
 	}
-	var iterator = parts.GetIterator()
-	for iterator.HasNext() {
-		var part = iterator.GetNext()
+	var partIterator = parts.GetIterator()
+	for partIterator.HasNext() {
+		var part = partIterator.GetNext()
 		v.validatePart(name, part)
 	}
 
 	// Validate the alternatives.
 	var alternatives = pattern.GetAlternatives()
-	if alternatives != nil {
-		var iterator = alternatives.GetIterator()
-		for iterator.HasNext() {
-			var alternative = iterator.GetNext()
-			v.validateAlternative(name, alternative)
-		}
+	var alternativeIterator = alternatives.GetIterator()
+	for alternativeIterator.HasNext() {
+		var alternative = alternativeIterator.GetNext()
+		v.validateAlternative(name, alternative)
 	}
 }
 
@@ -621,35 +541,22 @@ func (v *validator_) validateRule(
 	rules col.CatalogLike[string, ast.ExpressionLike],
 ) {
 	// Validate the optional comment.
-	var comment = rule.GetComment()
-	if len(comment) > 0 {
+	var comment = rule.GetOptionalComment()
+	if fwk.IsDefined(comment) {
 		v.validateToken(name, CommentToken, comment)
 	}
 
 	// Validate the uppercase identifier.
 	var uppercase = rule.GetUppercase()
-	if len(uppercase) == 0 {
-		var message = v.formatError(
-			name,
-			"A rule must contain an uppercase identifier.",
-		)
-		panic(message)
-	}
 	v.validateToken(name, UppercaseToken, uppercase)
 
 	// Validate the expression.
 	var expression = rule.GetExpression()
-	if expression == nil {
-		var message = v.formatError(
-			name,
-			"A rule must contain an expression.",
-		)
-		panic(message)
-	}
 	v.validateExpression(name, expression)
 
 	// Check for duplicate rule definitions.
-	if rules.GetValue(uppercase) != nil {
+	var duplicate = rules.GetValue(uppercase)
+	if fwk.IsDefined(duplicate) {
 		var message = v.formatError(
 			name,
 			fmt.Sprintf("The rule %q is defined more than once.", uppercase),
@@ -667,7 +574,7 @@ func (v *validator_) validateSyntax(
 ) {
 	// Validate the headers.
 	var syntaxHeaders = syntax.GetHeaders()
-	if syntaxHeaders == nil || syntaxHeaders.IsEmpty() {
+	if syntaxHeaders.IsEmpty() {
 		var message = "The syntax must contain at least one header.\n"
 		panic(message)
 	}
@@ -679,7 +586,7 @@ func (v *validator_) validateSyntax(
 
 	// Validate the rule definitions.
 	var syntaxRules = syntax.GetRules()
-	if syntaxRules == nil || syntaxRules.IsEmpty() {
+	if syntaxRules.IsEmpty() {
 		var message = "The syntax must contain at least one rule definition.\n"
 		panic(message)
 	}
@@ -691,7 +598,7 @@ func (v *validator_) validateSyntax(
 
 	// Validate the lexigram definition.
 	var syntaxLexigrams = syntax.GetLexigrams()
-	if syntaxLexigrams == nil || syntaxLexigrams.IsEmpty() {
+	if syntaxLexigrams.IsEmpty() {
 		var message = "The syntax must contain at least one lexigram definition.\n"
 		panic(message)
 	}

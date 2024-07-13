@@ -12,7 +12,9 @@
 
 package ast
 
-import ()
+import (
+	mod "github.com/craterdog/go-collection-framework/v4"
+)
 
 // CLASS ACCESS
 
@@ -39,10 +41,16 @@ type minimumClass_ struct {
 // Constructors
 
 func (c *minimumClass_) Make(number string) MinimumLike {
-	return &minimum_{
-		// Initialize instance attributes.
-		class_:  c,
-		number_: number,
+	// Validate the arguments.
+	switch {
+	case mod.IsUndefined(number):
+		panic("The number attribute is required for each Minimum.")
+	default:
+		return &minimum_{
+			// Initialize instance attributes.
+			class_:  c,
+			number_: number,
+		}
 	}
 }
 

@@ -30,6 +30,7 @@ package module
 
 import (
 	fmt "fmt"
+	fwk "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	age "github.com/craterdog/go-grammar-framework/v4/agent"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
@@ -146,9 +147,9 @@ func Character(arguments ...any) CharacterLike {
 	// Call the constructor.
 	var character CharacterLike
 	switch {
-	case bounded != nil:
+	case fwk.IsDefined(bounded):
 		character = ast.Character().Make(bounded)
-	case len(intrinsic) > 0:
+	case fwk.IsDefined(intrinsic):
 		character = ast.Character().Make(intrinsic)
 	default:
 		panic("The constructor for a character requires an argument.")
@@ -180,9 +181,9 @@ func Cardinality(arguments ...any) CardinalityLike {
 	// Call the constructor.
 	var cardinality CardinalityLike
 	switch {
-	case constrained != nil:
+	case fwk.IsDefined(constrained):
 		cardinality = ast.Cardinality().Make(constrained)
-	case len(quantified) > 0:
+	case fwk.IsDefined(quantified):
 		cardinality = ast.Cardinality().Make(quantified)
 	default:
 		panic("The constructor for a cardinality requires an argument.")
@@ -300,17 +301,17 @@ func Element(arguments ...any) ElementLike {
 	// Call the constructor.
 	var element ElementLike
 	switch {
-	case grouped != nil:
+	case fwk.IsDefined(grouped):
 		element = ast.Element().Make(grouped)
-	case filtered != nil:
+	case fwk.IsDefined(filtered):
 		element = ast.Element().Make(filtered)
-	case bounded != nil:
+	case fwk.IsDefined(bounded):
 		element = ast.Element().Make(bounded)
-	case len(intrinsic) > 0:
+	case fwk.IsDefined(intrinsic):
 		element = ast.Element().Make(intrinsic)
-	case len(lowercase) > 0:
+	case fwk.IsDefined(lowercase):
 		element = ast.Element().Make(lowercase)
-	case len(literal) > 0:
+	case fwk.IsDefined(literal):
 		element = ast.Element().Make(literal)
 	default:
 		panic("The constructor for an element requires an argument.")
@@ -342,9 +343,9 @@ func Expression(arguments ...any) ExpressionLike {
 	// Call the constructor.
 	var expression ExpressionLike
 	switch {
-	case inlined != nil:
+	case fwk.IsDefined(inlined):
 		expression = ast.Expression().Make(inlined)
-	case multilined != nil:
+	case fwk.IsDefined(multilined):
 		expression = ast.Expression().Make(multilined)
 	default:
 		panic("The constructor for an expression requires an argument.")
@@ -513,9 +514,9 @@ func Identifier(arguments ...any) IdentifierLike {
 	// Call the constructor.
 	var identifier IdentifierLike
 	switch {
-	case len(lowercase) > 0:
+	case fwk.IsDefined(lowercase):
 		identifier = ast.Identifier().Make(lowercase)
-	case len(uppercase) > 0:
+	case fwk.IsDefined(uppercase):
 		identifier = ast.Identifier().Make(uppercase)
 	default:
 		panic("The constructor for an identifier requires an argument.")
@@ -798,13 +799,13 @@ func Predicate(arguments ...any) PredicateLike {
 	// Call the constructor.
 	var predicate PredicateLike
 	switch {
-	case len(lowercase) > 0:
+	case fwk.IsDefined(lowercase):
 		predicate = ast.Predicate().Make(lowercase)
-	case len(uppercase) > 0:
+	case fwk.IsDefined(uppercase):
 		predicate = ast.Predicate().Make(uppercase)
-	case len(intrinsic) > 0:
+	case fwk.IsDefined(intrinsic):
 		predicate = ast.Predicate().Make(intrinsic)
-	case len(literal) > 0:
+	case fwk.IsDefined(literal):
 		predicate = ast.Predicate().Make(literal)
 	default:
 		panic("The constructor for a predicate requires an argument.")

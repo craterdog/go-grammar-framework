@@ -14,7 +14,7 @@ package agent
 
 import (
 	fmt "fmt"
-	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	fwk "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	sts "strings"
@@ -77,7 +77,7 @@ func (v *parser_) GetClass() ParserClassLike {
 
 func (v *parser_) ParseSource(source string) ast.SyntaxLike {
 	v.source_ = source
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	v.tokens_ = col.Queue[TokenLike](notation).MakeWithCapacity(parserClass.queueSize_)
 	v.next_ = col.Stack[TokenLike](notation).MakeWithCapacity(parserClass.stackSize_)
 
@@ -190,7 +190,7 @@ func (v *parser_) parseAlternative() (
 		)
 		panic(message)
 	}
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	var parts = col.List[ast.PartLike](notation).Make()
 	for ok {
 		parts.AppendValue(part)
@@ -478,7 +478,7 @@ func (v *parser_) parseFiltered() (
 	_, token, ok = v.parseToken(DelimiterToken, "[")
 	if !ok {
 		// This is not the filtered element, put back any negation token.
-		if len(negation) > 0 {
+		if fwk.IsDefined(negation) {
 			v.putBack(negationToken)
 		}
 		return filtered, token, false
@@ -491,7 +491,7 @@ func (v *parser_) parseFiltered() (
 		// This is not the filtered element.
 		return filtered, token, false
 	}
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	var characters = col.List[ast.CharacterLike](notation).Make()
 	for ok {
 		characters.AppendValue(character)
@@ -636,7 +636,7 @@ func (v *parser_) parseInlined() (
 		// This is not the inlined expression.
 		return inlined, token, false
 	}
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	var factors = col.List[ast.FactorLike](notation).Make()
 	for ok {
 		factors.AppendValue(factor)
@@ -667,7 +667,7 @@ func (v *parser_) parseLexigram() (
 	lowercase, token, ok = v.parseToken(LowercaseToken, "")
 	if !ok {
 		// This is not the lexigram, put back any comment token that was received.
-		if len(comment) > 0 {
+		if fwk.IsDefined(comment) {
 			v.putBack(commentToken)
 		}
 		return lexigram, token, false
@@ -801,7 +801,7 @@ func (v *parser_) parseMultilined() (
 		// This is not the multilined expression.
 		return multilined, token, false
 	}
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	var lines = col.List[ast.LineLike](notation).Make()
 	for ok {
 		lines.AppendValue(line)
@@ -847,7 +847,7 @@ func (v *parser_) parsePattern() (
 		// This is not the pattern.
 		return pattern, token, false
 	}
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	var parts = col.List[ast.PartLike](notation).Make()
 	for ok {
 		parts.AppendValue(part)
@@ -924,7 +924,7 @@ func (v *parser_) parseRule() (
 	uppercase, token, ok = v.parseToken(UppercaseToken, "")
 	if !ok {
 		// This is not the rule, put back any comment token that was received.
-		if len(comment) > 0 {
+		if fwk.IsDefined(comment) {
 			v.putBack(commentToken)
 		}
 		return rule, token, false
@@ -984,7 +984,7 @@ func (v *parser_) parseSyntax() (
 		// This is not the syntax.
 		return syntax, token, false
 	}
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	var headers = col.List[ast.HeaderLike](notation).Make()
 	for ok {
 		headers.AppendValue(header)
@@ -1061,8 +1061,7 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 	token = v.getNextToken()
 	if token.GetType() == expectedType {
 		value = token.GetValue()
-		var notConstrained = len(expectedValue) == 0
-		if notConstrained || value == expectedValue {
+		if fwk.IsUndefined(expectedValue) || value == expectedValue {
 			// Found the right token.
 			return value, token, true
 		}

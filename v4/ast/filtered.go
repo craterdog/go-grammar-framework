@@ -13,6 +13,7 @@
 package ast
 
 import (
+	mod "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
@@ -41,14 +42,20 @@ type filteredClass_ struct {
 // Constructors
 
 func (c *filteredClass_) Make(
-	negation string,
-	characters col.ListLike[CharacterLike],
+	optionalNegation string,
+	characters col.Sequential[CharacterLike],
 ) FilteredLike {
-	return &filtered_{
-		// Initialize instance attributes.
-		class_:      c,
-		negation_:   negation,
-		characters_: characters,
+	// Validate the arguments.
+	switch {
+	case mod.IsUndefined(characters):
+		panic("The characters attribute is required for each Filtered.")
+	default:
+		return &filtered_{
+			// Initialize instance attributes.
+			class_:            c,
+			optionalNegation_: optionalNegation,
+			characters_:       characters,
+		}
 	}
 }
 
@@ -58,9 +65,9 @@ func (c *filteredClass_) Make(
 
 type filtered_ struct {
 	// Define instance attributes.
-	class_      FilteredClassLike
-	negation_   string
-	characters_ col.ListLike[CharacterLike]
+	class_            FilteredClassLike
+	optionalNegation_ string
+	characters_       col.Sequential[CharacterLike]
 }
 
 // Attributes
@@ -69,11 +76,11 @@ func (v *filtered_) GetClass() FilteredClassLike {
 	return v.class_
 }
 
-func (v *filtered_) GetNegation() string {
-	return v.negation_
+func (v *filtered_) GetOptionalNegation() string {
+	return v.optionalNegation_
 }
 
-func (v *filtered_) GetCharacters() col.ListLike[CharacterLike] {
+func (v *filtered_) GetCharacters() col.Sequential[CharacterLike] {
 	return v.characters_
 }
 

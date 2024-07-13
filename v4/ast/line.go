@@ -12,7 +12,9 @@
 
 package ast
 
-import ()
+import (
+	mod "github.com/craterdog/go-collection-framework/v4"
+)
 
 // CLASS ACCESS
 
@@ -40,13 +42,19 @@ type lineClass_ struct {
 
 func (c *lineClass_) Make(
 	identifier IdentifierLike,
-	note string,
+	optionalNote string,
 ) LineLike {
-	return &line_{
-		// Initialize instance attributes.
-		class_:      c,
-		identifier_: identifier,
-		note_:       note,
+	// Validate the arguments.
+	switch {
+	case mod.IsUndefined(identifier):
+		panic("The identifier attribute is required for each Line.")
+	default:
+		return &line_{
+			// Initialize instance attributes.
+			class_:        c,
+			identifier_:   identifier,
+			optionalNote_: optionalNote,
+		}
 	}
 }
 
@@ -56,9 +64,9 @@ func (c *lineClass_) Make(
 
 type line_ struct {
 	// Define instance attributes.
-	class_      LineClassLike
-	identifier_ IdentifierLike
-	note_       string
+	class_        LineClassLike
+	identifier_   IdentifierLike
+	optionalNote_ string
 }
 
 // Attributes
@@ -71,8 +79,8 @@ func (v *line_) GetIdentifier() IdentifierLike {
 	return v.identifier_
 }
 
-func (v *line_) GetNote() string {
-	return v.note_
+func (v *line_) GetOptionalNote() string {
+	return v.optionalNote_
 }
 
 // Private

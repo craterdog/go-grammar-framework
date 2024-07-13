@@ -13,7 +13,6 @@
 package agent
 
 const modelTemplate_ = `<Notice>
-
 /*
 Package "<package>" provides...
 
@@ -33,7 +32,6 @@ package <package>
 `
 
 const astTemplate_ = `
-
 import (
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 )
@@ -43,14 +41,20 @@ import (
 /*
 This is a dummy class placeholder.
 */
-type DummyClassLike interface {}
+type DummyClassLike interface {
+	// Constructors
+	Make() DummyLike
+}
 
 // Instances
 
 /*
 This is a dummy instance placeholder.
 */
-type DummyLike interface {}
+type DummyLike interface {
+	// Attributes
+	GetClass() DummyClassLike
+}
 `
 
 const agentTemplate_ = `
@@ -68,7 +72,7 @@ scanner.
 type TokenType uint8
 
 const (
-	ErrorToken TokenType = iota
+	<TokenTypes>
 )
 
 // Classes
@@ -314,7 +318,6 @@ text: '"' (ESCAPE ~['"' CONTROL])+ '"'
 `
 
 const tokenTemplate_ = `<Notice>
-
 package agent
 
 // CLASS ACCESS
@@ -398,7 +401,7 @@ package agent
 
 import (
 	fmt "fmt"
-	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	fwk "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	reg "regexp"
 	sts "strings"
@@ -487,7 +490,7 @@ func (c *scannerClass_) MatchToken(
 ) col.ListLike[string] {
 	var matcher = c.matchers_[type_]
 	var matches = matcher.FindStringSubmatch(text)
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	return col.List[string](notation).MakeFromArray(matches)
 }
 
@@ -632,12 +635,11 @@ const (
 `
 
 const parserTemplate_ = `<Notice>
-
 package agent
 
 import (
 	fmt "fmt"
-	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	fwk "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "<module>/ast"
 	sts "strings"
@@ -700,7 +702,7 @@ func (v *parser_) GetClass() ParserClassLike {
 
 func (v *parser_) ParseSource(source string) ast.<Name>Like {
 	v.source_ = source
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	v.tokens_ = col.Queue[TokenLike](notation).MakeWithCapacity(parserClass.queueSize_)
 	v.next_ = col.Stack[TokenLike](notation).MakeWithCapacity(parserClass.stackSize_)
 
@@ -823,8 +825,7 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 	token = v.getNextToken()
 	if token.GetType() == expectedType {
 		value = token.GetValue()
-		var notConstrained = len(expectedValue) == 0
-		if notConstrained || value == expectedValue {
+		if fwk.IsUndefined(expectedValue) || value == expectedValue {
 			// Found the right token.
 			return value, token, true
 		}
@@ -845,7 +846,6 @@ var syntax = map[string]string{
 `
 
 const formatterTemplate_ = `<Notice>
-
 package agent
 
 import (
@@ -944,7 +944,6 @@ func (v *formatter_) getResult() string {
 `
 
 const validatorTemplate_ = `<Notice>
-
 package agent
 
 import (

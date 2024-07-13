@@ -194,7 +194,7 @@ package agent
 
 import (
 	fmt "fmt"
-	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	fwk "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	sts "strings"
@@ -257,7 +257,7 @@ func (v *parser_) GetClass() ParserClassLike {
 
 func (v *parser_) ParseSource(source string) ast.DocumentLike {
 	v.source_ = source
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	v.tokens_ = col.Queue[TokenLike](notation).MakeWithCapacity(parserClass.queueSize_)
 	v.next_ = col.Stack[TokenLike](notation).MakeWithCapacity(parserClass.stackSize_)
 
@@ -380,8 +380,7 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 	token = v.getNextToken()
 	if token.GetType() == expectedType {
 		value = token.GetValue()
-		var notConstrained = len(expectedValue) == 0
-		if notConstrained || value == expectedValue {
+		if fwk.IsUndefined(expectedValue) || value == expectedValue {
 			// Found the right token.
 			return value, token, true
 		}
@@ -412,11 +411,12 @@ const modelScanner = `/*
 .  Initiative. (See https://opensource.org/license/MIT)                        .
 ................................................................................
 */
+
 package agent
 
 import (
 	fmt "fmt"
-	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	fwk "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	reg "regexp"
 	sts "strings"
@@ -505,7 +505,7 @@ func (c *scannerClass_) MatchToken(
 ) col.ListLike[string] {
 	var matcher = c.matchers_[type_]
 	var matches = matcher.FindStringSubmatch(text)
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	return col.List[string](notation).MakeFromArray(matches)
 }
 

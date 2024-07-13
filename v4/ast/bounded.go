@@ -12,7 +12,9 @@
 
 package ast
 
-import ()
+import (
+	mod "github.com/craterdog/go-collection-framework/v4"
+)
 
 // CLASS ACCESS
 
@@ -40,13 +42,19 @@ type boundedClass_ struct {
 
 func (c *boundedClass_) Make(
 	initial InitialLike,
-	extent ExtentLike,
+	optionalExtent ExtentLike,
 ) BoundedLike {
-	return &bounded_{
-		// Initialize instance attributes.
-		class_:   c,
-		initial_: initial,
-		extent_:  extent,
+	// Validate the arguments.
+	switch {
+	case mod.IsUndefined(initial):
+		panic("The initial attribute is required for each Bounded.")
+	default:
+		return &bounded_{
+			// Initialize instance attributes.
+			class_:          c,
+			initial_:        initial,
+			optionalExtent_: optionalExtent,
+		}
 	}
 }
 
@@ -56,9 +64,9 @@ func (c *boundedClass_) Make(
 
 type bounded_ struct {
 	// Define instance attributes.
-	class_   BoundedClassLike
-	initial_ InitialLike
-	extent_  ExtentLike
+	class_          BoundedClassLike
+	initial_        InitialLike
+	optionalExtent_ ExtentLike
 }
 
 // Attributes
@@ -71,8 +79,8 @@ func (v *bounded_) GetInitial() InitialLike {
 	return v.initial_
 }
 
-func (v *bounded_) GetExtent() ExtentLike {
-	return v.extent_
+func (v *bounded_) GetOptionalExtent() ExtentLike {
+	return v.optionalExtent_
 }
 
 // Private

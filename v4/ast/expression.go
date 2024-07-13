@@ -12,7 +12,9 @@
 
 package ast
 
-import ()
+import (
+	mod "github.com/craterdog/go-collection-framework/v4"
+)
 
 // CLASS ACCESS
 
@@ -39,10 +41,16 @@ type expressionClass_ struct {
 // Constructors
 
 func (c *expressionClass_) Make(any_ any) ExpressionLike {
-	return &expression_{
-		// Initialize instance attributes.
-		class_: c,
-		any_:   any_,
+	// Validate the arguments.
+	switch {
+	case mod.IsUndefined(any_):
+		panic("The any_ attribute is required for each Expression.")
+	default:
+		return &expression_{
+			// Initialize instance attributes.
+			class_: c,
+			any_:   any_,
+		}
 	}
 }
 

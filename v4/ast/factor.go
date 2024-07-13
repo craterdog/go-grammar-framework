@@ -12,7 +12,9 @@
 
 package ast
 
-import ()
+import (
+	mod "github.com/craterdog/go-collection-framework/v4"
+)
 
 // CLASS ACCESS
 
@@ -40,13 +42,19 @@ type factorClass_ struct {
 
 func (c *factorClass_) Make(
 	predicate PredicateLike,
-	cardinality CardinalityLike,
+	optionalCardinality CardinalityLike,
 ) FactorLike {
-	return &factor_{
-		// Initialize instance attributes.
-		class_:       c,
-		predicate_:   predicate,
-		cardinality_: cardinality,
+	// Validate the arguments.
+	switch {
+	case mod.IsUndefined(predicate):
+		panic("The predicate attribute is required for each Factor.")
+	default:
+		return &factor_{
+			// Initialize instance attributes.
+			class_:               c,
+			predicate_:           predicate,
+			optionalCardinality_: optionalCardinality,
+		}
 	}
 }
 
@@ -56,9 +64,9 @@ func (c *factorClass_) Make(
 
 type factor_ struct {
 	// Define instance attributes.
-	class_       FactorClassLike
-	predicate_   PredicateLike
-	cardinality_ CardinalityLike
+	class_               FactorClassLike
+	predicate_           PredicateLike
+	optionalCardinality_ CardinalityLike
 }
 
 // Attributes
@@ -71,8 +79,8 @@ func (v *factor_) GetPredicate() PredicateLike {
 	return v.predicate_
 }
 
-func (v *factor_) GetCardinality() CardinalityLike {
-	return v.cardinality_
+func (v *factor_) GetOptionalCardinality() CardinalityLike {
+	return v.optionalCardinality_
 }
 
 // Private

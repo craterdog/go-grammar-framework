@@ -12,7 +12,9 @@
 
 package ast
 
-import ()
+import (
+	mod "github.com/craterdog/go-collection-framework/v4"
+)
 
 // CLASS ACCESS
 
@@ -39,10 +41,16 @@ type initialClass_ struct {
 // Constructors
 
 func (c *initialClass_) Make(rune_ string) InitialLike {
-	return &initial_{
-		// Initialize instance attributes.
-		class_: c,
-		rune_:  rune_,
+	// Validate the arguments.
+	switch {
+	case mod.IsUndefined(rune_):
+		panic("The rune_ attribute is required for each Initial.")
+	default:
+		return &initial_{
+			// Initialize instance attributes.
+			class_: c,
+			rune_:  rune_,
+		}
 	}
 }
 

@@ -14,7 +14,7 @@
 Package "ast" provides...
 
 For detailed documentation on this package refer to the wiki:
-  - <wiki>
+  - https://github.com/craterdog/go-grammar-framework/wiki
 
 This package follows the Crater Dog Technologies™ Go Coding Conventions located
 here:
@@ -40,7 +40,7 @@ concrete alternative-like class.
 */
 type AlternativeClassLike interface {
 	// Constructors
-	Make(parts col.ListLike[PartLike]) AlternativeLike
+	Make(parts col.Sequential[PartLike]) AlternativeLike
 }
 
 /*
@@ -52,7 +52,7 @@ type BoundedClassLike interface {
 	// Constructors
 	Make(
 		initial InitialLike,
-		extent ExtentLike,
+		optionalExtent ExtentLike,
 	) BoundedLike
 }
 
@@ -85,7 +85,7 @@ type ConstrainedClassLike interface {
 	// Constructors
 	Make(
 		minimum MinimumLike,
-		maximum MaximumLike,
+		optionalMaximum MaximumLike,
 	) ConstrainedLike
 }
 
@@ -128,7 +128,7 @@ type FactorClassLike interface {
 	// Constructors
 	Make(
 		predicate PredicateLike,
-		cardinality CardinalityLike,
+		optionalCardinality CardinalityLike,
 	) FactorLike
 }
 
@@ -140,8 +140,8 @@ concrete filtered-like class.
 type FilteredClassLike interface {
 	// Constructors
 	Make(
-		negation string,
-		characters col.ListLike[CharacterLike],
+		optionalNegation string,
+		characters col.Sequential[CharacterLike],
 	) FilteredLike
 }
 
@@ -193,8 +193,8 @@ concrete inlined-like class.
 type InlinedClassLike interface {
 	// Constructors
 	Make(
-		factors col.ListLike[FactorLike],
-		note string,
+		factors col.Sequential[FactorLike],
+		optionalNote string,
 	) InlinedLike
 }
 
@@ -206,10 +206,10 @@ concrete lexigram-like class.
 type LexigramClassLike interface {
 	// Constructors
 	Make(
-		comment string,
+		optionalComment string,
 		lowercase string,
 		pattern PatternLike,
-		note string,
+		optionalNote string,
 	) LexigramLike
 }
 
@@ -222,7 +222,7 @@ type LineClassLike interface {
 	// Constructors
 	Make(
 		identifier IdentifierLike,
-		note string,
+		optionalNote string,
 	) LineLike
 }
 
@@ -233,7 +233,7 @@ concrete maximum-like class.
 */
 type MaximumClassLike interface {
 	// Constructors
-	Make(number string) MaximumLike
+	Make(optionalNumber string) MaximumLike
 }
 
 /*
@@ -253,7 +253,7 @@ concrete multilined-like class.
 */
 type MultilinedClassLike interface {
 	// Constructors
-	Make(lines col.ListLike[LineLike]) MultilinedLike
+	Make(lines col.Sequential[LineLike]) MultilinedLike
 }
 
 /*
@@ -265,7 +265,7 @@ type PartClassLike interface {
 	// Constructors
 	Make(
 		element ElementLike,
-		cardinality CardinalityLike,
+		optionalCardinality CardinalityLike,
 	) PartLike
 }
 
@@ -277,8 +277,8 @@ concrete pattern-like class.
 type PatternClassLike interface {
 	// Constructors
 	Make(
-		parts col.ListLike[PartLike],
-		alternatives col.ListLike[AlternativeLike],
+		parts col.Sequential[PartLike],
+		alternatives col.Sequential[AlternativeLike],
 	) PatternLike
 }
 
@@ -300,7 +300,7 @@ concrete rule-like class.
 type RuleClassLike interface {
 	// Constructors
 	Make(
-		comment string,
+		optionalComment string,
 		uppercase string,
 		expression ExpressionLike,
 	) RuleLike
@@ -314,9 +314,9 @@ concrete syntax-like class.
 type SyntaxClassLike interface {
 	// Constructors
 	Make(
-		headers col.ListLike[HeaderLike],
-		rules col.ListLike[RuleLike],
-		lexigrams col.ListLike[LexigramLike],
+		headers col.Sequential[HeaderLike],
+		rules col.Sequential[RuleLike],
+		lexigrams col.Sequential[LexigramLike],
 	) SyntaxLike
 }
 
@@ -330,7 +330,7 @@ instance of a concrete alternative-like class.
 type AlternativeLike interface {
 	// Attributes
 	GetClass() AlternativeClassLike
-	GetParts() col.ListLike[PartLike]
+	GetParts() col.Sequential[PartLike]
 }
 
 /*
@@ -342,7 +342,7 @@ type BoundedLike interface {
 	// Attributes
 	GetClass() BoundedClassLike
 	GetInitial() InitialLike
-	GetExtent() ExtentLike
+	GetOptionalExtent() ExtentLike
 }
 
 /*
@@ -376,7 +376,7 @@ type ConstrainedLike interface {
 	// Attributes
 	GetClass() ConstrainedClassLike
 	GetMinimum() MinimumLike
-	GetMaximum() MaximumLike
+	GetOptionalMaximum() MaximumLike
 }
 
 /*
@@ -421,7 +421,7 @@ type FactorLike interface {
 	// Attributes
 	GetClass() FactorClassLike
 	GetPredicate() PredicateLike
-	GetCardinality() CardinalityLike
+	GetOptionalCardinality() CardinalityLike
 }
 
 /*
@@ -432,8 +432,8 @@ instance of a concrete filtered-like class.
 type FilteredLike interface {
 	// Attributes
 	GetClass() FilteredClassLike
-	GetNegation() string
-	GetCharacters() col.ListLike[CharacterLike]
+	GetOptionalNegation() string
+	GetCharacters() col.Sequential[CharacterLike]
 }
 
 /*
@@ -488,8 +488,8 @@ instance of a concrete inlined-like class.
 type InlinedLike interface {
 	// Attributes
 	GetClass() InlinedClassLike
-	GetFactors() col.ListLike[FactorLike]
-	GetNote() string
+	GetFactors() col.Sequential[FactorLike]
+	GetOptionalNote() string
 }
 
 /*
@@ -500,10 +500,10 @@ instance of a concrete lexigram-like class.
 type LexigramLike interface {
 	// Attributes
 	GetClass() LexigramClassLike
-	GetComment() string
+	GetOptionalComment() string
 	GetLowercase() string
 	GetPattern() PatternLike
-	GetNote() string
+	GetOptionalNote() string
 }
 
 /*
@@ -515,7 +515,7 @@ type LineLike interface {
 	// Attributes
 	GetClass() LineClassLike
 	GetIdentifier() IdentifierLike
-	GetNote() string
+	GetOptionalNote() string
 }
 
 /*
@@ -526,7 +526,7 @@ instance of a concrete maximum-like class.
 type MaximumLike interface {
 	// Attributes
 	GetClass() MaximumClassLike
-	GetNumber() string
+	GetOptionalNumber() string
 }
 
 /*
@@ -548,7 +548,7 @@ instance of a concrete multilined-like class.
 type MultilinedLike interface {
 	// Attributes
 	GetClass() MultilinedClassLike
-	GetLines() col.ListLike[LineLike]
+	GetLines() col.Sequential[LineLike]
 }
 
 /*
@@ -560,7 +560,7 @@ type PartLike interface {
 	// Attributes
 	GetClass() PartClassLike
 	GetElement() ElementLike
-	GetCardinality() CardinalityLike
+	GetOptionalCardinality() CardinalityLike
 }
 
 /*
@@ -571,8 +571,8 @@ instance of a concrete pattern-like class.
 type PatternLike interface {
 	// Attributes
 	GetClass() PatternClassLike
-	GetParts() col.ListLike[PartLike]
-	GetAlternatives() col.ListLike[AlternativeLike]
+	GetParts() col.Sequential[PartLike]
+	GetAlternatives() col.Sequential[AlternativeLike]
 }
 
 /*
@@ -594,7 +594,7 @@ instance of a concrete rule-like class.
 type RuleLike interface {
 	// Attributes
 	GetClass() RuleClassLike
-	GetComment() string
+	GetOptionalComment() string
 	GetUppercase() string
 	GetExpression() ExpressionLike
 }
@@ -607,7 +607,7 @@ instance of a concrete syntax-like class.
 type SyntaxLike interface {
 	// Attributes
 	GetClass() SyntaxClassLike
-	GetHeaders() col.ListLike[HeaderLike]
-	GetRules() col.ListLike[RuleLike]
-	GetLexigrams() col.ListLike[LexigramLike]
+	GetHeaders() col.Sequential[HeaderLike]
+	GetRules() col.Sequential[RuleLike]
+	GetLexigrams() col.Sequential[LexigramLike]
 }

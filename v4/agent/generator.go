@@ -14,7 +14,7 @@ package agent
 
 import (
 	fmt "fmt"
-	cdc "github.com/craterdog/go-collection-framework/v4/cdcn"
+	fwk "github.com/craterdog/go-collection-framework/v4"
 	col "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	mod "github.com/craterdog/go-model-framework/v4"
@@ -96,7 +96,6 @@ func (v *generator_) GenerateAgent(
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
 	// Create the agent class model template.
-	v.processSyntax(syntax)
 	var source = modelTemplate_ + agentTemplate_
 	var notice = v.extractNotice(syntax)
 	source = sts.ReplaceAll(source, "<Notice>", notice)
@@ -107,14 +106,12 @@ func (v *generator_) GenerateAgent(
 	source = sts.ReplaceAll(source, "<name>", v.makeLowercase(name))
 	var parameter = v.makeLowercase(name)
 	source = sts.ReplaceAll(source, "<parameter>", parameter)
+	var tokenTypes = v.extractTokenTypes(syntax)
+	source = sts.ReplaceAll(source, "<TokenTypes>", tokenTypes)
 
-	// Parse the agent class model template.
+	// Parse the agent generated class model.
 	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
-
-	// Add additional definitions to the class model.
-	v.addLexigrams(model)
-
 	return model
 }
 
@@ -123,10 +120,8 @@ func (v *generator_) GenerateAST(
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
 	// Create the AST class model template.
-	v.processSyntax(syntax)
 	var source = modelTemplate_ + astTemplate_
-	var notice = v.extractNotice(syntax)
-	source = sts.ReplaceAll(source, "<Notice>", notice)
+	source = sts.ReplaceAll(source, "<Notice>", v.extractNotice(syntax))
 	source = sts.ReplaceAll(source, "<module>", module)
 	source = sts.ReplaceAll(source, "<package>", "ast")
 
@@ -135,9 +130,26 @@ func (v *generator_) GenerateAST(
 	var model = parser.ParseSource(source)
 
 	// Add additional definitions to the AST class model.
-	v.addModules(model)
-	v.addClasses(model)
-	v.addInstances(model)
+	v.processSyntax(syntax)
+	var notice = model.GetNotice()
+	var header = model.GetHeader()
+	var modules = mod.Modules(v.modules_.GetValues(v.modules_.GetKeys()))
+	var imports = mod.Imports(modules)
+	var types = model.GetOptionalTypes()
+	var functionals = model.GetOptionalFunctionals()
+	var classes = mod.Classes(v.classes_.GetValues(v.classes_.GetKeys()))
+	var instances = mod.Instances(v.instances_.GetValues(v.instances_.GetKeys()))
+	var aspects = model.GetOptionalAspects()
+	model = mod.Model(
+		notice,
+		header,
+		imports,
+		types,
+		functionals,
+		classes,
+		instances,
+		aspects,
+	)
 
 	return model
 }
@@ -213,44 +225,20 @@ func (v *generator_) GenerateValidator(
 
 // Private
 
-func (v *generator_) addClasses(model mod.ModelLike) {
-	var classes = model.GetClasses()
-	classes.RemoveAll() // Remove the dummy placeholder.
-	classes.AppendValues(v.classes_.GetValues(v.classes_.GetKeys()))
-}
-
-func (v *generator_) addInstances(model mod.ModelLike) {
-	var instances = model.GetInstances()
-	instances.RemoveAll() // Remove the dummy placeholder.
-	instances.AppendValues(v.instances_.GetValues(v.instances_.GetKeys()))
-}
-
-func (v *generator_) addLexigrams(model mod.ModelLike) {
-	var types = model.GetTypes()
-	var enumeration = types.GetValue(1).GetEnumeration()
-	var identifiers = enumeration.GetIdentifiers()
-	identifiers.AppendValues(v.lexigrams_)
-}
-
-func (v *generator_) addModules(model mod.ModelLike) {
-	var modules = model.GetModules()
-	modules.RemoveAll() // Remove the dummy placeholder.
-	modules.AppendValues(v.modules_.GetValues(v.modules_.GetKeys()))
-}
-
 func (v *generator_) consolidateAttributes(
 	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Compare each attribute and make lists out of duplicates.
 	for i := 1; i <= attributes.GetSize(); i++ {
 		var attribute = attributes.GetValue(i)
-		var first = attribute.GetIdentifier()
+		var first = attribute.GetName()
 		for j := i + 1; j <= attributes.GetSize(); {
-			var second = attributes.GetValue(j).GetIdentifier()
+			var second = attributes.GetValue(j).GetName()
 			switch {
 			case first == second:
 				attribute = attributes.GetValue(i)
-				attributes.SetValue(i, v.makeList(attribute))
+				attribute = v.pluralizeAttribute(attribute)
+				attributes.SetValue(i, attribute)
 				attributes.RemoveValue(j)
 			case first == second[:len(second)-1] && sts.HasSuffix(second, "s"):
 				attribute = attributes.GetValue(j)
@@ -301,14 +289,16 @@ func (v *generator_) expandCopyright(copyright string) string {
 }
 
 func (v *generator_) extractAttribute(name string) mod.AttributeLike {
-	var abstraction mod.AbstractionLike
+	var attributeType mod.AbstractionLike
 	switch {
 	case !Scanner().MatchToken(UppercaseToken, name).IsEmpty():
-		abstraction = mod.Abstraction(name + "Like")
+		// The attribute type is the (non-generic) abstract instance type.
+		attributeType = mod.Abstraction(name + "Like")
 	case !Scanner().MatchToken(LowercaseToken, name).IsEmpty():
+		// The attribute type is simply the Go primitive "string" type.
 		var tokenType = v.makeUppercase(name) + "Token"
 		v.lexigrams_.AddValue(tokenType)
-		abstraction = mod.Abstraction("string")
+		attributeType = mod.Abstraction("string")
 	default:
 		var message = fmt.Sprintf(
 			"Found an invalid attribute name: %q",
@@ -316,15 +306,13 @@ func (v *generator_) extractAttribute(name string) mod.AttributeLike {
 		)
 		panic(message)
 	}
-	var attribute = mod.Attribute(
-		"Get"+v.makeUppercase(name),
-		abstraction,
-	)
+	var attributeName = "Get" + v.makeUppercase(name)
+	var attribute = mod.Attribute(attributeName, attributeType)
 	return attribute
 }
 
 func (v *generator_) extractNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetValue(1)
+	var header = syntax.GetHeaders().GetIterator().GetNext()
 	var comment = header.GetComment()
 
 	// Strip off the syntax style comment delimiters.
@@ -338,16 +326,20 @@ func (v *generator_) extractNotice(syntax ast.SyntaxLike) string {
 
 func (v *generator_) extractParameters(
 	attributes col.ListLike[mod.AttributeLike],
-) col.ListLike[mod.ParameterLike] {
-	var notation = cdc.Notation().Make()
+) col.Sequential[mod.ParameterLike] {
+	var notation = fwk.CDCN()
 	var parameters = col.List[mod.ParameterLike](notation).Make()
 	var iterator = attributes.GetIterator()
 	for iterator.HasNext() {
 		var attribute = iterator.GetNext()
-		var identifier = sts.TrimPrefix(attribute.GetIdentifier(), "Get")
-		var abstraction = attribute.GetAbstraction()
+		var name = sts.TrimPrefix(attribute.GetName(), "Get")
+		var abstraction = attribute.GetOptionalAbstraction()
+		if fwk.IsUndefined(abstraction) {
+			var parameter = attribute.GetOptionalParameter()
+			abstraction = parameter.GetAbstraction()
+		}
 		var parameter = mod.Parameter(
-			v.makeLowercase(identifier),
+			v.makeLowercase(name),
 			abstraction,
 		)
 		parameters.AppendValue(parameter)
@@ -356,9 +348,19 @@ func (v *generator_) extractParameters(
 }
 
 func (v *generator_) extractSyntaxName(syntax ast.SyntaxLike) string {
-	var rule = syntax.GetRules().GetValue(1)
+	var rule = syntax.GetRules().GetIterator().GetNext()
 	var name = rule.GetUppercase()
 	return name
+}
+
+func (v *generator_) extractTokenTypes(syntax ast.SyntaxLike) string {
+	var tokenTypes = "ErrorToken TokenType = iota"
+	var iterator = v.lexigrams_.GetIterator()
+	for iterator.HasNext() {
+		var tokenType = iterator.GetNext()
+		tokenTypes += "\n\t" + tokenType
+	}
+	return tokenTypes
 }
 
 func (v *generator_) generateClass(
@@ -371,9 +373,10 @@ func (v *generator_) generateClass(
 		comment,
 		name+"ClassLike",
 	)
-	var notation = cdc.Notation().Make()
-	var constructors = col.List[mod.ConstructorLike](notation).Make()
-	constructors.AppendValue(constructor)
+	var notation = fwk.CDCN()
+	var list = col.List[mod.ConstructorLike](notation).Make()
+	list.AppendValue(constructor)
+	var constructors = mod.Constructors(list)
 	var class = mod.Class(
 		declaration,
 		constructors,
@@ -401,55 +404,65 @@ func (v *generator_) generateInstance(
 	attributes.InsertValue(0, attribute)
 	var instance = mod.Instance(
 		declaration,
-		attributes,
+		mod.Attributes(attributes),
 	)
 	return instance
 }
 
-func (v *generator_) makeList(attribute mod.AttributeLike) mod.AttributeLike {
-	var prefix = "col"
+func (v *generator_) pluralizeAttribute(
+	attribute mod.AttributeLike,
+) mod.AttributeLike {
+	// Add the collections module to the catalog of imported modules.
+	var alias = "col"
 	var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
 	var module = mod.Module(
-		prefix,
+		alias,
 		path,
 	)
 	v.modules_.SetValue(path, module)
-	var identifier = attribute.GetIdentifier()
-	identifier = v.makePlural(identifier)
-	var abstraction = attribute.GetAbstraction()
-	var notation = cdc.Notation().Make()
-	var arguments = col.List[mod.AbstractionLike](notation).Make()
-	arguments.AppendValue(abstraction)
-	abstraction = mod.Abstraction(
-		mod.Prefix(prefix, mod.AliasPrefix),
-		"ListLike",
-		arguments,
+
+	// Extract the name and attribute type from the attribute.
+	var name = v.makePlural(attribute.GetName())
+	var attributeType = attribute.GetOptionalAbstraction() // Not optional here.
+
+	// Create the generic arguments list for the pluralized attribute.
+	var argument = mod.Argument(attributeType)
+	var notation = fwk.CDCN()
+	var additionalArguments = col.List[mod.AdditionalArgumentLike](notation).Make()
+	var arguments = mod.Arguments(argument, additionalArguments)
+	var genericArguments = mod.GenericArguments(arguments)
+
+	// Create the result type for the pluralized attribute.
+	attributeType = mod.Abstraction(
+		alias,
+		"Sequential",
+		genericArguments,
 	)
-	attribute = mod.Attribute(identifier, abstraction)
+	attribute = mod.Attribute(name, attributeType)
 	return attribute
 }
 
-func (v *generator_) makeLowercase(identifier string) string {
-	runes := []rune(identifier)
+func (v *generator_) makeLowercase(name string) string {
+	runes := []rune(name)
 	runes[0] = uni.ToLower(runes[0])
-	identifier = string(runes)
-	if reserved_[identifier] {
-		identifier += "_"
+	name = string(runes)
+	if reserved_[name] {
+		name += "_"
 	}
-	return identifier
+	return name
 }
 
-func (v *generator_) makePlural(identifier string) string {
-	if sts.HasSuffix(identifier, "s") {
-		identifier += "es"
+func (v *generator_) makePlural(name string) string {
+	if sts.HasSuffix(name, "s") {
+		name += "es"
 	} else {
-		identifier += "s"
+		name += "s"
 	}
-	return identifier
+	return name
 }
 
-func (v *generator_) makeUppercase(identifier string) string {
-	runes := []rune(identifier)
+func (v *generator_) makeUppercase(name string) string {
+	runes := []rune(name)
 	runes[0] = uni.ToUpper(runes[0])
 	return string(runes)
 }
@@ -462,36 +475,65 @@ func (v *generator_) processExpression(
 	attributes col.ListLike[mod.AttributeLike],
 ) {
 	// Extract the attributes.
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	attributes = col.List[mod.AttributeLike](notation).Make()
 	switch actual := expression.GetAny().(type) {
 	case ast.InlinedLike:
-		v.processInlined(name, actual, attributes)
+		v.processInlined(actual, attributes)
 	case ast.MultilinedLike:
-		v.processMultilined(name, actual, attributes)
+		v.processMultilined(actual, attributes)
 	default:
 		panic("Found an empty expression.")
 	}
 
 	// Create the constructor.
 	var abstraction = mod.Abstraction(name + "Like")
-	var identifier = "Make"
+	name = "Make"
 	var parameters = v.extractParameters(attributes)
+	var iterator = parameters.GetIterator()
+	var parameter = iterator.GetNext()
+	var additionalParameters = col.List[mod.AdditionalParameterLike](notation).Make()
+	for iterator.HasNext() {
+		var parameter = iterator.GetNext()
+		var additionalParameter = mod.AdditionalParameter(parameter)
+		additionalParameters.AppendValue(additionalParameter)
+	}
 	constructor = mod.Constructor(
-		identifier,
-		parameters,
+		name,
+		mod.Parameters(
+			parameter,
+			additionalParameters.(col.Sequential[mod.AdditionalParameterLike]),
+		),
 		abstraction,
 	)
 
 	return constructor, attributes
 }
 
-func (v *generator_) processFactor(
-	name string,
-	factor ast.FactorLike,
-	attributes col.ListLike[mod.AttributeLike],
+func (v *generator_) processCardinality(
+	attribute mod.AttributeLike,
+	cardinality ast.CardinalityLike,
+) mod.AttributeLike {
+	switch actual := cardinality.GetAny().(type) {
+	case ast.ConstrainedLike:
+		attribute = v.pluralizeAttribute(attribute)
+	case string:
+		switch actual {
+		case "?":
+			// This attribute is optional, not plural.
+		case "*", "+":
+			// Turn the attribute into a sequence of that type attribute.
+			attribute = v.pluralizeAttribute(attribute)
+		}
+	}
+	return attribute
+}
+
+func (v *generator_) processPredicate(
+	predicate ast.PredicateLike,
+) (
+	attribute mod.AttributeLike,
 ) {
-	var predicate = factor.GetPredicate()
 	var actual = predicate.GetAny().(string)
 	switch {
 	case !Scanner().MatchToken(IntrinsicToken, actual).IsEmpty():
@@ -499,27 +541,38 @@ func (v *generator_) processFactor(
 	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
 		// Ignore literals as well.
 	default:
-		var attribute = v.extractAttribute(actual)
-		var cardinality = factor.GetCardinality()
-		if cardinality != nil {
-			switch actual := cardinality.GetAny().(type) {
-			case ast.ConstrainedLike:
-				attribute = v.makeList(attribute)
-			case string:
-				switch actual {
-				case "?":
-					// Don't make a list for zero or one.
-				case "*", "+":
-					attribute = v.makeList(attribute)
-				}
-			}
-		}
-		attributes.AppendValue(attribute)
+		// We know it is a rule or lexigram name which corresponds to an attribute
+		// with a (non-generic) instance type, or a Go primitive "string" type
+		// respectively.
+		attribute = v.extractAttribute(actual)
 	}
+	return attribute
+}
+
+func (v *generator_) processFactor(
+	factor ast.FactorLike,
+	attributes col.ListLike[mod.AttributeLike],
+) {
+	// Attempt to extract the attribute definitions from the predicate string.
+	var predicate = factor.GetPredicate()
+	var attribute = v.processPredicate(predicate)
+	if fwk.IsUndefined(attribute) {
+		// The predicate does not correspond to an attribute.
+		return
+	}
+
+	// Take into account any cardinality of the predicate.
+	var cardinality = factor.GetOptionalCardinality()
+	if fwk.IsDefined(cardinality) {
+		// The attribute type may need to be "pluralized".
+		attribute = v.processCardinality(attribute, cardinality)
+	}
+
+	// Add the attribute definition to our list.
+	attributes.AppendValue(attribute)
 }
 
 func (v *generator_) processInlined(
-	name string,
 	inlined ast.InlinedLike,
 	attributes col.ListLike[mod.AttributeLike],
 ) {
@@ -527,7 +580,7 @@ func (v *generator_) processInlined(
 	var iterator = inlined.GetFactors().GetIterator()
 	for iterator.HasNext() {
 		var factor = iterator.GetNext()
-		v.processFactor(name, factor, attributes)
+		v.processFactor(factor, attributes)
 	}
 	v.consolidateAttributes(attributes)
 }
@@ -539,7 +592,6 @@ func (v *generator_) processLexigram(
 }
 
 func (v *generator_) processMultilined(
-	name string,
 	multilined ast.MultilinedLike,
 	attributes col.ListLike[mod.AttributeLike],
 ) {
@@ -574,7 +626,7 @@ func (v *generator_) processSyntax(syntax ast.SyntaxLike) {
 		"EOLToken",
 		"SpaceToken",
 	}
-	var notation = cdc.Notation().Make()
+	var notation = fwk.CDCN()
 	v.lexigrams_ = col.Set[string](notation).MakeFromArray(array)
 	v.modules_ = col.Catalog[string, mod.ModuleLike](notation).Make()
 	v.classes_ = col.Catalog[string, mod.ClassLike](notation).Make()

@@ -12,8 +12,6 @@
 
 package ast
 
-import ()
-
 // CLASS ACCESS
 
 // Reference
@@ -38,11 +36,15 @@ type maximumClass_ struct {
 
 // Constructors
 
-func (c *maximumClass_) Make(number string) MaximumLike {
-	return &maximum_{
-		// Initialize instance attributes.
-		class_:  c,
-		number_: number,
+func (c *maximumClass_) Make(optionalNumber string) MaximumLike {
+	// Validate the arguments.
+	switch {
+	default:
+		return &maximum_{
+			// Initialize instance attributes.
+			class_:          c,
+			optionalNumber_: optionalNumber,
+		}
 	}
 }
 
@@ -52,8 +54,8 @@ func (c *maximumClass_) Make(number string) MaximumLike {
 
 type maximum_ struct {
 	// Define instance attributes.
-	class_  MaximumClassLike
-	number_ string
+	class_          MaximumClassLike
+	optionalNumber_ string
 }
 
 // Attributes
@@ -62,8 +64,8 @@ func (v *maximum_) GetClass() MaximumClassLike {
 	return v.class_
 }
 
-func (v *maximum_) GetNumber() string {
-	return v.number_
+func (v *maximum_) GetOptionalNumber() string {
+	return v.optionalNumber_
 }
 
 // Private

@@ -12,12 +12,16 @@
 
 package agent
 
+import (
+	mod "github.com/craterdog/go-collection-framework/v4"
+)
+
 // CLASS ACCESS
 
 // Reference
 
 var tokenClass = &tokenClass_{
-	// Initialize the class constants.
+	// Initialize class constants.
 }
 
 // Function
@@ -31,7 +35,7 @@ func Token() TokenClassLike {
 // Target
 
 type tokenClass_ struct {
-	// Define the class constants.
+	// Define class constants.
 }
 
 // Constructors
@@ -42,13 +46,21 @@ func (c *tokenClass_) Make(
 	type_ TokenType,
 	value string,
 ) TokenLike {
-	return &token_{
-		// Initialize the instance attributes.
-		class_:    c,
-		line_:     line,
-		position_: position,
-		type_:     type_,
-		value_:    value,
+	// Validate the arguments.
+	switch {
+	case mod.IsUndefined(type_):
+		panic("The token type  attribute is required for each Token.")
+	case mod.IsUndefined(value):
+		panic("The token value attribute is required for each Token.")
+	default:
+		return &token_{
+			// Initialize instance attributes.
+			class_:    c,
+			line_:     line,
+			position_: position,
+			type_:     type_,
+			value_:    value,
+		}
 	}
 }
 
@@ -57,7 +69,7 @@ func (c *tokenClass_) Make(
 // Target
 
 type token_ struct {
-	// Define the instance attributes.
+	// Define instance attributes.
 	class_    TokenClassLike
 	line_     int
 	position_ int

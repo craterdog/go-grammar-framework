@@ -168,6 +168,8 @@ func (v *scanner_) emitToken(type_ TokenType) {
 		value = "<CRTN>"
 	case "\v":
 		value = "<VTAB>"
+	case "":
+		value = "<EOFL>"
 	}
 	var token = Token().Make(v.line_, v.position_, type_, value)
 	//fmt.Println(Scanner().FormatToken(token)) // Uncomment when debugging.
@@ -195,8 +197,8 @@ func (v *scanner_) foundToken(type_ TokenType) bool {
 		var nextIndex = v.next_ + length
 		if nextIndex < len(v.runes_) {
 			var nextRune = v.runes_[v.next_+length]
-			if type_ == IntrinsicToken && (uni.IsLetter(nextRune) ||
-				uni.IsDigit(nextRune) || nextRune == rune('_')) {
+			if type_ == IntrinsicToken &&
+				(uni.IsLetter(nextRune) || uni.IsDigit(nextRune)) {
 				// This is not an intrinsic token.
 				return false
 			}
