@@ -13,7 +13,7 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
+	col "github.com/craterdog/go-collection-framework/v4"
 )
 
 // CLASS ACCESS
@@ -46,7 +46,7 @@ func (c *partClass_) Make(
 ) PartLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(element):
+	case col.IsUndefined(element):
 		panic("The element attribute is required for each Part.")
 	default:
 		return &part_{

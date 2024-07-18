@@ -12,12 +12,208 @@
 
 package agent
 
-const modelTemplate_ = `<Notice>
+var templates_ = map[string]map[string]string{
+	"syntax":    syntaxTemplates_,
+	"ast":       astTemplates_,
+	"agent":     agentTemplates_,
+	"token":     tokenTemplates_,
+	"scanner":   scannerTemplates_,
+	"parser":    parserTemplates_,
+	"validator": validatorTemplates_,
+	"formatter": formatterTemplates_,
+}
+
+var syntaxTemplates_ = map[string]string{
+	"notice":      syntaxNoticeTemplate_,
+	"header":      syntaxHeaderTemplate_,
+	"rules":       syntaxRulesTemplate_,
+	"expressions": syntaxExpressionsTemplate_,
+}
+
+var astTemplates_ = map[string]string{
+	"notice":      astNoticeTemplate_,
+	"header":      astHeaderTemplate_,
+	"imports":     astImportsTemplate_,
+	"types":       astTypesTemplate_,
+	"functionals": astFunctionalsTemplate_,
+	"classes":     astClassesTemplate_,
+	"instances":   astInstancesTemplate_,
+	"aspects":     astAspectsTemplate_,
+}
+
+var agentTemplates_ = map[string]string{
+	"notice":      agentNoticeTemplate_,
+	"header":      agentHeaderTemplate_,
+	"imports":     agentImportsTemplate_,
+	"types":       agentTypesTemplate_,
+	"functionals": agentFunctionalsTemplate_,
+	"classes":     agentClassesTemplate_,
+	"instances":   agentInstancesTemplate_,
+	"aspects":     agentAspectsTemplate_,
+}
+
+var tokenTemplates_ = map[string]string{
+	"notice":   tokenNoticeTemplate_,
+	"header":   tokenHeaderTemplate_,
+	"imports":  tokenImportsTemplate_,
+	"access":   tokenAccessTemplate_,
+	"class":    tokenClassTemplate_,
+	"instance": tokenInstanceTemplate_,
+}
+
+var scannerTemplates_ = map[string]string{
+	"notice":   scannerNoticeTemplate_,
+	"header":   scannerHeaderTemplate_,
+	"imports":  scannerImportsTemplate_,
+	"access":   scannerAccessTemplate_,
+	"class":    scannerClassTemplate_,
+	"instance": scannerInstanceTemplate_,
+}
+
+var parserTemplates_ = map[string]string{
+	"notice":   parserNoticeTemplate_,
+	"header":   parserHeaderTemplate_,
+	"imports":  parserImportsTemplate_,
+	"access":   parserAccessTemplate_,
+	"class":    parserClassTemplate_,
+	"instance": parserInstanceTemplate_,
+}
+
+var validatorTemplates_ = map[string]string{
+	"notice":   validatorNoticeTemplate_,
+	"header":   validatorHeaderTemplate_,
+	"imports":  validatorImportsTemplate_,
+	"access":   validatorAccessTemplate_,
+	"class":    validatorClassTemplate_,
+	"instance": validatorInstanceTemplate_,
+}
+
+var formatterTemplates_ = map[string]string{
+	"notice":   formatterNoticeTemplate_,
+	"header":   formatterHeaderTemplate_,
+	"imports":  formatterImportsTemplate_,
+	"access":   formatterAccessTemplate_,
+	"class":    formatterClassTemplate_,
+	"instance": formatterInstanceTemplate_,
+}
+
+// GENERAL TEMPLATES
+
+const noticeTemplate_ = `
+................................................................................
+<Copyright>
+................................................................................
+.  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               .
+.                                                                              .
+.  This code is free software; you can redistribute it and/or modify it under  .
+.  the terms of The MIT License (MIT), as published by the Open Source         .
+.  Initiative. (See https://opensource.org/license/MIT)                        .
+................................................................................
+`
+
+// SYNTAX TEMPLATES
+
+const syntaxNoticeTemplate_ = `!><Notice><!
+`
+
+const syntaxHeaderTemplate_ = `
+!>
+<SYNTAX> NOTATION
+This document contains a formal definition of the <Syntax> Notation
+using Crater Dog Syntax Notation™ (CDSN):
+ * https://github.com/craterdog/go-grammar-framework/blob/main/v4/Syntax.cdsn
+
+A language syntax consists of a set of rule definitions and expression
+definitions.
+
+The following intrinsic character types are context specific:
+ * ANY - Any language specific character.
+ * LOWER - Any language specific lowercase character.
+ * UPPER - Any language specific uppercase character.
+ * DIGIT - Any language specific digit.
+ * ESCAPE - Any environment specific escape sequence.
+ * CONTROL - Any environment specific (non-printable) control character.
+ * EOL - The environment specific end-of-line character.
+ * EOF - The environment specific end-of-file marker (pseudo character).
+
+A predicate may be constrained by any of the following cardinalities:
+ * predicate{M} - Exactly M instances of the specified predicate.
+ * predicate{M..N} - M to N instances of the specified predicate.
+ * predicate{M..} - M or more instances of the specified predicate.
+ * predicate? - Zero or one instances of the specified predicate.
+ * predicate* - Zero or more instances of the specified predicate.
+ * predicate+ - One or more instances of the specified predicate.
+
+A negation "~" within an expression definition may only be applied to a bounded
+range of possible intrinsic character types or printable unicode characters
+called runes.
+<!
+`
+
+const syntaxRulesTemplate_ = `
+!>
+RULE DEFINITIONS
+The following rules are used by the parser when parsing the stream of tokens
+generated by the scanner based on the expression definitions.  Each rule name
+begins with an uppercase letter.  The rule definitions may specify the names of
+expressions or other rules and are matched by the parser in the order listed.  A
+rule definition may also be directly or indirectly recursive.  The parsing of
+tokens is greedy and will match as many repeated token types as possible. The
+sequence of factors within in a rule definition may be separated by spaces which
+are ignored by the parser.
+<!
+Document: Component EOL* EOF  ! Terminated with an end-of-file marker.
+
+Component:
+    Intrinsic
+    List
+
+Intrinsic:
+    integer
+    rune
+    text
+
+List: "[" Component Additional* "]"
+
+Additional: "," Component
+
+`
+
+const syntaxExpressionsTemplate_ = `
+!>
+EXPRESSION DEFINITIONS
+The following expression definitions are used by the scanner to generate the
+stream of tokens—each an instance of an expression type—that are to be processed by
+the parser.  Each expression name begins with a lowercase letter.  Unlike with
+rule definitions, an expression definition cannot specify the name of a rule within
+its definition, but it may specify the name of another expression.  Expression
+definitions cannot be recursive and the scanning of expressions is NOT greedy.
+Any spaces within an expression definition are part of the expression and are NOT
+ignored.
+<!
+delimiter: "," | "[" | "]"
+
+integer: '0' | '-'? '1'..'9' DIGIT*
+
+rune: "'" ~[CONTROL] "'"  ! Any single printable unicode character.
+
+text: '"' (ESCAPE ~['"' CONTROL])+ '"'
+
+`
+
+// AST TEMPLATES
+
+const astNoticeTemplate_ = `/*<Notice>*/
+`
+
+const astHeaderTemplate_ = `
 /*
-Package "<package>" provides...
+Package "ast" provides the abstract syntax tree (AST) classes for this module.
+Each AST class manages the attributes associated with the rule definition found
+in the syntax grammar with the same rule name as the class.
 
 For detailed documentation on this package refer to the wiki:
-  - <wiki>
+  - https://<module>/wiki
 
 This package follows the Crater Dog Technologies™ Go Coding Conventions located
 here:
@@ -25,17 +221,23 @@ here:
 
 Additional concrete implementations of the classes defined by this package can
 be developed and used seamlessly since the interface definitions only depend on
-other interfaces and primitive types—and the class implementations only depend
+other interfaces and intrinsic types—and the class implementations only depend
 on interfaces, not on each other.
 */
-package <package>
+package ast
 `
 
-const astTemplate_ = `
+const astImportsTemplate_ = `
 import (
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	ast "github.com/craterdog/go-collection-framework/v4/collection"
 )
+`
 
+const astTypesTemplate_ = ``
+
+const astFunctionalsTemplate_ = ``
+
+const astClassesTemplate_ = `
 // Classes
 
 /*
@@ -45,7 +247,9 @@ type DummyClassLike interface {
 	// Constructors
 	Make() DummyLike
 }
+`
 
+const astInstancesTemplate_ = `
 // Instances
 
 /*
@@ -57,12 +261,46 @@ type DummyLike interface {
 }
 `
 
-const agentTemplate_ = `
+const astAspectsTemplate_ = ``
+
+// AGENT TEMPLATES
+
+const agentNoticeTemplate_ = `/*<Notice>*/
+`
+
+const agentHeaderTemplate_ = `
+/*
+Package "agent" provides the following agent classes that operate on the
+abstract syntax tree (AST) for this module:
+  - Token captures the attributes associated with a parsed token.
+  - Scanner is used to scan the source byte stream and recognize matching tokens.
+  - Parser is used to process the token stream and generate the AST.
+  - Validator is used to validate the semantics associated with an AST.
+  - Formatter is used to format an AST back into a canonical version of its source.
+
+For detailed documentation on this package refer to the wiki:
+  - https://<module>/wiki
+
+This package follows the Crater Dog Technologies™ Go Coding Conventions located
+here:
+  - https://github.com/craterdog/go-model-framework/wiki
+
+Additional concrete implementations of the classes defined by this package can
+be developed and used seamlessly since the interface definitions only depend on
+other interfaces and intrinsic types—and the class implementations only depend
+on interfaces, not on each other.
+*/
+package agent
+`
+
+const agentImportsTemplate_ = `
 import (
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "<module>/ast"
 )
+`
 
+const agentTypesTemplate_ = `
 // Types
 
 /*
@@ -73,8 +311,11 @@ type TokenType uint8
 
 const (
 	<TokenTypes>
-)
+)`
 
+const agentFunctionalsTemplate_ = ``
+
+const agentClassesTemplate_ = `
 // Classes
 
 /*
@@ -113,7 +354,7 @@ type ScannerClassLike interface {
 	// Constructors
 	Make(
 		source string,
-		tokens col.QueueLike[TokenLike],
+		tokens abs.QueueLike[TokenLike],
 	) ScannerLike
 
 	// Functions
@@ -121,7 +362,7 @@ type ScannerClassLike interface {
 	MatchToken(
 		type_ TokenType,
 		text string,
-	) col.ListLike[string]
+	) abs.ListLike[string]
 }
 
 /*
@@ -148,7 +389,9 @@ type ValidatorClassLike interface {
 	// Constructors
 	Make() ValidatorLike
 }
+`
 
+const agentInstancesTemplate_ = `
 // Instances
 
 /*
@@ -216,110 +459,20 @@ type ValidatorLike interface {
 }
 `
 
-const classCommentTemplate_ = `/*
-<Class>ClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete <class>-like class.
-*/`
+const agentAspectsTemplate_ = ``
 
-const instanceCommentTemplate_ = `/*
-<Class>Like is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete <class>-like class.
-*/`
+// TOKEN TEMPLATES
 
-const syntaxTemplate_ = `!>
-................................................................................
-<Copyright>
-................................................................................
-.  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               .
-.                                                                              .
-.  This code is free software; you can redistribute it and/or modify it under  .
-.  the terms of The MIT License (MIT), as published by the Open Source         .
-.  Initiative. (See https://opensource.org/license/MIT)                        .
-................................................................................
-<!
-
-!>
-<NAME> NOTATION
-This document contains a formal definition of the <Name> Notation
-using Crater Dog Syntax Notation™ (CDSN):
- * https://github.com/craterdog/go-grammar-framework/blob/main/v4/Syntax.cdsn
-
-A language syntax consists of a set of rule definitions and lexigram
-definitions.
-
-The following intrinsic character types are context specific:
- * ANY - Any language specific character.
- * LOWER - Any language specific lowercase character.
- * UPPER - Any language specific uppercase character.
- * DIGIT - Any language specific digit.
- * ESCAPE - Any environment specific escape sequence.
- * CONTROL - Any environment specific (non-printable) control character.
- * EOL - The environment specific end-of-line character.
- * EOF - The environment specific end-of-file marker (pseudo character).
-
-A predicate may be constrained by any of the following cardinalities:
- * predicate{M} - Exactly M instances of the specified predicate.
- * predicate{M..N} - M to N instances of the specified predicate.
- * predicate{M..} - M or more instances of the specified predicate.
- * predicate? - Zero or one instances of the specified predicate.
- * predicate* - Zero or more instances of the specified predicate.
- * predicate+ - One or more instances of the specified predicate.
-
-A negation "~" within a lexigram definition may only be applied to a bounded
-range of possible intrinsic character types or printable unicode characters
-called runes.
-<!
-
-!>
-RULE DEFINITIONS
-The following rules are used by the parser when parsing the stream of tokens
-generated by the scanner based on the lexigram definitions.  Each rule name
-begins with an uppercase letter.  The rule definitions may specify the names of
-lexigrams or other rules and are matched by the parser in the order listed.  A
-rule definition may also be directly or indirectly recursive.  The parsing of
-tokens is greedy and will match as many repeated token types as possible. The
-sequence of factors within in a rule definition may be separated by spaces which
-are ignored by the parser.
-<!
-Document: Component EOL* EOF  ! Terminated with an end-of-file marker.
-
-Component:
-    Primitive
-    List
-
-Primitive:
-    integer
-    rune
-    text
-
-List: "[" Component Additional* "]"
-
-Additional: "," Component
-
-!>
-LEXIGRAM DEFINITIONS
-The following lexigram definitions are used by the scanner to generate the
-stream of tokens—each an instance of a lexigram type—that are to be processed by
-the parser.  Each lexigram name begins with a lowercase letter.  Unlike with
-rule definitions, a lexigram definition cannot specify the name of a rule within
-its definition, but it may specify the name of another lexigram.  Lexigram
-definitions cannot be recursive and the scanning of lexigrams is NOT greedy.
-Any spaces within a lexigram definition are part of the lexigram and are NOT
-ignored.
-<!
-integer: '0' | '-'? '1'..'9' DIGIT*
-
-rune: "'" ~[CONTROL] "'"  ! Any single printable unicode character.
-
-text: '"' (ESCAPE ~['"' CONTROL])+ '"'
-
+const tokenNoticeTemplate_ = `/*<Notice>*/
 `
 
-const tokenTemplate_ = `<Notice>
+const tokenHeaderTemplate_ = `
 package agent
+`
 
+const tokenImportsTemplate_ = ``
+
+const tokenAccessTemplate_ = `
 // CLASS ACCESS
 
 // Reference
@@ -333,7 +486,9 @@ var tokenClass = &tokenClass_{
 func Token() TokenClassLike {
 	return tokenClass
 }
+`
 
+const tokenClassTemplate_ = `
 // CLASS METHODS
 
 // Target
@@ -359,7 +514,9 @@ func (c *tokenClass_) Make(
 		value_:    value,
 	}
 }
+`
 
+const tokenInstanceTemplate_ = `
 // INSTANCE METHODS
 
 // Target
@@ -396,17 +553,26 @@ func (v *token_) GetValue() string {
 }
 `
 
-const scannerTemplate_ = `<Notice>
-package agent
+// SCANNER TEMPLATES
 
+const scannerNoticeTemplate_ = `/*<Notice>*/
+`
+
+const scannerHeaderTemplate_ = `
+package agent
+`
+
+const scannerImportsTemplate_ = `
 import (
 	fmt "fmt"
-	fwk "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	reg "regexp"
 	sts "strings"
 )
+`
 
+const scannerAccessTemplate_ = `
 // CLASS ACCESS
 
 // Reference
@@ -414,18 +580,10 @@ import (
 var scannerClass = &scannerClass_{
 	// Initialize the class constants.
 	tokens_: map[TokenType]string{
-		// TBA - Add additional token types.
-		ErrorToken:     "error",
-		DelimiterToken: "delimiter",
-		EOFToken:       "EOF",
-		EOLToken:       "EOL",
-		SpaceToken:     "space",
+		<TokenNames>
 	},
 	matchers_: map[TokenType]*reg.Regexp{
-		// TBA - Add additional token types.
-		DelimiterToken: reg.MustCompile("^(?:" + delimiter_ + ")"),
-		EOLToken:       reg.MustCompile("^(?:" + eol_ + ")"),
-		SpaceToken:     reg.MustCompile("^(?:" + space_ + ")"),
+		<TokenMatchers>
 	},
 }
 
@@ -434,7 +592,9 @@ var scannerClass = &scannerClass_{
 func Scanner() ScannerClassLike {
 	return scannerClass
 }
+`
 
+const scannerClassTemplate_ = `
 // CLASS METHODS
 
 // Target
@@ -449,7 +609,7 @@ type scannerClass_ struct {
 
 func (c *scannerClass_) Make(
 	source string,
-	tokens col.QueueLike[TokenLike],
+	tokens abs.QueueLike[TokenLike],
 ) ScannerLike {
 	var scanner = &scanner_{
 		// Initialize the instance attributes.
@@ -487,13 +647,14 @@ func (c *scannerClass_) FormatToken(token TokenLike) string {
 func (c *scannerClass_) MatchToken(
 	type_ TokenType,
 	text string,
-) col.ListLike[string] {
+) abs.ListLike[string] {
 	var matcher = c.matchers_[type_]
 	var matches = matcher.FindStringSubmatch(text)
-	var notation = fwk.CDCN()
-	return col.List[string](notation).MakeFromArray(matches)
+	return col.List[string](matches)
 }
+`
 
+const scannerInstanceTemplate_ = `
 // INSTANCE METHODS
 
 // Target
@@ -506,7 +667,7 @@ type scanner_ struct {
 	line_     int // The line number in the source string of the next rune.
 	position_ int // The position in the current line of the next rune.
 	runes_    []rune
-	tokens_   col.QueueLike[TokenLike]
+	tokens_   abs.QueueLike[TokenLike]
 }
 
 // Attributes
@@ -536,14 +697,16 @@ func (v *scanner_) emitToken(type_ TokenType) {
 		value = "<CRTN>"
 	case "\v":
 		value = "<VTAB>"
+	case "":
+		value = "<EOFL>"
 	}
 	var token = Token().Make(v.line_, v.position_, type_, value)
 	//fmt.Println(Scanner().FormatToken(token)) // Uncomment when debugging.
 	v.tokens_.AddValue(token) // This will block if the queue is full.
 }
 
-func (v *scanner_) foundEOF() {
-	v.emitToken(EOFToken)
+func (v *scanner_) foundEof() {
+	v.emitToken(EofToken)
 }
 
 func (v *scanner_) foundError() {
@@ -567,7 +730,7 @@ func (v *scanner_) foundToken(type_ TokenType) bool {
 		var count = sts.Count(match, "\n")
 		if count > 0 {
 			v.line_ += count
-			v.position_ = v.indexOfLastEOL(token)
+			v.position_ = v.indexOfLastEol(token)
 		} else {
 			v.position_ += v.next_ - v.first_
 		}
@@ -579,7 +742,7 @@ func (v *scanner_) foundToken(type_ TokenType) bool {
 	return false
 }
 
-func (v *scanner_) indexOfLastEOL(runes []rune) int {
+func (v *scanner_) indexOfLastEol(runes []rune) int {
 	var length = len(runes)
 	for index := length; index > 0; index-- {
 		if runes[index-1] == '\n' {
@@ -593,16 +756,13 @@ func (v *scanner_) scanTokens() {
 loop:
 	for v.next_ < len(v.runes_) {
 		switch {
-		// TBA - Add additional token types.
-		case v.foundToken(DelimiterToken):
-		case v.foundToken(EOLToken):
-		case v.foundToken(SpaceToken):
+		<FoundCases>
 		default:
 			v.foundError()
 			break loop
 		}
 	}
-	v.foundEOF()
+	v.foundEof()
 }
 
 /*
@@ -614,37 +774,30 @@ way.  We append an underscore to each name to lessen the chance of a name
 collision with other private Go class constants in this package.
 */
 const (
-	// TBA - Add additional token types.
-	any_       = ` + "`" + `.|` + "`" + ` + eol_
-	base16_    = ` + "`" + `[0-9a-f]` + "`" + `
-	control_   = ` + "`" + `\p{Cc}` + "`" + `
-	delimiter_ = ` + "`" + `[:;,\.=]` + "`" + ` // TBA - Replace with the actual delimeters.
-	digit_     = ` + "`" + `\p{Nd}` + "`" + `
-	eof_       = ` + "`" + `\z` + "`" + `
-	eol_       = ` + "`" + `\n` + "`" + `
-	escape_    = ` + "`" + `\\(?:(?:` + "`" + ` + unicode_ + ` + "`" + `)|[abfnrtv'"\\])` + "`" + `
-	letter_    = lower_ + ` + "`" + `|` + "`" + ` + upper_
-	lower_     = ` + "`" + `\p{Ll}` + "`" + `
-	number_    = ` + "`" + `(?:` + "`" + ` + digit_ + ` + "`" + `)+` + "`" + `
-	rune_      = ` + "`" + `['][^` + "`" + ` + control_ + ` + "`" + `][']` + "`" + `
-	space_     = ` + "`" + `[ \t]+` + "`" + `
-	string_    = ` + "`" + `["](?:` + "`" + ` + escape_ + ` + "`" + `|[^"` + "`" + ` + control_ + ` + "`" + `])+?["]` + "`" + `
-	unicode_   = ` + "`" + `x` + "`" + ` + base16_ + ` + "`" + `{2}|u` + "`" + ` + base16_ + ` + "`" + `{4}|U` + "`" + ` + base16_ + ` + "`" + `{8}` + "`" + `
-	upper_     = ` + "`" + `\p{Lu}` + "`" + `
+	<Expressions>
 )
 `
 
-const parserTemplate_ = `<Notice>
-package agent
+// PARSER TEMPLATES
 
+const parserNoticeTemplate_ = `/*<Notice>*/
+`
+
+const parserHeaderTemplate_ = `
+package agent
+`
+
+const parserImportsTemplate_ = `
 import (
 	fmt "fmt"
-	fwk "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "<module>/ast"
 	sts "strings"
 )
+`
 
+const parserAccessTemplate_ = `
 // CLASS ACCESS
 
 // Reference
@@ -660,7 +813,9 @@ var parserClass = &parserClass_{
 func Parser() ParserClassLike {
 	return parserClass
 }
+`
 
+const parserClassTemplate_ = `
 // CLASS METHODS
 
 // Target
@@ -679,7 +834,9 @@ func (c *parserClass_) Make() ParserLike {
 		class_: c,
 	}
 }
+`
 
+const parserInstanceTemplate_ = `
 // INSTANCE METHODS
 
 // Target
@@ -688,8 +845,8 @@ type parser_ struct {
 	// Define the instance attributes.
 	class_  ParserClassLike
 	source_ string                   // The original source code.
-	tokens_ col.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
-	next_   col.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
+	tokens_ abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
+	next_   abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
 }
 
 // Attributes
@@ -702,9 +859,8 @@ func (v *parser_) GetClass() ParserClassLike {
 
 func (v *parser_) ParseSource(source string) ast.<Name>Like {
 	v.source_ = source
-	var notation = fwk.CDCN()
-	v.tokens_ = col.Queue[TokenLike](notation).MakeWithCapacity(parserClass.queueSize_)
-	v.next_ = col.Stack[TokenLike](notation).MakeWithCapacity(parserClass.stackSize_)
+	v.tokens_ = col.Queue[TokenLike](parserClass.queueSize_)
+	v.next_ = col.Stack[TokenLike](parserClass.stackSize_)
 
 	// The scanner runs in a separate Go routine.
 	Scanner().Make(v.source_, v.tokens_)
@@ -721,11 +877,11 @@ func (v *parser_) ParseSource(source string) ast.<Name>Like {
 
 	// Attempt to parse optional end-of-line characters.
 	for ok {
-		_, _, ok = v.parseToken(EOLToken, "")
+		_, _, ok = v.parseToken(EolToken, "")
 	}
 
 	// Attempt to parse the end-of-file marker.
-	_, token, ok = v.parseToken(EOFToken, "")
+	_, token, ok = v.parseToken(EofToken, "")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("EOF",
@@ -825,7 +981,7 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 	token = v.getNextToken()
 	if token.GetType() == expectedType {
 		value = token.GetValue()
-		if fwk.IsUndefined(expectedValue) || value == expectedValue {
+		if col.IsUndefined(expectedValue) || value == expectedValue {
 			// Found the right token.
 			return value, token, true
 		}
@@ -845,14 +1001,118 @@ var syntax = map[string]string{
 }
 `
 
-const formatterTemplate_ = `<Notice>
-package agent
+// VALIDATOR TEMPLATES
 
+const validatorNoticeTemplate_ = `/*<Notice>*/
+`
+
+const validatorHeaderTemplate_ = `
+package agent
+`
+
+const validatorImportsTemplate_ = `
+import (
+	fmt "fmt"
+	ast "<module>/ast"
+)
+`
+
+const validatorAccessTemplate_ = `
+// CLASS ACCESS
+
+// Reference
+
+var validatorClass = &validatorClass_{
+	// Initialize the class constants.
+}
+
+// Function
+
+func Validator() ValidatorClassLike {
+	return validatorClass
+}
+`
+
+const validatorClassTemplate_ = `
+// CLASS METHODS
+
+// Target
+
+type validatorClass_ struct {
+	// Define the class constants.
+}
+
+// Constructors
+
+func (c *validatorClass_) Make() ValidatorLike {
+	return &validator_{
+		// Initialize the instance attributes.
+		class_: c,
+	}
+}
+`
+
+const validatorInstanceTemplate_ = `
+// INSTANCE METHODS
+
+// Target
+
+type validator_ struct {
+	// Define the instance attributes.
+	class_    ValidatorClassLike
+}
+
+// Attributes
+
+func (v *validator_) GetClass() ValidatorClassLike {
+	return v.class_
+}
+
+// Public
+
+func (v *validator_) Validate<Name>(<name> ast.<Name>Like) {
+	// TBA - Add a real method implementation.
+	var name = "foobar"
+	if !v.matchesToken(ErrorToken, name) {
+		var message = v.formatError(name, "Oops!")
+		panic(message)
+	}
+}
+
+// Private
+
+func (v *validator_) formatError(name, message string) string {
+	message = fmt.Sprintf(
+		"The definition for %v is invalid:\n%v\n",
+		name,
+		message,
+	)
+	return message
+}
+
+func (v *validator_) matchesToken(type_ TokenType, value string) bool {
+	var matches = Scanner().MatchToken(type_, value)
+	return !matches.IsEmpty()
+}
+`
+
+// FORMATTER TEMPLATES
+
+const formatterNoticeTemplate_ = `/*<Notice>*/
+`
+
+const formatterHeaderTemplate_ = `
+package agent
+`
+
+const formatterImportsTemplate_ = `
 import (
 	ast "<module>/ast"
 	sts "strings"
 )
+`
 
+const formatterAccessTemplate_ = `
 // CLASS ACCESS
 
 // Reference
@@ -866,7 +1126,9 @@ var formatterClass = &formatterClass_{
 func Formatter() FormatterClassLike {
 	return formatterClass
 }
+`
 
+const formatterClassTemplate_ = `
 // CLASS METHODS
 
 // Target
@@ -883,7 +1145,9 @@ func (c *formatterClass_) Make() FormatterLike {
 		class_:   c,
 	}
 }
+`
 
+const formatterInstanceTemplate_ = `
 // INSTANCE METHODS
 
 // Target
@@ -943,84 +1207,14 @@ func (v *formatter_) getResult() string {
 }
 `
 
-const validatorTemplate_ = `<Notice>
-package agent
+const classCommentTemplate_ = `/*
+<Class>ClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete <class>-like class.
+*/`
 
-import (
-	fmt "fmt"
-	ast "<module>/ast"
-)
-
-// CLASS ACCESS
-
-// Reference
-
-var validatorClass = &validatorClass_{
-	// Initialize the class constants.
-}
-
-// Function
-
-func Validator() ValidatorClassLike {
-	return validatorClass
-}
-
-// CLASS METHODS
-
-// Target
-
-type validatorClass_ struct {
-	// Define the class constants.
-}
-
-// Constructors
-
-func (c *validatorClass_) Make() ValidatorLike {
-	return &validator_{
-		// Initialize the instance attributes.
-		class_: c,
-	}
-}
-
-// INSTANCE METHODS
-
-// Target
-
-type validator_ struct {
-	// Define the instance attributes.
-	class_    ValidatorClassLike
-}
-
-// Attributes
-
-func (v *validator_) GetClass() ValidatorClassLike {
-	return v.class_
-}
-
-// Public
-
-func (v *validator_) Validate<Name>(<name> ast.<Name>Like) {
-	// TBA - Add a real method implementation.
-	var name = "foobar"
-	if !v.matchesToken(ErrorToken, name) {
-		var message = v.formatError(name, "Oops!")
-		panic(message)
-	}
-}
-
-// Private
-
-func (v *validator_) formatError(name, message string) string {
-	message = fmt.Sprintf(
-		"The definition for %v is invalid:\n%v\n",
-		name,
-		message,
-	)
-	return message
-}
-
-func (v *validator_) matchesToken(type_ TokenType, value string) bool {
-	var matches = Scanner().MatchToken(type_, value)
-	return !matches.IsEmpty()
-}
-`
+const instanceCommentTemplate_ = `/*
+<Class>Like is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete <class>-like class.
+*/`

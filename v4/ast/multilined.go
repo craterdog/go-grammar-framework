@@ -13,8 +13,8 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -41,10 +41,10 @@ type multilinedClass_ struct {
 
 // Constructors
 
-func (c *multilinedClass_) Make(lines col.Sequential[LineLike]) MultilinedLike {
+func (c *multilinedClass_) Make(lines abs.Sequential[LineLike]) MultilinedLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(lines):
+	case col.IsUndefined(lines):
 		panic("The lines attribute is required for each Multilined.")
 	default:
 		return &multilined_{
@@ -62,7 +62,7 @@ func (c *multilinedClass_) Make(lines col.Sequential[LineLike]) MultilinedLike {
 type multilined_ struct {
 	// Define instance attributes.
 	class_ MultilinedClassLike
-	lines_ col.Sequential[LineLike]
+	lines_ abs.Sequential[LineLike]
 }
 
 // Attributes
@@ -71,7 +71,7 @@ func (v *multilined_) GetClass() MultilinedClassLike {
 	return v.class_
 }
 
-func (v *multilined_) GetLines() col.Sequential[LineLike] {
+func (v *multilined_) GetLines() abs.Sequential[LineLike] {
 	return v.lines_
 }
 

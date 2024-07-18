@@ -13,8 +13,8 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -42,14 +42,14 @@ type patternClass_ struct {
 // Constructors
 
 func (c *patternClass_) Make(
-	parts col.Sequential[PartLike],
-	alternatives col.Sequential[AlternativeLike],
+	parts abs.Sequential[PartLike],
+	alternatives abs.Sequential[AlternativeLike],
 ) PatternLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(parts):
+	case col.IsUndefined(parts):
 		panic("The parts attribute is required for each Pattern.")
-	case mod.IsUndefined(alternatives):
+	case col.IsUndefined(alternatives):
 		panic("The alternatives attribute is required for each Pattern.")
 	default:
 		return &pattern_{
@@ -68,8 +68,8 @@ func (c *patternClass_) Make(
 type pattern_ struct {
 	// Define instance attributes.
 	class_        PatternClassLike
-	parts_        col.Sequential[PartLike]
-	alternatives_ col.Sequential[AlternativeLike]
+	parts_        abs.Sequential[PartLike]
+	alternatives_ abs.Sequential[AlternativeLike]
 }
 
 // Attributes
@@ -78,11 +78,11 @@ func (v *pattern_) GetClass() PatternClassLike {
 	return v.class_
 }
 
-func (v *pattern_) GetParts() col.Sequential[PartLike] {
+func (v *pattern_) GetParts() abs.Sequential[PartLike] {
 	return v.parts_
 }
 
-func (v *pattern_) GetAlternatives() col.Sequential[AlternativeLike] {
+func (v *pattern_) GetAlternatives() abs.Sequential[AlternativeLike] {
 	return v.alternatives_
 }
 

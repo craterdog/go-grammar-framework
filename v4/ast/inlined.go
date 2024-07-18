@@ -13,8 +13,8 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -42,12 +42,12 @@ type inlinedClass_ struct {
 // Constructors
 
 func (c *inlinedClass_) Make(
-	factors col.Sequential[FactorLike],
+	factors abs.Sequential[FactorLike],
 	optionalNote string,
 ) InlinedLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(factors):
+	case col.IsUndefined(factors):
 		panic("The factors attribute is required for each Inlined.")
 	default:
 		return &inlined_{
@@ -66,7 +66,7 @@ func (c *inlinedClass_) Make(
 type inlined_ struct {
 	// Define instance attributes.
 	class_        InlinedClassLike
-	factors_      col.Sequential[FactorLike]
+	factors_      abs.Sequential[FactorLike]
 	optionalNote_ string
 }
 
@@ -76,7 +76,7 @@ func (v *inlined_) GetClass() InlinedClassLike {
 	return v.class_
 }
 
-func (v *inlined_) GetFactors() col.Sequential[FactorLike] {
+func (v *inlined_) GetFactors() abs.Sequential[FactorLike] {
 	return v.factors_
 }
 

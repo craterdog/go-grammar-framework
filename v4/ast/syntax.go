@@ -13,8 +13,8 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -42,25 +42,25 @@ type syntaxClass_ struct {
 // Constructors
 
 func (c *syntaxClass_) Make(
-	headers col.Sequential[HeaderLike],
-	rules col.Sequential[RuleLike],
-	lexigrams col.Sequential[LexigramLike],
+	headers abs.Sequential[HeaderLike],
+	rules abs.Sequential[RuleLike],
+	expressions abs.Sequential[ExpressionLike],
 ) SyntaxLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(headers):
+	case col.IsUndefined(headers):
 		panic("The headers attribute is required for each Syntax.")
-	case mod.IsUndefined(rules):
+	case col.IsUndefined(rules):
 		panic("The rules attribute is required for each Syntax.")
-	case mod.IsUndefined(lexigrams):
-		panic("The lexigrams attribute is required for each Syntax.")
+	case col.IsUndefined(expressions):
+		panic("The expressions attribute is required for each Syntax.")
 	default:
 		return &syntax_{
 			// Initialize instance attributes.
-			class_:     c,
-			headers_:   headers,
-			rules_:     rules,
-			lexigrams_: lexigrams,
+			class_:       c,
+			headers_:     headers,
+			rules_:       rules,
+			expressions_: expressions,
 		}
 	}
 }
@@ -71,10 +71,10 @@ func (c *syntaxClass_) Make(
 
 type syntax_ struct {
 	// Define instance attributes.
-	class_     SyntaxClassLike
-	headers_   col.Sequential[HeaderLike]
-	rules_     col.Sequential[RuleLike]
-	lexigrams_ col.Sequential[LexigramLike]
+	class_       SyntaxClassLike
+	headers_     abs.Sequential[HeaderLike]
+	rules_       abs.Sequential[RuleLike]
+	expressions_ abs.Sequential[ExpressionLike]
 }
 
 // Attributes
@@ -83,16 +83,16 @@ func (v *syntax_) GetClass() SyntaxClassLike {
 	return v.class_
 }
 
-func (v *syntax_) GetHeaders() col.Sequential[HeaderLike] {
+func (v *syntax_) GetHeaders() abs.Sequential[HeaderLike] {
 	return v.headers_
 }
 
-func (v *syntax_) GetRules() col.Sequential[RuleLike] {
+func (v *syntax_) GetRules() abs.Sequential[RuleLike] {
 	return v.rules_
 }
 
-func (v *syntax_) GetLexigrams() col.Sequential[LexigramLike] {
-	return v.lexigrams_
+func (v *syntax_) GetExpressions() abs.Sequential[ExpressionLike] {
+	return v.expressions_
 }
 
 // Private

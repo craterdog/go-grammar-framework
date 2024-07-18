@@ -56,17 +56,19 @@ func TestLifecycle(t *tes.T) {
 	fmt.Println(source)
 
 	// Generate the formatter class for the syntax.
-	generator.GenerateFormatter(module, syntax, model)
+	generator.GenerateFormatter(module, syntax)
 
 	// Generate the parser class for the syntax.
-	generator.GenerateParser(module, syntax, model)
+	generator.GenerateParser(module, syntax)
 
 	// Generate the scanner class for the syntax.
-	generator.GenerateScanner(module, syntax, model)
+	source = generator.GenerateScanner(module, syntax)
+	fmt.Println("Scanner Class:")
+	fmt.Println(source)
 
 	// Generate the token class for the syntax.
-	generator.GenerateToken(module, syntax, model)
+	generator.GenerateToken(module, syntax)
 
 	// Generate the validator class for the syntax.
-	generator.GenerateValidator(module, syntax, model)
+	generator.GenerateValidator(module, syntax)
 }

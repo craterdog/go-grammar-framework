@@ -14,8 +14,8 @@ package agent
 
 import (
 	fmt "fmt"
-	fwk "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	sts "strings"
 )
@@ -63,8 +63,8 @@ type parser_ struct {
 	// Define the instance attributes.
 	class_  ParserClassLike
 	source_ string                   // The original source code.
-	tokens_ col.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
-	next_   col.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
+	tokens_ abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
+	next_   abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
 }
 
 // Attributes
@@ -77,9 +77,8 @@ func (v *parser_) GetClass() ParserClassLike {
 
 func (v *parser_) ParseSource(source string) ast.SyntaxLike {
 	v.source_ = source
-	var notation = fwk.CDCN()
-	v.tokens_ = col.Queue[TokenLike](notation).MakeWithCapacity(parserClass.queueSize_)
-	v.next_ = col.Stack[TokenLike](notation).MakeWithCapacity(parserClass.stackSize_)
+	v.tokens_ = col.Queue[TokenLike](parserClass.queueSize_)
+	v.next_ = col.Stack[TokenLike](parserClass.stackSize_)
 
 	// The scanner runs in a separate Go routine.
 	Scanner().Make(v.source_, v.tokens_)
@@ -190,8 +189,7 @@ func (v *parser_) parseAlternative() (
 		)
 		panic(message)
 	}
-	var notation = fwk.CDCN()
-	var parts = col.List[ast.PartLike](notation).Make()
+	var parts = col.List[ast.PartLike]()
 	for ok {
 		parts.AppendValue(part)
 		part, token, ok = v.parsePart()
@@ -324,6 +322,33 @@ func (v *parser_) parseConstrained() (
 	return constrained, token, true
 }
 
+func (v *parser_) parseDefinition() (
+	definition ast.DefinitionLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the in-line definition.
+	var inlined ast.InlinedLike
+	inlined, token, ok = v.parseInlined()
+	if ok {
+		// Found the in-line definition.
+		definition = ast.Definition().Make(inlined)
+		return definition, token, true
+	}
+
+	// Attempt to parse the multi-line definition.
+	var multilined ast.MultilinedLike
+	multilined, token, ok = v.parseMultilined()
+	if ok {
+		// Found the multi-line definition.
+		definition = ast.Definition().Make(multilined)
+		return definition, token, true
+	}
+
+	// This is not the definition.
+	return definition, token, false
+}
+
 func (v *parser_) parseElement() (
 	element ast.ElementLike,
 	token TokenLike,
@@ -347,39 +372,21 @@ func (v *parser_) parseElement() (
 		return element, token, true
 	}
 
-	// Attempt to parse the bounded element.
-	var bounded ast.BoundedLike
-	bounded, token, ok = v.parseBounded()
+	// Attempt to parse the character element.
+	var character ast.CharacterLike
+	character, token, ok = v.parseCharacter()
 	if ok {
 		// Found the character element.
-		element = ast.Element().Make(bounded)
+		element = ast.Element().Make(character)
 		return element, token, true
 	}
 
-	// Attempt to parse the intrinsic element.
-	var intrinsic string
-	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
+	// Attempt to parse the string element.
+	var string_ ast.StringLike
+	string_, token, ok = v.parseString()
 	if ok {
-		// Found the intrinsic element.
-		element = ast.Element().Make(intrinsic)
-		return element, token, true
-	}
-
-	// Attempt to parse the lowercase element.
-	var lowercase string
-	lowercase, token, ok = v.parseToken(LowercaseToken, "")
-	if ok {
-		// Found the lowercase element.
-		element = ast.Element().Make(lowercase)
-		return element, token, true
-	}
-
-	// Attempt to parse the literal element.
-	var literal string
-	literal, token, ok = v.parseToken(LiteralToken, "")
-	if ok {
-		// Found the literal element.
-		element = ast.Element().Make(literal)
+		// Found the string element.
+		element = ast.Element().Make(string_)
 		return element, token, true
 	}
 
@@ -392,26 +399,66 @@ func (v *parser_) parseExpression() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the in-line expression.
-	var inlined ast.InlinedLike
-	inlined, token, ok = v.parseInlined()
-	if ok {
-		// Found the in-line expression.
-		expression = ast.Expression().Make(inlined)
-		return expression, token, true
+	// Attempt to parse the optional comment.
+	var comment string
+	var commentToken TokenLike
+	comment, commentToken, _ = v.parseToken(CommentToken, "")
+
+	// Attempt to parse the lowercase identifier.
+	var lowercase string
+	lowercase, token, ok = v.parseToken(LowercaseToken, "")
+	if !ok {
+		// This is not the expression, put back any comment token that was received.
+		if col.IsDefined(comment) {
+			v.putBack(commentToken)
+		}
+		return expression, token, false
 	}
 
-	// Attempt to parse the multi-line expression.
-	var multilined ast.MultilinedLike
-	multilined, token, ok = v.parseMultilined()
-	if ok {
-		// Found the multi-line expression.
-		expression = ast.Expression().Make(multilined)
-		return expression, token, true
+	// Attempt to parse the separator delimiter.
+	_, token, ok = v.parseToken(DelimiterToken, ":")
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateSyntax(":",
+			"Expression",
+			"Pattern",
+		)
+		panic(message)
 	}
 
-	// This is not the expression.
-	return expression, token, false
+	// Attempt to parse the pattern.
+	var pattern ast.PatternLike
+	pattern, token, ok = v.parsePattern()
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateSyntax("Pattern",
+			"Expression",
+			"Pattern",
+		)
+		panic(message)
+	}
+
+	// Attempt to parse the optional note.
+	var note string
+	note, _, _ = v.parseToken(NoteToken, "")
+
+	// Attempt to parse one or more end-of-line characters.
+	_, token, ok = v.parseToken(EolToken, "")
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateSyntax("EOL",
+			"Expression",
+			"Pattern",
+		)
+		panic(message)
+	}
+	for ok {
+		_, token, ok = v.parseToken(EolToken, "")
+	}
+
+	// Found the expression.
+	expression = ast.Expression().Make(comment, lowercase, pattern, note)
+	return expression, token, true
 }
 
 func (v *parser_) parseExtent() (
@@ -478,7 +525,7 @@ func (v *parser_) parseFiltered() (
 	_, token, ok = v.parseToken(DelimiterToken, "[")
 	if !ok {
 		// This is not the filtered element, put back any negation token.
-		if fwk.IsDefined(negation) {
+		if col.IsDefined(negation) {
 			v.putBack(negationToken)
 		}
 		return filtered, token, false
@@ -491,8 +538,7 @@ func (v *parser_) parseFiltered() (
 		// This is not the filtered element.
 		return filtered, token, false
 	}
-	var notation = fwk.CDCN()
-	var characters = col.List[ast.CharacterLike](notation).Make()
+	var characters = col.List[ast.CharacterLike]()
 	for ok {
 		characters.AppendValue(character)
 		character, _, ok = v.parseCharacter()
@@ -569,7 +615,7 @@ func (v *parser_) parseHeader() (
 	}
 
 	// Attempt to parse the end-of-line character.
-	_, token, ok = v.parseToken(EOLToken, "")
+	_, token, ok = v.parseToken(EolToken, "")
 	if !ok {
 		// This is not the header, put back the comment token.
 		v.putBack(commentToken)
@@ -633,11 +679,10 @@ func (v *parser_) parseInlined() (
 	var factor ast.FactorLike
 	factor, token, ok = v.parseFactor()
 	if !ok {
-		// This is not the inlined expression.
+		// This is not the inlined definition.
 		return inlined, token, false
 	}
-	var notation = fwk.CDCN()
-	var factors = col.List[ast.FactorLike](notation).Make()
+	var factors = col.List[ast.FactorLike]()
 	for ok {
 		factors.AppendValue(factor)
 		factor, _, ok = v.parseFactor()
@@ -647,76 +692,9 @@ func (v *parser_) parseInlined() (
 	var note string
 	note, token, _ = v.parseToken(NoteToken, "")
 
-	// Found the in-line expression.
+	// Found the in-line definition.
 	inlined = ast.Inlined().Make(factors, note)
 	return inlined, token, true
-}
-
-func (v *parser_) parseLexigram() (
-	lexigram ast.LexigramLike,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse the optional comment.
-	var comment string
-	var commentToken TokenLike
-	comment, commentToken, _ = v.parseToken(CommentToken, "")
-
-	// Attempt to parse the lowercase identifier.
-	var lowercase string
-	lowercase, token, ok = v.parseToken(LowercaseToken, "")
-	if !ok {
-		// This is not the lexigram, put back any comment token that was received.
-		if fwk.IsDefined(comment) {
-			v.putBack(commentToken)
-		}
-		return lexigram, token, false
-	}
-
-	// Attempt to parse the separator delimiter.
-	_, token, ok = v.parseToken(DelimiterToken, ":")
-	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax(":",
-			"Lexigram",
-			"Pattern",
-		)
-		panic(message)
-	}
-
-	// Attempt to parse the pattern.
-	var pattern ast.PatternLike
-	pattern, token, ok = v.parsePattern()
-	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("Pattern",
-			"Lexigram",
-			"Pattern",
-		)
-		panic(message)
-	}
-
-	// Attempt to parse the optional note.
-	var note string
-	note, _, _ = v.parseToken(NoteToken, "")
-
-	// Attempt to parse one or more end-of-line characters.
-	_, token, ok = v.parseToken(EOLToken, "")
-	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("EOL",
-			"Lexigram",
-			"Pattern",
-		)
-		panic(message)
-	}
-	for ok {
-		_, token, ok = v.parseToken(EOLToken, "")
-	}
-
-	// Found the lexigram.
-	lexigram = ast.Lexigram().Make(comment, lowercase, pattern, note)
-	return lexigram, token, true
 }
 
 func (v *parser_) parseLine() (
@@ -726,7 +704,7 @@ func (v *parser_) parseLine() (
 ) {
 	// Attempt to parse the end-of-line character.
 	var eolToken TokenLike
-	_, eolToken, ok = v.parseToken(EOLToken, "")
+	_, eolToken, ok = v.parseToken(EolToken, "")
 	if !ok {
 		// This is not the line.
 		return line, eolToken, false
@@ -798,17 +776,16 @@ func (v *parser_) parseMultilined() (
 	var line ast.LineLike
 	line, token, ok = v.parseLine()
 	if !ok {
-		// This is not the multilined expression.
+		// This is not the multilined definition.
 		return multilined, token, false
 	}
-	var notation = fwk.CDCN()
-	var lines = col.List[ast.LineLike](notation).Make()
+	var lines = col.List[ast.LineLike]()
 	for ok {
 		lines.AppendValue(line)
 		line, _, ok = v.parseLine()
 	}
 
-	// Found the multi-line expression.
+	// Found the multi-line definition.
 	multilined = ast.Multilined().Make(lines)
 	return multilined, token, true
 }
@@ -847,8 +824,7 @@ func (v *parser_) parsePattern() (
 		// This is not the pattern.
 		return pattern, token, false
 	}
-	var notation = fwk.CDCN()
-	var parts = col.List[ast.PartLike](notation).Make()
+	var parts = col.List[ast.PartLike]()
 	for ok {
 		parts.AppendValue(part)
 		part, _, ok = v.parsePart()
@@ -857,7 +833,7 @@ func (v *parser_) parsePattern() (
 	// Attempt to parse zero or more alternatives.
 	var alternative ast.AlternativeLike
 	alternative, token, ok = v.parseAlternative()
-	var alternatives = col.List[ast.AlternativeLike](notation).Make()
+	var alternatives = col.List[ast.AlternativeLike]()
 	for ok {
 		alternatives.AppendValue(alternative)
 		alternative, token, ok = v.parseAlternative()
@@ -924,7 +900,7 @@ func (v *parser_) parseRule() (
 	uppercase, token, ok = v.parseToken(UppercaseToken, "")
 	if !ok {
 		// This is not the rule, put back any comment token that was received.
-		if fwk.IsDefined(comment) {
+		if col.IsDefined(comment) {
 			v.putBack(commentToken)
 		}
 		return rule, token, false
@@ -936,40 +912,67 @@ func (v *parser_) parseRule() (
 		var message = v.formatError(token)
 		message += v.generateSyntax(":",
 			"Rule",
-			"Expression",
+			"Definition",
 		)
 		panic(message)
 	}
 
-	// Attempt to parse the expression.
-	var expression ast.ExpressionLike
-	expression, token, ok = v.parseExpression()
+	// Attempt to parse the definition.
+	var definition ast.DefinitionLike
+	definition, token, ok = v.parseDefinition()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("Expression",
+		message += v.generateSyntax("Definition",
 			"Rule",
-			"Expression",
+			"Definition",
 		)
 		panic(message)
 	}
 
 	// Attempt to parse one or more end-of-line characters.
-	_, token, ok = v.parseToken(EOLToken, "")
+	_, token, ok = v.parseToken(EolToken, "")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("EOL",
 			"Rule",
-			"Expression",
+			"Definition",
 		)
 		panic(message)
 	}
 	for ok {
-		_, token, ok = v.parseToken(EOLToken, "")
+		_, token, ok = v.parseToken(EolToken, "")
 	}
 
 	// Found the rule.
-	rule = ast.Rule().Make(comment, uppercase, expression)
+	rule = ast.Rule().Make(comment, uppercase, definition)
 	return rule, token, true
+}
+
+func (v *parser_) parseString() (
+	string_ ast.StringLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the lowercase string.
+	var lowercase string
+	lowercase, token, ok = v.parseToken(LowercaseToken, "")
+	if ok {
+		// Found the lowercase string.
+		string_ = ast.String().Make(lowercase)
+		return string_, token, true
+	}
+
+	// Attempt to parse the literal string.
+	var literal string
+	literal, token, ok = v.parseToken(LiteralToken, "")
+	if ok {
+		// Found the literal string.
+		string_ = ast.String().Make(literal)
+		return string_, token, true
+	}
+
+	// This is not the string.
+	return string_, token, false
 }
 
 func (v *parser_) parseSyntax() (
@@ -984,8 +987,7 @@ func (v *parser_) parseSyntax() (
 		// This is not the syntax.
 		return syntax, token, false
 	}
-	var notation = fwk.CDCN()
-	var headers = col.List[ast.HeaderLike](notation).Make()
+	var headers = col.List[ast.HeaderLike]()
 	for ok {
 		headers.AppendValue(header)
 		header, _, ok = v.parseHeader()
@@ -1000,55 +1002,55 @@ func (v *parser_) parseSyntax() (
 			"Syntax",
 			"Header",
 			"Rule",
-			"Lexigram",
+			"Expression",
 		)
 		panic(message)
 	}
-	var rules = col.List[ast.RuleLike](notation).Make()
+	var rules = col.List[ast.RuleLike]()
 	for ok {
 		rules.AppendValue(rule)
 		rule, _, ok = v.parseRule()
 	}
 
-	// Attempt to parse one or more lexigrams.
-	var lexigram ast.LexigramLike
-	lexigram, token, ok = v.parseLexigram()
+	// Attempt to parse one or more expressions.
+	var expression ast.ExpressionLike
+	expression, token, ok = v.parseExpression()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("Lexigram",
+		message += v.generateSyntax("Expression",
 			"Syntax",
 			"Header",
 			"Rule",
-			"Lexigram",
+			"Expression",
 		)
 		panic(message)
 	}
-	var lexigrams = col.List[ast.LexigramLike](notation).Make()
+	var expressions = col.List[ast.ExpressionLike]()
 	for ok {
-		lexigrams.AppendValue(lexigram)
-		lexigram, _, ok = v.parseLexigram()
+		expressions.AppendValue(expression)
+		expression, _, ok = v.parseExpression()
 	}
 
 	// Attempt to parse optional end-of-line characters.
 	for ok {
-		_, _, ok = v.parseToken(EOLToken, "")
+		_, _, ok = v.parseToken(EolToken, "")
 	}
 
 	// Attempt to parse the end-of-file marker.
-	_, token, ok = v.parseToken(EOFToken, "")
+	_, token, ok = v.parseToken(EofToken, "")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("EOF",
 			"Syntax",
 			"Header",
 			"Rule",
-			"Lexigram",
+			"Expression",
 		)
 		panic(message)
 	}
 
 	// Found the syntax.
-	syntax = ast.Syntax().Make(headers, rules, lexigrams)
+	syntax = ast.Syntax().Make(headers, rules, expressions)
 	return syntax, token, true
 }
 
@@ -1061,7 +1063,7 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 	token = v.getNextToken()
 	if token.GetType() == expectedType {
 		value = token.GetValue()
-		if fwk.IsUndefined(expectedValue) || value == expectedValue {
+		if col.IsUndefined(expectedValue) || value == expectedValue {
 			// Found the right token.
 			return value, token, true
 		}
@@ -1077,10 +1079,10 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var syntax = map[string]string{
-	"Syntax": `Header+ Rule+ Lexigram+ EOL* EOF  ! Terminated with an end-of-file marker.`,
+	"Syntax": `Header+ Rule+ Expression+ EOL* EOF  ! Terminated with an end-of-file marker.`,
 	"Header": `comment EOL`,
-	"Rule":   `comment? uppercase ":" Expression EOL+`,
-	"Expression": `,
+	"Rule":   `comment? uppercase ":" Definition EOL+`,
+	"Definition": `,
     "Inlined
     "Multilined`,
 	"Inlined":    `Factor+ note?`,
@@ -1100,7 +1102,7 @@ var syntax = map[string]string{
 	"Constrained": `"{" Minimum Maximum? "}"  ! A range of numbers is inclusive.`,
 	"Minimum":     `number`,
 	"Maximum":     `".." number?`,
-	"Lexigram":    `comment? lowercase ":" Pattern note? EOL+`,
+	"Expression":  `comment? lowercase ":" Pattern note? EOL+`,
 	"Pattern":     `Part+ Alternative*`,
 	"Part":        `Element Cardinality?  ! The default cardinality is one.`,
 	"Element": `,

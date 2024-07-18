@@ -13,7 +13,7 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
+	col "github.com/craterdog/go-collection-framework/v4"
 )
 
 // CLASS ACCESS
@@ -40,16 +40,26 @@ type expressionClass_ struct {
 
 // Constructors
 
-func (c *expressionClass_) Make(any_ any) ExpressionLike {
+func (c *expressionClass_) Make(
+	optionalComment string,
+	lowercase string,
+	pattern PatternLike,
+	optionalNote string,
+) ExpressionLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(any_):
-		panic("The any_ attribute is required for each Expression.")
+	case col.IsUndefined(lowercase):
+		panic("The lowercase attribute is required for each Expression.")
+	case col.IsUndefined(pattern):
+		panic("The pattern attribute is required for each Expression.")
 	default:
 		return &expression_{
 			// Initialize instance attributes.
-			class_: c,
-			any_:   any_,
+			class_:           c,
+			optionalComment_: optionalComment,
+			lowercase_:       lowercase,
+			pattern_:         pattern,
+			optionalNote_:    optionalNote,
 		}
 	}
 }
@@ -60,8 +70,11 @@ func (c *expressionClass_) Make(any_ any) ExpressionLike {
 
 type expression_ struct {
 	// Define instance attributes.
-	class_ ExpressionClassLike
-	any_   any
+	class_           ExpressionClassLike
+	optionalComment_ string
+	lowercase_       string
+	pattern_         PatternLike
+	optionalNote_    string
 }
 
 // Attributes
@@ -70,8 +83,20 @@ func (v *expression_) GetClass() ExpressionClassLike {
 	return v.class_
 }
 
-func (v *expression_) GetAny() any {
-	return v.any_
+func (v *expression_) GetOptionalComment() string {
+	return v.optionalComment_
+}
+
+func (v *expression_) GetLowercase() string {
+	return v.lowercase_
+}
+
+func (v *expression_) GetPattern() PatternLike {
+	return v.pattern_
+}
+
+func (v *expression_) GetOptionalNote() string {
+	return v.optionalNote_
 }
 
 // Private

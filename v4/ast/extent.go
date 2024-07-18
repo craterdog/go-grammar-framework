@@ -13,7 +13,7 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
+	col "github.com/craterdog/go-collection-framework/v4"
 )
 
 // CLASS ACCESS
@@ -43,7 +43,7 @@ type extentClass_ struct {
 func (c *extentClass_) Make(rune_ string) ExtentLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(rune_):
+	case col.IsUndefined(rune_):
 		panic("The rune_ attribute is required for each Extent.")
 	default:
 		return &extent_{

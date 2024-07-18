@@ -25,13 +25,13 @@ here:
 
 Additional concrete implementations of the classes defined by this package can
 be developed and used seamlessly since the interface definitions only depend on
-other interfaces and primitive types—and the class implementations only depend
+other interfaces and intrinsic types—and the class implementations only depend
 on interfaces, not on each other.
 */
 package agent
 
 import (
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	mod "github.com/craterdog/go-model-framework/v4"
 )
@@ -48,8 +48,8 @@ const (
 	ErrorToken TokenType = iota
 	CommentToken
 	DelimiterToken
-	EOFToken
-	EOLToken
+	EofToken
+	EolToken
 	IntrinsicToken
 	LiteralToken
 	LowercaseToken
@@ -109,7 +109,7 @@ type ScannerClassLike interface {
 	// Constructors
 	Make(
 		source string,
-		tokens col.QueueLike[TokenLike],
+		tokens abs.QueueLike[TokenLike],
 	) ScannerLike
 
 	// Functions
@@ -118,7 +118,7 @@ type ScannerClassLike interface {
 	MatchToken(
 		type_ TokenType,
 		text string,
-	) col.ListLike[string]
+	) abs.ListLike[string]
 }
 
 /*
@@ -186,27 +186,22 @@ type GeneratorLike interface {
 	GenerateFormatter(
 		module string,
 		syntax ast.SyntaxLike,
-		model mod.ModelLike,
 	) string
 	GenerateParser(
 		module string,
 		syntax ast.SyntaxLike,
-		model mod.ModelLike,
 	) string
 	GenerateScanner(
 		module string,
 		syntax ast.SyntaxLike,
-		model mod.ModelLike,
 	) string
 	GenerateToken(
 		module string,
 		syntax ast.SyntaxLike,
-		model mod.ModelLike,
 	) string
 	GenerateValidator(
 		module string,
 		syntax ast.SyntaxLike,
-		model mod.ModelLike,
 	) string
 }
 

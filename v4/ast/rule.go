@@ -13,7 +13,7 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
+	col "github.com/craterdog/go-collection-framework/v4"
 )
 
 // CLASS ACCESS
@@ -43,21 +43,21 @@ type ruleClass_ struct {
 func (c *ruleClass_) Make(
 	optionalComment string,
 	uppercase string,
-	expression ExpressionLike,
+	definition DefinitionLike,
 ) RuleLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(uppercase):
+	case col.IsUndefined(uppercase):
 		panic("The uppercase attribute is required for each Rule.")
-	case mod.IsUndefined(expression):
-		panic("The expression attribute is required for each Rule.")
+	case col.IsUndefined(definition):
+		panic("The definition attribute is required for each Rule.")
 	default:
 		return &rule_{
 			// Initialize instance attributes.
 			class_:           c,
 			optionalComment_: optionalComment,
 			uppercase_:       uppercase,
-			expression_:      expression,
+			definition_:      definition,
 		}
 	}
 }
@@ -71,7 +71,7 @@ type rule_ struct {
 	class_           RuleClassLike
 	optionalComment_ string
 	uppercase_       string
-	expression_      ExpressionLike
+	definition_      DefinitionLike
 }
 
 // Attributes
@@ -88,8 +88,8 @@ func (v *rule_) GetUppercase() string {
 	return v.uppercase_
 }
 
-func (v *rule_) GetExpression() ExpressionLike {
-	return v.expression_
+func (v *rule_) GetDefinition() DefinitionLike {
+	return v.definition_
 }
 
 // Private

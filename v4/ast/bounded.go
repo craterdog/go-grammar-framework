@@ -13,7 +13,7 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
+	col "github.com/craterdog/go-collection-framework/v4"
 )
 
 // CLASS ACCESS
@@ -46,7 +46,7 @@ func (c *boundedClass_) Make(
 ) BoundedLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(initial):
+	case col.IsUndefined(initial):
 		panic("The initial attribute is required for each Bounded.")
 	default:
 		return &bounded_{

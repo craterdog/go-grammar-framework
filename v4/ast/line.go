@@ -13,7 +13,7 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
+	col "github.com/craterdog/go-collection-framework/v4"
 )
 
 // CLASS ACCESS
@@ -46,7 +46,7 @@ func (c *lineClass_) Make(
 ) LineLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(identifier):
+	case col.IsUndefined(identifier):
 		panic("The identifier attribute is required for each Line.")
 	default:
 		return &line_{

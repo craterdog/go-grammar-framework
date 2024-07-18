@@ -13,8 +13,8 @@
 package ast
 
 import (
-	mod "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -43,11 +43,11 @@ type filteredClass_ struct {
 
 func (c *filteredClass_) Make(
 	optionalNegation string,
-	characters col.Sequential[CharacterLike],
+	characters abs.Sequential[CharacterLike],
 ) FilteredLike {
 	// Validate the arguments.
 	switch {
-	case mod.IsUndefined(characters):
+	case col.IsUndefined(characters):
 		panic("The characters attribute is required for each Filtered.")
 	default:
 		return &filtered_{
@@ -67,7 +67,7 @@ type filtered_ struct {
 	// Define instance attributes.
 	class_            FilteredClassLike
 	optionalNegation_ string
-	characters_       col.Sequential[CharacterLike]
+	characters_       abs.Sequential[CharacterLike]
 }
 
 // Attributes
@@ -80,7 +80,7 @@ func (v *filtered_) GetOptionalNegation() string {
 	return v.optionalNegation_
 }
 
-func (v *filtered_) GetCharacters() col.Sequential[CharacterLike] {
+func (v *filtered_) GetCharacters() abs.Sequential[CharacterLike] {
 	return v.characters_
 }
 

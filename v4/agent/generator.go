@@ -14,8 +14,8 @@ package agent
 
 import (
 	fmt "fmt"
-	fwk "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	mod "github.com/craterdog/go-model-framework/v4"
 	sts "strings"
@@ -61,10 +61,11 @@ func (c *generatorClass_) Make() GeneratorLike {
 type generator_ struct {
 	// Define the instance attributes.
 	class_     GeneratorClassLike
-	lexigrams_ col.SetLike[string]
-	modules_   col.CatalogLike[string, mod.ModuleLike]
-	classes_   col.CatalogLike[string, mod.ClassLike]
-	instances_ col.CatalogLike[string, mod.InstanceLike]
+	tokens_    abs.SetLike[string]
+	regexps_   abs.CatalogLike[string, string]
+	modules_   abs.CatalogLike[string, mod.ModuleLike]
+	classes_   abs.CatalogLike[string, mod.ClassLike]
+	instances_ abs.CatalogLike[string, mod.InstanceLike]
 }
 
 // Attributes
@@ -79,13 +80,8 @@ func (v *generator_) CreateSyntax(
 	name string,
 	copyright string,
 ) ast.SyntaxLike {
-	// Center and insert the copyright notice into the syntax template.
-	copyright = v.expandCopyright(copyright)
-	var source = sts.ReplaceAll(syntaxTemplate_, "<Copyright>", copyright)
-	source = sts.ReplaceAll(source, "<NAME>", sts.ToUpper(name))
-	source = sts.ReplaceAll(source, "<Name>", name)
-
-	// Parse the syntax.
+	var template = v.generateSyntaxTemplate()
+	var source = v.populateSyntaxTemplate(template, name, copyright)
 	var parser = Parser().Make()
 	var syntax = parser.ParseSource(source)
 	return syntax
@@ -95,21 +91,9 @@ func (v *generator_) GenerateAgent(
 	module string,
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
-	// Create the agent class model template.
-	var source = modelTemplate_ + agentTemplate_
-	var notice = v.extractNotice(syntax)
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	source = sts.ReplaceAll(source, "<module>", module)
-	source = sts.ReplaceAll(source, "<package>", "agent")
-	var name = v.extractSyntaxName(syntax)
-	source = sts.ReplaceAll(source, "<Name>", v.makeUppercase(name))
-	source = sts.ReplaceAll(source, "<name>", v.makeLowercase(name))
-	var parameter = v.makeLowercase(name)
-	source = sts.ReplaceAll(source, "<parameter>", parameter)
-	var tokenTypes = v.extractTokenTypes(syntax)
-	source = sts.ReplaceAll(source, "<TokenTypes>", tokenTypes)
-
-	// Parse the agent generated class model.
+	v.analyzeSyntax(syntax)
+	var template = v.generateModelTemplate("agent", syntax)
+	var source = v.populateModelTemplate(template, module, syntax)
 	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
 	return model
@@ -119,18 +103,117 @@ func (v *generator_) GenerateAST(
 	module string,
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
-	// Create the AST class model template.
-	var source = modelTemplate_ + astTemplate_
-	source = sts.ReplaceAll(source, "<Notice>", v.extractNotice(syntax))
-	source = sts.ReplaceAll(source, "<module>", module)
-	source = sts.ReplaceAll(source, "<package>", "ast")
-
-	// Parse the AST class model template.
+	v.analyzeSyntax(syntax)
+	var template = v.generateModelTemplate("ast", syntax)
+	var source = v.populateModelTemplate(template, module, syntax)
 	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
+	model = v.augmentAstModel(model)
+	return model
+}
 
-	// Add additional definitions to the AST class model.
-	v.processSyntax(syntax)
+func (v *generator_) GenerateFormatter(
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	v.analyzeSyntax(syntax)
+	var template = v.generateClassTemplate("formatter", syntax)
+	implementation = v.populateClassTemplate(template, module, syntax)
+	return implementation
+}
+
+func (v *generator_) GenerateParser(
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	v.analyzeSyntax(syntax)
+	var template = v.generateClassTemplate("parser", syntax)
+	implementation = v.populateClassTemplate(template, module, syntax)
+	return implementation
+}
+
+func (v *generator_) GenerateScanner(
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	v.analyzeSyntax(syntax)
+	var template = v.generateClassTemplate("scanner", syntax)
+	implementation = v.populateScannerTemplate(template, syntax)
+	return implementation
+}
+
+func (v *generator_) GenerateToken(
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	v.analyzeSyntax(syntax)
+	var template = v.generateClassTemplate("token", syntax)
+	implementation = v.populateClassTemplate(template, module, syntax)
+	return implementation
+}
+
+func (v *generator_) GenerateValidator(
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	v.analyzeSyntax(syntax)
+	var template = v.generateClassTemplate("validator", syntax)
+	implementation = v.populateClassTemplate(template, module, syntax)
+	return implementation
+}
+
+// Private
+
+func (v *generator_) analyzeSyntax(syntax ast.SyntaxLike) {
+	// Define the regular expressions for each intrinsic.
+	var map_ = map[string]string{
+		"any":     ` ".|" + eol_`,
+		"base16":  ` "[0-9a-f]"`,
+		"control": ` "\\p{Cc}"`,
+		"digit":   ` "\\p{Nd}"`,
+		"eof":     ` "\\z"`,
+		"eol":     ` "\\n"`,
+		"escape":  ` "\\\\(?:(?:" + unicode_ + ")|[abfnrtv'\"\\\\])"`,
+		"lower":   ` "\\p{Ll}"`,
+		"space":   ` "[ \\t]+"`,
+		"unicode": ` "x" + base16_ + "{2}|u" + base16_ + "{4}|U" + base16_ + "{8}"`,
+		"upper":   ` "\\p{Lu}"`,
+	}
+
+	// Initialize the collections.
+	v.tokens_ = col.Set[string]([]string{"delimiter", "eol", "eof", "space"})
+	v.regexps_ = col.Catalog[string, string](map_)
+	v.modules_ = col.Catalog[string, mod.ModuleLike]()
+	v.classes_ = col.Catalog[string, mod.ClassLike]()
+	v.instances_ = col.Catalog[string, mod.InstanceLike]()
+
+	// Process the syntax rule definitions.
+	var rulesIterator = syntax.GetRules().GetIterator()
+	for rulesIterator.HasNext() {
+		var rule = rulesIterator.GetNext()
+		v.processRule(rule)
+	}
+
+	// Process the syntax expression definitions.
+	var expressionIterator = syntax.GetExpressions().GetIterator()
+	for expressionIterator.HasNext() {
+		var expression = expressionIterator.GetNext()
+		v.processExpression(expression)
+	}
+	v.regexps_.SortValues()
+}
+
+func (v *generator_) augmentAstModel(model mod.ModelLike) mod.ModelLike {
 	var notice = model.GetNotice()
 	var header = model.GetHeader()
 	var modules = mod.Modules(v.modules_.GetValues(v.modules_.GetKeys()))
@@ -150,83 +233,11 @@ func (v *generator_) GenerateAST(
 		instances,
 		aspects,
 	)
-
 	return model
 }
 
-func (v *generator_) GenerateFormatter(
-	module string,
-	syntax ast.SyntaxLike,
-	model mod.ModelLike,
-) string {
-	var source = formatterTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	source = sts.ReplaceAll(source, "<module>", module)
-	var name = v.extractSyntaxName(syntax)
-	source = sts.ReplaceAll(source, "<Name>", v.makeUppercase(name))
-	source = sts.ReplaceAll(source, "<name>", v.makeLowercase(name))
-	return source
-}
-
-func (v *generator_) GenerateParser(
-	module string,
-	syntax ast.SyntaxLike,
-	model mod.ModelLike,
-) string {
-	var source = parserTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	source = sts.ReplaceAll(source, "<module>", module)
-	var name = v.extractSyntaxName(syntax)
-	source = sts.ReplaceAll(source, "<Name>", v.makeUppercase(name))
-	source = sts.ReplaceAll(source, "<name>", v.makeLowercase(name))
-	return source
-}
-
-func (v *generator_) GenerateScanner(
-	module string,
-	syntax ast.SyntaxLike,
-	model mod.ModelLike,
-) string {
-	var source = scannerTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	source = sts.ReplaceAll(source, "<module>", module)
-	return source
-}
-
-func (v *generator_) GenerateToken(
-	module string,
-	syntax ast.SyntaxLike,
-	model mod.ModelLike,
-) string {
-	var source = tokenTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	source = sts.ReplaceAll(source, "<module>", module)
-	return source
-}
-
-func (v *generator_) GenerateValidator(
-	module string,
-	syntax ast.SyntaxLike,
-	model mod.ModelLike,
-) string {
-	var source = validatorTemplate_
-	var notice = model.GetNotice().GetComment()
-	source = sts.ReplaceAll(source, "<Notice>", notice)
-	source = sts.ReplaceAll(source, "<module>", module)
-	var name = v.extractSyntaxName(syntax)
-	source = sts.ReplaceAll(source, "<Name>", v.makeUppercase(name))
-	source = sts.ReplaceAll(source, "<name>", v.makeLowercase(name))
-	return source
-}
-
-// Private
-
 func (v *generator_) consolidateAttributes(
-	attributes col.ListLike[mod.AttributeLike],
+	attributes abs.ListLike[mod.AttributeLike],
 ) {
 	// Compare each attribute and make lists out of duplicates.
 	for i := 1; i <= attributes.GetSize(); i++ {
@@ -258,6 +269,19 @@ func (v *generator_) consolidateAttributes(
 			}
 		}
 	}
+}
+
+func (v *generator_) escapeString(string_ string) string {
+	var escaped string
+	for _, character := range string_ {
+		switch character {
+		case '.', '-', '+', '*', '?', '^', '$', '"',
+			'(', ')', '[', ']', '{', '}', '|', '\\':
+			escaped += "\\"
+		}
+		escaped += string(character)
+	}
+	return escaped
 }
 
 func (v *generator_) expandCopyright(copyright string) string {
@@ -295,10 +319,9 @@ func (v *generator_) extractAttribute(name string) mod.AttributeLike {
 		// The attribute type is the (non-generic) abstract instance type.
 		attributeType = mod.Abstraction(name + "Like")
 	case !Scanner().MatchToken(LowercaseToken, name).IsEmpty():
-		// The attribute type is simply the Go primitive "string" type.
-		var tokenType = v.makeUppercase(name) + "Token"
-		v.lexigrams_.AddValue(tokenType)
+		// The attribute type is simply the Go intrinsic "string" type.
 		attributeType = mod.Abstraction("string")
+		v.tokens_.AddValue(name)
 	default:
 		var message = fmt.Sprintf(
 			"Found an invalid attribute name: %q",
@@ -311,30 +334,50 @@ func (v *generator_) extractAttribute(name string) mod.AttributeLike {
 	return attribute
 }
 
+func (v *generator_) extractExpressions() string {
+	var expressions = `error_ = "x^"`
+	var iterator = v.regexps_.GetIterator()
+	for iterator.HasNext() {
+		var association = iterator.GetNext()
+		var name = association.GetKey()
+		var regexp = association.GetValue()
+		expressions += "\n\t" + name + "_ = " + regexp
+	}
+	return expressions
+}
+
+func (v *generator_) extractFoundCases() string {
+	var foundCases = "case v.foundToken(ErrorToken):"
+	var iterator = v.tokens_.GetIterator()
+	for iterator.HasNext() {
+		var tokenName = iterator.GetNext()
+		var tokenType = v.makeUppercase(tokenName) + "Token"
+		foundCases += "\n\t\tcase v.foundToken(" + tokenType + "):"
+	}
+	return foundCases
+}
+
 func (v *generator_) extractNotice(syntax ast.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetIterator().GetNext()
 	var comment = header.GetComment()
 
 	// Strip off the syntax style comment delimiters.
 	var notice = Scanner().MatchToken(CommentToken, comment).GetValue(2)
-
-	// Add the Go style comment delimiters.
-	notice = "/*\n" + notice + "\n*/"
+	notice = "\n" + notice + "\n"
 
 	return notice
 }
 
 func (v *generator_) extractParameters(
-	attributes col.ListLike[mod.AttributeLike],
-) col.Sequential[mod.ParameterLike] {
-	var notation = fwk.CDCN()
-	var parameters = col.List[mod.ParameterLike](notation).Make()
+	attributes abs.ListLike[mod.AttributeLike],
+) abs.Sequential[mod.ParameterLike] {
+	var parameters = col.List[mod.ParameterLike]()
 	var iterator = attributes.GetIterator()
 	for iterator.HasNext() {
 		var attribute = iterator.GetNext()
 		var name = sts.TrimPrefix(attribute.GetName(), "Get")
 		var abstraction = attribute.GetOptionalAbstraction()
-		if fwk.IsUndefined(abstraction) {
+		if col.IsUndefined(abstraction) {
 			var parameter = attribute.GetOptionalParameter()
 			abstraction = parameter.GetAbstraction()
 		}
@@ -353,11 +396,35 @@ func (v *generator_) extractSyntaxName(syntax ast.SyntaxLike) string {
 	return name
 }
 
-func (v *generator_) extractTokenTypes(syntax ast.SyntaxLike) string {
-	var tokenTypes = "ErrorToken TokenType = iota"
-	var iterator = v.lexigrams_.GetIterator()
+func (v *generator_) extractTokenMatchers() string {
+	var tokenMatchers = `ErrorToken: reg.MustCompile("x^"),`
+	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
-		var tokenType = iterator.GetNext()
+		var tokenName = iterator.GetNext()
+		var tokenType = v.makeUppercase(tokenName) + "Token"
+		tokenMatchers += "\n\t\t" + tokenType +
+			`: reg.MustCompile("^(?:" + ` + tokenName + `_ + ")"),`
+	}
+	return tokenMatchers
+}
+
+func (v *generator_) extractTokenNames() string {
+	var tokenNames = `ErrorToken: "error",`
+	var iterator = v.tokens_.GetIterator()
+	for iterator.HasNext() {
+		var tokenName = iterator.GetNext()
+		var tokenType = v.makeUppercase(tokenName) + "Token"
+		tokenNames += "\n\t\t" + tokenType + `: "` + tokenName + `",`
+	}
+	return tokenNames
+}
+
+func (v *generator_) extractTokenTypes() string {
+	var tokenTypes = "ErrorToken TokenType = iota"
+	var iterator = v.tokens_.GetIterator()
+	for iterator.HasNext() {
+		var name = iterator.GetNext()
+		var tokenType = v.makeUppercase(name) + "Token"
 		tokenTypes += "\n\t" + tokenType
 	}
 	return tokenTypes
@@ -373,8 +440,7 @@ func (v *generator_) generateClass(
 		comment,
 		name+"ClassLike",
 	)
-	var notation = fwk.CDCN()
-	var list = col.List[mod.ConstructorLike](notation).Make()
+	var list = col.List[mod.ConstructorLike]()
 	list.AppendValue(constructor)
 	var constructors = mod.Constructors(list)
 	var class = mod.Class(
@@ -384,9 +450,24 @@ func (v *generator_) generateClass(
 	return class
 }
 
+func (v *generator_) generateClassTemplate(
+	class string,
+	syntax ast.SyntaxLike,
+) (
+	template string,
+) {
+	template = templates_[class]["notice"]
+	template += templates_[class]["header"]
+	template += templates_[class]["imports"]
+	template += templates_[class]["access"]
+	template += templates_[class]["class"]
+	template += templates_[class]["instance"]
+	return template
+}
+
 func (v *generator_) generateInstance(
 	name string,
-	attributes col.ListLike[mod.AttributeLike],
+	attributes abs.ListLike[mod.AttributeLike],
 ) mod.InstanceLike {
 	var comment = sts.ReplaceAll(instanceCommentTemplate_, "<Class>", name)
 	comment = sts.ReplaceAll(comment, "<class>", sts.ToLower(name))
@@ -409,6 +490,87 @@ func (v *generator_) generateInstance(
 	return instance
 }
 
+/*
+func (v *generator_) generateMethod(
+	class string,
+	rule ast.RuleLike,
+) (
+	implementation string,
+) {
+	var definition = rule.GetDefinition()
+	switch actual := definition.GetAny().(type) {
+	case ast.InlinedLike:
+		var iterator = actual.GetFactors().GetIterator()
+		for iterator.HasNext() {
+		}
+	case ast.MultilinedLike:
+		var iterator = actual.GetLines().GetIterator()
+		for iterator.HasNext() {
+		}
+	default:
+		panic("Found an empty definition.")
+	}
+	return implementation
+}
+
+func (v *generator_) generateMethods(
+	class string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	var iterator = syntax.GetRules().GetIterator()
+	for iterator.HasNext() {
+		var rule = iterator.GetNext()
+		implementation += v.generateMethod(class, rule)
+	}
+	return implementation
+}
+*/
+
+func (v *generator_) generateModelTemplate(
+	model string,
+	syntax ast.SyntaxLike,
+) (
+	template string,
+) {
+	template = templates_[model]["notice"]
+	template += templates_[model]["header"]
+	template += templates_[model]["imports"]
+	template += templates_[model]["types"]
+	template += templates_[model]["functionals"]
+	template += templates_[model]["classes"]
+	template += templates_[model]["instances"]
+	template += templates_[model]["aspects"]
+	return template
+}
+
+func (v *generator_) generateSyntaxTemplate() (
+	template string,
+) {
+	template = templates_["syntax"]["notice"]
+	template += templates_["syntax"]["header"]
+	template += templates_["syntax"]["rules"]
+	template += templates_["syntax"]["expressions"]
+	return template
+}
+
+func (v *generator_) makeLowercase(name string) string {
+	runes := []rune(name)
+	runes[0] = uni.ToLower(runes[0])
+	name = string(runes)
+	if reserved_[name] {
+		name += "_"
+	}
+	return name
+}
+
+func (v *generator_) makeUppercase(name string) string {
+	runes := []rune(name)
+	runes[0] = uni.ToUpper(runes[0])
+	return string(runes)
+}
+
 func (v *generator_) pluralizeAttribute(
 	attribute mod.AttributeLike,
 ) mod.AttributeLike {
@@ -422,13 +584,17 @@ func (v *generator_) pluralizeAttribute(
 	v.modules_.SetValue(path, module)
 
 	// Extract the name and attribute type from the attribute.
-	var name = v.makePlural(attribute.GetName())
+	var name = attribute.GetName()
+	if sts.HasSuffix(name, "s") {
+		name += "es"
+	} else {
+		name += "s"
+	}
 	var attributeType = attribute.GetOptionalAbstraction() // Not optional here.
 
 	// Create the generic arguments list for the pluralized attribute.
 	var argument = mod.Argument(attributeType)
-	var notation = fwk.CDCN()
-	var additionalArguments = col.List[mod.AdditionalArgumentLike](notation).Make()
+	var additionalArguments = col.List[mod.AdditionalArgumentLike]()
 	var arguments = mod.Arguments(argument, additionalArguments)
 	var genericArguments = mod.GenericArguments(arguments)
 
@@ -442,72 +608,109 @@ func (v *generator_) pluralizeAttribute(
 	return attribute
 }
 
-func (v *generator_) makeLowercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToLower(runes[0])
-	name = string(runes)
-	if reserved_[name] {
-		name += "_"
-	}
-	return name
-}
-
-func (v *generator_) makePlural(name string) string {
-	if sts.HasSuffix(name, "s") {
-		name += "es"
-	} else {
-		name += "s"
-	}
-	return name
-}
-
-func (v *generator_) makeUppercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
-}
-
-func (v *generator_) processExpression(
-	name string,
-	expression ast.ExpressionLike,
+func (v *generator_) populateClassTemplate(
+	template string,
+	module string,
+	syntax ast.SyntaxLike,
 ) (
-	constructor mod.ConstructorLike,
-	attributes col.ListLike[mod.AttributeLike],
+	implementation string,
 ) {
-	// Extract the attributes.
-	var notation = fwk.CDCN()
-	attributes = col.List[mod.AttributeLike](notation).Make()
-	switch actual := expression.GetAny().(type) {
-	case ast.InlinedLike:
-		v.processInlined(actual, attributes)
-	case ast.MultilinedLike:
-		v.processMultilined(actual, attributes)
-	default:
-		panic("Found an empty expression.")
-	}
+	var name = v.extractSyntaxName(syntax)
+	var uppercase = v.makeUppercase(name)
+	var lowercase = v.makeLowercase(name)
+	var notice = v.extractNotice(syntax)
+	implementation = sts.ReplaceAll(template, "<Notice>", notice)
+	implementation = sts.ReplaceAll(implementation, "<module>", module)
+	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
+	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
+	return implementation
+}
 
-	// Create the constructor.
-	var abstraction = mod.Abstraction(name + "Like")
-	name = "Make"
-	var parameters = v.extractParameters(attributes)
-	var iterator = parameters.GetIterator()
-	var parameter = iterator.GetNext()
-	var additionalParameters = col.List[mod.AdditionalParameterLike](notation).Make()
-	for iterator.HasNext() {
-		var parameter = iterator.GetNext()
-		var additionalParameter = mod.AdditionalParameter(parameter)
-		additionalParameters.AppendValue(additionalParameter)
-	}
-	constructor = mod.Constructor(
-		name,
-		mod.Parameters(
-			parameter,
-			additionalParameters.(col.Sequential[mod.AdditionalParameterLike]),
-		),
-		abstraction,
-	)
+func (v *generator_) populateModelTemplate(
+	template string,
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	var name = v.extractSyntaxName(syntax)
+	implementation = sts.ReplaceAll(template, "<module>", module)
+	var notice = v.extractNotice(syntax)
+	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
+	var uppercase = v.makeUppercase(name)
+	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
+	var lowercase = v.makeLowercase(name)
+	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
+	implementation = sts.ReplaceAll(implementation, "<parameter>", lowercase)
+	var tokenTypes = v.extractTokenTypes()
+	implementation = sts.ReplaceAll(implementation, "<TokenTypes>", tokenTypes)
+	return implementation
+}
 
-	return constructor, attributes
+func (v *generator_) populateScannerTemplate(
+	template string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	var notice = v.extractNotice(syntax)
+	implementation = sts.ReplaceAll(template, "<Notice>", notice)
+	var tokenNames = v.extractTokenNames()
+	implementation = sts.ReplaceAll(implementation, "<TokenNames>", tokenNames)
+	var tokenMatchers = v.extractTokenMatchers()
+	implementation = sts.ReplaceAll(implementation, "<TokenMatchers>", tokenMatchers)
+	var foundCases = v.extractFoundCases()
+	implementation = sts.ReplaceAll(implementation, "<FoundCases>", foundCases)
+	var expressions = v.extractExpressions()
+	implementation = sts.ReplaceAll(implementation, "<Expressions>", expressions)
+	return implementation
+}
+
+func (v *generator_) populateSyntaxTemplate(
+	template string,
+	syntax string,
+	copyright string,
+) (
+	implementation string,
+) {
+	implementation = sts.ReplaceAll(template, "<Notice>", noticeTemplate_)
+	copyright = v.expandCopyright(copyright)
+	implementation = sts.ReplaceAll(implementation, "<Copyright>", copyright)
+	var allCaps = sts.ToUpper(syntax)
+	implementation = sts.ReplaceAll(implementation, "<SYNTAX>", allCaps)
+	var uppercase = v.makeUppercase(syntax)
+	implementation = sts.ReplaceAll(implementation, "<Syntax>", uppercase)
+	var lowercase = v.makeLowercase(syntax)
+	implementation = sts.ReplaceAll(implementation, "<syntax>", lowercase)
+	return implementation
+}
+
+func (v *generator_) processAlternative(
+	alternative ast.AlternativeLike,
+) (
+	regexp string,
+) {
+	regexp += "|"
+	var parts = alternative.GetParts().GetIterator()
+	for parts.HasNext() {
+		var part = parts.GetNext()
+		regexp += v.processPart(part)
+	}
+	return regexp
+}
+
+func (v *generator_) processBounded(
+	bounded ast.BoundedLike,
+) (
+	regexp string,
+) {
+	var initial = bounded.GetInitial()
+	regexp += v.processInitial(initial)
+	var extent = bounded.GetOptionalExtent()
+	if col.IsDefined(extent) {
+		regexp += v.processExtent(extent)
+	}
+	return regexp
 }
 
 func (v *generator_) processCardinality(
@@ -529,6 +732,287 @@ func (v *generator_) processCardinality(
 	return attribute
 }
 
+func (v *generator_) processCharacter(
+	character ast.CharacterLike,
+) (
+	regexp string,
+) {
+	switch actual := character.GetAny().(type) {
+	case ast.BoundedLike:
+		regexp += v.processBounded(actual)
+	case string:
+		regexp += v.processIntrinsic(actual)
+	default:
+		var message = fmt.Sprintf(
+			"Found an invalid character type: %T",
+			actual,
+		)
+		panic(message)
+	}
+	return regexp
+}
+
+func (v *generator_) processDefinition(
+	name string,
+	definition ast.DefinitionLike,
+) (
+	constructor mod.ConstructorLike,
+	attributes abs.ListLike[mod.AttributeLike],
+) {
+	// Extract the attributes.
+	attributes = col.List[mod.AttributeLike]()
+	switch actual := definition.GetAny().(type) {
+	case ast.InlinedLike:
+		v.processInlined(actual, attributes)
+	case ast.MultilinedLike:
+		v.processMultilined(actual, attributes)
+	default:
+		panic("Found an empty definition.")
+	}
+
+	// Create the constructor.
+	var abstraction = mod.Abstraction(name + "Like")
+	name = "Make"
+	var parameters = v.extractParameters(attributes)
+	var iterator = parameters.GetIterator()
+	var parameter = iterator.GetNext()
+	var additionalParameters = col.List[mod.AdditionalParameterLike]()
+	for iterator.HasNext() {
+		var parameter = iterator.GetNext()
+		var additionalParameter = mod.AdditionalParameter(parameter)
+		additionalParameters.AppendValue(additionalParameter)
+	}
+	constructor = mod.Constructor(
+		name,
+		mod.Parameters(
+			parameter,
+			additionalParameters.(abs.Sequential[mod.AdditionalParameterLike]),
+		),
+		abstraction,
+	)
+
+	return constructor, attributes
+}
+
+func (v *generator_) processElement(
+	element ast.ElementLike,
+) (
+	regexp string,
+) {
+	switch actual := element.GetAny().(type) {
+	case ast.GroupedLike:
+		regexp += v.processGrouped(actual)
+	case ast.FilteredLike:
+		regexp += v.processFiltered(actual)
+	case ast.CharacterLike:
+		regexp += v.processCharacter(actual)
+	case ast.StringLike:
+		regexp += v.processString(actual)
+	default:
+		var message = fmt.Sprintf(
+			"Found an invalid element type: %T",
+			actual,
+		)
+		panic(message)
+	}
+	return regexp
+}
+
+func (v *generator_) processExpression(
+	expression ast.ExpressionLike,
+) {
+	var name = expression.GetLowercase()
+	var pattern = expression.GetPattern()
+	var regexp = `"`
+	regexp += v.processPattern(pattern)
+	regexp += `"`
+	v.regexps_.SetValue(name, regexp)
+}
+
+func (v *generator_) processExtent(
+	extent ast.ExtentLike,
+) (
+	regexp string,
+) {
+	regexp += "-"
+	var rune_ = extent.GetRune()
+	regexp += v.processRune(rune_)
+	return regexp
+}
+
+func (v *generator_) processFactor(
+	factor ast.FactorLike,
+	attributes abs.ListLike[mod.AttributeLike],
+) {
+	// Attempt to extract the attribute definitions from the predicate string.
+	var predicate = factor.GetPredicate()
+	var attribute = v.processPredicate(predicate)
+	if col.IsUndefined(attribute) {
+		// The predicate does not correspond to an attribute.
+		return
+	}
+
+	// Take into account any cardinality of the predicate.
+	var cardinality = factor.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		// The attribute type may need to be "pluralized".
+		attribute = v.processCardinality(attribute, cardinality)
+	}
+
+	// Add the attribute definition to our list.
+	attributes.AppendValue(attribute)
+}
+
+func (v *generator_) processFiltered(
+	filtered ast.FilteredLike,
+) (
+	regexp string,
+) {
+	var negation = filtered.GetOptionalNegation()
+	regexp += "["
+	if col.IsDefined(negation) {
+		regexp += "^"
+	}
+	var characters = filtered.GetCharacters().GetIterator()
+	for characters.HasNext() {
+		var character = characters.GetNext()
+		regexp += v.processCharacter(character)
+	}
+	regexp += "]"
+	return regexp
+}
+
+func (v *generator_) processGrouped(
+	grouped ast.GroupedLike,
+) (
+	regexp string,
+) {
+	var pattern = grouped.GetPattern()
+	regexp += v.processPattern(pattern)
+	regexp += "(" + regexp + ")"
+	return regexp
+}
+
+func (v *generator_) processIdentifier(
+	identifier ast.IdentifierLike,
+) {
+	var name = identifier.GetAny().(string)
+	if !Scanner().MatchToken(LowercaseToken, name).IsEmpty() {
+		v.tokens_.AddValue(name)
+	}
+}
+
+func (v *generator_) processInitial(
+	initial ast.InitialLike,
+) (
+	regexp string,
+) {
+	var rune_ = initial.GetRune()
+	regexp += v.processRune(rune_)
+	return regexp
+}
+
+func (v *generator_) processInlined(
+	inlined ast.InlinedLike,
+	attributes abs.ListLike[mod.AttributeLike],
+) {
+	// Extract the attributes.
+	var iterator = inlined.GetFactors().GetIterator()
+	for iterator.HasNext() {
+		var factor = iterator.GetNext()
+		v.processFactor(factor, attributes)
+	}
+	v.consolidateAttributes(attributes)
+}
+
+func (v *generator_) processIntrinsic(
+	intrinsic string,
+) (
+	regexp string,
+) {
+	regexp += `" + ` + sts.ToLower(intrinsic) + `_ + "`
+	return regexp
+}
+
+func (v *generator_) processLine(
+	line ast.LineLike,
+) {
+	var identifier = line.GetIdentifier()
+	v.processIdentifier(identifier)
+}
+
+func (v *generator_) processMultilined(
+	multilined ast.MultilinedLike,
+	attributes abs.ListLike[mod.AttributeLike],
+) {
+	var lines = multilined.GetLines().GetIterator()
+	for lines.HasNext() {
+		var line = lines.GetNext()
+		v.processLine(line)
+	}
+	var abstraction = mod.Abstraction("any")
+	var attribute = mod.Attribute(
+		"GetAny",
+		abstraction,
+	)
+	attributes.AppendValue(attribute)
+}
+
+func (v *generator_) processPart(
+	part ast.PartLike,
+) (
+	regexp string,
+) {
+	var element = part.GetElement()
+	regexp += v.processElement(element)
+	var cardinality = part.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		switch actual := cardinality.GetAny().(type) {
+		case ast.ConstrainedLike:
+			var minimum = actual.GetMinimum().GetNumber()
+			regexp += "{" + minimum
+			var maximum = actual.GetOptionalMaximum()
+			if col.IsDefined(maximum) {
+				regexp += ","
+				var number = maximum.GetOptionalNumber()
+				if col.IsDefined(number) {
+					regexp += number
+				}
+			}
+			regexp += "}"
+		case string:
+			regexp += actual
+		default:
+			var message = fmt.Sprintf(
+				"Found an invalid cardinality type: %T",
+				actual,
+			)
+			panic(message)
+		}
+	}
+	return regexp
+}
+
+func (v *generator_) processPattern(
+	pattern ast.PatternLike,
+) (
+	regexp string,
+) {
+	var parts = pattern.GetParts().GetIterator()
+	var part = parts.GetNext()
+	regexp += v.processPart(part)
+	for parts.HasNext() {
+		part = parts.GetNext()
+		regexp += v.processPart(part)
+	}
+	var alternatives = pattern.GetAlternatives().GetIterator()
+	for alternatives.HasNext() {
+		var alternative = alternatives.GetNext()
+		regexp += v.processAlternative(alternative)
+	}
+	return regexp
+}
+
 func (v *generator_) processPredicate(
 	predicate ast.PredicateLike,
 ) (
@@ -541,73 +1025,19 @@ func (v *generator_) processPredicate(
 	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
 		// Ignore literals as well.
 	default:
-		// We know it is a rule or lexigram name which corresponds to an attribute
-		// with a (non-generic) instance type, or a Go primitive "string" type
+		// We know it is a rule or expression name which corresponds to an attribute
+		// with a (non-generic) instance type, or a Go intrinsic "string" type
 		// respectively.
 		attribute = v.extractAttribute(actual)
 	}
 	return attribute
 }
 
-func (v *generator_) processFactor(
-	factor ast.FactorLike,
-	attributes col.ListLike[mod.AttributeLike],
-) {
-	// Attempt to extract the attribute definitions from the predicate string.
-	var predicate = factor.GetPredicate()
-	var attribute = v.processPredicate(predicate)
-	if fwk.IsUndefined(attribute) {
-		// The predicate does not correspond to an attribute.
-		return
-	}
-
-	// Take into account any cardinality of the predicate.
-	var cardinality = factor.GetOptionalCardinality()
-	if fwk.IsDefined(cardinality) {
-		// The attribute type may need to be "pluralized".
-		attribute = v.processCardinality(attribute, cardinality)
-	}
-
-	// Add the attribute definition to our list.
-	attributes.AppendValue(attribute)
-}
-
-func (v *generator_) processInlined(
-	inlined ast.InlinedLike,
-	attributes col.ListLike[mod.AttributeLike],
-) {
-	// Extract the attributes.
-	var iterator = inlined.GetFactors().GetIterator()
-	for iterator.HasNext() {
-		var factor = iterator.GetNext()
-		v.processFactor(factor, attributes)
-	}
-	v.consolidateAttributes(attributes)
-}
-
-func (v *generator_) processLexigram(
-	lexigram ast.LexigramLike,
-) {
-	// Ignore lexigram definitions for now.
-}
-
-func (v *generator_) processMultilined(
-	multilined ast.MultilinedLike,
-	attributes col.ListLike[mod.AttributeLike],
-) {
-	var abstraction = mod.Abstraction("any")
-	var attribute = mod.Attribute(
-		"GetAny",
-		abstraction,
-	)
-	attributes.AppendValue(attribute)
-}
-
 func (v *generator_) processRule(rule ast.RuleLike) {
-	// Process the expression.
+	// Process the definition.
 	var name = rule.GetUppercase()
-	var expression = rule.GetExpression()
-	var constructor, attributes = v.processExpression(name, expression)
+	var definition = rule.GetDefinition()
+	var constructor, attributes = v.processDefinition(name, definition)
 
 	// Create the class interface.
 	var class = v.generateClass(name, constructor)
@@ -618,33 +1048,38 @@ func (v *generator_) processRule(rule ast.RuleLike) {
 	v.instances_.SetValue(name, instance)
 }
 
-func (v *generator_) processSyntax(syntax ast.SyntaxLike) {
-	// Initialize the collections.
-	var array = []string{
-		"DelimiterToken",
-		"EOFToken",
-		"EOLToken",
-		"SpaceToken",
-	}
-	var notation = fwk.CDCN()
-	v.lexigrams_ = col.Set[string](notation).MakeFromArray(array)
-	v.modules_ = col.Catalog[string, mod.ModuleLike](notation).Make()
-	v.classes_ = col.Catalog[string, mod.ClassLike](notation).Make()
-	v.instances_ = col.Catalog[string, mod.InstanceLike](notation).Make()
+func (v *generator_) processRune(
+	rune_ string,
+) (
+	regexp string,
+) {
+	var character = rune_[1:2] //Remove the single quotes.
+	character = v.escapeString(character)
+	regexp += character
+	return regexp
+}
 
-	// Process the syntax rule definitions.
-	var rulesIterator = syntax.GetRules().GetIterator()
-	for rulesIterator.HasNext() {
-		var rule = rulesIterator.GetNext()
-		v.processRule(rule)
+func (v *generator_) processString(
+	string_ ast.StringLike,
+) (
+	regexp string,
+) {
+	var actual = string_.GetAny().(string)
+	switch {
+	case !Scanner().MatchToken(LowercaseToken, actual).IsEmpty():
+		regexp += `" + ` + actual + `_ + "`
+	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
+		var literal = actual[1 : len(actual)-1] // Remove the double quotes.
+		literal = v.escapeString(literal)
+		regexp += literal
+	default:
+		var message = fmt.Sprintf(
+			"Found an invalid element string: %q",
+			actual,
+		)
+		panic(message)
 	}
-
-	// Process the syntax lexigram definitions.
-	var lexigramIterator = syntax.GetLexigrams().GetIterator()
-	for lexigramIterator.HasNext() {
-		var lexigram = lexigramIterator.GetNext()
-		v.processLexigram(lexigram)
-	}
+	return regexp
 }
 
 var reserved_ = map[string]bool{

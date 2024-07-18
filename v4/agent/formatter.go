@@ -13,7 +13,7 @@
 package agent
 
 import (
-	fwk "github.com/craterdog/go-collection-framework/v4"
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	sts "strings"
 )
@@ -106,7 +106,7 @@ func (v *formatter_) formatBounded(bounded ast.BoundedLike) {
 	var initial = bounded.GetInitial()
 	v.formatInitial(initial)
 	var extent = bounded.GetOptionalExtent()
-	if fwk.IsDefined(extent) {
+	if col.IsDefined(extent) {
 		v.formatExtent(extent)
 	}
 }
@@ -138,10 +138,21 @@ func (v *formatter_) formatConstrained(constrained ast.ConstrainedLike) {
 	var minimum = constrained.GetMinimum()
 	v.formatMinimum(minimum)
 	var maximum = constrained.GetOptionalMaximum()
-	if fwk.IsDefined(maximum) {
+	if col.IsDefined(maximum) {
 		v.formatMaximum(maximum)
 	}
 	v.appendString("}")
+}
+
+func (v *formatter_) formatDefinition(definition ast.DefinitionLike) {
+	switch actual := definition.GetAny().(type) {
+	case ast.InlinedLike:
+		v.formatInlined(actual)
+	case ast.MultilinedLike:
+		v.formatMultilined(actual)
+	default:
+		panic("Attempted to format an empty definition.")
+	}
 }
 
 func (v *formatter_) formatElement(element ast.ElementLike) {
@@ -150,24 +161,32 @@ func (v *formatter_) formatElement(element ast.ElementLike) {
 		v.formatGrouped(actual)
 	case ast.FilteredLike:
 		v.formatFiltered(actual)
-	case ast.BoundedLike:
-		v.formatBounded(actual)
-	case string:
-		v.appendString(actual)
+	case ast.CharacterLike:
+		v.formatCharacter(actual)
+	case ast.StringLike:
+		v.formatString(actual)
 	default:
 		panic("Attempted to format an empty element.")
 	}
 }
 
 func (v *formatter_) formatExpression(expression ast.ExpressionLike) {
-	switch actual := expression.GetAny().(type) {
-	case ast.InlinedLike:
-		v.formatInlined(actual)
-	case ast.MultilinedLike:
-		v.formatMultilined(actual)
-	default:
-		panic("Attempted to format an empty expression.")
+	var comment = expression.GetOptionalComment()
+	if col.IsDefined(comment) {
+		v.appendString(comment)
 	}
+	var lower = expression.GetLowercase()
+	v.appendString(lower)
+	v.appendString(": ")
+	var pattern = expression.GetPattern()
+	v.formatPattern(pattern)
+	var note = expression.GetOptionalNote()
+	if col.IsDefined(note) {
+		v.appendString("  ")
+		v.appendString(note)
+	}
+	v.appendNewline()
+	v.appendNewline()
 }
 
 func (v *formatter_) formatExtent(extent ast.ExtentLike) {
@@ -180,14 +199,14 @@ func (v *formatter_) formatFactor(factor ast.FactorLike) {
 	var predicate = factor.GetPredicate()
 	v.formatPredicate(predicate)
 	var cardinality = factor.GetOptionalCardinality()
-	if fwk.IsDefined(cardinality) {
+	if col.IsDefined(cardinality) {
 		v.formatCardinality(cardinality)
 	}
 }
 
 func (v *formatter_) formatFiltered(filtered ast.FilteredLike) {
 	var negation = filtered.GetOptionalNegation()
-	if fwk.IsDefined(negation) {
+	if col.IsDefined(negation) {
 		v.appendString(negation)
 	}
 	v.appendString("[")
@@ -237,29 +256,10 @@ func (v *formatter_) formatInlined(inlined ast.InlinedLike) {
 		v.formatFactor(factor)
 	}
 	var note = inlined.GetOptionalNote()
-	if fwk.IsDefined(note) {
+	if col.IsDefined(note) {
 		v.appendString("  ")
 		v.appendString(note)
 	}
-}
-
-func (v *formatter_) formatLexigram(lexigram ast.LexigramLike) {
-	var comment = lexigram.GetOptionalComment()
-	if fwk.IsDefined(comment) {
-		v.appendString(comment)
-	}
-	var lower = lexigram.GetLowercase()
-	v.appendString(lower)
-	v.appendString(": ")
-	var pattern = lexigram.GetPattern()
-	v.formatPattern(pattern)
-	var note = lexigram.GetOptionalNote()
-	if fwk.IsDefined(note) {
-		v.appendString("  ")
-		v.appendString(note)
-	}
-	v.appendNewline()
-	v.appendNewline()
 }
 
 func (v *formatter_) formatLine(line ast.LineLike) {
@@ -267,7 +267,7 @@ func (v *formatter_) formatLine(line ast.LineLike) {
 	var identifier = line.GetIdentifier()
 	v.formatIdentifier(identifier)
 	var note = line.GetOptionalNote()
-	if fwk.IsDefined(note) {
+	if col.IsDefined(note) {
 		v.appendString("  ")
 		v.appendString(note)
 	}
@@ -276,7 +276,7 @@ func (v *formatter_) formatLine(line ast.LineLike) {
 func (v *formatter_) formatMaximum(maximum ast.MaximumLike) {
 	v.appendString("..")
 	var number = maximum.GetOptionalNumber()
-	if fwk.IsDefined(number) {
+	if col.IsDefined(number) {
 		v.appendString(number)
 	}
 }
@@ -300,7 +300,7 @@ func (v *formatter_) formatPart(part ast.PartLike) {
 	var element = part.GetElement()
 	v.formatElement(element)
 	var cardinality = part.GetOptionalCardinality()
-	if fwk.IsDefined(cardinality) {
+	if col.IsDefined(cardinality) {
 		v.formatCardinality(cardinality)
 	}
 }
@@ -333,16 +333,25 @@ func (v *formatter_) formatPredicate(predicate ast.PredicateLike) {
 
 func (v *formatter_) formatRule(rule ast.RuleLike) {
 	var comment = rule.GetOptionalComment()
-	if fwk.IsDefined(comment) {
+	if col.IsDefined(comment) {
 		v.appendString(comment)
 	}
 	var upper = rule.GetUppercase()
 	v.appendString(upper)
 	v.appendString(":")
-	var expression = rule.GetExpression()
-	v.formatExpression(expression)
+	var definition = rule.GetDefinition()
+	v.formatDefinition(definition)
 	v.appendNewline()
 	v.appendNewline()
+}
+
+func (v *formatter_) formatString(string_ ast.StringLike) {
+	switch actual := string_.GetAny().(type) {
+	case string:
+		v.appendString(actual)
+	default:
+		panic("Attempted to format an empty string.")
+	}
 }
 
 func (v *formatter_) formatSyntax(syntax ast.SyntaxLike) {
@@ -360,11 +369,11 @@ func (v *formatter_) formatSyntax(syntax ast.SyntaxLike) {
 		v.formatRule(rule)
 	}
 
-	// Format the lexigrams.
-	var lexigramIterator = syntax.GetLexigrams().GetIterator()
-	for lexigramIterator.HasNext() {
-		var lexigram = lexigramIterator.GetNext()
-		v.formatLexigram(lexigram)
+	// Format the expressions.
+	var expressionIterator = syntax.GetExpressions().GetIterator()
+	for expressionIterator.HasNext() {
+		var expression = expressionIterator.GetNext()
+		v.formatExpression(expression)
 	}
 }
 

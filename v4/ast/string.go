@@ -20,40 +20,36 @@ import (
 
 // Reference
 
-var constrainedClass = &constrainedClass_{
+var stringClass = &stringClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Constrained() ConstrainedClassLike {
-	return constrainedClass
+func String() StringClassLike {
+	return stringClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type constrainedClass_ struct {
+type stringClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *constrainedClass_) Make(
-	minimum MinimumLike,
-	optionalMaximum MaximumLike,
-) ConstrainedLike {
+func (c *stringClass_) Make(any_ any) StringLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(minimum):
-		panic("The minimum attribute is required for each Constrained.")
+	case col.IsUndefined(any_):
+		panic("The any_ attribute is required for each String.")
 	default:
-		return &constrained_{
+		return &string_{
 			// Initialize instance attributes.
-			class_:           c,
-			minimum_:         minimum,
-			optionalMaximum_: optionalMaximum,
+			class_: c,
+			any_:   any_,
 		}
 	}
 }
@@ -62,25 +58,20 @@ func (c *constrainedClass_) Make(
 
 // Target
 
-type constrained_ struct {
+type string_ struct {
 	// Define instance attributes.
-	class_           ConstrainedClassLike
-	minimum_         MinimumLike
-	optionalMaximum_ MaximumLike
+	class_ StringClassLike
+	any_   any
 }
 
 // Attributes
 
-func (v *constrained_) GetClass() ConstrainedClassLike {
+func (v *string_) GetClass() StringClassLike {
 	return v.class_
 }
 
-func (v *constrained_) GetMinimum() MinimumLike {
-	return v.minimum_
-}
-
-func (v *constrained_) GetOptionalMaximum() MaximumLike {
-	return v.optionalMaximum_
+func (v *string_) GetAny() any {
+	return v.any_
 }
 
 // Private

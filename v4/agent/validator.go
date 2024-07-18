@@ -14,8 +14,8 @@ package agent
 
 import (
 	fmt "fmt"
-	fwk "github.com/craterdog/go-collection-framework/v4"
-	col "github.com/craterdog/go-collection-framework/v4/collection"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 )
 
@@ -70,20 +70,19 @@ func (v *validator_) GetClass() ValidatorClassLike {
 func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
 	// Initialize the state.
 	var name = syntax.GetRules().GetIterator().GetNext().GetUppercase()
-	var notation = fwk.CDCN()
-	var rules = col.Catalog[string, ast.ExpressionLike](notation).Make()
-	var lexigrams = col.Catalog[string, ast.PatternLike](notation).Make()
+	var rules = col.Catalog[string, ast.DefinitionLike]()
+	var expressions = col.Catalog[string, ast.PatternLike]()
 
 	// Validate the syntax.
-	v.validateSyntax(name, syntax, rules, lexigrams)
+	v.validateSyntax(name, syntax, rules, expressions)
 
 	// Check for missing rule definitions.
 	var ruleIterator = rules.GetIterator()
 	for ruleIterator.HasNext() {
 		var association = ruleIterator.GetNext()
 		var rule = association.GetKey()
-		var expression = association.GetValue()
-		if fwk.IsUndefined(expression) {
+		var definition = association.GetValue()
+		if col.IsUndefined(definition) {
 			var message = fmt.Sprintf(
 				"The syntax is missing a definition for the rule: %v\n",
 				rule,
@@ -92,16 +91,16 @@ func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
 		}
 	}
 
-	// Check for missing lexigram definitions.
-	var lexigramIterator = lexigrams.GetIterator()
-	for lexigramIterator.HasNext() {
-		var association = lexigramIterator.GetNext()
-		var lexigram = association.GetKey()
-		var expression = association.GetValue()
-		if fwk.IsUndefined(expression) {
+	// Check for missing expression definitions.
+	var expressionIterator = expressions.GetIterator()
+	for expressionIterator.HasNext() {
+		var association = expressionIterator.GetNext()
+		var expression = association.GetKey()
+		var definition = association.GetValue()
+		if col.IsUndefined(definition) {
 			var message = fmt.Sprintf(
-				"The syntax is missing a definition for the lexigram: %v\n",
-				lexigram,
+				"The syntax is missing a definition for the expression: %v\n",
+				expression,
 			)
 			panic(message)
 		}
@@ -154,7 +153,7 @@ func (v *validator_) validateBounded(
 
 	// Validate the optional extent rune.
 	var extent = bounded.GetOptionalExtent()
-	if fwk.IsDefined(extent) {
+	if col.IsDefined(extent) {
 		v.validateExtent(name, extent)
 		if initial.GetRune() > extent.GetRune() {
 			var message = v.formatError(
@@ -214,8 +213,23 @@ func (v *validator_) validateConstrained(
 
 	// Validate the optional maximum value.
 	var maximum = constrained.GetOptionalMaximum()
-	if fwk.IsDefined(maximum) {
+	if col.IsDefined(maximum) {
 		v.validateMaximum(name, maximum)
+	}
+}
+
+func (v *validator_) validateDefinition(
+	name string,
+	definition ast.DefinitionLike,
+) {
+	// Validate the possible definition types.
+	switch actual := definition.GetAny().(type) {
+	case ast.InlinedLike:
+		v.validateInlined(name, actual)
+	case ast.MultilinedLike:
+		v.validateMultilined(name, actual)
+	default:
+		panic("An definition must have a value.")
 	}
 }
 
@@ -229,16 +243,10 @@ func (v *validator_) validateElement(
 		v.validateGrouped(name, actual)
 	case ast.FilteredLike:
 		v.validateFiltered(name, actual)
-	case ast.BoundedLike:
-		v.validateBounded(name, actual)
-	case string:
-		switch {
-		case v.matchesToken(IntrinsicToken, actual):
-		case v.matchesToken(LowercaseToken, actual):
-		case v.matchesToken(LiteralToken, actual):
-		default:
-			panic("An element must have a value.")
-		}
+	case ast.CharacterLike:
+		v.validateCharacter(name, actual)
+	case ast.StringLike:
+		v.validateString(name, actual)
 	default:
 		panic("An element must have a value.")
 	}
@@ -247,15 +255,37 @@ func (v *validator_) validateElement(
 func (v *validator_) validateExpression(
 	name string,
 	expression ast.ExpressionLike,
+	expressions abs.CatalogLike[string, ast.PatternLike],
 ) {
-	// Validate the possible expression types.
-	switch actual := expression.GetAny().(type) {
-	case ast.InlinedLike:
-		v.validateInlined(name, actual)
-	case ast.MultilinedLike:
-		v.validateMultilined(name, actual)
-	default:
-		panic("An expression must have a value.")
+	// Validate the optional comment.
+	var comment = expression.GetOptionalComment()
+	if col.IsDefined(comment) {
+		v.validateToken(name, CommentToken, comment)
+	}
+
+	// Validate the lowercase identifier.
+	var lowercase = expression.GetLowercase()
+	v.validateToken(name, LowercaseToken, lowercase)
+
+	// Validate the pattern.
+	var pattern = expression.GetPattern()
+	v.validatePattern(name, pattern)
+
+	// Check for duplicate expression definitions.
+	var duplicate = expressions.GetValue(lowercase)
+	if col.IsDefined(duplicate) {
+		var message = v.formatError(
+			name,
+			"The expression is defined more than once.",
+		)
+		panic(message)
+	}
+	expressions.SetValue(lowercase, pattern)
+
+	// Validate the optional note.
+	var note = expression.GetOptionalNote()
+	if col.IsDefined(note) {
+		v.validateToken(name, NoteToken, note)
 	}
 }
 
@@ -278,7 +308,7 @@ func (v *validator_) validateFactor(
 
 	// Validate the optional cardinality.
 	var cardinality = factor.GetOptionalCardinality()
-	if fwk.IsDefined(cardinality) {
+	if col.IsDefined(cardinality) {
 		v.validateCardinality(name, cardinality)
 	}
 }
@@ -289,7 +319,7 @@ func (v *validator_) validateFiltered(
 ) {
 	// Validate the optional negation.
 	var negation = filtered.GetOptionalNegation()
-	if fwk.IsDefined(negation) {
+	if col.IsDefined(negation) {
 		v.validateToken(name, NegationToken, negation)
 	}
 
@@ -363,7 +393,7 @@ func (v *validator_) validateInlined(
 	if factors.IsEmpty() {
 		var message = v.formatError(
 			name,
-			"Each inlined expression must have at least one factor.",
+			"Each inlined definition must have at least one factor.",
 		)
 		panic(message)
 	}
@@ -375,44 +405,7 @@ func (v *validator_) validateInlined(
 
 	// Validate the optional note.
 	var note = inlined.GetOptionalNote()
-	if fwk.IsDefined(note) {
-		v.validateToken(name, NoteToken, note)
-	}
-}
-
-func (v *validator_) validateLexigram(
-	name string,
-	lexigram ast.LexigramLike,
-	lexigrams col.CatalogLike[string, ast.PatternLike],
-) {
-	// Validate the optional comment.
-	var comment = lexigram.GetOptionalComment()
-	if fwk.IsDefined(comment) {
-		v.validateToken(name, CommentToken, comment)
-	}
-
-	// Validate the lowercase identifier.
-	var lowercase = lexigram.GetLowercase()
-	v.validateToken(name, LowercaseToken, lowercase)
-
-	// Validate the pattern.
-	var pattern = lexigram.GetPattern()
-	v.validatePattern(name, pattern)
-
-	// Check for duplicate lexigram definitions.
-	var duplicate = lexigrams.GetValue(lowercase)
-	if fwk.IsDefined(duplicate) {
-		var message = v.formatError(
-			name,
-			"The lexigram is defined more than once.",
-		)
-		panic(message)
-	}
-	lexigrams.SetValue(lowercase, pattern)
-
-	// Validate the optional note.
-	var note = lexigram.GetOptionalNote()
-	if fwk.IsDefined(note) {
+	if col.IsDefined(note) {
 		v.validateToken(name, NoteToken, note)
 	}
 }
@@ -427,7 +420,7 @@ func (v *validator_) validateLine(
 
 	// Validate the optional note.
 	var note = line.GetOptionalNote()
-	if fwk.IsDefined(note) {
+	if col.IsDefined(note) {
 		v.validateToken(name, NoteToken, note)
 	}
 }
@@ -438,7 +431,7 @@ func (v *validator_) validateMaximum(
 ) {
 	// Validate the optional number.
 	var number = maximum.GetOptionalNumber()
-	if fwk.IsDefined(number) {
+	if col.IsDefined(number) {
 		v.validateToken(name, NumberToken, number)
 	}
 }
@@ -461,7 +454,7 @@ func (v *validator_) validateMultilined(
 	if lines.IsEmpty() {
 		var message = v.formatError(
 			name,
-			"Each multi-line expression must have at least one line.",
+			"Each multi-line definition must have at least one line.",
 		)
 		panic(message)
 	}
@@ -482,7 +475,7 @@ func (v *validator_) validatePart(
 
 	// Validate the optional cardinality.
 	var cardinality = part.GetOptionalCardinality()
-	if fwk.IsDefined(cardinality) {
+	if col.IsDefined(cardinality) {
 		v.validateCardinality(name, cardinality)
 	}
 }
@@ -538,11 +531,11 @@ func (v *validator_) validatePredicate(
 func (v *validator_) validateRule(
 	name string,
 	rule ast.RuleLike,
-	rules col.CatalogLike[string, ast.ExpressionLike],
+	rules abs.CatalogLike[string, ast.DefinitionLike],
 ) {
 	// Validate the optional comment.
 	var comment = rule.GetOptionalComment()
-	if fwk.IsDefined(comment) {
+	if col.IsDefined(comment) {
 		v.validateToken(name, CommentToken, comment)
 	}
 
@@ -550,27 +543,45 @@ func (v *validator_) validateRule(
 	var uppercase = rule.GetUppercase()
 	v.validateToken(name, UppercaseToken, uppercase)
 
-	// Validate the expression.
-	var expression = rule.GetExpression()
-	v.validateExpression(name, expression)
+	// Validate the definition.
+	var definition = rule.GetDefinition()
+	v.validateDefinition(name, definition)
 
 	// Check for duplicate rule definitions.
 	var duplicate = rules.GetValue(uppercase)
-	if fwk.IsDefined(duplicate) {
+	if col.IsDefined(duplicate) {
 		var message = v.formatError(
 			name,
 			fmt.Sprintf("The rule %q is defined more than once.", uppercase),
 		)
 		panic(message)
 	}
-	rules.SetValue(uppercase, expression)
+	rules.SetValue(uppercase, definition)
+}
+
+func (v *validator_) validateString(
+	name string,
+	string_ ast.StringLike,
+) {
+	// Validate the possible string types.
+	switch actual := string_.GetAny().(type) {
+	case string:
+		switch {
+		case v.matchesToken(LowercaseToken, actual):
+		case v.matchesToken(LiteralToken, actual):
+		default:
+			panic("A string must have a value.")
+		}
+	default:
+		panic("A string must have a value.")
+	}
 }
 
 func (v *validator_) validateSyntax(
 	name string,
 	syntax ast.SyntaxLike,
-	rules col.CatalogLike[string, ast.ExpressionLike],
-	lexigrams col.CatalogLike[string, ast.PatternLike],
+	rules abs.CatalogLike[string, ast.DefinitionLike],
+	expressions abs.CatalogLike[string, ast.PatternLike],
 ) {
 	// Validate the headers.
 	var syntaxHeaders = syntax.GetHeaders()
@@ -596,16 +607,16 @@ func (v *validator_) validateSyntax(
 		v.validateRule(name, rule, rules)
 	}
 
-	// Validate the lexigram definition.
-	var syntaxLexigrams = syntax.GetLexigrams()
-	if syntaxLexigrams.IsEmpty() {
-		var message = "The syntax must contain at least one lexigram definition.\n"
+	// Validate the expression definition.
+	var syntaxExpressions = syntax.GetExpressions()
+	if syntaxExpressions.IsEmpty() {
+		var message = "The syntax must contain at least one expression definition.\n"
 		panic(message)
 	}
-	var lexigramIterator = syntaxLexigrams.GetIterator()
-	for lexigramIterator.HasNext() {
-		var lexigram = lexigramIterator.GetNext()
-		v.validateLexigram(name, lexigram, lexigrams)
+	var expressionIterator = syntaxExpressions.GetIterator()
+	for expressionIterator.HasNext() {
+		var expression = expressionIterator.GetNext()
+		v.validateExpression(name, expression, expressions)
 	}
 }
 
