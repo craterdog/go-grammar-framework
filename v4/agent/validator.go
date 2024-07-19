@@ -509,10 +509,10 @@ func (v *validator_) validatePredicate(
 	switch actual := predicate.GetAny().(type) {
 	case string:
 		switch {
+		case v.matchesToken(LiteralToken, actual):
 		case v.matchesToken(LowercaseToken, actual):
 		case v.matchesToken(UppercaseToken, actual):
 		case v.matchesToken(IntrinsicToken, actual):
-		case v.matchesToken(LiteralToken, actual):
 		default:
 			panic("A predicate must have a value.")
 		}

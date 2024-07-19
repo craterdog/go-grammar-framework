@@ -802,6 +802,14 @@ func (v *parser_) parsePredicate() (
 	token TokenLike,
 	ok bool,
 ) {
+	// Attempt to parse the literal predicate.
+	var literal string
+	literal, token, ok = v.parseToken(LiteralToken, "")
+	if ok {
+		predicate = ast.Predicate().Make(literal)
+		return predicate, token, true
+	}
+
 	// Attempt to parse the lowercase predicate.
 	var lowercase string
 	lowercase, token, ok = v.parseToken(LowercaseToken, "")
@@ -823,14 +831,6 @@ func (v *parser_) parsePredicate() (
 	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
 	if ok {
 		predicate = ast.Predicate().Make(intrinsic)
-		return predicate, token, true
-	}
-
-	// Attempt to parse the literal predicate.
-	var literal string
-	literal, token, ok = v.parseToken(LiteralToken, "")
-	if ok {
-		predicate = ast.Predicate().Make(literal)
 		return predicate, token, true
 	}
 
@@ -1053,38 +1053,44 @@ var syntax = map[string]string{
 	"Syntax": `Header+ Rule+ Expression+ EOL* EOF  ! Terminated with an end-of-file marker.`,
 	"Header": `comment EOL`,
 	"Rule":   `comment? uppercase ":" Definition EOL+`,
-	"Definition": `,
-    "Inlined
-    "Multilined`,
+	"Definition": `
+    Inlined
+    Multilined`,
 	"Inlined":    `Factor+ note?`,
 	"Multilined": `Line+`,
 	"Line":       `EOL Identifier note?`,
-	"Identifier": `,
-	"lowercase
-	"uppercase`,
+	"Identifier": `
+    lowercase
+    uppercase`,
 	"Factor": `Predicate Cardinality?  ! The default cardinality is one.`,
-	"Predicate": `,
-	"Identifier
-    "intrinsic
-    "literal`,
-	"Cardinality": `,
-    "Constrained
-    "quantified`,
-	"Constrained": `"{" number Limit? "}"  ! A range of numbers is inclusive.`,
+	"Predicate": `
+    literal
+    lowercase
+    uppercase
+    intrinsic`,
+	"Cardinality": `
+    Constrained
+    quantified`,
+	"Constrained": `"{" number Limit? "}"  ! A constrained range of numbers is inclusive.`,
 	"Limit":       `".." number?`,
 	"Expression":  `comment? lowercase ":" Pattern note? EOL+`,
 	"Pattern":     `Part+ Alternative*`,
 	"Part":        `Element Cardinality?  ! The default cardinality is one.`,
-	"Element": `,
-	"Group
-	"Filter
-    "String`,
 	"Alternative": `"|" Part+`,
-	"Grouped":     `"(" Pattern ")"`,
-	"Filtered":    `negation? "[" Character+ "]"`,
-	"Character": `,
-    "Bounded
-    "intrinsic`,
-	"Bounded": `rune Extent?  ! A range of runes is inclusive.`,
+	"Element": `
+    Grouped
+    Filtered
+    String`,
+	"Grouped":  `"(" Pattern ")"`,
+	"Filtered": `negation? "[" Character+ "]"`,
+	"String": `
+    rune
+    literal
+    lowercase
+    intrinsic`,
+	"Character": `
+    Bounded
+    intrinsic`,
+	"Bounded": `rune Extent?  ! A bounded range of runes is inclusive.`,
 	"Extent":  `".." rune`,
 }

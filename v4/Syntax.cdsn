@@ -55,9 +55,9 @@ Syntax: Header+ Rule+ Expression+ EOL* EOF  ! Terminated with an end-of-file mar
 
 Header: comment EOL
 
-Rule: comment? uppercase ":" Expression EOL+
+Rule: comment? uppercase ":" Definition EOL+
 
-Expression:
+Definition:
     Inlined
     Multilined
 
@@ -74,10 +74,10 @@ Identifier:
 Factor: Predicate Cardinality?  ! The default cardinality is one.
 
 Predicate:
+    literal
     lowercase
     uppercase
     intrinsic
-    literal
 
 Cardinality:
     Constrained

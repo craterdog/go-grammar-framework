@@ -1005,10 +1005,8 @@ func (v *generator_) processPredicate(
 ) {
 	var actual = predicate.GetAny().(string)
 	switch {
-	case !Scanner().MatchToken(IntrinsicToken, actual).IsEmpty():
-		// NOTE: We must check for intrinsics first and ignore them.
 	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
-		// Ignore literals as well.
+	case !Scanner().MatchToken(IntrinsicToken, actual).IsEmpty():
 	default:
 		// We know it is a rule or expression name which corresponds to an attribute
 		// with a (non-generic) instance type, or a Go intrinsic "string" type
