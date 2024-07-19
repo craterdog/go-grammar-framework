@@ -49,11 +49,21 @@ func TestModelGeneration(t *tes.T) {
 	var parser = gra.Parser()
 	var syntax = parser.ParseSource(source)
 	var generator = gra.Generator()
-	var model = generator.GenerateAST(module, syntax)
 	var formatter = mod.Formatter()
+
+	var model = generator.GenerateAST(module, syntax)
 	source = formatter.FormatModel(model)
 	bytes = []byte(source)
 	var filename = "ast/Package.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	model = generator.GenerateGrammar(module, syntax)
+	source = formatter.FormatModel(model)
+	bytes = []byte(source)
+	filename = "grammar/Package.go"
 	err = osx.WriteFile(filename, bytes, 0644)
 	if err != nil {
 		panic(err)
@@ -90,10 +100,10 @@ func TestLifecycle(t *tes.T) {
 	fmt.Println("AST Model:")
 	fmt.Println(source)
 
-	// Generate the agent model for the syntax.
-	model = generator.GenerateAgent(module, syntax)
+	// Generate the language grammar model for the syntax.
+	model = generator.GenerateGrammar(module, syntax)
 	source = formatter2.FormatModel(model)
-	fmt.Println("Agent Model:")
+	fmt.Println("Grammar Model:")
 	fmt.Println(source)
 
 	// Generate the formatter class for the syntax.

@@ -10,18 +10,19 @@
 ................................................................................
 */
 
-package agent_test
+package generator_test
 
 import (
-	age "github.com/craterdog/go-grammar-framework/v4/agent"
+	gen "github.com/craterdog/go-grammar-framework/v4/generator"
+	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	mod "github.com/craterdog/go-model-framework/v4"
 	ass "github.com/stretchr/testify/assert"
 	tes "testing"
 )
 
 func TestLifecycle(t *tes.T) {
-	var generator = age.Generator().Make()
-	var module = "github.com/craterdog/go-grammar-framework/v4"
+	var generator = gen.Generator().Make()
+	var module = "github.com/craterdog/go-grammar-framework"
 	var name = "example"
 
 	// Generate a new syntax with a default copyright.
@@ -29,23 +30,23 @@ func TestLifecycle(t *tes.T) {
 	var syntax = generator.CreateSyntax(name, copyright)
 
 	// Format the syntax.
-	var formatter = age.Formatter().Make()
+	var formatter = gra.Formatter().Make()
 	var source = formatter.FormatSyntax(syntax)
 
 	// Parse the source code for the syntax.
-	var parser = age.Parser().Make()
+	var parser = gra.Parser().Make()
 	syntax = parser.ParseSource(source)
 
 	// Validate the syntax.
-	var validator = age.Validator().Make()
+	var validator = gra.Validator().Make()
 	validator.ValidateSyntax(syntax)
 
 	// Generate the AST model for the syntax.
 	var model = generator.GenerateAST(module, syntax)
 	mod.Validator().ValidateModel(model)
 
-	// Generate the agent model for the syntax.
-	model = generator.GenerateAgent(module, syntax)
+	// Generate the language grammar model for the syntax.
+	model = generator.GenerateGrammar(module, syntax)
 	mod.Validator().ValidateModel(model)
 
 	// Generate the formatter class for the syntax.
@@ -81,7 +82,7 @@ const modelFormatter = `/*
 ................................................................................
 */
 
-package agent
+package grammar
 
 import (
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
@@ -190,7 +191,7 @@ const modelParser = `/*
 ................................................................................
 */
 
-package agent
+package grammar
 
 import (
 	fmt "fmt"
@@ -411,7 +412,7 @@ const modelScanner = `/*
 ................................................................................
 */
 
-package agent
+package grammar
 
 import (
 	fmt "fmt"
@@ -670,7 +671,7 @@ const modelToken = `/*
 ................................................................................
 */
 
-package agent
+package grammar
 
 // CLASS ACCESS
 
@@ -760,7 +761,7 @@ const modelValidator = `/*
 ................................................................................
 */
 
-package agent
+package grammar
 
 import (
 	fmt "fmt"

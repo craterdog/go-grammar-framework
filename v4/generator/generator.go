@@ -10,13 +10,14 @@
 ................................................................................
 */
 
-package agent
+package generator
 
 import (
 	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	mod "github.com/craterdog/go-model-framework/v4"
 	sts "strings"
 	tim "time"
@@ -82,17 +83,17 @@ func (v *generator_) CreateSyntax(
 ) ast.SyntaxLike {
 	var template = v.generateSyntaxTemplate()
 	var source = v.populateSyntaxTemplate(template, name, copyright)
-	var parser = Parser().Make()
+	var parser = gra.Parser().Make()
 	var syntax = parser.ParseSource(source)
 	return syntax
 }
 
-func (v *generator_) GenerateAgent(
+func (v *generator_) GenerateGrammar(
 	module string,
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
 	v.analyzeSyntax(syntax)
-	var template = v.generateModelTemplate("agent", syntax)
+	var template = v.generateModelTemplate("grammar", syntax)
 	var source = v.populateModelTemplate(template, module, syntax)
 	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
@@ -318,10 +319,10 @@ func (v *generator_) expandCopyright(copyright string) string {
 func (v *generator_) extractAttribute(name string) mod.AttributeLike {
 	var attributeType mod.AbstractionLike
 	switch {
-	case !Scanner().MatchToken(UppercaseToken, name).IsEmpty():
+	case !gra.Scanner().MatchToken(gra.UppercaseToken, name).IsEmpty():
 		// The attribute type is the (non-generic) abstract instance type.
 		attributeType = mod.Abstraction(name + "Like")
-	case !Scanner().MatchToken(LowercaseToken, name).IsEmpty():
+	case !gra.Scanner().MatchToken(gra.LowercaseToken, name).IsEmpty():
 		// The attribute type is simply the Go intrinsic "string" type.
 		attributeType = mod.Abstraction("string")
 		v.tokens_.AddValue(name)
@@ -365,7 +366,7 @@ func (v *generator_) extractNotice(syntax ast.SyntaxLike) string {
 	var comment = header.GetComment()
 
 	// Strip off the syntax style comment delimiters.
-	var notice = Scanner().MatchToken(CommentToken, comment).GetValue(2)
+	var notice = gra.Scanner().MatchToken(gra.CommentToken, comment).GetValue(2)
 	notice = "\n" + notice + "\n"
 
 	return notice
@@ -913,7 +914,7 @@ func (v *generator_) processIdentifier(
 	identifier ast.IdentifierLike,
 ) {
 	var name = identifier.GetAny().(string)
-	if !Scanner().MatchToken(LowercaseToken, name).IsEmpty() {
+	if !gra.Scanner().MatchToken(gra.LowercaseToken, name).IsEmpty() {
 		v.tokens_.AddValue(name)
 	}
 }
@@ -1017,8 +1018,8 @@ func (v *generator_) processPredicate(
 ) {
 	var actual = predicate.GetAny().(string)
 	switch {
-	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
-	case !Scanner().MatchToken(IntrinsicToken, actual).IsEmpty():
+	case !gra.Scanner().MatchToken(gra.LiteralToken, actual).IsEmpty():
+	case !gra.Scanner().MatchToken(gra.IntrinsicToken, actual).IsEmpty():
 	default:
 		// We know it is a rule or expression name which corresponds to an attribute
 		// with a (non-generic) instance type, or a Go intrinsic "string" type
@@ -1061,15 +1062,15 @@ func (v *generator_) processString(
 ) {
 	var actual = string_.GetAny().(string)
 	switch {
-	case !Scanner().MatchToken(RuneToken, actual).IsEmpty():
+	case !gra.Scanner().MatchToken(gra.RuneToken, actual).IsEmpty():
 		var literal = actual[1:2] // Remove the single quotes.
 		regexp += v.escapeString(literal)
-	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
+	case !gra.Scanner().MatchToken(gra.LiteralToken, actual).IsEmpty():
 		var literal = actual[1 : len(actual)-1] // Remove the double quotes.
 		regexp += v.escapeString(literal)
-	case !Scanner().MatchToken(LowercaseToken, actual).IsEmpty():
+	case !gra.Scanner().MatchToken(gra.LowercaseToken, actual).IsEmpty():
 		regexp += `" + ` + actual + `_ + "`
-	case !Scanner().MatchToken(IntrinsicToken, actual).IsEmpty():
+	case !gra.Scanner().MatchToken(gra.IntrinsicToken, actual).IsEmpty():
 		regexp += `" + ` + sts.ToLower(actual) + `_ + "`
 	default:
 		var message = fmt.Sprintf(

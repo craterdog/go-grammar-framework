@@ -10,7 +10,7 @@
 ................................................................................
 */
 
-package agent
+package grammar
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
@@ -56,7 +56,7 @@ func (c *formatterClass_) Make() FormatterLike {
 type formatter_ struct {
 	// Define the instance attributes.
 	class_  FormatterClassLike
-	depth_  int
+	depth_  uint
 	result_ sts.Builder
 }
 
@@ -66,7 +66,7 @@ func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
 }
 
-func (v *formatter_) GetDepth() int {
+func (v *formatter_) GetDepth() uint {
 	return v.depth_
 }
 
@@ -82,7 +82,8 @@ func (v *formatter_) FormatSyntax(syntax ast.SyntaxLike) string {
 func (v *formatter_) appendNewline() {
 	var newline = "\n"
 	var indentation = "    "
-	for level := 0; level < v.depth_; level++ {
+	var level uint
+	for level = 0; level < v.depth_; level++ {
 		newline += indentation
 	}
 	v.appendString(newline)

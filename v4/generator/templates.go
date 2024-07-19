@@ -10,12 +10,12 @@
 ................................................................................
 */
 
-package agent
+package generator
 
 var templates_ = map[string]map[string]string{
 	"syntax":    syntaxTemplates_,
 	"ast":       astTemplates_,
-	"agent":     agentTemplates_,
+	"grammar":   grammarTemplates_,
 	"token":     tokenTemplates_,
 	"scanner":   scannerTemplates_,
 	"parser":    parserTemplates_,
@@ -41,15 +41,15 @@ var astTemplates_ = map[string]string{
 	"aspects":     astAspectsTemplate_,
 }
 
-var agentTemplates_ = map[string]string{
-	"notice":      agentNoticeTemplate_,
-	"header":      agentHeaderTemplate_,
-	"imports":     agentImportsTemplate_,
-	"types":       agentTypesTemplate_,
-	"functionals": agentFunctionalsTemplate_,
-	"classes":     agentClassesTemplate_,
-	"instances":   agentInstancesTemplate_,
-	"aspects":     agentAspectsTemplate_,
+var grammarTemplates_ = map[string]string{
+	"notice":      grammarNoticeTemplate_,
+	"header":      grammarHeaderTemplate_,
+	"imports":     grammarImportsTemplate_,
+	"types":       grammarTypesTemplate_,
+	"functionals": grammarFunctionalsTemplate_,
+	"classes":     grammarClassesTemplate_,
+	"instances":   grammarInstancesTemplate_,
+	"aspects":     grammarAspectsTemplate_,
 }
 
 var tokenTemplates_ = map[string]string{
@@ -265,12 +265,12 @@ const astAspectsTemplate_ = ``
 
 // AGENT TEMPLATES
 
-const agentNoticeTemplate_ = `/*<Notice>*/
+const grammarNoticeTemplate_ = `/*<Notice>*/
 `
 
-const agentHeaderTemplate_ = `
+const grammarHeaderTemplate_ = `
 /*
-Package "agent" provides the following agent classes that operate on the
+Package "grammar" provides the following grammar classes that operate on the
 abstract syntax tree (AST) for this module:
   - Token captures the attributes associated with a parsed token.
   - Scanner is used to scan the source byte stream and recognize matching tokens.
@@ -290,17 +290,17 @@ be developed and used seamlessly since the interface definitions only depend on
 other interfaces and intrinsic types—and the class implementations only depend
 on interfaces, not on each other.
 */
-package agent
+package grammar
 `
 
-const agentImportsTemplate_ = `
+const grammarImportsTemplate_ = `
 import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
-	ast "<module>/ast"
+	ast "<module>/v4/ast"
 )
 `
 
-const agentTypesTemplate_ = `
+const grammarTypesTemplate_ = `
 // Types
 
 /*
@@ -313,9 +313,9 @@ const (
 	<TokenTypes>
 )`
 
-const agentFunctionalsTemplate_ = ``
+const grammarFunctionalsTemplate_ = ``
 
-const agentClassesTemplate_ = `
+const grammarClassesTemplate_ = `
 // Classes
 
 /*
@@ -343,6 +343,8 @@ ScannerClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete scanner-like class.  The following functions are supported:
 
+AsString() returns the string version of the token type.
+
 FormatToken() returns a formatted string containing the attributes of the token.
 
 MatchToken() a list of strings representing any matches found in the specified
@@ -358,6 +360,7 @@ type ScannerClassLike interface {
 	) ScannerLike
 
 	// Functions
+	AsString(type_ TokenType) string
 	FormatToken(token TokenLike) string
 	MatchToken(
 		type_ TokenType,
@@ -391,7 +394,7 @@ type ValidatorClassLike interface {
 }
 `
 
-const agentInstancesTemplate_ = `
+const grammarInstancesTemplate_ = `
 // Instances
 
 /*
@@ -459,7 +462,7 @@ type ValidatorLike interface {
 }
 `
 
-const agentAspectsTemplate_ = ``
+const grammarAspectsTemplate_ = ``
 
 // TOKEN TEMPLATES
 
@@ -467,7 +470,7 @@ const tokenNoticeTemplate_ = `/*<Notice>*/
 `
 
 const tokenHeaderTemplate_ = `
-package agent
+package grammar
 `
 
 const tokenImportsTemplate_ = ``
@@ -559,7 +562,7 @@ const scannerNoticeTemplate_ = `/*<Notice>*/
 `
 
 const scannerHeaderTemplate_ = `
-package agent
+package grammar
 `
 
 const scannerImportsTemplate_ = `
@@ -784,7 +787,7 @@ const parserNoticeTemplate_ = `/*<Notice>*/
 `
 
 const parserHeaderTemplate_ = `
-package agent
+package grammar
 `
 
 const parserImportsTemplate_ = `
@@ -792,7 +795,7 @@ import (
 	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
-	ast "<module>/ast"
+	ast "<module>/v4/ast"
 	sts "strings"
 )
 `
@@ -1007,13 +1010,13 @@ const validatorNoticeTemplate_ = `/*<Notice>*/
 `
 
 const validatorHeaderTemplate_ = `
-package agent
+package grammar
 `
 
 const validatorImportsTemplate_ = `
 import (
 	fmt "fmt"
-	ast "<module>/ast"
+	ast "<module>/v4/ast"
 )
 `
 
@@ -1102,12 +1105,12 @@ const formatterNoticeTemplate_ = `/*<Notice>*/
 `
 
 const formatterHeaderTemplate_ = `
-package agent
+package grammar
 `
 
 const formatterImportsTemplate_ = `
 import (
-	ast "<module>/ast"
+	ast "<module>/v4/ast"
 	sts "strings"
 )
 `

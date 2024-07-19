@@ -24,7 +24,7 @@ Conventions located here:
 
 The classes defined in this module provide the ability to parse, validate and
 format Go Class Model Notation (GCMN).  They can also generate concrete class
-implementation files for each abstract class defined in the Package.go file.
+implementation files for each abstract class defined in the Packgra.go file.
 */
 package module
 
@@ -32,8 +32,9 @@ import (
 	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
-	age "github.com/craterdog/go-grammar-framework/v4/agent"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	gen "github.com/craterdog/go-grammar-framework/v4/generator"
+	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	sts "strings"
 	uni "unicode"
 )
@@ -69,31 +70,38 @@ type (
 	SyntaxLike      = ast.SyntaxLike
 )
 
-// Agents
+// Grammar
 
 type (
-	FormatterLike = age.FormatterLike
-	GeneratorLike = age.GeneratorLike
-	ParserLike    = age.ParserLike
-	ValidatorLike = age.ValidatorLike
-	TokenType     = age.TokenType
+	FormatterLike = gra.FormatterLike
+	ParserLike    = gra.ParserLike
+	ValidatorLike = gra.ValidatorLike
+	TokenType     = gra.TokenType
 )
 
-const ErrorToken = age.ErrorToken
-const CommentToken = age.CommentToken
-const DelimiterToken = age.DelimiterToken
-const EofToken = age.EofToken
-const EolToken = age.EolToken
-const IntrinsicToken = age.IntrinsicToken
-const LiteralToken = age.LiteralToken
-const LowercaseToken = age.LowercaseToken
-const NegationToken = age.NegationToken
-const NoteToken = age.NoteToken
-const NumberToken = age.NumberToken
-const QuantifiedToken = age.QuantifiedToken
-const RuneToken = age.RuneToken
-const SpaceToken = age.SpaceToken
-const UppercaseToken = age.UppercaseToken
+const (
+	ErrorToken      = gra.ErrorToken
+	CommentToken    = gra.CommentToken
+	DelimiterToken  = gra.DelimiterToken
+	EofToken        = gra.EofToken
+	EolToken        = gra.EolToken
+	IntrinsicToken  = gra.IntrinsicToken
+	LiteralToken    = gra.LiteralToken
+	LowercaseToken  = gra.LowercaseToken
+	NegationToken   = gra.NegationToken
+	NoteToken       = gra.NoteToken
+	NumberToken     = gra.NumberToken
+	QuantifiedToken = gra.QuantifiedToken
+	RuneToken       = gra.RuneToken
+	SpaceToken      = gra.SpaceToken
+	UppercaseToken  = gra.UppercaseToken
+)
+
+// Generator
+
+type (
+	GeneratorLike = gen.GeneratorLike
+)
 
 // UNIVERSAL CONSTRUCTORS
 
@@ -857,29 +865,21 @@ func Syntax(arguments ...any) SyntaxLike {
 	return syntax
 }
 
-// Agents
+// Grammar
 
 func Formatter(arguments ...any) FormatterLike {
 	if len(arguments) > 0 {
 		panic("The formatter constructor does not take any arguments.")
 	}
-	var formatter = age.Formatter().Make()
+	var formatter = gra.Formatter().Make()
 	return formatter
-}
-
-func Generator(arguments ...any) GeneratorLike {
-	if len(arguments) > 0 {
-		panic("The generator constructor does not take any arguments.")
-	}
-	var generator = age.Generator().Make()
-	return generator
 }
 
 func Parser(arguments ...any) ParserLike {
 	if len(arguments) > 0 {
 		panic("The parser constructor does not take any arguments.")
 	}
-	var parser = age.Parser().Make()
+	var parser = gra.Parser().Make()
 	return parser
 }
 
@@ -887,13 +887,23 @@ func Validator(arguments ...any) ValidatorLike {
 	if len(arguments) > 0 {
 		panic("The validator constructor does not take any arguments.")
 	}
-	var validator = age.Validator().Make()
+	var validator = gra.Validator().Make()
 	return validator
+}
+
+// Generator
+
+func Generator(arguments ...any) GeneratorLike {
+	if len(arguments) > 0 {
+		panic("The generator constructor does not take any arguments.")
+	}
+	var generator = gen.Generator().Make()
+	return generator
 }
 
 // Private
 
 func matchesToken(type_ TokenType, value string) bool {
-	var matches = age.Scanner().MatchToken(type_, value)
+	var matches = gra.Scanner().MatchToken(type_, value)
 	return !matches.IsEmpty()
 }
