@@ -11,7 +11,9 @@
 */
 
 /*
-Package "ast" provides...
+Package "ast" provides the abstract syntax tree (AST) classes for this module.
+Each AST class manages the attributes associated with the rule definition found
+in the syntax grammar with the same rule name as the class.
 
 For detailed documentation on this package refer to the wiki:
   - https://github.com/craterdog/go-grammar-framework/wiki
@@ -204,6 +206,16 @@ type InlinedClassLike interface {
 }
 
 /*
+LimitClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete limit-like class.
+*/
+type LimitClassLike interface {
+	// Constructors
+	Make(optionalNumber string) LimitLike
+}
+
+/*
 LineClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete line-like class.
@@ -214,16 +226,6 @@ type LineClassLike interface {
 		identifier IdentifierLike,
 		optionalNote string,
 	) LineLike
-}
-
-/*
-LimitClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete maximum-like class.
-*/
-type LimitClassLike interface {
-	// Constructors
-	Make(optionalNumber string) LimitLike
 }
 
 /*
@@ -486,6 +488,17 @@ type InlinedLike interface {
 }
 
 /*
+LimitLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete limit-like class.
+*/
+type LimitLike interface {
+	// Attributes
+	GetClass() LimitClassLike
+	GetOptionalNumber() string
+}
+
+/*
 LineLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete line-like class.
@@ -495,17 +508,6 @@ type LineLike interface {
 	GetClass() LineClassLike
 	GetIdentifier() IdentifierLike
 	GetOptionalNote() string
-}
-
-/*
-LimitLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete maximum-like class.
-*/
-type LimitLike interface {
-	// Attributes
-	GetClass() LimitClassLike
-	GetOptionalNumber() string
 }
 
 /*

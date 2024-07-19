@@ -16,8 +16,49 @@ import (
 	fmt "fmt"
 	gra "github.com/craterdog/go-grammar-framework/v4"
 	mod "github.com/craterdog/go-model-framework/v4"
+	ass "github.com/stretchr/testify/assert"
+	osx "os"
 	tes "testing"
 )
+
+const module = "github.com/craterdog/go-grammar-framework"
+
+const syntaxFile = "Syntax.cdsn"
+
+func TestRoundTrips(t *tes.T) {
+	var bytes, err = osx.ReadFile(syntaxFile)
+	if err != nil {
+		panic(err)
+	}
+	var source = string(bytes)
+	var parser = gra.Parser()
+	var syntax = parser.ParseSource(source)
+	var formatter = gra.Formatter()
+	var actual = formatter.FormatSyntax(syntax)
+	ass.Equal(t, actual, source)
+	var validator = gra.Validator()
+	validator.ValidateSyntax(syntax)
+}
+
+func TestModelGeneration(t *tes.T) {
+	var bytes, err = osx.ReadFile(syntaxFile)
+	if err != nil {
+		panic(err)
+	}
+	var source = string(bytes)
+	var parser = gra.Parser()
+	var syntax = parser.ParseSource(source)
+	var generator = gra.Generator()
+	var model = generator.GenerateAST(module, syntax)
+	var formatter = mod.Formatter()
+	source = formatter.FormatModel(model)
+	bytes = []byte(source)
+	var filename = "ast/Package.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
 
 func TestLifecycle(t *tes.T) {
 	var generator = gra.Generator()

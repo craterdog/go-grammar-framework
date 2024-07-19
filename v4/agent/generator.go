@@ -190,21 +190,22 @@ func (v *generator_) analyzeSyntax(syntax ast.SyntaxLike) {
 		"upper":   ` "\\p{Lu}"`,
 	}
 
-	// Initialize the collections.
+	// Process the syntax rule definitions.
 	v.tokens_ = col.Set[string]([]string{"delimiter", "eol", "eof", "space"})
-	v.regexps_ = col.Catalog[string, string](map_)
 	v.modules_ = col.Catalog[string, mod.ModuleLike]()
 	v.classes_ = col.Catalog[string, mod.ClassLike]()
 	v.instances_ = col.Catalog[string, mod.InstanceLike]()
-
-	// Process the syntax rule definitions.
 	var rulesIterator = syntax.GetRules().GetIterator()
 	for rulesIterator.HasNext() {
 		var rule = rulesIterator.GetNext()
 		v.processRule(rule)
 	}
+	v.modules_.SortValues()
+	v.classes_.SortValues()
+	v.instances_.SortValues()
 
 	// Process the syntax expression definitions.
+	v.regexps_ = col.Catalog[string, string](map_)
 	var expressionIterator = syntax.GetExpressions().GetIterator()
 	for expressionIterator.HasNext() {
 		var expression = expressionIterator.GetNext()
@@ -573,11 +574,21 @@ func (v *generator_) makeUppercase(name string) string {
 	return string(runes)
 }
 
+func (v *generator_) optionalizeAttribute(
+	attribute mod.AttributeLike,
+) mod.AttributeLike {
+	var name = attribute.GetName()
+	name = "GetOptional" + sts.TrimPrefix(name, "Get")
+	var attributeType = attribute.GetOptionalAbstraction()
+	attribute = mod.Attribute(name, attributeType)
+	return attribute
+}
+
 func (v *generator_) pluralizeAttribute(
 	attribute mod.AttributeLike,
 ) mod.AttributeLike {
 	// Add the collections module to the catalog of imported modules.
-	var alias = "col"
+	var alias = "abs"
 	var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
 	var module = mod.Module(
 		alias,
@@ -602,7 +613,7 @@ func (v *generator_) pluralizeAttribute(
 
 	// Create the result type for the pluralized attribute.
 	attributeType = mod.Abstraction(
-		alias,
+		mod.Alias(alias),
 		"Sequential",
 		genericArguments,
 	)
@@ -729,7 +740,8 @@ func (v *generator_) processCardinality(
 	case string:
 		switch actual {
 		case "?":
-			// This attribute is optional, not plural.
+			// This attribute is optional.
+			attribute = v.optionalizeAttribute(attribute)
 		case "*", "+":
 			// Turn the attribute into a sequence of that type attribute.
 			attribute = v.pluralizeAttribute(attribute)
@@ -1070,6 +1082,7 @@ func (v *generator_) processString(
 }
 
 var reserved_ = map[string]bool{
+	"any":       true,
 	"byte":      true,
 	"case":      true,
 	"complex":   true,
