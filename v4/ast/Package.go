@@ -51,7 +51,7 @@ concrete bounded-like class.
 type BoundedClassLike interface {
 	// Constructors
 	Make(
-		initial InitialLike,
+		rune_ string,
 		optionalExtent ExtentLike,
 	) BoundedLike
 }
@@ -84,8 +84,8 @@ concrete constrained-like class.
 type ConstrainedClassLike interface {
 	// Constructors
 	Make(
-		minimum MinimumLike,
-		optionalMaximum MaximumLike,
+		number string,
+		optionalLimit LimitLike,
 	) ConstrainedLike
 }
 
@@ -191,16 +191,6 @@ type IdentifierClassLike interface {
 }
 
 /*
-InitialClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete initial-like class.
-*/
-type InitialClassLike interface {
-	// Constructors
-	Make(rune_ string) InitialLike
-}
-
-/*
 InlinedClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete inlined-like class.
@@ -227,23 +217,13 @@ type LineClassLike interface {
 }
 
 /*
-MaximumClassLike is a class interface that defines the complete set of
+LimitClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete maximum-like class.
 */
-type MaximumClassLike interface {
+type LimitClassLike interface {
 	// Constructors
-	Make(optionalNumber string) MaximumLike
-}
-
-/*
-MinimumClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete minimum-like class.
-*/
-type MinimumClassLike interface {
-	// Constructors
-	Make(number string) MinimumLike
+	Make(optionalNumber string) LimitLike
 }
 
 /*
@@ -351,7 +331,7 @@ instance of a concrete bounded-like class.
 type BoundedLike interface {
 	// Attributes
 	GetClass() BoundedClassLike
-	GetInitial() InitialLike
+	GetRune() string
 	GetOptionalExtent() ExtentLike
 }
 
@@ -385,8 +365,8 @@ instance of a concrete constrained-like class.
 type ConstrainedLike interface {
 	// Attributes
 	GetClass() ConstrainedClassLike
-	GetMinimum() MinimumLike
-	GetOptionalMaximum() MaximumLike
+	GetNumber() string
+	GetOptionalLimit() LimitLike
 }
 
 /*
@@ -494,17 +474,6 @@ type IdentifierLike interface {
 }
 
 /*
-InitialLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete initial-like class.
-*/
-type InitialLike interface {
-	// Attributes
-	GetClass() InitialClassLike
-	GetRune() string
-}
-
-/*
 InlinedLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete inlined-like class.
@@ -529,25 +498,14 @@ type LineLike interface {
 }
 
 /*
-MaximumLike is an instance interface that defines the complete set of
+LimitLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete maximum-like class.
 */
-type MaximumLike interface {
+type LimitLike interface {
 	// Attributes
-	GetClass() MaximumClassLike
+	GetClass() LimitClassLike
 	GetOptionalNumber() string
-}
-
-/*
-MinimumLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete minimum-like class.
-*/
-type MinimumLike interface {
-	// Attributes
-	GetClass() MinimumClassLike
-	GetNumber() string
 }
 
 /*

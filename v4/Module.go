@@ -57,11 +57,9 @@ type (
 	GroupedLike     = ast.GroupedLike
 	HeaderLike      = ast.HeaderLike
 	IdentifierLike  = ast.IdentifierLike
-	InitialLike     = ast.InitialLike
 	InlinedLike     = ast.InlinedLike
+	LimitLike       = ast.LimitLike
 	LineLike        = ast.LineLike
-	MaximumLike     = ast.MaximumLike
-	MinimumLike     = ast.MinimumLike
 	MultilinedLike  = ast.MultilinedLike
 	PartLike        = ast.PartLike
 	PatternLike     = ast.PatternLike
@@ -126,14 +124,14 @@ func Alternative(arguments ...any) AlternativeLike {
 
 func Bounded(arguments ...any) BoundedLike {
 	// Initialize the possible arguments.
-	var initial InitialLike
+	var rune_ string
 	var extent ExtentLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case InitialLike:
-			initial = actual
+		case string:
+			rune_ = actual
 		case ExtentLike:
 			extent = actual
 		default:
@@ -147,7 +145,7 @@ func Bounded(arguments ...any) BoundedLike {
 
 	// Call the constructor.
 	var bounded = ast.Bounded().Make(
-		initial,
+		rune_,
 		extent,
 	)
 	return bounded
@@ -223,16 +221,16 @@ func Character(arguments ...any) CharacterLike {
 
 func Constrained(arguments ...any) ConstrainedLike {
 	// Initialize the possible arguments.
-	var minimum MinimumLike
-	var maximum MaximumLike
+	var number string
+	var limit LimitLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case MinimumLike:
-			minimum = actual
-		case MaximumLike:
-			maximum = actual
+		case string:
+			number = actual
+		case LimitLike:
+			limit = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the constrained constructor: %T\n",
@@ -244,8 +242,8 @@ func Constrained(arguments ...any) ConstrainedLike {
 
 	// Call the constructor.
 	var constrained = ast.Constrained().Make(
-		minimum,
-		maximum,
+		number,
+		limit,
 	)
 	return constrained
 }
@@ -288,7 +286,6 @@ func Element(arguments ...any) ElementLike {
 	// Initialize the possible arguments.
 	var grouped GroupedLike
 	var filtered FilteredLike
-	var character CharacterLike
 	var string_ StringLike
 
 	// Process the actual arguments.
@@ -298,8 +295,6 @@ func Element(arguments ...any) ElementLike {
 			grouped = actual
 		case FilteredLike:
 			filtered = actual
-		case CharacterLike:
-			character = actual
 		case StringLike:
 			string_ = actual
 		default:
@@ -318,8 +313,6 @@ func Element(arguments ...any) ElementLike {
 		element = ast.Element().Make(grouped)
 	case col.IsDefined(filtered):
 		element = ast.Element().Make(filtered)
-	case col.IsDefined(character):
-		element = ast.Element().Make(character)
 	case col.IsDefined(string_):
 		element = ast.Element().Make(string_)
 	default:
@@ -533,29 +526,6 @@ func Identifier(arguments ...any) IdentifierLike {
 	return identifier
 }
 
-func Initial(arguments ...any) InitialLike {
-	// Initialize the possible arguments.
-	var rune_ string
-
-	// Process the actual arguments.
-	for _, argument := range arguments {
-		switch actual := argument.(type) {
-		case string:
-			rune_ = actual
-		default:
-			var message = fmt.Sprintf(
-				"An unknown argument type passed into the initial constructor: %T\n",
-				actual,
-			)
-			panic(message)
-		}
-	}
-
-	// Call the constructor.
-	var initial = ast.Initial().Make(rune_)
-	return initial
-}
-
 func Inlined(arguments ...any) InlinedLike {
 	// Initialize the possible arguments.
 	var factors abs.ListLike[FactorLike]
@@ -614,7 +584,7 @@ func Line(arguments ...any) LineLike {
 	return line
 }
 
-func Maximum(arguments ...any) MaximumLike {
+func Limit(arguments ...any) LimitLike {
 	// Initialize the possible arguments.
 	var number string
 
@@ -625,7 +595,7 @@ func Maximum(arguments ...any) MaximumLike {
 			number = actual
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the maximum constructor: %T\n",
+				"An unknown argument type passed into the limit constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -633,31 +603,8 @@ func Maximum(arguments ...any) MaximumLike {
 	}
 
 	// Call the constructor.
-	var maximum = ast.Maximum().Make(number)
-	return maximum
-}
-
-func Minimum(arguments ...any) MinimumLike {
-	// Initialize the possible arguments.
-	var number string
-
-	// Process the actual arguments.
-	for _, argument := range arguments {
-		switch actual := argument.(type) {
-		case string:
-			number = actual
-		default:
-			var message = fmt.Sprintf(
-				"An unknown argument type passed into the minimum constructor: %T\n",
-				actual,
-			)
-			panic(message)
-		}
-	}
-
-	// Call the constructor.
-	var minimum = ast.Minimum().Make(number)
-	return minimum
+	var limit = ast.Limit().Make(number)
+	return limit
 }
 
 func Multilined(arguments ...any) MultilinedLike {
@@ -826,18 +773,24 @@ func Rule(arguments ...any) RuleLike {
 
 func String(arguments ...any) StringLike {
 	// Initialize the possible arguments.
-	var lowercase string
+	var rune_ string
 	var literal string
+	var lowercase string
+	var intrinsic string
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case string:
 			switch {
-			case matchesToken(LowercaseToken, actual):
-				lowercase = actual
+			case matchesToken(RuneToken, actual):
+				rune_ = actual
 			case matchesToken(LiteralToken, actual):
 				literal = actual
+			case matchesToken(LowercaseToken, actual):
+				lowercase = actual
+			case matchesToken(IntrinsicToken, actual):
+				intrinsic = actual
 			default:
 				var message = fmt.Sprintf(
 					"An invalid string was passed into the string constructor: %v\n",
@@ -857,10 +810,14 @@ func String(arguments ...any) StringLike {
 	// Call the constructor.
 	var string_ StringLike
 	switch {
-	case col.IsDefined(lowercase):
-		string_ = ast.String().Make(lowercase)
+	case col.IsDefined(rune_):
+		string_ = ast.String().Make(rune_)
 	case col.IsDefined(literal):
 		string_ = ast.String().Make(literal)
+	case col.IsDefined(lowercase):
+		string_ = ast.String().Make(lowercase)
+	case col.IsDefined(intrinsic):
+		string_ = ast.String().Make(intrinsic)
 	default:
 		panic("The constructor for an string requires an argument.")
 	}

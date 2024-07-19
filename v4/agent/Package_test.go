@@ -13,7 +13,6 @@
 package agent_test
 
 import (
-	fmt "fmt"
 	age "github.com/craterdog/go-grammar-framework/v4/agent"
 	mod "github.com/craterdog/go-model-framework/v4"
 	ass "github.com/stretchr/testify/assert"
@@ -59,7 +58,6 @@ func TestLifecycle(t *tes.T) {
 
 	// Generate the scanner class for the syntax.
 	source = generator.GenerateScanner(module, syntax)
-	fmt.Println(source)
 	ass.Equal(t, modelScanner, source)
 
 	// Generate the token class for the syntax.
@@ -433,16 +431,21 @@ var scannerClass = &scannerClass_{
 		ErrorToken: "error",
 		DelimiterToken: "delimiter",
 		EofToken: "eof",
+		EolToken: "eol",
 		IntegerToken: "integer",
 		RuneToken: "rune",
 		SpaceToken: "space",
 		TextToken: "text",
 	},
 	matchers_: map[TokenType]*reg.Regexp{
-		// TBA - Add additional token types.
+		ErrorToken: reg.MustCompile("x^"),
 		DelimiterToken: reg.MustCompile("^(?:" + delimiter_ + ")"),
-		EolToken:       reg.MustCompile("^(?:" + eol_ + ")"),
-		SpaceToken:     reg.MustCompile("^(?:" + space_ + ")"),
+		EofToken: reg.MustCompile("^(?:" + eof_ + ")"),
+		EolToken: reg.MustCompile("^(?:" + eol_ + ")"),
+		IntegerToken: reg.MustCompile("^(?:" + integer_ + ")"),
+		RuneToken: reg.MustCompile("^(?:" + rune_ + ")"),
+		SpaceToken: reg.MustCompile("^(?:" + space_ + ")"),
+		TextToken: reg.MustCompile("^(?:" + text_ + ")"),
 	},
 }
 
@@ -640,12 +643,12 @@ const (
 	any_ =  ".|" + eol_
 	base16_ =  "[0-9a-f]"
 	control_ =  "\\p{Cc}"
-	delimiter_ = ",|\[|\]"
+	delimiter_ = ",|\\[|\\]"
 	digit_ =  "\\p{Nd}"
 	eof_ =  "\\z"
 	eol_ =  "\\n"
 	escape_ =  "\\\\(?:(?:" + unicode_ + ")|[abfnrtv'\"\\\\])"
-	integer_ = "0|\-?1-9" + digit_ + "*"
+	integer_ = "0|-?[1-9]" + digit_ + "*"
 	lower_ =  "\\p{Ll}"
 	rune_ = "'[^" + control_ + "]'"
 	space_ =  "[ \\t]+"

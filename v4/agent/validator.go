@@ -17,6 +17,7 @@ import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	stc "strconv"
 )
 
 // CLASS ACCESS
@@ -148,17 +149,17 @@ func (v *validator_) validateBounded(
 	bounded ast.BoundedLike,
 ) {
 	// Validate the initial rune.
-	var initial = bounded.GetInitial()
-	v.validateInitial(name, initial)
+	var rune_ = bounded.GetRune()
+	v.validateToken(name, RuneToken, rune_)
 
 	// Validate the optional extent rune.
 	var extent = bounded.GetOptionalExtent()
 	if col.IsDefined(extent) {
 		v.validateExtent(name, extent)
-		if initial.GetRune() > extent.GetRune() {
+		if rune_ > extent.GetRune() {
 			var message = v.formatError(
 				name,
-				"The extent rune in a bounded cannot come before the initial.",
+				"The extent rune in a bounded cannot come before the initial rune.",
 			)
 			panic(message)
 		}
@@ -208,13 +209,25 @@ func (v *validator_) validateConstrained(
 	constrained ast.ConstrainedLike,
 ) {
 	// Validate the minimum value.
-	var minimum = constrained.GetMinimum()
-	v.validateMinimum(name, minimum)
+	var number = constrained.GetNumber()
+	v.validateToken(name, NumberToken, number)
 
-	// Validate the optional maximum value.
-	var maximum = constrained.GetOptionalMaximum()
-	if col.IsDefined(maximum) {
-		v.validateMaximum(name, maximum)
+	// Validate the optional limit value.
+	var limit = constrained.GetOptionalLimit()
+	if col.IsDefined(limit) {
+		v.validateLimit(name, limit)
+		var optionalNumber = limit.GetOptionalNumber()
+		if col.IsDefined(optionalNumber) {
+			var minimum, _ = stc.Atoi(number)
+			var maximum, _ = stc.Atoi(optionalNumber)
+			if minimum > maximum {
+				var message = v.formatError(
+					name,
+					"The limit in a constrained cardinality cannot be less than the minimum.",
+				)
+				panic(message)
+			}
+		}
 	}
 }
 
@@ -243,8 +256,6 @@ func (v *validator_) validateElement(
 		v.validateGrouped(name, actual)
 	case ast.FilteredLike:
 		v.validateFiltered(name, actual)
-	case ast.CharacterLike:
-		v.validateCharacter(name, actual)
 	case ast.StringLike:
 		v.validateString(name, actual)
 	default:
@@ -375,15 +386,6 @@ func (v *validator_) validateIdentifier(
 	}
 }
 
-func (v *validator_) validateInitial(
-	name string,
-	initial ast.InitialLike,
-) {
-	// Validate the rune.
-	var rune_ = initial.GetRune()
-	v.validateToken(name, RuneToken, rune_)
-}
-
 func (v *validator_) validateInlined(
 	name string,
 	inlined ast.InlinedLike,
@@ -425,24 +427,15 @@ func (v *validator_) validateLine(
 	}
 }
 
-func (v *validator_) validateMaximum(
+func (v *validator_) validateLimit(
 	name string,
-	maximum ast.MaximumLike,
+	limit ast.LimitLike,
 ) {
 	// Validate the optional number.
-	var number = maximum.GetOptionalNumber()
+	var number = limit.GetOptionalNumber()
 	if col.IsDefined(number) {
 		v.validateToken(name, NumberToken, number)
 	}
-}
-
-func (v *validator_) validateMinimum(
-	name string,
-	minimum ast.MinimumLike,
-) {
-	// Validate the number.
-	var number = minimum.GetNumber()
-	v.validateToken(name, NumberToken, number)
 }
 
 func (v *validator_) validateMultilined(
@@ -567,8 +560,10 @@ func (v *validator_) validateString(
 	switch actual := string_.GetAny().(type) {
 	case string:
 		switch {
-		case v.matchesToken(LowercaseToken, actual):
+		case v.matchesToken(RuneToken, actual):
 		case v.matchesToken(LiteralToken, actual):
+		case v.matchesToken(LowercaseToken, actual):
+		case v.matchesToken(IntrinsicToken, actual):
 		default:
 			panic("A string must have a value.")
 		}

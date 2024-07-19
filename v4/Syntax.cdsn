@@ -83,11 +83,9 @@ Cardinality:
     Constrained
     quantified
 
-Constrained: "{" Minimum Maximum? "}"  ! The range of numbers is inclusive.
+Constrained: "{" number Limit? "}"  ! A constrained range of numbers is inclusive.
 
-Minimum: number
-
-Maximum: ".." number?
+Limit: ".." number?
 
 Expression: comment? lowercase ":" Pattern note? EOL+
 
@@ -100,24 +98,23 @@ Alternative: "|" Part+
 Element:
     Grouped
     Filtered
-    Character
     String
 
 Grouped: "(" Pattern ")"
 
 Filtered: negation? "[" Character+ "]"
 
+String:
+    rune
+    literal
+    lowercase
+    intrinsic
+
 Character:
     Bounded
     intrinsic
 
-String:
-    lowercase
-    literal
-
-Bounded: Initial Extent?  ! The range of runes is inclusive.
-
-Initial: rune
+Bounded: rune Extent?  ! A bounded range of runes is inclusive.
 
 Extent: ".." rune
 

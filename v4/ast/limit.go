@@ -12,44 +12,38 @@
 
 package ast
 
-import (
-	col "github.com/craterdog/go-collection-framework/v4"
-)
-
 // CLASS ACCESS
 
 // Reference
 
-var minimumClass = &minimumClass_{
+var limitClass = &limitClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Minimum() MinimumClassLike {
-	return minimumClass
+func Limit() LimitClassLike {
+	return limitClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type minimumClass_ struct {
+type limitClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *minimumClass_) Make(number string) MinimumLike {
+func (c *limitClass_) Make(optionalNumber string) LimitLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(number):
-		panic("The number attribute is required for each Minimum.")
 	default:
-		return &minimum_{
+		return &limit_{
 			// Initialize instance attributes.
-			class_:  c,
-			number_: number,
+			class_:          c,
+			optionalNumber_: optionalNumber,
 		}
 	}
 }
@@ -58,20 +52,20 @@ func (c *minimumClass_) Make(number string) MinimumLike {
 
 // Target
 
-type minimum_ struct {
+type limit_ struct {
 	// Define instance attributes.
-	class_  MinimumClassLike
-	number_ string
+	class_          LimitClassLike
+	optionalNumber_ string
 }
 
 // Attributes
 
-func (v *minimum_) GetClass() MinimumClassLike {
+func (v *limit_) GetClass() LimitClassLike {
 	return v.class_
 }
 
-func (v *minimum_) GetNumber() string {
-	return v.number_
+func (v *limit_) GetOptionalNumber() string {
+	return v.optionalNumber_
 }
 
 // Private

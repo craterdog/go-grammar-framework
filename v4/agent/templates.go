@@ -193,7 +193,7 @@ ignored.
 <!
 delimiter: "," | "[" | "]"
 
-integer: '0' | '-'? '1'..'9' DIGIT*
+integer: '0' | '-'? ['1'..'9'] DIGIT*
 
 rune: "'" ~[CONTROL] "'"  ! Any single printable unicode character.
 

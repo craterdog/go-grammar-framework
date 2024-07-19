@@ -41,18 +41,18 @@ type boundedClass_ struct {
 // Constructors
 
 func (c *boundedClass_) Make(
-	initial InitialLike,
+	rune_ string,
 	optionalExtent ExtentLike,
 ) BoundedLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(initial):
-		panic("The initial attribute is required for each Bounded.")
+	case col.IsUndefined(rune_):
+		panic("The rune attribute is required for each Bounded.")
 	default:
 		return &bounded_{
 			// Initialize instance attributes.
 			class_:          c,
-			initial_:        initial,
+			rune_:           rune_,
 			optionalExtent_: optionalExtent,
 		}
 	}
@@ -65,7 +65,7 @@ func (c *boundedClass_) Make(
 type bounded_ struct {
 	// Define instance attributes.
 	class_          BoundedClassLike
-	initial_        InitialLike
+	rune_           string
 	optionalExtent_ ExtentLike
 }
 
@@ -75,8 +75,8 @@ func (v *bounded_) GetClass() BoundedClassLike {
 	return v.class_
 }
 
-func (v *bounded_) GetInitial() InitialLike {
-	return v.initial_
+func (v *bounded_) GetRune() string {
+	return v.rune_
 }
 
 func (v *bounded_) GetOptionalExtent() ExtentLike {

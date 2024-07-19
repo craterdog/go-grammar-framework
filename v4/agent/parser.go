@@ -206,8 +206,8 @@ func (v *parser_) parseBounded() (
 	ok bool,
 ) {
 	// Attempt to parse the initial rune.
-	var initial ast.InitialLike
-	initial, token, ok = v.parseInitial()
+	var rune_ string
+	rune_, token, ok = v.parseToken(RuneToken, "")
 	if !ok {
 		// This is not the bounded.
 		return bounded, token, false
@@ -218,7 +218,7 @@ func (v *parser_) parseBounded() (
 	extent, token, _ = v.parseExtent()
 
 	// Found the bounded.
-	bounded = ast.Bounded().Make(initial, extent)
+	bounded = ast.Bounded().Make(rune_, extent)
 	return bounded, token, true
 }
 
@@ -288,22 +288,21 @@ func (v *parser_) parseConstrained() (
 		return constrained, token, false
 	}
 
-	// Attempt to parse the minimum number for the constrained.
-	var minimum ast.MinimumLike
-	minimum, token, ok = v.parseMinimum()
+	// Attempt to parse the minimum number.
+	var number string
+	number, token, ok = v.parseToken(NumberToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("Minimum",
+		message += v.generateSyntax("number",
 			"Constrained",
-			"Minimum",
-			"Maximum",
+			"Limit",
 		)
 		panic(message)
 	}
 
-	// Attempt to parse the optional maximum number for the constrained.
-	var maximum ast.MaximumLike
-	maximum, _, _ = v.parseMaximum()
+	// Attempt to parse the optional limit number for the constrained.
+	var limit ast.LimitLike
+	limit, _, _ = v.parseLimit()
 
 	// Attempt to parse the closing bracket for the constrained.
 	_, token, ok = v.parseToken(DelimiterToken, "}")
@@ -311,14 +310,13 @@ func (v *parser_) parseConstrained() (
 		var message = v.formatError(token)
 		message += v.generateSyntax("}",
 			"Constrained",
-			"Minimum",
-			"Maximum",
+			"Limit",
 		)
 		panic(message)
 	}
 
 	// Found the constrained.
-	constrained = ast.Constrained().Make(minimum, maximum)
+	constrained = ast.Constrained().Make(number, limit)
 	return constrained, token, true
 }
 
@@ -369,15 +367,6 @@ func (v *parser_) parseElement() (
 	if ok {
 		// Found the filtered element.
 		element = ast.Element().Make(filtered)
-		return element, token, true
-	}
-
-	// Attempt to parse the character element.
-	var character ast.CharacterLike
-	character, token, ok = v.parseCharacter()
-	if ok {
-		// Found the character element.
-		element = ast.Element().Make(character)
 		return element, token, true
 	}
 
@@ -652,24 +641,6 @@ func (v *parser_) parseIdentifier() (
 	return identifier, token, false
 }
 
-func (v *parser_) parseInitial() (
-	initial ast.InitialLike,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse the initial rune.
-	var rune_ string
-	rune_, token, ok = v.parseToken(RuneToken, "")
-	if !ok {
-		// This is not the initial rune.
-		return initial, token, false
-	}
-
-	// Found the initial rune.
-	initial = ast.Initial().Make(rune_)
-	return initial, token, true
-}
-
 func (v *parser_) parseInlined() (
 	inlined ast.InlinedLike,
 	token TokenLike,
@@ -728,43 +699,25 @@ func (v *parser_) parseLine() (
 	return line, token, true
 }
 
-func (v *parser_) parseMaximum() (
-	maximum ast.MaximumLike,
+func (v *parser_) parseLimit() (
+	limit ast.LimitLike,
 	token TokenLike,
 	ok bool,
 ) {
 	// Attempt to parse the dot-dot delimiter.
 	_, token, ok = v.parseToken(DelimiterToken, "..")
 	if !ok {
-		// This is not the maximum number.
-		return maximum, token, false
+		// This is not the limit number.
+		return limit, token, false
 	}
 
-	// Attempt to parse the optional maximum number.
+	// Attempt to parse the optional limit number.
 	var number string
 	number, token, _ = v.parseToken(NumberToken, "")
 
-	// Found the maximum number.
-	maximum = ast.Maximum().Make(number)
-	return maximum, token, true
-}
-
-func (v *parser_) parseMinimum() (
-	minimum ast.MinimumLike,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse the minimum number.
-	var number string
-	number, token, ok = v.parseToken(NumberToken, "")
-	if !ok {
-		// This is not the minimum number.
-		return minimum, token, false
-	}
-
-	// Found the minimum number.
-	minimum = ast.Minimum().Make(number)
-	return minimum, token, true
+	// Found the limit number.
+	limit = ast.Limit().Make(number)
+	return limit, token, true
 }
 
 func (v *parser_) parseMultilined() (
@@ -953,12 +906,12 @@ func (v *parser_) parseString() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the lowercase string.
-	var lowercase string
-	lowercase, token, ok = v.parseToken(LowercaseToken, "")
+	// Attempt to parse the rune string.
+	var rune_ string
+	rune_, token, ok = v.parseToken(RuneToken, "")
 	if ok {
-		// Found the lowercase string.
-		string_ = ast.String().Make(lowercase)
+		// Found the rune string.
+		string_ = ast.String().Make(rune_)
 		return string_, token, true
 	}
 
@@ -968,6 +921,24 @@ func (v *parser_) parseString() (
 	if ok {
 		// Found the literal string.
 		string_ = ast.String().Make(literal)
+		return string_, token, true
+	}
+
+	// Attempt to parse the lowercase string.
+	var lowercase string
+	lowercase, token, ok = v.parseToken(LowercaseToken, "")
+	if ok {
+		// Found the lowercase string.
+		string_ = ast.String().Make(lowercase)
+		return string_, token, true
+	}
+
+	// Attempt to parse the intrinsic string.
+	var intrinsic string
+	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
+	if ok {
+		// Found the intrinsic string.
+		string_ = ast.String().Make(intrinsic)
 		return string_, token, true
 	}
 
@@ -1099,25 +1070,21 @@ var syntax = map[string]string{
 	"Cardinality": `,
     "Constrained
     "quantified`,
-	"Constrained": `"{" Minimum Maximum? "}"  ! A range of numbers is inclusive.`,
-	"Minimum":     `number`,
-	"Maximum":     `".." number?`,
+	"Constrained": `"{" number Limit? "}"  ! A range of numbers is inclusive.`,
+	"Limit":       `".." number?`,
 	"Expression":  `comment? lowercase ":" Pattern note? EOL+`,
 	"Pattern":     `Part+ Alternative*`,
 	"Part":        `Element Cardinality?  ! The default cardinality is one.`,
 	"Element": `,
 	"Group
 	"Filter
-    "Character
-    "lowercase
-    "literal`,
+    "String`,
 	"Alternative": `"|" Part+`,
 	"Grouped":     `"(" Pattern ")"`,
 	"Filtered":    `negation? "[" Character+ "]"`,
 	"Character": `,
     "Bounded
     "intrinsic`,
-	"Bounded": `Initial Extent?  ! A range of runes is inclusive.`,
-	"Initial": `rune`,
+	"Bounded": `rune Extent?  ! A range of runes is inclusive.`,
 	"Extent":  `".." rune`,
 }

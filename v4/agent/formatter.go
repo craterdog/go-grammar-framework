@@ -103,8 +103,8 @@ func (v *formatter_) formatAlternative(alternative ast.AlternativeLike) {
 }
 
 func (v *formatter_) formatBounded(bounded ast.BoundedLike) {
-	var initial = bounded.GetInitial()
-	v.formatInitial(initial)
+	var rune_ = bounded.GetRune()
+	v.appendString(rune_)
 	var extent = bounded.GetOptionalExtent()
 	if col.IsDefined(extent) {
 		v.formatExtent(extent)
@@ -135,11 +135,11 @@ func (v *formatter_) formatCharacter(character ast.CharacterLike) {
 
 func (v *formatter_) formatConstrained(constrained ast.ConstrainedLike) {
 	v.appendString("{")
-	var minimum = constrained.GetMinimum()
-	v.formatMinimum(minimum)
-	var maximum = constrained.GetOptionalMaximum()
-	if col.IsDefined(maximum) {
-		v.formatMaximum(maximum)
+	var number = constrained.GetNumber()
+	v.appendString(number)
+	var limit = constrained.GetOptionalLimit()
+	if col.IsDefined(limit) {
+		v.formatLimit(limit)
 	}
 	v.appendString("}")
 }
@@ -161,8 +161,6 @@ func (v *formatter_) formatElement(element ast.ElementLike) {
 		v.formatGrouped(actual)
 	case ast.FilteredLike:
 		v.formatFiltered(actual)
-	case ast.CharacterLike:
-		v.formatCharacter(actual)
 	case ast.StringLike:
 		v.formatString(actual)
 	default:
@@ -243,11 +241,6 @@ func (v *formatter_) formatIdentifier(identifier ast.IdentifierLike) {
 	}
 }
 
-func (v *formatter_) formatInitial(initial ast.InitialLike) {
-	var rune_ = initial.GetRune()
-	v.appendString(rune_)
-}
-
 func (v *formatter_) formatInlined(inlined ast.InlinedLike) {
 	var iterator = inlined.GetFactors().GetIterator()
 	for iterator.HasNext() {
@@ -273,17 +266,12 @@ func (v *formatter_) formatLine(line ast.LineLike) {
 	}
 }
 
-func (v *formatter_) formatMaximum(maximum ast.MaximumLike) {
+func (v *formatter_) formatLimit(limit ast.LimitLike) {
 	v.appendString("..")
-	var number = maximum.GetOptionalNumber()
+	var number = limit.GetOptionalNumber()
 	if col.IsDefined(number) {
 		v.appendString(number)
 	}
-}
-
-func (v *formatter_) formatMinimum(minimum ast.MinimumLike) {
-	var number = minimum.GetNumber()
-	v.appendString(number)
 }
 
 func (v *formatter_) formatMultilined(multilined ast.MultilinedLike) {

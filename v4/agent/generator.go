@@ -275,9 +275,11 @@ func (v *generator_) escapeString(string_ string) string {
 	var escaped string
 	for _, character := range string_ {
 		switch character {
-		case '.', '-', '+', '*', '?', '^', '$', '"',
-			'(', ')', '[', ']', '{', '}', '|', '\\':
+		case '"', '\\':
 			escaped += "\\"
+		case '.', '|', '^', '$', '+', '*', '?',
+			'(', ')', '[', ']', '{', '}':
+			escaped += "\\\\"
 		}
 		escaped += string(character)
 	}
@@ -285,9 +287,9 @@ func (v *generator_) escapeString(string_ string) string {
 }
 
 func (v *generator_) expandCopyright(copyright string) string {
-	var maximum = 78
+	var limit = 78
 	var length = len(copyright)
-	if length > maximum {
+	if length > limit {
 		var message = fmt.Sprintf(
 			"The copyright notice cannot be longer than 78 characters: %v",
 			copyright,
@@ -301,11 +303,11 @@ func (v *generator_) expandCopyright(copyright string) string {
 		)
 		length = len(copyright)
 	}
-	var padding = (maximum - length) / 2
+	var padding = (limit - length) / 2
 	for range padding {
 		copyright = " " + copyright + " "
 	}
-	if len(copyright) < maximum {
+	if len(copyright) < limit {
 		copyright = " " + copyright
 	}
 	copyright = "." + copyright + "."
@@ -704,8 +706,12 @@ func (v *generator_) processBounded(
 ) (
 	regexp string,
 ) {
-	var initial = bounded.GetInitial()
-	regexp += v.processInitial(initial)
+	var rune_ = bounded.GetRune()
+	rune_ = v.processRune(rune_)
+	if rune_ == "-" {
+		rune_ = "\\-"
+	}
+	regexp += rune_
 	var extent = bounded.GetOptionalExtent()
 	if col.IsDefined(extent) {
 		regexp += v.processExtent(extent)
@@ -741,7 +747,7 @@ func (v *generator_) processCharacter(
 	case ast.BoundedLike:
 		regexp += v.processBounded(actual)
 	case string:
-		regexp += v.processIntrinsic(actual)
+		regexp += `" + ` + sts.ToLower(actual) + `_ + "`
 	default:
 		var message = fmt.Sprintf(
 			"Found an invalid character type: %T",
@@ -804,8 +810,6 @@ func (v *generator_) processElement(
 		regexp += v.processGrouped(actual)
 	case ast.FilteredLike:
 		regexp += v.processFiltered(actual)
-	case ast.CharacterLike:
-		regexp += v.processCharacter(actual)
 	case ast.StringLike:
 		regexp += v.processString(actual)
 	default:
@@ -902,16 +906,6 @@ func (v *generator_) processIdentifier(
 	}
 }
 
-func (v *generator_) processInitial(
-	initial ast.InitialLike,
-) (
-	regexp string,
-) {
-	var rune_ = initial.GetRune()
-	regexp += v.processRune(rune_)
-	return regexp
-}
-
 func (v *generator_) processInlined(
 	inlined ast.InlinedLike,
 	attributes abs.ListLike[mod.AttributeLike],
@@ -923,15 +917,6 @@ func (v *generator_) processInlined(
 		v.processFactor(factor, attributes)
 	}
 	v.consolidateAttributes(attributes)
-}
-
-func (v *generator_) processIntrinsic(
-	intrinsic string,
-) (
-	regexp string,
-) {
-	regexp += `" + ` + sts.ToLower(intrinsic) + `_ + "`
-	return regexp
 }
 
 func (v *generator_) processLine(
@@ -969,12 +954,12 @@ func (v *generator_) processPart(
 	if col.IsDefined(cardinality) {
 		switch actual := cardinality.GetAny().(type) {
 		case ast.ConstrainedLike:
-			var minimum = actual.GetMinimum().GetNumber()
-			regexp += "{" + minimum
-			var maximum = actual.GetOptionalMaximum()
-			if col.IsDefined(maximum) {
+			var number = actual.GetNumber()
+			regexp += "{" + number
+			var limit = actual.GetOptionalLimit()
+			if col.IsDefined(limit) {
 				regexp += ","
-				var number = maximum.GetOptionalNumber()
+				number = limit.GetOptionalNumber()
 				if col.IsDefined(number) {
 					regexp += number
 				}
@@ -1066,12 +1051,16 @@ func (v *generator_) processString(
 ) {
 	var actual = string_.GetAny().(string)
 	switch {
-	case !Scanner().MatchToken(LowercaseToken, actual).IsEmpty():
-		regexp += `" + ` + actual + `_ + "`
+	case !Scanner().MatchToken(RuneToken, actual).IsEmpty():
+		var literal = actual[1:2] // Remove the single quotes.
+		regexp += v.escapeString(literal)
 	case !Scanner().MatchToken(LiteralToken, actual).IsEmpty():
 		var literal = actual[1 : len(actual)-1] // Remove the double quotes.
-		literal = v.escapeString(literal)
-		regexp += literal
+		regexp += v.escapeString(literal)
+	case !Scanner().MatchToken(LowercaseToken, actual).IsEmpty():
+		regexp += `" + ` + actual + `_ + "`
+	case !Scanner().MatchToken(IntrinsicToken, actual).IsEmpty():
+		regexp += `" + ` + sts.ToLower(actual) + `_ + "`
 	default:
 		var message = fmt.Sprintf(
 			"Found an invalid element string: %q",
