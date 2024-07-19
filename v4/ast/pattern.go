@@ -48,9 +48,9 @@ func (c *patternClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(parts):
-		panic("The parts attribute is required for each Pattern.")
+		panic("The parts attribute is required by this class.")
 	case col.IsUndefined(alternatives):
-		panic("The alternatives attribute is required for each Pattern.")
+		panic("The alternatives attribute is required by this class.")
 	default:
 		return &pattern_{
 			// Initialize instance attributes.

@@ -45,7 +45,7 @@ func (c *alternativeClass_) Make(parts abs.Sequential[PartLike]) AlternativeLike
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(parts):
-		panic("The parts attribute is required for each Alternative.")
+		panic("The parts attribute is required by this class.")
 	default:
 		return &alternative_{
 			// Initialize instance attributes.

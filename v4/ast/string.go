@@ -44,7 +44,7 @@ func (c *stringClass_) Make(any_ any) StringLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(any_):
-		panic("The any_ attribute is required for each String.")
+		panic("The any attribute is required by this class.")
 	default:
 		return &string_{
 			// Initialize instance attributes.

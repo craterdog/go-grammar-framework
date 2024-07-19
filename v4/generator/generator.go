@@ -88,19 +88,7 @@ func (v *generator_) CreateSyntax(
 	return syntax
 }
 
-func (v *generator_) GenerateGrammar(
-	module string,
-	syntax ast.SyntaxLike,
-) mod.ModelLike {
-	v.analyzeSyntax(syntax)
-	var template = v.generateModelTemplate("grammar", syntax)
-	var source = v.populateModelTemplate(template, module, syntax)
-	var parser = mod.Parser()
-	var model = parser.ParseSource(source)
-	return model
-}
-
-func (v *generator_) GenerateAST(
+func (v *generator_) GenerateAst(
 	module string,
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
@@ -123,6 +111,18 @@ func (v *generator_) GenerateFormatter(
 	var template = v.generateClassTemplate("formatter", syntax)
 	implementation = v.populateClassTemplate(template, module, syntax)
 	return implementation
+}
+
+func (v *generator_) GenerateGrammar(
+	module string,
+	syntax ast.SyntaxLike,
+) mod.ModelLike {
+	v.analyzeSyntax(syntax)
+	var template = v.generateModelTemplate("grammar", syntax)
+	var source = v.populateModelTemplate(template, module, syntax)
+	var parser = mod.Parser()
+	var model = parser.ParseSource(source)
+	return model
 }
 
 func (v *generator_) GenerateParser(

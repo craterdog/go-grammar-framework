@@ -49,9 +49,9 @@ func (c *expressionClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(lowercase):
-		panic("The lowercase attribute is required for each Expression.")
+		panic("The lowercase attribute is required by this class.")
 	case col.IsUndefined(pattern):
-		panic("The pattern attribute is required for each Expression.")
+		panic("The pattern attribute is required by this class.")
 	default:
 		return &expression_{
 			// Initialize instance attributes.

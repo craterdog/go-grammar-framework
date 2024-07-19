@@ -48,9 +48,9 @@ func (c *ruleClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(uppercase):
-		panic("The uppercase attribute is required for each Rule.")
+		panic("The uppercase attribute is required by this class.")
 	case col.IsUndefined(definition):
-		panic("The definition attribute is required for each Rule.")
+		panic("The definition attribute is required by this class.")
 	default:
 		return &rule_{
 			// Initialize instance attributes.

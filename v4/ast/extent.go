@@ -44,7 +44,7 @@ func (c *extentClass_) Make(rune_ string) ExtentLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(rune_):
-		panic("The rune_ attribute is required for each Extent.")
+		panic("The rune attribute is required by this class.")
 	default:
 		return &extent_{
 			// Initialize instance attributes.

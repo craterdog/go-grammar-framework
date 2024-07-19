@@ -45,7 +45,7 @@ func (c *multilinedClass_) Make(lines abs.Sequential[LineLike]) MultilinedLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(lines):
-		panic("The lines attribute is required for each Multilined.")
+		panic("The lines attribute is required by this class.")
 	default:
 		return &multilined_{
 			// Initialize instance attributes.

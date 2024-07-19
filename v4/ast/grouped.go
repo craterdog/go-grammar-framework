@@ -44,7 +44,7 @@ func (c *groupedClass_) Make(pattern PatternLike) GroupedLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(pattern):
-		panic("The pattern attribute is required for each Grouped.")
+		panic("The pattern attribute is required by this class.")
 	default:
 		return &grouped_{
 			// Initialize instance attributes.

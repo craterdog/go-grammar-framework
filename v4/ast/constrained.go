@@ -47,7 +47,7 @@ func (c *constrainedClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(number):
-		panic("The number attribute is required for each Constrained.")
+		panic("The number attribute is required by this class.")
 	default:
 		return &constrained_{
 			// Initialize instance attributes.

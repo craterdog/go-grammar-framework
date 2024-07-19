@@ -47,7 +47,7 @@ func (c *boundedClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(rune_):
-		panic("The rune attribute is required for each Bounded.")
+		panic("The rune attribute is required by this class.")
 	default:
 		return &bounded_{
 			// Initialize instance attributes.

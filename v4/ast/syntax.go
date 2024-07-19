@@ -49,11 +49,11 @@ func (c *syntaxClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(headers):
-		panic("The headers attribute is required for each Syntax.")
+		panic("The headers attribute is required by this class.")
 	case col.IsUndefined(rules):
-		panic("The rules attribute is required for each Syntax.")
+		panic("The rules attribute is required by this class.")
 	case col.IsUndefined(expressions):
-		panic("The expressions attribute is required for each Syntax.")
+		panic("The expressions attribute is required by this class.")
 	default:
 		return &syntax_{
 			// Initialize instance attributes.

@@ -47,7 +47,7 @@ func (c *partClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(element):
-		panic("The element attribute is required for each Part.")
+		panic("The element attribute is required by this class.")
 	default:
 		return &part_{
 			// Initialize instance attributes.

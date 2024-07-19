@@ -44,7 +44,7 @@ func (c *headerClass_) Make(comment string) HeaderLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(comment):
-		panic("The comment attribute is required for each Header.")
+		panic("The comment attribute is required by this class.")
 	default:
 		return &header_{
 			// Initialize instance attributes.

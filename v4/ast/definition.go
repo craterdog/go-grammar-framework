@@ -44,7 +44,7 @@ func (c *definitionClass_) Make(any_ any) DefinitionLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(any_):
-		panic("The any_ attribute is required for each Definition.")
+		panic("The any attribute is required by this class.")
 	default:
 		return &definition_{
 			// Initialize instance attributes.

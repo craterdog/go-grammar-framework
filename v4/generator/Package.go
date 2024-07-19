@@ -61,7 +61,7 @@ type GeneratorLike interface {
 		name string,
 		copyright string,
 	) ast.SyntaxLike
-	GenerateAST(
+	GenerateAst(
 		module string,
 		syntax ast.SyntaxLike,
 	) mod.ModelLike

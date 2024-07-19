@@ -47,7 +47,7 @@ func (c *factorClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(predicate):
-		panic("The predicate attribute is required for each Factor.")
+		panic("The predicate attribute is required by this class.")
 	default:
 		return &factor_{
 			// Initialize instance attributes.

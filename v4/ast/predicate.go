@@ -44,7 +44,7 @@ func (c *predicateClass_) Make(any_ any) PredicateLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(any_):
-		panic("The any_ attribute is required for each Predicate.")
+		panic("The any attribute is required by this class.")
 	default:
 		return &predicate_{
 			// Initialize instance attributes.

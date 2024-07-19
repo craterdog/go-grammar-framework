@@ -44,7 +44,7 @@ func (c *characterClass_) Make(any_ any) CharacterLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(any_):
-		panic("The any_ attribute is required for each Character.")
+		panic("The any attribute is required by this class.")
 	default:
 		return &character_{
 			// Initialize instance attributes.

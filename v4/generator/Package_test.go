@@ -42,7 +42,7 @@ func TestLifecycle(t *tes.T) {
 	validator.ValidateSyntax(syntax)
 
 	// Generate the AST model for the syntax.
-	var model = generator.GenerateAST(module, syntax)
+	var model = generator.GenerateAst(module, syntax)
 	mod.Validator().ValidateModel(model)
 
 	// Generate the language grammar model for the syntax.

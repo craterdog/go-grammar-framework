@@ -18,6 +18,7 @@ import (
 	mod "github.com/craterdog/go-model-framework/v4"
 	ass "github.com/stretchr/testify/assert"
 	osx "os"
+	sts "strings"
 	tes "testing"
 )
 
@@ -51,13 +52,30 @@ func TestModelGeneration(t *tes.T) {
 	var generator = gra.Generator()
 	var formatter = mod.Formatter()
 
-	var model = generator.GenerateAST(module, syntax)
+	var model = generator.GenerateAst(module, syntax)
 	source = formatter.FormatModel(model)
 	bytes = []byte(source)
 	var filename = "ast/Package.go"
 	err = osx.WriteFile(filename, bytes, 0644)
 	if err != nil {
 		panic(err)
+	}
+
+	var classes = model.GetClasses().GetClasses().GetIterator()
+	for classes.HasNext() {
+		var class = classes.GetNext()
+		var name = sts.ToLower(sts.TrimSuffix(
+			class.GetDeclaration().GetName(),
+			"ClassLike",
+		))
+		var generator = mod.Generator()
+		source = generator.GenerateClass(model, name)
+		bytes = []byte(source)
+		var filename = "ast/" + name + ".go"
+		var err = osx.WriteFile(filename, bytes, 0644)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	model = generator.GenerateGrammar(module, syntax)
@@ -94,7 +112,7 @@ func TestLifecycle(t *tes.T) {
 	syntax = parser.ParseSource(source)
 
 	// Generate the AST model for the syntax.
-	var model = generator.GenerateAST(module, syntax)
+	var model = generator.GenerateAst(module, syntax)
 	var formatter2 = mod.Formatter()
 	source = formatter2.FormatModel(model)
 	fmt.Println("AST Model:")

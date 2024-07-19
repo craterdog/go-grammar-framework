@@ -48,7 +48,7 @@ func (c *inlinedClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(factors):
-		panic("The factors attribute is required for each Inlined.")
+		panic("The factors attribute is required by this class.")
 	default:
 		return &inlined_{
 			// Initialize instance attributes.

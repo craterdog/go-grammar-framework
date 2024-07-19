@@ -48,7 +48,7 @@ func (c *filteredClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(characters):
-		panic("The characters attribute is required for each Filtered.")
+		panic("The characters attribute is required by this class.")
 	default:
 		return &filtered_{
 			// Initialize instance attributes.

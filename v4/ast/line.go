@@ -47,7 +47,7 @@ func (c *lineClass_) Make(
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(identifier):
-		panic("The identifier attribute is required for each Line.")
+		panic("The identifier attribute is required by this class.")
 	default:
 		return &line_{
 			// Initialize instance attributes.
