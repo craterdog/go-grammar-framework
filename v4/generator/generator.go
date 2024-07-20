@@ -792,21 +792,24 @@ func (v *generator_) processDefinition(
 	// Create the constructor.
 	var abstraction = mod.Abstraction(name + "Like")
 	name = "Make"
-	var parameters = v.extractParameters(attributes)
-	var iterator = parameters.GetIterator()
-	var parameter = iterator.GetNext()
-	var additionalParameters = col.List[mod.AdditionalParameterLike]()
-	for iterator.HasNext() {
+	var parameters mod.ParametersLike
+	var iterator = v.extractParameters(attributes).GetIterator()
+	if iterator.HasNext() {
 		var parameter = iterator.GetNext()
-		var additionalParameter = mod.AdditionalParameter(parameter)
-		additionalParameters.AppendValue(additionalParameter)
+		var additionalParameters = col.List[mod.AdditionalParameterLike]()
+		for iterator.HasNext() {
+			var parameter = iterator.GetNext()
+			var additionalParameter = mod.AdditionalParameter(parameter)
+			additionalParameters.AppendValue(additionalParameter)
+		}
+		parameters = mod.Parameters(
+			parameter,
+			additionalParameters.(abs.Sequential[mod.AdditionalParameterLike]),
+		)
 	}
 	constructor = mod.Constructor(
 		name,
-		mod.Parameters(
-			parameter,
-			additionalParameters.(abs.Sequential[mod.AdditionalParameterLike]),
-		),
+		parameters,
 		abstraction,
 	)
 
