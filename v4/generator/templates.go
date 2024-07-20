@@ -213,7 +213,7 @@ Each AST class manages the attributes associated with the rule definition found
 in the syntax grammar with the same rule name as the class.
 
 For detailed documentation on this package refer to the wiki:
-  - https://<module>/wiki
+  - https://<wiki>
 
 This package follows the Crater Dog Technologies™ Go Coding Conventions located
 here:
@@ -279,7 +279,7 @@ abstract syntax tree (AST) for this module:
   - Formatter is used to format an AST back into a canonical version of its source.
 
 For detailed documentation on this package refer to the wiki:
-  - https://<module>/wiki
+  - https://<wiki>
 
 This package follows the Crater Dog Technologies™ Go Coding Conventions located
 here:
@@ -296,7 +296,7 @@ package grammar
 const grammarImportsTemplate_ = `
 import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
-	ast "<module>/v4/ast"
+	ast "<module>/ast"
 )
 `
 
@@ -795,7 +795,7 @@ import (
 	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
-	ast "<module>/v4/ast"
+	ast "<module>/ast"
 	sts "strings"
 )
 `
@@ -1016,7 +1016,7 @@ package grammar
 const validatorImportsTemplate_ = `
 import (
 	fmt "fmt"
-	ast "<module>/v4/ast"
+	ast "<module>/ast"
 )
 `
 
@@ -1110,7 +1110,7 @@ package grammar
 
 const formatterImportsTemplate_ = `
 import (
-	ast "<module>/v4/ast"
+	ast "<module>/ast"
 	sts "strings"
 )
 `

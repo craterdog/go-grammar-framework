@@ -22,7 +22,10 @@ import (
 	tes "testing"
 )
 
-const module = "github.com/craterdog/go-grammar-framework"
+const (
+	module = "github.com/craterdog/go-grammar-framework/v4"
+	wiki   = "github.com/craterdog/go-grammar-framework/wiki"
+)
 
 const syntaxFile = "Syntax.cdsn"
 
@@ -52,7 +55,7 @@ func TestModelGeneration(t *tes.T) {
 	var generator = gra.Generator()
 	var formatter = mod.Formatter()
 
-	var model = generator.GenerateAst(module, syntax)
+	var model = generator.GenerateAst(module, wiki, syntax)
 	source = formatter.FormatModel(model)
 	bytes = []byte(source)
 	var filename = "ast/Package.go"
@@ -78,7 +81,7 @@ func TestModelGeneration(t *tes.T) {
 		}
 	}
 
-	model = generator.GenerateGrammar(module, syntax)
+	model = generator.GenerateGrammar(module, wiki, syntax)
 	source = formatter.FormatModel(model)
 	bytes = []byte(source)
 	filename = "grammar/Package.go"
@@ -90,7 +93,6 @@ func TestModelGeneration(t *tes.T) {
 
 func TestLifecycle(t *tes.T) {
 	var generator = gra.Generator()
-	var module = "github.com/craterdog/go-grammar-framework/v4"
 	var name = "example"
 
 	// Generate a new syntax with a default copyright.
@@ -112,32 +114,32 @@ func TestLifecycle(t *tes.T) {
 	syntax = parser.ParseSource(source)
 
 	// Generate the AST model for the syntax.
-	var model = generator.GenerateAst(module, syntax)
+	var model = generator.GenerateAst(module, wiki, syntax)
 	var formatter2 = mod.Formatter()
 	source = formatter2.FormatModel(model)
 	fmt.Println("AST Model:")
 	fmt.Println(source)
 
 	// Generate the language grammar model for the syntax.
-	model = generator.GenerateGrammar(module, syntax)
+	model = generator.GenerateGrammar(module, wiki, syntax)
 	source = formatter2.FormatModel(model)
 	fmt.Println("Grammar Model:")
 	fmt.Println(source)
 
 	// Generate the formatter class for the syntax.
-	generator.GenerateFormatter(module, syntax)
+	generator.GenerateFormatter(module, wiki, syntax)
 
 	// Generate the parser class for the syntax.
-	generator.GenerateParser(module, syntax)
+	generator.GenerateParser(module, wiki, syntax)
 
 	// Generate the scanner class for the syntax.
-	source = generator.GenerateScanner(module, syntax)
+	source = generator.GenerateScanner(module, wiki, syntax)
 	fmt.Println("Scanner Class:")
 	fmt.Println(source)
 
 	// Generate the token class for the syntax.
-	generator.GenerateToken(module, syntax)
+	generator.GenerateToken(module, wiki, syntax)
 
 	// Generate the validator class for the syntax.
-	generator.GenerateValidator(module, syntax)
+	generator.GenerateValidator(module, wiki, syntax)
 }

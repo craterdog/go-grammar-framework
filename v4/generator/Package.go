@@ -63,30 +63,37 @@ type GeneratorLike interface {
 	) ast.SyntaxLike
 	GenerateAst(
 		module string,
+		wiki string,
 		syntax ast.SyntaxLike,
 	) mod.ModelLike
 	GenerateGrammar(
 		module string,
+		wiki string,
 		syntax ast.SyntaxLike,
 	) mod.ModelLike
 	GenerateFormatter(
 		module string,
+		wiki string,
 		syntax ast.SyntaxLike,
 	) string
 	GenerateParser(
 		module string,
+		wiki string,
 		syntax ast.SyntaxLike,
 	) string
 	GenerateScanner(
 		module string,
+		wiki string,
 		syntax ast.SyntaxLike,
 	) string
 	GenerateToken(
 		module string,
+		wiki string,
 		syntax ast.SyntaxLike,
 	) string
 	GenerateValidator(
 		module string,
+		wiki string,
 		syntax ast.SyntaxLike,
 	) string
 }

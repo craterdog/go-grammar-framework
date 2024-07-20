@@ -90,11 +90,12 @@ func (v *generator_) CreateSyntax(
 
 func (v *generator_) GenerateAst(
 	module string,
+	wiki string,
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
 	v.analyzeSyntax(syntax)
 	var template = v.generateModelTemplate("ast", syntax)
-	var source = v.populateModelTemplate(template, module, syntax)
+	var source = v.populateModelTemplate(template, module, wiki, syntax)
 	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
 	model = v.augmentAstModel(model)
@@ -103,23 +104,25 @@ func (v *generator_) GenerateAst(
 
 func (v *generator_) GenerateFormatter(
 	module string,
+	wiki string,
 	syntax ast.SyntaxLike,
 ) (
 	implementation string,
 ) {
 	v.analyzeSyntax(syntax)
 	var template = v.generateClassTemplate("formatter", syntax)
-	implementation = v.populateClassTemplate(template, module, syntax)
+	implementation = v.populateClassTemplate(template, module, wiki, syntax)
 	return implementation
 }
 
 func (v *generator_) GenerateGrammar(
 	module string,
+	wiki string,
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
 	v.analyzeSyntax(syntax)
 	var template = v.generateModelTemplate("grammar", syntax)
-	var source = v.populateModelTemplate(template, module, syntax)
+	var source = v.populateModelTemplate(template, module, wiki, syntax)
 	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
 	return model
@@ -127,18 +130,20 @@ func (v *generator_) GenerateGrammar(
 
 func (v *generator_) GenerateParser(
 	module string,
+	wiki string,
 	syntax ast.SyntaxLike,
 ) (
 	implementation string,
 ) {
 	v.analyzeSyntax(syntax)
 	var template = v.generateClassTemplate("parser", syntax)
-	implementation = v.populateClassTemplate(template, module, syntax)
+	implementation = v.populateClassTemplate(template, module, wiki, syntax)
 	return implementation
 }
 
 func (v *generator_) GenerateScanner(
 	module string,
+	wiki string,
 	syntax ast.SyntaxLike,
 ) (
 	implementation string,
@@ -151,25 +156,27 @@ func (v *generator_) GenerateScanner(
 
 func (v *generator_) GenerateToken(
 	module string,
+	wiki string,
 	syntax ast.SyntaxLike,
 ) (
 	implementation string,
 ) {
 	v.analyzeSyntax(syntax)
 	var template = v.generateClassTemplate("token", syntax)
-	implementation = v.populateClassTemplate(template, module, syntax)
+	implementation = v.populateClassTemplate(template, module, wiki, syntax)
 	return implementation
 }
 
 func (v *generator_) GenerateValidator(
 	module string,
+	wiki string,
 	syntax ast.SyntaxLike,
 ) (
 	implementation string,
 ) {
 	v.analyzeSyntax(syntax)
 	var template = v.generateClassTemplate("validator", syntax)
-	implementation = v.populateClassTemplate(template, module, syntax)
+	implementation = v.populateClassTemplate(template, module, wiki, syntax)
 	return implementation
 }
 
@@ -625,16 +632,18 @@ func (v *generator_) pluralizeAttribute(
 func (v *generator_) populateClassTemplate(
 	template string,
 	module string,
+	wiki string,
 	syntax ast.SyntaxLike,
 ) (
 	implementation string,
 ) {
+	var notice = v.extractNotice(syntax)
 	var name = v.extractSyntaxName(syntax)
 	var uppercase = v.makeUppercase(name)
 	var lowercase = v.makeLowercase(name)
-	var notice = v.extractNotice(syntax)
 	implementation = sts.ReplaceAll(template, "<Notice>", notice)
 	implementation = sts.ReplaceAll(implementation, "<module>", module)
+	implementation = sts.ReplaceAll(implementation, "<wiki>", wiki)
 	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
 	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
 	return implementation
@@ -643,20 +652,22 @@ func (v *generator_) populateClassTemplate(
 func (v *generator_) populateModelTemplate(
 	template string,
 	module string,
+	wiki string,
 	syntax ast.SyntaxLike,
 ) (
 	implementation string,
 ) {
-	var name = v.extractSyntaxName(syntax)
-	implementation = sts.ReplaceAll(template, "<module>", module)
 	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
+	var name = v.extractSyntaxName(syntax)
 	var uppercase = v.makeUppercase(name)
-	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
 	var lowercase = v.makeLowercase(name)
+	var tokenTypes = v.extractTokenTypes()
+	implementation = sts.ReplaceAll(template, "<Notice>", notice)
+	implementation = sts.ReplaceAll(implementation, "<module>", module)
+	implementation = sts.ReplaceAll(implementation, "<wiki>", wiki)
+	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
 	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
 	implementation = sts.ReplaceAll(implementation, "<parameter>", lowercase)
-	var tokenTypes = v.extractTokenTypes()
 	implementation = sts.ReplaceAll(implementation, "<TokenTypes>", tokenTypes)
 	return implementation
 }
@@ -668,14 +679,14 @@ func (v *generator_) populateScannerTemplate(
 	implementation string,
 ) {
 	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(template, "<Notice>", notice)
 	var tokenNames = v.extractTokenNames()
-	implementation = sts.ReplaceAll(implementation, "<TokenNames>", tokenNames)
 	var tokenMatchers = v.extractTokenMatchers()
-	implementation = sts.ReplaceAll(implementation, "<TokenMatchers>", tokenMatchers)
 	var foundCases = v.extractFoundCases()
-	implementation = sts.ReplaceAll(implementation, "<FoundCases>", foundCases)
 	var expressions = v.extractExpressions()
+	implementation = sts.ReplaceAll(template, "<Notice>", notice)
+	implementation = sts.ReplaceAll(implementation, "<TokenNames>", tokenNames)
+	implementation = sts.ReplaceAll(implementation, "<TokenMatchers>", tokenMatchers)
+	implementation = sts.ReplaceAll(implementation, "<FoundCases>", foundCases)
 	implementation = sts.ReplaceAll(implementation, "<Expressions>", expressions)
 	return implementation
 }
@@ -687,14 +698,15 @@ func (v *generator_) populateSyntaxTemplate(
 ) (
 	implementation string,
 ) {
-	implementation = sts.ReplaceAll(template, "<Notice>", noticeTemplate_)
+	var notice = noticeTemplate_
 	copyright = v.expandCopyright(copyright)
-	implementation = sts.ReplaceAll(implementation, "<Copyright>", copyright)
 	var allCaps = sts.ToUpper(syntax)
-	implementation = sts.ReplaceAll(implementation, "<SYNTAX>", allCaps)
 	var uppercase = v.makeUppercase(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Syntax>", uppercase)
 	var lowercase = v.makeLowercase(syntax)
+	implementation = sts.ReplaceAll(template, "<Notice>", notice)
+	implementation = sts.ReplaceAll(implementation, "<Copyright>", copyright)
+	implementation = sts.ReplaceAll(implementation, "<SYNTAX>", allCaps)
+	implementation = sts.ReplaceAll(implementation, "<Syntax>", uppercase)
 	implementation = sts.ReplaceAll(implementation, "<syntax>", lowercase)
 	return implementation
 }

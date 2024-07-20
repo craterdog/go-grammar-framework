@@ -22,7 +22,8 @@ import (
 
 func TestLifecycle(t *tes.T) {
 	var generator = gen.Generator().Make()
-	var module = "github.com/craterdog/go-grammar-framework"
+	var module = "github.com/craterdog/go-grammar-framework/v4"
+	var wiki = "github.com/craterdog/go-grammar-framework/wiki"
 	var name = "example"
 
 	// Generate a new syntax with a default copyright.
@@ -42,31 +43,31 @@ func TestLifecycle(t *tes.T) {
 	validator.ValidateSyntax(syntax)
 
 	// Generate the AST model for the syntax.
-	var model = generator.GenerateAst(module, syntax)
+	var model = generator.GenerateAst(module, wiki, syntax)
 	mod.Validator().ValidateModel(model)
 
 	// Generate the language grammar model for the syntax.
-	model = generator.GenerateGrammar(module, syntax)
+	model = generator.GenerateGrammar(module, wiki, syntax)
 	mod.Validator().ValidateModel(model)
 
 	// Generate the formatter class for the syntax.
-	source = generator.GenerateFormatter(module, syntax)
+	source = generator.GenerateFormatter(module, wiki, syntax)
 	ass.Equal(t, modelFormatter, source)
 
 	// Generate the parser class for the syntax.
-	source = generator.GenerateParser(module, syntax)
+	source = generator.GenerateParser(module, wiki, syntax)
 	ass.Equal(t, modelParser, source)
 
 	// Generate the scanner class for the syntax.
-	source = generator.GenerateScanner(module, syntax)
+	source = generator.GenerateScanner(module, wiki, syntax)
 	ass.Equal(t, modelScanner, source)
 
 	// Generate the token class for the syntax.
-	source = generator.GenerateToken(module, syntax)
+	source = generator.GenerateToken(module, wiki, syntax)
 	ass.Equal(t, modelToken, source)
 
 	// Generate the validator class for the syntax.
-	source = generator.GenerateValidator(module, syntax)
+	source = generator.GenerateValidator(module, wiki, syntax)
 	ass.Equal(t, modelValidator, source)
 }
 
