@@ -62,6 +62,7 @@ func (c *generatorClass_) Make() GeneratorLike {
 type generator_ struct {
 	// Define the instance attributes.
 	class_     GeneratorClassLike
+	greedy_    bool
 	tokens_    abs.SetLike[string]
 	regexps_   abs.CatalogLike[string, string]
 	modules_   abs.CatalogLike[string, mod.ModuleLike]
@@ -185,17 +186,14 @@ func (v *generator_) GenerateValidator(
 func (v *generator_) analyzeSyntax(syntax ast.SyntaxLike) {
 	// Define the regular expressions for each intrinsic.
 	var map_ = map[string]string{
-		"any":     ` ".|" + eol_`,
-		"base16":  ` "[0-9a-f]"`,
-		"control": ` "\\p{Cc}"`,
-		"digit":   ` "\\p{Nd}"`,
-		"eof":     ` "\\z"`,
-		"eol":     ` "\\n"`,
-		"escape":  ` "\\\\(?:(?:" + unicode_ + ")|[abfnrtv'\"\\\\])"`,
-		"lower":   ` "\\p{Ll}"`,
-		"space":   ` "[ \\t]+"`,
-		"unicode": ` "x" + base16_ + "{2}|u" + base16_ + "{4}|U" + base16_ + "{8}"`,
-		"upper":   ` "\\p{Lu}"`,
+		"any":     `"."`,
+		"control": `"\\p{Cc}"`,
+		"digit":   `"\\p{Nd}"`,
+		"eof":     `"\\z"`,
+		"eol":     `"\\r?\\n"`,
+		"lower":   `"\\p{Ll}"`,
+		"space":   `"[ \\t]+"`,
+		"upper":   `"\\p{Lu}"`,
 	}
 
 	// Process the syntax rule definitions.
@@ -213,6 +211,7 @@ func (v *generator_) analyzeSyntax(syntax ast.SyntaxLike) {
 	v.instances_.SortValues()
 
 	// Process the syntax expression definitions.
+	v.greedy_ = true
 	v.regexps_ = col.Catalog[string, string](map_)
 	var expressionIterator = syntax.GetExpressions().GetIterator()
 	for expressionIterator.HasNext() {
@@ -284,11 +283,13 @@ func (v *generator_) escapeString(string_ string) string {
 	var escaped string
 	for _, character := range string_ {
 		switch character {
-		case '"', '\\':
-			escaped += "\\"
+		case '"':
+			escaped += `\`
 		case '.', '|', '^', '$', '+', '*', '?',
 			'(', ')', '[', ']', '{', '}':
-			escaped += "\\\\"
+			escaped += `\\`
+		case '\\':
+			escaped += `\\\`
 		}
 		escaped += string(character)
 	}
@@ -373,8 +374,7 @@ func (v *generator_) extractNotice(syntax ast.SyntaxLike) string {
 	var comment = header.GetComment()
 
 	// Strip off the syntax style comment delimiters.
-	var notice = gra.Scanner().MatchToken(gra.CommentToken, comment).GetValue(2)
-	notice = "\n" + notice + "\n"
+	var notice = comment[2 : len(comment)-3]
 
 	return notice
 }
@@ -414,7 +414,7 @@ func (v *generator_) extractTokenMatchers() string {
 		var tokenName = iterator.GetNext()
 		var tokenType = v.makeUppercase(tokenName) + "Token"
 		tokenMatchers += "\n\t\t" + tokenType +
-			`: reg.MustCompile("^(?:" + ` + tokenName + `_ + ")"),`
+			`: reg.MustCompile("^" + ` + tokenName + `_),`
 	}
 	return tokenMatchers
 }
@@ -732,8 +732,8 @@ func (v *generator_) processBounded(
 ) {
 	var rune_ = bounded.GetRune()
 	rune_ = v.processRune(rune_)
-	if rune_ == "-" {
-		rune_ = "\\-"
+	if rune_ == `-` {
+		rune_ = `\-`
 	}
 	regexp += rune_
 	var extent = bounded.GetOptionalExtent()
@@ -855,9 +855,9 @@ func (v *generator_) processExpression(
 ) {
 	var name = expression.GetLowercase()
 	var pattern = expression.GetPattern()
-	var regexp = `"`
+	var regexp = `"(?:`
 	regexp += v.processPattern(pattern)
-	regexp += `"`
+	regexp += `)"`
 	v.regexps_.SetValue(name, regexp)
 }
 
@@ -920,8 +920,9 @@ func (v *generator_) processGrouped(
 	regexp string,
 ) {
 	var pattern = grouped.GetPattern()
+	regexp += "("
 	regexp += v.processPattern(pattern)
-	regexp += "(" + regexp + ")"
+	regexp += ")"
 	return regexp
 }
 
@@ -1001,6 +1002,10 @@ func (v *generator_) processPart(
 				actual,
 			)
 			panic(message)
+		}
+		if !v.greedy_ {
+			regexp += "?"
+			v.greedy_ = true
 		}
 	}
 	return regexp
@@ -1084,9 +1089,13 @@ func (v *generator_) processString(
 		var literal = actual[1 : len(actual)-1] // Remove the double quotes.
 		regexp += v.escapeString(literal)
 	case !gra.Scanner().MatchToken(gra.LowercaseToken, actual).IsEmpty():
-		regexp += `" + ` + actual + `_ + "`
+		regexp += `(?:" + ` + actual + `_ + ")`
 	case !gra.Scanner().MatchToken(gra.IntrinsicToken, actual).IsEmpty():
-		regexp += `" + ` + sts.ToLower(actual) + `_ + "`
+		var intrinsic = sts.ToLower(actual)
+		if intrinsic == "any" {
+			v.greedy_ = false
+		}
+		regexp += `" + ` + intrinsic + `_ + "`
 	default:
 		var message = fmt.Sprintf(
 			"Found an invalid element string: %q",

@@ -441,13 +441,13 @@ var scannerClass = &scannerClass_{
 	},
 	matchers_: map[TokenType]*reg.Regexp{
 		ErrorToken: reg.MustCompile("x^"),
-		DelimiterToken: reg.MustCompile("^(?:" + delimiter_ + ")"),
-		EofToken: reg.MustCompile("^(?:" + eof_ + ")"),
-		EolToken: reg.MustCompile("^(?:" + eol_ + ")"),
-		IntegerToken: reg.MustCompile("^(?:" + integer_ + ")"),
-		RuneToken: reg.MustCompile("^(?:" + rune_ + ")"),
-		SpaceToken: reg.MustCompile("^(?:" + space_ + ")"),
-		TextToken: reg.MustCompile("^(?:" + text_ + ")"),
+		DelimiterToken: reg.MustCompile("^" + delimiter_),
+		EofToken: reg.MustCompile("^" + eof_),
+		EolToken: reg.MustCompile("^" + eol_),
+		IntegerToken: reg.MustCompile("^" + integer_),
+		RuneToken: reg.MustCompile("^" + rune_),
+		SpaceToken: reg.MustCompile("^" + space_),
+		TextToken: reg.MustCompile("^" + text_),
 	},
 }
 
@@ -642,21 +642,21 @@ collision with other private Go class constants in this package.
 */
 const (
 	error_ = "x^"
-	any_ =  ".|" + eol_
-	base16_ =  "[0-9a-f]"
-	control_ =  "\\p{Cc}"
+	any_ = "."
+	base16_ = "[0-9a-f]"
+	control_ = "\\p{Cc}"
 	delimiter_ = ",|\\[|\\]"
-	digit_ =  "\\p{Nd}"
-	eof_ =  "\\z"
-	eol_ =  "\\n"
-	escape_ =  "\\\\(?:(?:" + unicode_ + ")|[abfnrtv'\"\\\\])"
+	digit_ = "\\p{Nd}"
+	eof_ = "\\z"
+	eol_ = "\\r?\\n"
+	escape_ = "(?:\\\\(?:(?:" + unicode_ + ")|[abfnrtv\"\\\\]))"
 	integer_ = "0|-?[1-9]" + digit_ + "*"
-	lower_ =  "\\p{Ll}"
+	lower_ = "\\p{Ll}"
 	rune_ = "'[^" + control_ + "]'"
-	space_ =  "[ \\t]+"
-	text_ = "\"" + escape_ + "[^\"" + control_ + "](" + escape_ + "[^\"" + control_ + "])+\""
-	unicode_ =  "x" + base16_ + "{2}|u" + base16_ + "{4}|U" + base16_ + "{8}"
-	upper_ =  "\\p{Lu}"
+	space_ = "[ \\t]+"
+	text_ = "\"[^\"" + control_ + "]+\""
+	unicode_ = "(?:x" + base16_ + "{2}|u" + base16_ + "{4}|U" + base16_ + "{8})"
+	upper_ = "\\p{Lu}"
 )
 `
 

@@ -89,6 +89,24 @@ func TestModelGeneration(t *tes.T) {
 	if err != nil {
 		panic(err)
 	}
+
+	// Generate the scanner class for the syntax.
+	source = generator.GenerateScanner(module, wiki, syntax)
+	bytes = []byte(source)
+	filename = "grammar/scanner.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	// Generate the token class for the syntax.
+	source = generator.GenerateToken(module, wiki, syntax)
+	bytes = []byte(source)
+	filename = "grammar/token.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestLifecycle(t *tes.T) {

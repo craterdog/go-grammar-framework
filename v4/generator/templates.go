@@ -127,12 +127,11 @@ A language syntax consists of a set of rule definitions and expression
 definitions.
 
 The following intrinsic character types are context specific:
- * ANY - Any language specific character.
+ * ANY - Any printable language specific character.
  * LOWER - Any language specific lowercase character.
  * UPPER - Any language specific uppercase character.
  * DIGIT - Any language specific digit.
- * ESCAPE - Any environment specific escape sequence.
- * CONTROL - Any environment specific (non-printable) control character.
+ * CONTROL - Any environment specific control (non-printable) character.
  * EOL - The environment specific end-of-line character.
  * EOF - The environment specific end-of-file marker (pseudo character).
 
@@ -197,7 +196,7 @@ integer: '0' | '-'? ['1'..'9'] DIGIT*
 
 rune: "'" ~[CONTROL] "'"  ! Any single printable unicode character.
 
-text: '"' (ESCAPE ~['"' CONTROL])+ '"'
+text: '"' ~['"' CONTROL]+ '"'
 
 `
 
