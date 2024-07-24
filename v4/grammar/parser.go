@@ -1088,6 +1088,6 @@ var syntax = map[string]string{
 	"Character": `
     Bounded
     intrinsic`,
-	"Bounded": `glyph Extent?  ! A bounded range of glyph is inclusive.`,
+	"Bounded": `glyph Extent?  ! A bounded range of glyphs is inclusive.`,
 	"Extent":  `".." glyph`,
 }
