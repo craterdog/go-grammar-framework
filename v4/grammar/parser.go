@@ -832,14 +832,6 @@ func (v *parser_) parsePredicate() (
 		return predicate, token, true
 	}
 
-	// Attempt to parse the intrinsic predicate.
-	var intrinsic string
-	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
-	if ok {
-		predicate = ast.Predicate().Make(intrinsic)
-		return predicate, token, true
-	}
-
 	// This is not the predicate.
 	return predicate, token, false
 }
@@ -1045,15 +1037,15 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var syntax = map[string]string{
-	"Syntax": `Header+ Rule+ Expression+ EOL* EOF  ! Terminated with an end-of-file marker.`,
-	"Header": `comment EOL`,
-	"Rule":   `comment? uppercase ":" Definition EOL+`,
+	"Syntax": `Header+ Rule+ Expression+`,
+	"Header": `comment newline`,
+	"Rule":   `comment? uppercase ":" Definition newline+`,
 	"Definition": `
     Inlined
     Multilined`,
 	"Inlined":    `Factor+ note?`,
 	"Multilined": `Line+`,
-	"Line":       `EOL Identifier note?`,
+	"Line":       `newline Identifier note?`,
 	"Identifier": `
     lowercase
     uppercase`,
@@ -1061,14 +1053,13 @@ var syntax = map[string]string{
 	"Predicate": `
     literal
     lowercase
-    uppercase
-    intrinsic`,
+    uppercase`,
 	"Cardinality": `
     Constrained
     quantified`,
 	"Constrained": `"{" number Limit? "}"  ! A constrained range of numbers is inclusive.`,
 	"Limit":       `".." number?`,
-	"Expression":  `comment? lowercase ":" Pattern note? EOL+`,
+	"Expression":  `comment? lowercase ":" Pattern note? newline+`,
 	"Pattern":     `Part+ Alternative*`,
 	"Part":        `Element Cardinality?  ! The default cardinality is one.`,
 	"Alternative": `"|" Part+`,
