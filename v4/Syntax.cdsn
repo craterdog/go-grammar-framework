@@ -13,20 +13,14 @@
 !>
 CRATER DOG SYNTAX NOTATION
 This document contains a formal definition of the Crater Dog Syntax Notation™
-(CDSN) using CDSN itself in homage to Douglas Hofstadter.
+(CDSN) using CDSN itself in homage to Douglas Hofstadter of Gödel, Escher, Bach
+fame.
 
-A language syntax consists of a set of rule definitions and expression patterns.
+A language syntax consists of a set of rule definitions and regular expression
+patterns.
 
-The following intrinsic character types are context specific:
- * ANY - Any language specific character.
- * LOWER - Any language specific lowercase character.
- * UPPER - Any language specific uppercase character.
- * DIGIT - Any language specific digit.
- * CONTROL - Any environment specific (non-printable) control character.
- * EOL - The environment specific end-of-line character.
- * EOF - The environment specific end-of-file marker (pseudo character).
-
-A predicate may be constrained by any of the following cardinalities:
+Each predicate within a rule definition may be constrained by one of the
+following cardinalities:
  * predicate{M} - Exactly M instances of the specified predicate.
  * predicate{M..N} - M to N instances of the specified predicate.
  * predicate{M..} - M or more instances of the specified predicate.
@@ -34,8 +28,17 @@ A predicate may be constrained by any of the following cardinalities:
  * predicate* - Zero or more instances of the specified predicate.
  * predicate+ - One or more instances of the specified predicate.
 
-A negation "~" within a regular expression pattern may only be applied to a
-bounded range of possible intrinsic character types or printable unicode
+The following intrinsic character types may be used within regular expression
+pattern declarations:
+ * ANY - Any language specific character.
+ * LOWER - Any language specific lowercase character.
+ * UPPER - Any language specific uppercase character.
+ * DIGIT - Any language specific digit.
+ * CONTROL - Any environment specific (non-printable) control character.
+ * EOL - The environment specific end-of-line character.
+
+The negation "~" prefix within a regular expression pattern may only be applied
+to a bounded range of possible intrinsic character types or printable unicode
 characters called runes.
 <!
 
@@ -48,13 +51,14 @@ expressions or other rules and are matched by the parser in the order listed.  A
 rule definition may also be directly or indirectly recursive.  The parsing of
 tokens is greedy and will match as many repeated token types as possible. The
 sequence of factors within in a rule definition may be separated by spaces which
-are ignored by the parser.
+are ignored by the parser.  Newlines are also ignored unless a "newline" regular
+expression pattern is defined and used in one or more rule definitions.
 <!
-Syntax: Header+ Rule+ Expression+ EOL* EOF  ! Terminated with an end-of-file marker.
+Syntax: Header+ Rule+ Expression+
 
-Header: comment EOL
+Header: comment newline
 
-Rule: comment? uppercase ":" Definition EOL+
+Rule: comment? uppercase ":" Definition newline+
 
 Definition:
     Inlined
@@ -64,7 +68,7 @@ Inlined: Factor+ note?
 
 Multilined: Line+
 
-Line: EOL Identifier note?
+Line: newline Identifier note?
 
 Identifier:
     lowercase
@@ -76,7 +80,6 @@ Predicate:
     literal
     lowercase
     uppercase
-    intrinsic
 
 Cardinality:
     Constrained
@@ -86,7 +89,7 @@ Constrained: "{" number Limit? "}"  ! A constrained range of numbers is inclusiv
 
 Limit: ".." number?
 
-Expression: comment? lowercase ":" Pattern note? EOL+
+Expression: comment? lowercase ":" Pattern note? newline+
 
 Pattern: Part+ Alternative*
 
@@ -125,24 +128,25 @@ by the parser.  Each regular expression name begins with a lowercase letter.
 Unlike rule definitions, a regular expression pattern cannot specify the name of
 a rule within its pattern—but it may specify the name of another regular
 expression.  Regular expression patterns cannot be recursive and the scanning of
-patterns is NOT greedy.  Any spaces within a regular expression pattern are part
-of the regular expression and are NOT ignored.
+patterns is greedy unless the pattern contains the ANY intrinsic character.  Any
+spaces within a regular expression pattern are part of the regular expression
+and are NOT ignored.
 <!
 base16: ['0'..'9' 'a'..'f']
 
 comment: "!>" EOL (ANY | EOL)* EOL "<!" EOL  ! Chooses the shortest possible match.
 
-delimiter: ":" | "|" | "(" | ")" | "[" | "]" | "{" | "}" | ".."
-
 escape: '\' (unicode | ['a' 'b' 'f' 'n' 'r' 't' 'v' '"' '\'])
 
-intrinsic: "ANY" | "LOWER" | "UPPER" | "DIGIT" | "CONTROL" | "EOL" | "EOF"
+intrinsic: "ANY" | "CONTROL" | "DIGIT" | "EOL" | "LOWER" | "UPPER"
 
 literal: '"' (escape | ~['"' CONTROL])+ '"'
 
-lowercase: LOWER (LOWER | UPPER | DIGIT)*
+lowercase: LOWER (DIGIT | LOWER | UPPER)*
 
 negation: "~"
+
+newline: EOL
 
 note: "! " ~[CONTROL]*
 
@@ -154,5 +158,5 @@ rune: "'" ~[CONTROL] "'"  ! Any printable unicode character.
 
 unicode: 'x' base16{2} | 'u' base16{4} | 'U' base16{8}
 
-uppercase: UPPER (LOWER | UPPER | DIGIT)*
+uppercase: UPPER (DIGIT | LOWER | UPPER)*
 

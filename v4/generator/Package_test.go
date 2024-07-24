@@ -52,26 +52,26 @@ func TestLifecycle(t *tes.T) {
 
 	// Generate the formatter class for the syntax.
 	source = generator.GenerateFormatter(module, wiki, syntax)
-	ass.Equal(t, modelFormatter, source)
+	ass.Equal(t, formatterClass, source)
 
 	// Generate the parser class for the syntax.
 	source = generator.GenerateParser(module, wiki, syntax)
-	ass.Equal(t, modelParser, source)
+	ass.Equal(t, parserClass, source)
 
 	// Generate the scanner class for the syntax.
 	source = generator.GenerateScanner(module, wiki, syntax)
-	ass.Equal(t, modelScanner, source)
+	ass.Equal(t, scannerClass, source)
 
 	// Generate the token class for the syntax.
 	source = generator.GenerateToken(module, wiki, syntax)
-	ass.Equal(t, modelToken, source)
+	ass.Equal(t, tokenClass, source)
 
 	// Generate the validator class for the syntax.
 	source = generator.GenerateValidator(module, wiki, syntax)
-	ass.Equal(t, modelValidator, source)
+	ass.Equal(t, validatorClass, source)
 }
 
-const modelFormatter = `/*
+const formatterClass = `/*
 ................................................................................
 .                   Copyright (c) 2024.  All Rights Reserved.                  .
 ................................................................................
@@ -180,7 +180,7 @@ func (v *formatter_) getResult() string {
 }
 `
 
-const modelParser = `/*
+const parserClass = `/*
 ................................................................................
 .                   Copyright (c) 2024.  All Rights Reserved.                  .
 ................................................................................
@@ -275,21 +275,6 @@ func (v *parser_) ParseSource(source string) ast.DocumentLike {
 		panic(message)
 	}
 
-	// Attempt to parse optional end-of-line characters.
-	for ok {
-		_, _, ok = v.parseToken(EolToken, "")
-	}
-
-	// Attempt to parse the end-of-file marker.
-	_, token, ok = v.parseToken(EofToken, "")
-	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("EOF",
-			"Document",
-		)
-		panic(message)
-	}
-
 	// Found the document.
 	return document
 }
@@ -351,7 +336,8 @@ func (v *parser_) getNextToken() TokenLike {
 	// Read a new token from the token stream.
 	var token, ok = v.tokens_.RemoveHead() // This will wait for a token.
 	if !ok {
-		panic("The token channel terminated without an EOF token.")
+		// The token channel has been closed.
+		return nil
 	}
 
 	// Check for an error token.
@@ -397,11 +383,11 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var syntax = map[string]string{
-	"Document": "uppercase+ EOL* EOF  ! Terminated with an end-of-file marker.",
+	"Document": "Component newline*",
 }
 `
 
-const modelScanner = `/*
+const scannerClass = `/*
 ................................................................................
 .                   Copyright (c) 2024.  All Rights Reserved.                  .
 ................................................................................
@@ -417,7 +403,6 @@ package grammar
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	reg "regexp"
 	sts "strings"
@@ -431,21 +416,19 @@ var scannerClass = &scannerClass_{
 	// Initialize the class constants.
 	tokens_: map[TokenType]string{
 		ErrorToken: "error",
-		DelimiterToken: "delimiter",
-		EofToken: "eof",
-		EolToken: "eol",
 		IntegerToken: "integer",
+		NewlineToken: "newline",
 		RuneToken: "rune",
+		SeparatorToken: "separator",
 		SpaceToken: "space",
 		TextToken: "text",
 	},
 	matchers_: map[TokenType]*reg.Regexp{
-		ErrorToken: reg.MustCompile("x^"),
-		DelimiterToken: reg.MustCompile("^" + delimiter_),
-		EofToken: reg.MustCompile("^" + eof_),
-		EolToken: reg.MustCompile("^" + eol_),
+		// Define pattern matchers for each type of token.
 		IntegerToken: reg.MustCompile("^" + integer_),
+		NewlineToken: reg.MustCompile("^" + newline_),
 		RuneToken: reg.MustCompile("^" + rune_),
+		SeparatorToken: reg.MustCompile("^" + separator_),
 		SpaceToken: reg.MustCompile("^" + space_),
 		TextToken: reg.MustCompile("^" + text_),
 	},
@@ -487,10 +470,6 @@ func (c *scannerClass_) Make(
 
 // Functions
 
-func (c *scannerClass_) AsString(type_ TokenType) string {
-	return c.tokens_[type_]
-}
-
 func (c *scannerClass_) FormatToken(token TokenLike) string {
 	var value = token.GetValue()
 	var s = fmt.Sprintf("%q", value)
@@ -506,13 +485,17 @@ func (c *scannerClass_) FormatToken(token TokenLike) string {
 	)
 }
 
-func (c *scannerClass_) MatchToken(
-	type_ TokenType,
-	text string,
-) abs.ListLike[string] {
-	var matcher = c.matchers_[type_]
-	var matches = matcher.FindStringSubmatch(text)
-	return col.List[string](matches)
+func (c *scannerClass_) FormatType(tokenType TokenType) string {
+	return c.tokens_[tokenType]
+}
+
+func (c *scannerClass_) MatchesType(
+	tokenValue string,
+	tokenType TokenType,
+) bool {
+	var matcher = c.matchers_[tokenType]
+	var match = matcher.FindString(tokenValue)
+	return len(match) > 0
 }
 
 // INSTANCE METHODS
@@ -538,7 +521,12 @@ func (v *scanner_) GetClass() ScannerClassLike {
 
 // Private
 
-func (v *scanner_) emitToken(type_ TokenType) {
+func (v *scanner_) emitToken(tokenType TokenType) {
+	switch v.GetClass().FormatType(tokenType) {
+	// Ignore the implicit token types.
+	case "space":
+		return
+	}
 	var value = string(v.runes_[v.first_:v.next_])
 	switch value {
 	case "\x00":
@@ -557,16 +545,10 @@ func (v *scanner_) emitToken(type_ TokenType) {
 		value = "<CRTN>"
 	case "\v":
 		value = "<VTAB>"
-	case "":
-		value = "<EOFL>"
 	}
-	var token = Token().Make(v.line_, v.position_, type_, value)
+	var token = Token().Make(v.line_, v.position_, tokenType, value)
 	//fmt.Println(Scanner().FormatToken(token)) // Uncomment when debugging.
 	v.tokens_.AddValue(token) // This will block if the queue is full.
-}
-
-func (v *scanner_) foundEof() {
-	v.emitToken(EofToken)
 }
 
 func (v *scanner_) foundError() {
@@ -574,19 +556,17 @@ func (v *scanner_) foundError() {
 	v.emitToken(ErrorToken)
 }
 
-func (v *scanner_) foundToken(type_ TokenType) bool {
+func (v *scanner_) foundToken(tokenType TokenType) bool {
 	var text = string(v.runes_[v.next_:])
-	var matches = Scanner().MatchToken(type_, text)
-	if !matches.IsEmpty() {
-		var match = matches.GetValue(1)
+	var matcher = scannerClass.matchers_[tokenType]
+	var match = matcher.FindString(text)
+	if len(match) > 0 {
 		var token = []rune(match)
 		var length = len(token)
 
 		// Found the requested token type.
 		v.next_ += length
-		if type_ != SpaceToken {
-			v.emitToken(type_)
-		}
+		v.emitToken(tokenType)
 		var count = sts.Count(match, "\n")
 		if count > 0 {
 			v.line_ += count
@@ -616,12 +596,11 @@ func (v *scanner_) scanTokens() {
 loop:
 	for v.next_ < len(v.runes_) {
 		switch {
-		case v.foundToken(ErrorToken):
-		case v.foundToken(DelimiterToken):
-		case v.foundToken(EofToken):
-		case v.foundToken(EolToken):
+		// Find the next token type.
 		case v.foundToken(IntegerToken):
+		case v.foundToken(NewlineToken):
 		case v.foundToken(RuneToken):
+		case v.foundToken(SeparatorToken):
 		case v.foundToken(SpaceToken):
 		case v.foundToken(TextToken):
 		default:
@@ -629,7 +608,7 @@ loop:
 			break loop
 		}
 	}
-	v.foundEof()
+	v.tokens_.CloseQueue()
 }
 
 /*
@@ -641,26 +620,22 @@ way.  We append an underscore to each name to lessen the chance of a name
 collision with other private Go class constants in this package.
 */
 const (
-	error_ = "x^"
+	// Define the regular expression patterns for each type.
 	any_ = "."
-	base16_ = "[0-9a-f]"
 	control_ = "\\p{Cc}"
-	delimiter_ = ",|\\[|\\]"
 	digit_ = "\\p{Nd}"
-	eof_ = "\\z"
 	eol_ = "\\r?\\n"
-	escape_ = "(?:\\\\(?:(?:" + unicode_ + ")|[abfnrtv\"\\\\]))"
-	integer_ = "0|-?[1-9]" + digit_ + "*"
+	integer_ = "(?:0|-?[1-9]" + digit_ + "*)"
 	lower_ = "\\p{Ll}"
-	rune_ = "'[^" + control_ + "]'"
+	rune_ = "(?:'[^" + control_ + "]')"
+	separator_ = "(?:,|\\[|\\])"
 	space_ = "[ \\t]+"
-	text_ = "\"[^\"" + control_ + "]+\""
-	unicode_ = "(?:x" + base16_ + "{2}|u" + base16_ + "{4}|U" + base16_ + "{8})"
+	text_ = "(?:\"[^\"" + control_ + "]+\")"
 	upper_ = "\\p{Lu}"
 )
 `
 
-const modelToken = `/*
+const tokenClass = `/*
 ................................................................................
 .                   Copyright (c) 2024.  All Rights Reserved.                  .
 ................................................................................
@@ -750,7 +725,7 @@ func (v *token_) GetValue() string {
 }
 `
 
-const modelValidator = `/*
+const validatorClass = `/*
 ................................................................................
 .                   Copyright (c) 2024.  All Rights Reserved.                  .
 ................................................................................
@@ -835,10 +810,5 @@ func (v *validator_) formatError(name, message string) string {
 		message,
 	)
 	return message
-}
-
-func (v *validator_) matchesToken(type_ TokenType, value string) bool {
-	var matches = Scanner().MatchToken(type_, value)
-	return !matches.IsEmpty()
 }
 `

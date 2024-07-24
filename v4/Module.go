@@ -82,9 +82,6 @@ type (
 const (
 	ErrorToken      = gra.ErrorToken
 	CommentToken    = gra.CommentToken
-	DelimiterToken  = gra.DelimiterToken
-	EofToken        = gra.EofToken
-	EolToken        = gra.EolToken
 	IntrinsicToken  = gra.IntrinsicToken
 	LiteralToken    = gra.LiteralToken
 	LowercaseToken  = gra.LowercaseToken
@@ -93,6 +90,7 @@ const (
 	NumberToken     = gra.NumberToken
 	QuantifiedToken = gra.QuantifiedToken
 	RuneToken       = gra.RuneToken
+	SeparatorToken  = gra.SeparatorToken
 	SpaceToken      = gra.SpaceToken
 	UppercaseToken  = gra.UppercaseToken
 )
@@ -360,11 +358,13 @@ func Expression(arguments ...any) ExpressionLike {
 	}
 
 	// Call the constructor.
+	var newlines = col.List[string]([]string{"\n", "\n"})
 	var expression = ast.Expression().Make(
 		comment,
 		lowercase,
 		pattern,
 		note,
+		newlines,
 	)
 	return expression
 }
@@ -492,7 +492,11 @@ func Header(arguments ...any) HeaderLike {
 	}
 
 	// Call the constructor.
-	var header = ast.Header().Make(comment)
+	var newline = "\n"
+	var header = ast.Header().Make(
+		comment,
+		newline,
+	)
 	return header
 }
 
@@ -585,7 +589,9 @@ func Line(arguments ...any) LineLike {
 	}
 
 	// Call the constructor.
+	var newline = "\n"
 	var line = ast.Line().Make(
+		newline,
 		identifier,
 		note,
 	)
@@ -708,13 +714,13 @@ func Predicate(arguments ...any) PredicateLike {
 		switch actual := argument.(type) {
 		case string:
 			switch {
-			case matchesToken(LowercaseToken, actual):
+			case gra.Scanner().MatchesType(actual, LowercaseToken):
 				lowercase = actual
-			case matchesToken(UppercaseToken, actual):
+			case gra.Scanner().MatchesType(actual, UppercaseToken):
 				uppercase = actual
-			case matchesToken(IntrinsicToken, actual):
+			case gra.Scanner().MatchesType(actual, IntrinsicToken):
 				intrinsic = actual
-			case matchesToken(LiteralToken, actual):
+			case gra.Scanner().MatchesType(actual, LiteralToken):
 				literal = actual
 			}
 		default:
@@ -771,10 +777,12 @@ func Rule(arguments ...any) RuleLike {
 	}
 
 	// Call the constructor.
+	var newlines = col.List[string]([]string{"\n", "\n"})
 	var rule = ast.Rule().Make(
 		comment,
 		uppercase,
 		definition,
+		newlines,
 	)
 	return rule
 }
@@ -791,13 +799,13 @@ func String(arguments ...any) StringLike {
 		switch actual := argument.(type) {
 		case string:
 			switch {
-			case matchesToken(RuneToken, actual):
+			case gra.Scanner().MatchesType(actual, RuneToken):
 				rune_ = actual
-			case matchesToken(LiteralToken, actual):
+			case gra.Scanner().MatchesType(actual, LiteralToken):
 				literal = actual
-			case matchesToken(LowercaseToken, actual):
+			case gra.Scanner().MatchesType(actual, LowercaseToken):
 				lowercase = actual
-			case matchesToken(IntrinsicToken, actual):
+			case gra.Scanner().MatchesType(actual, IntrinsicToken):
 				intrinsic = actual
 			default:
 				var message = fmt.Sprintf(
@@ -899,11 +907,4 @@ func Generator(arguments ...any) GeneratorLike {
 	}
 	var generator = gen.Generator().Make()
 	return generator
-}
-
-// Private
-
-func matchesToken(type_ TokenType, value string) bool {
-	var matches = gra.Scanner().MatchToken(type_, value)
-	return !matches.IsEmpty()
 }

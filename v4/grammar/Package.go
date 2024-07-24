@@ -49,17 +49,16 @@ type TokenType uint8
 const (
 	ErrorToken TokenType = iota
 	CommentToken
-	DelimiterToken
-	EofToken
-	EolToken
 	IntrinsicToken
 	LiteralToken
 	LowercaseToken
 	NegationToken
+	NewlineToken
 	NoteToken
 	NumberToken
 	QuantifiedToken
 	RuneToken
+	SeparatorToken
 	SpaceToken
 	UppercaseToken
 )
@@ -91,14 +90,11 @@ ScannerClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete scanner-like class.  The following functions are supported:
 
-AsString() returns the string version of the token type.
-
 FormatToken() returns a formatted string containing the attributes of the token.
 
-MatchToken() a list of strings representing any matches found in the specified
-text of the specified token type using the regular expression defined for that
-token type.  If the regular expression contains submatch patterns the matching
-substrings are returned as additional values in the list.
+FormatType() returns the string version of the token type.
+
+MatchesType() determines whether or not a token value is of a specified type.
 */
 type ScannerClassLike interface {
 	// Constructors
@@ -108,12 +104,12 @@ type ScannerClassLike interface {
 	) ScannerLike
 
 	// Functions
-	AsString(type_ TokenType) string
 	FormatToken(token TokenLike) string
-	MatchToken(
-		type_ TokenType,
-		text string,
-	) abs.ListLike[string]
+	FormatType(tokenType TokenType) string
+	MatchesType(
+		tokenValue string,
+		tokenType TokenType,
+	) bool
 }
 
 /*

@@ -41,17 +41,21 @@ type lineClass_ struct {
 // Constructors
 
 func (c *lineClass_) Make(
+	newline string,
 	identifier IdentifierLike,
 	optionalNote string,
 ) LineLike {
 	// Validate the arguments.
 	switch {
+	case col.IsUndefined(newline):
+		panic("The newline attribute is required by this class.")
 	case col.IsUndefined(identifier):
 		panic("The identifier attribute is required by this class.")
 	default:
 		return &line_{
 			// Initialize instance attributes.
 			class_:        c,
+			newline_:      newline,
 			identifier_:   identifier,
 			optionalNote_: optionalNote,
 		}
@@ -65,6 +69,7 @@ func (c *lineClass_) Make(
 type line_ struct {
 	// Define instance attributes.
 	class_        LineClassLike
+	newline_      string
 	identifier_   IdentifierLike
 	optionalNote_ string
 }
@@ -73,6 +78,10 @@ type line_ struct {
 
 func (v *line_) GetClass() LineClassLike {
 	return v.class_
+}
+
+func (v *line_) GetNewline() string {
+	return v.newline_
 }
 
 func (v *line_) GetIdentifier() IdentifierLike {

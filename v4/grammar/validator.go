@@ -119,11 +119,6 @@ func (v *validator_) formatError(name, message string) string {
 	return message
 }
 
-func (v *validator_) matchesToken(type_ TokenType, value string) bool {
-	var matches = Scanner().MatchToken(type_, value)
-	return !matches.IsEmpty()
-}
-
 func (v *validator_) validateAlternative(
 	name string,
 	alternative ast.AlternativeLike,
@@ -176,12 +171,12 @@ func (v *validator_) validateCardinality(
 		v.validateConstrained(name, actual)
 	case string:
 		switch {
-		case v.matchesToken(QuantifiedToken, actual):
+		case Scanner().MatchesType(actual, QuantifiedToken):
 		default:
-			panic("A cardinality must have a value.")
+			panic("A quantified cardinality must have a value of '?', '*' or '+'.")
 		}
 	default:
-		panic("A cardinality must have a value.")
+		panic("A cardinality must have a constrained or quantified value.")
 	}
 }
 
@@ -195,7 +190,7 @@ func (v *validator_) validateCharacter(
 		v.validateBounded(name, actual)
 	case string:
 		switch {
-		case v.matchesToken(IntrinsicToken, actual):
+		case Scanner().MatchesType(actual, IntrinsicToken):
 		default:
 			panic("An character must have a value.")
 		}
@@ -376,8 +371,8 @@ func (v *validator_) validateIdentifier(
 	switch actual := identifier.GetAny().(type) {
 	case string:
 		switch {
-		case v.matchesToken(LowercaseToken, actual):
-		case v.matchesToken(UppercaseToken, actual):
+		case Scanner().MatchesType(actual, LowercaseToken):
+		case Scanner().MatchesType(actual, UppercaseToken):
 		default:
 			panic("An identifier must have a value.")
 		}
@@ -509,10 +504,10 @@ func (v *validator_) validatePredicate(
 	switch actual := predicate.GetAny().(type) {
 	case string:
 		switch {
-		case v.matchesToken(LiteralToken, actual):
-		case v.matchesToken(LowercaseToken, actual):
-		case v.matchesToken(UppercaseToken, actual):
-		case v.matchesToken(IntrinsicToken, actual):
+		case Scanner().MatchesType(actual, LiteralToken):
+		case Scanner().MatchesType(actual, LowercaseToken):
+		case Scanner().MatchesType(actual, UppercaseToken):
+		case Scanner().MatchesType(actual, IntrinsicToken):
 		default:
 			panic("A predicate must have a value.")
 		}
@@ -560,10 +555,10 @@ func (v *validator_) validateString(
 	switch actual := string_.GetAny().(type) {
 	case string:
 		switch {
-		case v.matchesToken(RuneToken, actual):
-		case v.matchesToken(LiteralToken, actual):
-		case v.matchesToken(LowercaseToken, actual):
-		case v.matchesToken(IntrinsicToken, actual):
+		case Scanner().MatchesType(actual, RuneToken):
+		case Scanner().MatchesType(actual, LiteralToken):
+		case Scanner().MatchesType(actual, LowercaseToken):
+		case Scanner().MatchesType(actual, IntrinsicToken):
 		default:
 			panic("A string must have a value.")
 		}
@@ -617,14 +612,14 @@ func (v *validator_) validateSyntax(
 
 func (v *validator_) validateToken(
 	name string,
-	type_ TokenType,
-	value string,
+	tokenType TokenType,
+	tokenValue string,
 ) {
-	if !v.matchesToken(type_, value) {
+	if !Scanner().MatchesType(tokenValue, tokenType) {
 		var message = fmt.Sprintf(
-			"The following value is not of type %v: %v",
-			Scanner().AsString(type_),
-			value,
+			"The following token value is not of type %v: %v",
+			Scanner().FormatType(tokenType),
+			tokenValue,
 		)
 		panic(message)
 	}

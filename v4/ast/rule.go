@@ -14,6 +14,7 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -44,6 +45,7 @@ func (c *ruleClass_) Make(
 	optionalComment string,
 	uppercase string,
 	definition DefinitionLike,
+	newlines abs.Sequential[string],
 ) RuleLike {
 	// Validate the arguments.
 	switch {
@@ -51,6 +53,8 @@ func (c *ruleClass_) Make(
 		panic("The uppercase attribute is required by this class.")
 	case col.IsUndefined(definition):
 		panic("The definition attribute is required by this class.")
+	case col.IsUndefined(newlines):
+		panic("The newlines attribute is required by this class.")
 	default:
 		return &rule_{
 			// Initialize instance attributes.
@@ -58,6 +62,7 @@ func (c *ruleClass_) Make(
 			optionalComment_: optionalComment,
 			uppercase_:       uppercase,
 			definition_:      definition,
+			newlines_:        newlines,
 		}
 	}
 }
@@ -72,6 +77,7 @@ type rule_ struct {
 	optionalComment_ string
 	uppercase_       string
 	definition_      DefinitionLike
+	newlines_        abs.Sequential[string]
 }
 
 // Attributes
@@ -90,6 +96,10 @@ func (v *rule_) GetUppercase() string {
 
 func (v *rule_) GetDefinition() DefinitionLike {
 	return v.definition_
+}
+
+func (v *rule_) GetNewlines() abs.Sequential[string] {
+	return v.newlines_
 }
 
 // Private

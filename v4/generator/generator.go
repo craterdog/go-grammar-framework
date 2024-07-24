@@ -61,13 +61,15 @@ func (c *generatorClass_) Make() GeneratorLike {
 
 type generator_ struct {
 	// Define the instance attributes.
-	class_     GeneratorClassLike
-	greedy_    bool
-	tokens_    abs.SetLike[string]
-	regexps_   abs.CatalogLike[string, string]
-	modules_   abs.CatalogLike[string, mod.ModuleLike]
-	classes_   abs.CatalogLike[string, mod.ClassLike]
-	instances_ abs.CatalogLike[string, mod.InstanceLike]
+	class_      GeneratorClassLike
+	greedy_     bool
+	ignored_    abs.SetLike[string]
+	tokens_     abs.SetLike[string]
+	separators_ abs.SetLike[string]
+	regexps_    abs.CatalogLike[string, string]
+	modules_    abs.CatalogLike[string, mod.ModuleLike]
+	classes_    abs.CatalogLike[string, mod.ClassLike]
+	instances_  abs.CatalogLike[string, mod.InstanceLike]
 }
 
 // Attributes
@@ -184,12 +186,16 @@ func (v *generator_) GenerateValidator(
 // Private
 
 func (v *generator_) analyzeSyntax(syntax ast.SyntaxLike) {
+	if col.IsDefined(v.tokens_) {
+		// The analysis has already been done.
+		return
+	}
+
 	// Define the regular expressions for each intrinsic.
 	var map_ = map[string]string{
 		"any":     `"."`,
 		"control": `"\\p{Cc}"`,
 		"digit":   `"\\p{Nd}"`,
-		"eof":     `"\\z"`,
 		"eol":     `"\\r?\\n"`,
 		"lower":   `"\\p{Ll}"`,
 		"space":   `"[ \\t]+"`,
@@ -197,15 +203,19 @@ func (v *generator_) analyzeSyntax(syntax ast.SyntaxLike) {
 	}
 
 	// Process the syntax rule definitions.
-	v.tokens_ = col.Set[string]([]string{"delimiter", "eol", "eof", "space"})
+	v.ignored_ = col.Set[string]([]string{"newline", "space"})
+	v.tokens_ = col.Set[string]([]string{"separator"})
+	v.separators_ = col.Set[string]()
 	v.modules_ = col.Catalog[string, mod.ModuleLike]()
 	v.classes_ = col.Catalog[string, mod.ClassLike]()
 	v.instances_ = col.Catalog[string, mod.InstanceLike]()
-	var rulesIterator = syntax.GetRules().GetIterator()
-	for rulesIterator.HasNext() {
-		var rule = rulesIterator.GetNext()
+	var rules = syntax.GetRules().GetIterator()
+	for rules.HasNext() {
+		var rule = rules.GetNext()
 		v.processRule(rule)
 	}
+	v.ignored_ = v.ignored_.GetClass().Sans(v.ignored_, v.tokens_)
+	v.tokens_.AddValues(v.ignored_)
 	v.modules_.SortValues()
 	v.classes_.SortValues()
 	v.instances_.SortValues()
@@ -213,11 +223,13 @@ func (v *generator_) analyzeSyntax(syntax ast.SyntaxLike) {
 	// Process the syntax expression definitions.
 	v.greedy_ = true
 	v.regexps_ = col.Catalog[string, string](map_)
-	var expressionIterator = syntax.GetExpressions().GetIterator()
-	for expressionIterator.HasNext() {
-		var expression = expressionIterator.GetNext()
+	var expressions = syntax.GetExpressions().GetIterator()
+	for expressions.HasNext() {
+		var expression = expressions.GetNext()
 		v.processExpression(expression)
 	}
+	var separators = v.extractSeparators()
+	v.regexps_.SetValue("separator", separators)
 	v.regexps_.SortValues()
 }
 
@@ -324,30 +336,8 @@ func (v *generator_) expandCopyright(copyright string) string {
 	return copyright
 }
 
-func (v *generator_) extractAttribute(name string) mod.AttributeLike {
-	var attributeType mod.AbstractionLike
-	switch {
-	case !gra.Scanner().MatchToken(gra.UppercaseToken, name).IsEmpty():
-		// The attribute type is the (non-generic) abstract instance type.
-		attributeType = mod.Abstraction(name + "Like")
-	case !gra.Scanner().MatchToken(gra.LowercaseToken, name).IsEmpty():
-		// The attribute type is simply the Go intrinsic "string" type.
-		attributeType = mod.Abstraction("string")
-		v.tokens_.AddValue(name)
-	default:
-		var message = fmt.Sprintf(
-			"Found an invalid attribute name: %q",
-			name,
-		)
-		panic(message)
-	}
-	var attributeName = "Get" + v.makeUppercase(name)
-	var attribute = mod.Attribute(attributeName, attributeType)
-	return attribute
-}
-
 func (v *generator_) extractExpressions() string {
-	var expressions = `error_ = "x^"`
+	var expressions = "// Define the regular expression patterns for each type."
 	var iterator = v.regexps_.GetIterator()
 	for iterator.HasNext() {
 		var association = iterator.GetNext()
@@ -359,7 +349,7 @@ func (v *generator_) extractExpressions() string {
 }
 
 func (v *generator_) extractFoundCases() string {
-	var foundCases = "case v.foundToken(ErrorToken):"
+	var foundCases = "// Find the next token type."
 	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
@@ -367,6 +357,17 @@ func (v *generator_) extractFoundCases() string {
 		foundCases += "\n\t\tcase v.foundToken(" + tokenType + "):"
 	}
 	return foundCases
+}
+
+func (v *generator_) extractIgnoredCases() string {
+	var ignoreCases = "// Ignore the implicit token types."
+	var iterator = v.ignored_.GetIterator()
+	for iterator.HasNext() {
+		var tokenType = iterator.GetNext()
+		ignoreCases += "\n\tcase \"" + tokenType + "\":"
+		ignoreCases += "\n\t\treturn"
+	}
+	return ignoreCases
 }
 
 func (v *generator_) extractNotice(syntax ast.SyntaxLike) string {
@@ -401,6 +402,21 @@ func (v *generator_) extractParameters(
 	return parameters
 }
 
+func (v *generator_) extractSeparators() string {
+	var separators = `"(?:`
+	if !v.separators_.IsEmpty() {
+		var iterator = v.separators_.GetIterator()
+		var separator = iterator.GetNext()
+		separators += separator
+		for iterator.HasNext() {
+			separator = iterator.GetNext()
+			separators += "|" + separator
+		}
+	}
+	separators += `)"`
+	return separators
+}
+
 func (v *generator_) extractSyntaxName(syntax ast.SyntaxLike) string {
 	var rule = syntax.GetRules().GetIterator().GetNext()
 	var name = rule.GetUppercase()
@@ -408,7 +424,7 @@ func (v *generator_) extractSyntaxName(syntax ast.SyntaxLike) string {
 }
 
 func (v *generator_) extractTokenMatchers() string {
-	var tokenMatchers = `ErrorToken: reg.MustCompile("x^"),`
+	var tokenMatchers = "// Define pattern matchers for each type of token."
 	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
@@ -682,11 +698,13 @@ func (v *generator_) populateScannerTemplate(
 	var tokenNames = v.extractTokenNames()
 	var tokenMatchers = v.extractTokenMatchers()
 	var foundCases = v.extractFoundCases()
+	var ignoredCases = v.extractIgnoredCases()
 	var expressions = v.extractExpressions()
 	implementation = sts.ReplaceAll(template, "<Notice>", notice)
 	implementation = sts.ReplaceAll(implementation, "<TokenNames>", tokenNames)
 	implementation = sts.ReplaceAll(implementation, "<TokenMatchers>", tokenMatchers)
 	implementation = sts.ReplaceAll(implementation, "<FoundCases>", foundCases)
+	implementation = sts.ReplaceAll(implementation, "<IgnoredCases>", ignoredCases)
 	implementation = sts.ReplaceAll(implementation, "<Expressions>", expressions)
 	return implementation
 }
@@ -930,7 +948,7 @@ func (v *generator_) processIdentifier(
 	identifier ast.IdentifierLike,
 ) {
 	var name = identifier.GetAny().(string)
-	if !gra.Scanner().MatchToken(gra.LowercaseToken, name).IsEmpty() {
+	if gra.Scanner().MatchesType(name, gra.LowercaseToken) {
 		v.tokens_.AddValue(name)
 	}
 }
@@ -1036,15 +1054,31 @@ func (v *generator_) processPredicate(
 ) (
 	attribute mod.AttributeLike,
 ) {
+	var attributeType mod.AbstractionLike
 	var actual = predicate.GetAny().(string)
 	switch {
-	case !gra.Scanner().MatchToken(gra.LiteralToken, actual).IsEmpty():
-	case !gra.Scanner().MatchToken(gra.IntrinsicToken, actual).IsEmpty():
+	case gra.Scanner().MatchesType(actual, gra.LiteralToken):
+		// Add the escaped literal string to the set of separators.
+		var separator = actual[1 : len(actual)-1] // Remove the double quotes.
+		separator = v.escapeString(separator)
+		v.separators_.AddValue(separator)
+	case gra.Scanner().MatchesType(actual, gra.LowercaseToken):
+		// The attribute type is simply the Go intrinsic "string" type.
+		attributeType = mod.Abstraction("string")
+		v.tokens_.AddValue(actual)
+	case gra.Scanner().MatchesType(actual, gra.UppercaseToken):
+		// The attribute type is the (non-generic) abstract instance type.
+		attributeType = mod.Abstraction(actual + "Like")
 	default:
-		// We know it is a rule or expression name which corresponds to an attribute
-		// with a (non-generic) instance type, or a Go intrinsic "string" type
-		// respectively.
-		attribute = v.extractAttribute(actual)
+		var message = fmt.Sprintf(
+			"Found an invalid predicate type: %T",
+			actual,
+		)
+		panic(message)
+	}
+	if col.IsDefined(attributeType) {
+		var attributeName = "Get" + v.makeUppercase(actual)
+		attribute = mod.Attribute(attributeName, attributeType)
 	}
 	return attribute
 }
@@ -1082,15 +1116,15 @@ func (v *generator_) processString(
 ) {
 	var actual = string_.GetAny().(string)
 	switch {
-	case !gra.Scanner().MatchToken(gra.RuneToken, actual).IsEmpty():
+	case gra.Scanner().MatchesType(actual, gra.RuneToken):
 		var literal = actual[1:2] // Remove the single quotes.
 		regexp += v.escapeString(literal)
-	case !gra.Scanner().MatchToken(gra.LiteralToken, actual).IsEmpty():
+	case gra.Scanner().MatchesType(actual, gra.LiteralToken):
 		var literal = actual[1 : len(actual)-1] // Remove the double quotes.
 		regexp += v.escapeString(literal)
-	case !gra.Scanner().MatchToken(gra.LowercaseToken, actual).IsEmpty():
+	case gra.Scanner().MatchesType(actual, gra.LowercaseToken):
 		regexp += `(?:" + ` + actual + `_ + ")`
-	case !gra.Scanner().MatchToken(gra.IntrinsicToken, actual).IsEmpty():
+	case gra.Scanner().MatchesType(actual, gra.IntrinsicToken):
 		var intrinsic = sts.ToLower(actual)
 		if intrinsic == "any" {
 			v.greedy_ = false

@@ -40,16 +40,22 @@ type headerClass_ struct {
 
 // Constructors
 
-func (c *headerClass_) Make(comment string) HeaderLike {
+func (c *headerClass_) Make(
+	comment string,
+	newline string,
+) HeaderLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(comment):
 		panic("The comment attribute is required by this class.")
+	case col.IsUndefined(newline):
+		panic("The newline attribute is required by this class.")
 	default:
 		return &header_{
 			// Initialize instance attributes.
 			class_:   c,
 			comment_: comment,
+			newline_: newline,
 		}
 	}
 }
@@ -62,6 +68,7 @@ type header_ struct {
 	// Define instance attributes.
 	class_   HeaderClassLike
 	comment_ string
+	newline_ string
 }
 
 // Attributes
@@ -72,6 +79,10 @@ func (v *header_) GetClass() HeaderClassLike {
 
 func (v *header_) GetComment() string {
 	return v.comment_
+}
+
+func (v *header_) GetNewline() string {
+	return v.newline_
 }
 
 // Private

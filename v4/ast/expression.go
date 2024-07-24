@@ -14,6 +14,7 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -45,6 +46,7 @@ func (c *expressionClass_) Make(
 	lowercase string,
 	pattern PatternLike,
 	optionalNote string,
+	newlines abs.Sequential[string],
 ) ExpressionLike {
 	// Validate the arguments.
 	switch {
@@ -52,6 +54,8 @@ func (c *expressionClass_) Make(
 		panic("The lowercase attribute is required by this class.")
 	case col.IsUndefined(pattern):
 		panic("The pattern attribute is required by this class.")
+	case col.IsUndefined(newlines):
+		panic("The newlines attribute is required by this class.")
 	default:
 		return &expression_{
 			// Initialize instance attributes.
@@ -60,6 +64,7 @@ func (c *expressionClass_) Make(
 			lowercase_:       lowercase,
 			pattern_:         pattern,
 			optionalNote_:    optionalNote,
+			newlines_:        newlines,
 		}
 	}
 }
@@ -75,6 +80,7 @@ type expression_ struct {
 	lowercase_       string
 	pattern_         PatternLike
 	optionalNote_    string
+	newlines_        abs.Sequential[string]
 }
 
 // Attributes
@@ -97,6 +103,10 @@ func (v *expression_) GetPattern() PatternLike {
 
 func (v *expression_) GetOptionalNote() string {
 	return v.optionalNote_
+}
+
+func (v *expression_) GetNewlines() abs.Sequential[string] {
+	return v.newlines_
 }
 
 // Private

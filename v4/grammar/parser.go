@@ -154,7 +154,8 @@ func (v *parser_) getNextToken() TokenLike {
 	// Read a new token from the token stream.
 	var token, ok = v.tokens_.RemoveHead() // This will wait for a token.
 	if !ok {
-		panic("The token channel terminated without an EOF token.")
+		// The token channel has been closed.
+		return nil
 	}
 
 	// Check for an error token.
@@ -171,8 +172,8 @@ func (v *parser_) parseAlternative() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the "|" delimiter.
-	_, token, ok = v.parseToken(DelimiterToken, "|")
+	// Attempt to parse the "|" separator.
+	_, token, ok = v.parseToken(SeparatorToken, "|")
 	if !ok {
 		// This is not the alternative.
 		return alternative, token, false
@@ -282,7 +283,7 @@ func (v *parser_) parseConstrained() (
 	ok bool,
 ) {
 	// Attempt to parse the opening bracket for the constrained.
-	_, token, ok = v.parseToken(DelimiterToken, "{")
+	_, token, ok = v.parseToken(SeparatorToken, "{")
 	if !ok {
 		// This is not the constrained.
 		return constrained, token, false
@@ -305,7 +306,7 @@ func (v *parser_) parseConstrained() (
 	limit, _, _ = v.parseLimit()
 
 	// Attempt to parse the closing bracket for the constrained.
-	_, token, ok = v.parseToken(DelimiterToken, "}")
+	_, token, ok = v.parseToken(SeparatorToken, "}")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("}",
@@ -404,8 +405,8 @@ func (v *parser_) parseExpression() (
 		return expression, token, false
 	}
 
-	// Attempt to parse the separator delimiter.
-	_, token, ok = v.parseToken(DelimiterToken, ":")
+	// Attempt to parse the colon separator.
+	_, token, ok = v.parseToken(SeparatorToken, ":")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax(":",
@@ -431,22 +432,25 @@ func (v *parser_) parseExpression() (
 	var note string
 	note, _, _ = v.parseToken(NoteToken, "")
 
-	// Attempt to parse one or more end-of-line characters.
-	_, token, ok = v.parseToken(EolToken, "")
+	// Attempt to parse one or more newline characters.
+	var newline string
+	newline, token, ok = v.parseToken(NewlineToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("EOL",
+		message += v.generateSyntax("newline",
 			"Expression",
 			"Pattern",
 		)
 		panic(message)
 	}
+	var newlines = col.List[string]()
 	for ok {
-		_, token, ok = v.parseToken(EolToken, "")
+		newlines.AppendValue(newline)
+		newline, token, ok = v.parseToken(NewlineToken, "")
 	}
 
 	// Found the expression.
-	expression = ast.Expression().Make(comment, lowercase, pattern, note)
+	expression = ast.Expression().Make(comment, lowercase, pattern, note, newlines)
 	return expression, token, true
 }
 
@@ -455,8 +459,8 @@ func (v *parser_) parseExtent() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the dot-dot delimiter.
-	_, token, ok = v.parseToken(DelimiterToken, "..")
+	// Attempt to parse the dot-dot separator.
+	_, token, ok = v.parseToken(SeparatorToken, "..")
 	if !ok {
 		// This is not the extent rune.
 		return extent, token, false
@@ -511,7 +515,7 @@ func (v *parser_) parseFiltered() (
 	negation, negationToken, _ = v.parseToken(NegationToken, "")
 
 	// Attempt to parse the opening bracket for the filtered element.
-	_, token, ok = v.parseToken(DelimiterToken, "[")
+	_, token, ok = v.parseToken(SeparatorToken, "[")
 	if !ok {
 		// This is not the filtered element, put back any negation token.
 		if col.IsDefined(negation) {
@@ -534,7 +538,7 @@ func (v *parser_) parseFiltered() (
 	}
 
 	// Attempt to parse the closing bracket for the filtered element.
-	_, token, ok = v.parseToken(DelimiterToken, "]")
+	_, token, ok = v.parseToken(SeparatorToken, "]")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("]",
@@ -554,8 +558,8 @@ func (v *parser_) parseGrouped() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the opening delimiter for the grouped.
-	_, token, ok = v.parseToken(DelimiterToken, "(")
+	// Attempt to parse the opening separator for the grouped pattern.
+	_, token, ok = v.parseToken(SeparatorToken, "(")
 	if !ok {
 		// This is not the grouped.
 		return grouped, token, false
@@ -573,8 +577,8 @@ func (v *parser_) parseGrouped() (
 		panic(message)
 	}
 
-	// Attempt to parse the closing delimiter for the grouped.
-	_, token, ok = v.parseToken(DelimiterToken, ")")
+	// Attempt to parse the closing separator for the grouped pattern.
+	_, token, ok = v.parseToken(SeparatorToken, ")")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax(")",
@@ -603,8 +607,9 @@ func (v *parser_) parseHeader() (
 		return header, commentToken, false
 	}
 
-	// Attempt to parse the end-of-line character.
-	_, token, ok = v.parseToken(EolToken, "")
+	// Attempt to parse the newline character.
+	var newline string
+	newline, token, ok = v.parseToken(NewlineToken, "")
 	if !ok {
 		// This is not the header, put back the comment token.
 		v.putBack(commentToken)
@@ -612,7 +617,7 @@ func (v *parser_) parseHeader() (
 	}
 
 	// Found the header.
-	header = ast.Header().Make(comment)
+	header = ast.Header().Make(comment, newline)
 	return header, token, true
 }
 
@@ -673,20 +678,21 @@ func (v *parser_) parseLine() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the end-of-line character.
-	var eolToken TokenLike
-	_, eolToken, ok = v.parseToken(EolToken, "")
+	// Attempt to parse the newline character.
+	var newline string
+	var newlineToken TokenLike
+	newline, newlineToken, ok = v.parseToken(NewlineToken, "")
 	if !ok {
 		// This is not the line.
-		return line, eolToken, false
+		return line, newlineToken, false
 	}
 
 	// Attempt to parse the identifier.
 	var identifier ast.IdentifierLike
 	identifier, token, ok = v.parseIdentifier()
 	if !ok {
-		// This is not the line, put back the end-of-line token.
-		v.putBack(eolToken)
+		// This is not the line, put back the newline token.
+		v.putBack(newlineToken)
 		return line, token, false
 	}
 
@@ -695,7 +701,7 @@ func (v *parser_) parseLine() (
 	note, token, _ = v.parseToken(NoteToken, "")
 
 	// Found the line.
-	line = ast.Line().Make(identifier, note)
+	line = ast.Line().Make(newline, identifier, note)
 	return line, token, true
 }
 
@@ -704,8 +710,8 @@ func (v *parser_) parseLimit() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the dot-dot delimiter.
-	_, token, ok = v.parseToken(DelimiterToken, "..")
+	// Attempt to parse the dot-dot separator.
+	_, token, ok = v.parseToken(SeparatorToken, "..")
 	if !ok {
 		// This is not the limit number.
 		return limit, token, false
@@ -859,8 +865,8 @@ func (v *parser_) parseRule() (
 		return rule, token, false
 	}
 
-	// Attempt to parse the separator delimiter.
-	_, token, ok = v.parseToken(DelimiterToken, ":")
+	// Attempt to parse the colon separator.
+	_, token, ok = v.parseToken(SeparatorToken, ":")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax(":",
@@ -882,22 +888,25 @@ func (v *parser_) parseRule() (
 		panic(message)
 	}
 
-	// Attempt to parse one or more end-of-line characters.
-	_, token, ok = v.parseToken(EolToken, "")
+	// Attempt to parse one or more newline characters.
+	var newline string
+	newline, token, ok = v.parseToken(NewlineToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("EOL",
+		message += v.generateSyntax("newline",
 			"Rule",
 			"Definition",
 		)
 		panic(message)
 	}
+	var newlines = col.List[string]()
 	for ok {
-		_, token, ok = v.parseToken(EolToken, "")
+		newlines.AppendValue(newline)
+		newline, token, ok = v.parseToken(NewlineToken, "")
 	}
 
 	// Found the rule.
-	rule = ast.Rule().Make(comment, uppercase, definition)
+	rule = ast.Rule().Make(comment, uppercase, definition, newlines)
 	return rule, token, true
 }
 
@@ -1002,24 +1011,6 @@ func (v *parser_) parseSyntax() (
 		expression, _, ok = v.parseExpression()
 	}
 
-	// Attempt to parse optional end-of-line characters.
-	for ok {
-		_, _, ok = v.parseToken(EolToken, "")
-	}
-
-	// Attempt to parse the end-of-file marker.
-	_, token, ok = v.parseToken(EofToken, "")
-	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("EOF",
-			"Syntax",
-			"Header",
-			"Rule",
-			"Expression",
-		)
-		panic(message)
-	}
-
 	// Found the syntax.
 	syntax = ast.Syntax().Make(headers, rules, expressions)
 	return syntax, token, true
@@ -1032,6 +1023,10 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 ) {
 	// Attempt to parse the specific token.
 	token = v.getNextToken()
+	if token == nil {
+		// We are at the end-of-file marker.
+		return value, token, false
+	}
 	if token.GetType() == expectedType {
 		value = token.GetValue()
 		if col.IsUndefined(expectedValue) || value == expectedValue {

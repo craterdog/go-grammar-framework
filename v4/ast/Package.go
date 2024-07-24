@@ -123,6 +123,7 @@ type ExpressionClassLike interface {
 		lowercase string,
 		pattern PatternLike,
 		optionalNote string,
+		newlines abs.Sequential[string],
 	) ExpressionLike
 }
 
@@ -179,7 +180,10 @@ concrete header-like class.
 */
 type HeaderClassLike interface {
 	// Constructors
-	Make(comment string) HeaderLike
+	Make(
+		comment string,
+		newline string,
+	) HeaderLike
 }
 
 /*
@@ -223,6 +227,7 @@ concrete line-like class.
 type LineClassLike interface {
 	// Constructors
 	Make(
+		newline string,
 		identifier IdentifierLike,
 		optionalNote string,
 	) LineLike
@@ -285,6 +290,7 @@ type RuleClassLike interface {
 		optionalComment string,
 		uppercase string,
 		definition DefinitionLike,
+		newlines abs.Sequential[string],
 	) RuleLike
 }
 
@@ -405,6 +411,7 @@ type ExpressionLike interface {
 	GetLowercase() string
 	GetPattern() PatternLike
 	GetOptionalNote() string
+	GetNewlines() abs.Sequential[string]
 }
 
 /*
@@ -462,6 +469,7 @@ type HeaderLike interface {
 	// Attributes
 	GetClass() HeaderClassLike
 	GetComment() string
+	GetNewline() string
 }
 
 /*
@@ -506,6 +514,7 @@ instance of a concrete line-like class.
 type LineLike interface {
 	// Attributes
 	GetClass() LineClassLike
+	GetNewline() string
 	GetIdentifier() IdentifierLike
 	GetOptionalNote() string
 }
@@ -567,6 +576,7 @@ type RuleLike interface {
 	GetOptionalComment() string
 	GetUppercase() string
 	GetDefinition() DefinitionLike
+	GetNewlines() abs.Sequential[string]
 }
 
 /*
