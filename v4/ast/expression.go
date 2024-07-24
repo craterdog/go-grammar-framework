@@ -44,6 +44,7 @@ type expressionClass_ struct {
 func (c *expressionClass_) Make(
 	optionalComment string,
 	lowercase string,
+	separator string,
 	pattern PatternLike,
 	optionalNote string,
 	newlines abs.Sequential[string],
@@ -52,6 +53,8 @@ func (c *expressionClass_) Make(
 	switch {
 	case col.IsUndefined(lowercase):
 		panic("The lowercase attribute is required by this class.")
+	case col.IsUndefined(separator):
+		panic("The separator attribute is required by this class.")
 	case col.IsUndefined(pattern):
 		panic("The pattern attribute is required by this class.")
 	case col.IsUndefined(newlines):
@@ -62,6 +65,7 @@ func (c *expressionClass_) Make(
 			class_:           c,
 			optionalComment_: optionalComment,
 			lowercase_:       lowercase,
+			separator_:       separator,
 			pattern_:         pattern,
 			optionalNote_:    optionalNote,
 			newlines_:        newlines,
@@ -78,6 +82,7 @@ type expression_ struct {
 	class_           ExpressionClassLike
 	optionalComment_ string
 	lowercase_       string
+	separator_       string
 	pattern_         PatternLike
 	optionalNote_    string
 	newlines_        abs.Sequential[string]
@@ -95,6 +100,10 @@ func (v *expression_) GetOptionalComment() string {
 
 func (v *expression_) GetLowercase() string {
 	return v.lowercase_
+}
+
+func (v *expression_) GetSeparator() string {
+	return v.separator_
 }
 
 func (v *expression_) GetPattern() PatternLike {

@@ -19,6 +19,7 @@ import (
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	mod "github.com/craterdog/go-model-framework/v4"
+	stc "strconv"
 	sts "strings"
 	tim "time"
 	uni "unicode"
@@ -259,41 +260,27 @@ func (v *generator_) augmentAstModel(model mod.ModelLike) mod.ModelLike {
 func (v *generator_) consolidateAttributes(
 	attributes abs.ListLike[mod.AttributeLike],
 ) {
-	// Compare each attribute and make lists out of duplicates.
+	// Compare each attribute type and rename duplicates.
 	for i := 1; i <= attributes.GetSize(); i++ {
 		var attribute = attributes.GetValue(i)
 		var first = attribute.GetName()
-		for j := i + 1; j <= attributes.GetSize(); {
+		for j := i + 1; j <= attributes.GetSize(); j++ {
+			var count = 1
 			var second = attributes.GetValue(j).GetName()
-			switch {
-			case first == second:
-				attribute = attributes.GetValue(i)
-				attribute = v.pluralizeAttribute(attribute)
-				attributes.SetValue(i, attribute)
-				attributes.RemoveValue(j)
-			case first == second[:len(second)-1] && sts.HasSuffix(second, "s"):
-				attribute = attributes.GetValue(j)
-				attributes.SetValue(i, attribute)
-				attributes.RemoveValue(j)
-			case first == second[:len(second)-2] && sts.HasSuffix(second, "es"):
-				attribute = attributes.GetValue(j)
-				attributes.SetValue(i, attribute)
-				attributes.RemoveValue(j)
-			case second == first[:len(first)-1] && sts.HasSuffix(first, "s"):
-				attributes.RemoveValue(j)
-			case second == first[:len(first)-2] && sts.HasSuffix(first, "es"):
-				attributes.RemoveValue(j)
-			default:
-				// We only increment the index j if we didn't remove anything.
-				j++
+			if first == second {
+				count++
+				var attributeName = second + stc.Itoa(count)
+				var attributeType = attribute.GetOptionalAbstraction()
+				var newAttribute = mod.Attribute(attributeName, attributeType)
+				attributes.SetValue(j, newAttribute)
 			}
 		}
 	}
 }
 
-func (v *generator_) escapeString(string_ string) string {
+func (v *generator_) escapeText(text string) string {
 	var escaped string
-	for _, character := range string_ {
+	for _, character := range text {
 		switch character {
 		case '"':
 			escaped += `\`
@@ -748,12 +735,12 @@ func (v *generator_) processBounded(
 ) (
 	regexp string,
 ) {
-	var rune_ = bounded.GetRune()
-	rune_ = v.processRune(rune_)
-	if rune_ == `-` {
-		rune_ = `\-`
+	var glyph = bounded.GetGlyph()
+	glyph = v.processGlyph(glyph)
+	if glyph == `-` {
+		glyph = `\-`
 	}
-	regexp += rune_
+	regexp += glyph
 	var extent = bounded.GetOptionalExtent()
 	if col.IsDefined(extent) {
 		regexp += v.processExtent(extent)
@@ -856,8 +843,8 @@ func (v *generator_) processElement(
 		regexp += v.processGrouped(actual)
 	case ast.FilteredLike:
 		regexp += v.processFiltered(actual)
-	case ast.StringLike:
-		regexp += v.processString(actual)
+	case ast.TextLike:
+		regexp += v.processText(actual)
 	default:
 		var message = fmt.Sprintf(
 			"Found an invalid element type: %T",
@@ -885,8 +872,8 @@ func (v *generator_) processExtent(
 	regexp string,
 ) {
 	regexp += "-"
-	var rune_ = extent.GetRune()
-	regexp += v.processRune(rune_)
+	var glyph = extent.GetGlyph()
+	regexp += v.processGlyph(glyph)
 	return regexp
 }
 
@@ -1054,20 +1041,25 @@ func (v *generator_) processPredicate(
 ) (
 	attribute mod.AttributeLike,
 ) {
+	var attributeName string
 	var attributeType mod.AbstractionLike
 	var actual = predicate.GetAny().(string)
 	switch {
 	case gra.Scanner().MatchesType(actual, gra.LiteralToken):
 		// Add the escaped literal string to the set of separators.
+		attributeName = "GetSeparator"
+		attributeType = mod.Abstraction("string")
 		var separator = actual[1 : len(actual)-1] // Remove the double quotes.
-		separator = v.escapeString(separator)
+		separator = v.escapeText(separator)
 		v.separators_.AddValue(separator)
 	case gra.Scanner().MatchesType(actual, gra.LowercaseToken):
 		// The attribute type is simply the Go intrinsic "string" type.
+		attributeName = "Get" + v.makeUppercase(actual)
 		attributeType = mod.Abstraction("string")
 		v.tokens_.AddValue(actual)
 	case gra.Scanner().MatchesType(actual, gra.UppercaseToken):
 		// The attribute type is the (non-generic) abstract instance type.
+		attributeName = "Get" + v.makeUppercase(actual)
 		attributeType = mod.Abstraction(actual + "Like")
 	default:
 		var message = fmt.Sprintf(
@@ -1076,10 +1068,7 @@ func (v *generator_) processPredicate(
 		)
 		panic(message)
 	}
-	if col.IsDefined(attributeType) {
-		var attributeName = "Get" + v.makeUppercase(actual)
-		attribute = mod.Attribute(attributeName, attributeType)
-	}
+	attribute = mod.Attribute(attributeName, attributeType)
 	return attribute
 }
 
@@ -1098,30 +1087,30 @@ func (v *generator_) processRule(rule ast.RuleLike) {
 	v.instances_.SetValue(name, instance)
 }
 
-func (v *generator_) processRune(
-	rune_ string,
+func (v *generator_) processGlyph(
+	glyph string,
 ) (
 	regexp string,
 ) {
-	var character = rune_[1:2] //Remove the single quotes.
-	character = v.escapeString(character)
+	var character = glyph[1:2] //Remove the single quotes.
+	character = v.escapeText(character)
 	regexp += character
 	return regexp
 }
 
-func (v *generator_) processString(
-	string_ ast.StringLike,
+func (v *generator_) processText(
+	text ast.TextLike,
 ) (
 	regexp string,
 ) {
-	var actual = string_.GetAny().(string)
+	var actual = text.GetAny().(string)
 	switch {
-	case gra.Scanner().MatchesType(actual, gra.RuneToken):
+	case gra.Scanner().MatchesType(actual, gra.GlyphToken):
 		var literal = actual[1:2] // Remove the single quotes.
-		regexp += v.escapeString(literal)
+		regexp += v.escapeText(literal)
 	case gra.Scanner().MatchesType(actual, gra.LiteralToken):
 		var literal = actual[1 : len(actual)-1] // Remove the double quotes.
-		regexp += v.escapeString(literal)
+		regexp += v.escapeText(literal)
 	case gra.Scanner().MatchesType(actual, gra.LowercaseToken):
 		regexp += `(?:" + ` + actual + `_ + ")`
 	case gra.Scanner().MatchesType(actual, gra.IntrinsicToken):

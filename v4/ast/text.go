@@ -20,33 +20,33 @@ import (
 
 // Reference
 
-var stringClass = &stringClass_{
+var textClass = &textClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func String() StringClassLike {
-	return stringClass
+func Text() TextClassLike {
+	return textClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type stringClass_ struct {
+type textClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *stringClass_) Make(any_ any) StringLike {
+func (c *textClass_) Make(any_ any) TextLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(any_):
 		panic("The any attribute is required by this class.")
 	default:
-		return &string_{
+		return &text_{
 			// Initialize instance attributes.
 			class_: c,
 			any_:   any_,
@@ -58,19 +58,19 @@ func (c *stringClass_) Make(any_ any) StringLike {
 
 // Target
 
-type string_ struct {
+type text_ struct {
 	// Define instance attributes.
-	class_ StringClassLike
+	class_ TextClassLike
 	any_   any
 }
 
 // Attributes
 
-func (v *string_) GetClass() StringClassLike {
+func (v *text_) GetClass() TextClassLike {
 	return v.class_
 }
 
-func (v *string_) GetAny() any {
+func (v *text_) GetAny() any {
 	return v.any_
 }
 

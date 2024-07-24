@@ -44,6 +44,7 @@ type ruleClass_ struct {
 func (c *ruleClass_) Make(
 	optionalComment string,
 	uppercase string,
+	separator string,
 	definition DefinitionLike,
 	newlines abs.Sequential[string],
 ) RuleLike {
@@ -51,6 +52,8 @@ func (c *ruleClass_) Make(
 	switch {
 	case col.IsUndefined(uppercase):
 		panic("The uppercase attribute is required by this class.")
+	case col.IsUndefined(separator):
+		panic("The separator attribute is required by this class.")
 	case col.IsUndefined(definition):
 		panic("The definition attribute is required by this class.")
 	case col.IsUndefined(newlines):
@@ -61,6 +64,7 @@ func (c *ruleClass_) Make(
 			class_:           c,
 			optionalComment_: optionalComment,
 			uppercase_:       uppercase,
+			separator_:       separator,
 			definition_:      definition,
 			newlines_:        newlines,
 		}
@@ -76,6 +80,7 @@ type rule_ struct {
 	class_           RuleClassLike
 	optionalComment_ string
 	uppercase_       string
+	separator_       string
 	definition_      DefinitionLike
 	newlines_        abs.Sequential[string]
 }
@@ -92,6 +97,10 @@ func (v *rule_) GetOptionalComment() string {
 
 func (v *rule_) GetUppercase() string {
 	return v.uppercase_
+}
+
+func (v *rule_) GetSeparator() string {
+	return v.separator_
 }
 
 func (v *rule_) GetDefinition() DefinitionLike {

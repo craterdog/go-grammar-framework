@@ -12,6 +12,10 @@
 
 package ast
 
+import (
+	col "github.com/craterdog/go-collection-framework/v4"
+)
+
 // CLASS ACCESS
 
 // Reference
@@ -36,13 +40,19 @@ type limitClass_ struct {
 
 // Constructors
 
-func (c *limitClass_) Make(optionalNumber string) LimitLike {
+func (c *limitClass_) Make(
+	separator string,
+	optionalNumber string,
+) LimitLike {
 	// Validate the arguments.
 	switch {
+	case col.IsUndefined(separator):
+		panic("The separator attribute is required by this class.")
 	default:
 		return &limit_{
 			// Initialize instance attributes.
 			class_:          c,
+			separator_:      separator,
 			optionalNumber_: optionalNumber,
 		}
 	}
@@ -55,6 +65,7 @@ func (c *limitClass_) Make(optionalNumber string) LimitLike {
 type limit_ struct {
 	// Define instance attributes.
 	class_          LimitClassLike
+	separator_      string
 	optionalNumber_ string
 }
 
@@ -62,6 +73,10 @@ type limit_ struct {
 
 func (v *limit_) GetClass() LimitClassLike {
 	return v.class_
+}
+
+func (v *limit_) GetSeparator() string {
+	return v.separator_
 }
 
 func (v *limit_) GetOptionalNumber() string {

@@ -172,8 +172,9 @@ func (v *parser_) parseAlternative() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the "|" separator.
-	_, token, ok = v.parseToken(SeparatorToken, "|")
+	// Attempt to parse the bar separator.
+	var bar string
+	bar, token, ok = v.parseToken(SeparatorToken, "|")
 	if !ok {
 		// This is not the alternative.
 		return alternative, token, false
@@ -197,7 +198,7 @@ func (v *parser_) parseAlternative() (
 	}
 
 	// Found the alternative.
-	alternative = ast.Alternative().Make(parts)
+	alternative = ast.Alternative().Make(bar, parts)
 	return alternative, token, true
 }
 
@@ -206,20 +207,20 @@ func (v *parser_) parseBounded() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the initial rune.
-	var rune_ string
-	rune_, token, ok = v.parseToken(RuneToken, "")
+	// Attempt to parse the initial glyph.
+	var glyph string
+	glyph, token, ok = v.parseToken(GlyphToken, "")
 	if !ok {
 		// This is not the bounded.
 		return bounded, token, false
 	}
 
-	// Attempt to parse the optional extent rune.
+	// Attempt to parse the optional extent glyph.
 	var extent ast.ExtentLike
 	extent, token, _ = v.parseExtent()
 
 	// Found the bounded.
-	bounded = ast.Bounded().Make(rune_, extent)
+	bounded = ast.Bounded().Make(glyph, extent)
 	return bounded, token, true
 }
 
@@ -283,7 +284,8 @@ func (v *parser_) parseConstrained() (
 	ok bool,
 ) {
 	// Attempt to parse the opening bracket for the constrained.
-	_, token, ok = v.parseToken(SeparatorToken, "{")
+	var left string
+	left, token, ok = v.parseToken(SeparatorToken, "{")
 	if !ok {
 		// This is not the constrained.
 		return constrained, token, false
@@ -306,7 +308,8 @@ func (v *parser_) parseConstrained() (
 	limit, _, _ = v.parseLimit()
 
 	// Attempt to parse the closing bracket for the constrained.
-	_, token, ok = v.parseToken(SeparatorToken, "}")
+	var right string
+	right, token, ok = v.parseToken(SeparatorToken, "}")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("}",
@@ -317,7 +320,7 @@ func (v *parser_) parseConstrained() (
 	}
 
 	// Found the constrained.
-	constrained = ast.Constrained().Make(number, limit)
+	constrained = ast.Constrained().Make(left, number, limit, right)
 	return constrained, token, true
 }
 
@@ -372,11 +375,11 @@ func (v *parser_) parseElement() (
 	}
 
 	// Attempt to parse the string element.
-	var string_ ast.StringLike
-	string_, token, ok = v.parseString()
+	var text ast.TextLike
+	text, token, ok = v.parseText()
 	if ok {
 		// Found the string element.
-		element = ast.Element().Make(string_)
+		element = ast.Element().Make(text)
 		return element, token, true
 	}
 
@@ -406,7 +409,8 @@ func (v *parser_) parseExpression() (
 	}
 
 	// Attempt to parse the colon separator.
-	_, token, ok = v.parseToken(SeparatorToken, ":")
+	var colon string
+	colon, token, ok = v.parseToken(SeparatorToken, ":")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax(":",
@@ -450,7 +454,7 @@ func (v *parser_) parseExpression() (
 	}
 
 	// Found the expression.
-	expression = ast.Expression().Make(comment, lowercase, pattern, note, newlines)
+	expression = ast.Expression().Make(comment, lowercase, colon, pattern, note, newlines)
 	return expression, token, true
 }
 
@@ -460,25 +464,26 @@ func (v *parser_) parseExtent() (
 	ok bool,
 ) {
 	// Attempt to parse the dot-dot separator.
-	_, token, ok = v.parseToken(SeparatorToken, "..")
+	var dotdot string
+	dotdot, token, ok = v.parseToken(SeparatorToken, "..")
 	if !ok {
-		// This is not the extent rune.
+		// This is not the extent glyph.
 		return extent, token, false
 	}
 
-	// Attempt to parse the extent rune.
-	var rune_ string
-	rune_, token, ok = v.parseToken(RuneToken, "")
+	// Attempt to parse the extent glyph.
+	var glyph string
+	glyph, token, ok = v.parseToken(GlyphToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("rune",
+		message += v.generateSyntax("glyph",
 			"Extent",
 		)
 		panic(message)
 	}
 
-	// Found the extent rune.
-	extent = ast.Extent().Make(rune_)
+	// Found the extent glyph.
+	extent = ast.Extent().Make(dotdot, glyph)
 	return extent, token, true
 }
 
@@ -515,7 +520,8 @@ func (v *parser_) parseFiltered() (
 	negation, negationToken, _ = v.parseToken(NegationToken, "")
 
 	// Attempt to parse the opening bracket for the filtered element.
-	_, token, ok = v.parseToken(SeparatorToken, "[")
+	var left string
+	left, token, ok = v.parseToken(SeparatorToken, "[")
 	if !ok {
 		// This is not the filtered element, put back any negation token.
 		if col.IsDefined(negation) {
@@ -538,7 +544,8 @@ func (v *parser_) parseFiltered() (
 	}
 
 	// Attempt to parse the closing bracket for the filtered element.
-	_, token, ok = v.parseToken(SeparatorToken, "]")
+	var right string
+	right, token, ok = v.parseToken(SeparatorToken, "]")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("]",
@@ -549,7 +556,7 @@ func (v *parser_) parseFiltered() (
 	}
 
 	// Found the filtered element.
-	filtered = ast.Filtered().Make(negation, characters)
+	filtered = ast.Filtered().Make(negation, left, characters, right)
 	return filtered, token, true
 }
 
@@ -558,8 +565,9 @@ func (v *parser_) parseGrouped() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the opening separator for the grouped pattern.
-	_, token, ok = v.parseToken(SeparatorToken, "(")
+	// Attempt to parse the opening bracket for the grouped pattern.
+	var left string
+	left, token, ok = v.parseToken(SeparatorToken, "(")
 	if !ok {
 		// This is not the grouped.
 		return grouped, token, false
@@ -577,8 +585,9 @@ func (v *parser_) parseGrouped() (
 		panic(message)
 	}
 
-	// Attempt to parse the closing separator for the grouped pattern.
-	_, token, ok = v.parseToken(SeparatorToken, ")")
+	// Attempt to parse the closing bracket for the grouped pattern.
+	var right string
+	right, token, ok = v.parseToken(SeparatorToken, ")")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax(")",
@@ -589,7 +598,7 @@ func (v *parser_) parseGrouped() (
 	}
 
 	// Found the grouped.
-	grouped = ast.Grouped().Make(pattern)
+	grouped = ast.Grouped().Make(left, pattern, right)
 	return grouped, token, true
 }
 
@@ -711,7 +720,8 @@ func (v *parser_) parseLimit() (
 	ok bool,
 ) {
 	// Attempt to parse the dot-dot separator.
-	_, token, ok = v.parseToken(SeparatorToken, "..")
+	var dotdot string
+	dotdot, token, ok = v.parseToken(SeparatorToken, "..")
 	if !ok {
 		// This is not the limit number.
 		return limit, token, false
@@ -722,7 +732,7 @@ func (v *parser_) parseLimit() (
 	number, token, _ = v.parseToken(NumberToken, "")
 
 	// Found the limit number.
-	limit = ast.Limit().Make(number)
+	limit = ast.Limit().Make(dotdot, number)
 	return limit, token, true
 }
 
@@ -858,7 +868,8 @@ func (v *parser_) parseRule() (
 	}
 
 	// Attempt to parse the colon separator.
-	_, token, ok = v.parseToken(SeparatorToken, ":")
+	var colon string
+	colon, token, ok = v.parseToken(SeparatorToken, ":")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax(":",
@@ -898,53 +909,53 @@ func (v *parser_) parseRule() (
 	}
 
 	// Found the rule.
-	rule = ast.Rule().Make(comment, uppercase, definition, newlines)
+	rule = ast.Rule().Make(comment, uppercase, colon, definition, newlines)
 	return rule, token, true
 }
 
-func (v *parser_) parseString() (
-	string_ ast.StringLike,
+func (v *parser_) parseText() (
+	text ast.TextLike,
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the rune string.
-	var rune_ string
-	rune_, token, ok = v.parseToken(RuneToken, "")
+	// Attempt to parse the glyph text.
+	var glyph string
+	glyph, token, ok = v.parseToken(GlyphToken, "")
 	if ok {
-		// Found the rune string.
-		string_ = ast.String().Make(rune_)
-		return string_, token, true
+		// Found the glyph text.
+		text = ast.Text().Make(glyph)
+		return text, token, true
 	}
 
-	// Attempt to parse the literal string.
+	// Attempt to parse the literal text.
 	var literal string
 	literal, token, ok = v.parseToken(LiteralToken, "")
 	if ok {
-		// Found the literal string.
-		string_ = ast.String().Make(literal)
-		return string_, token, true
+		// Found the literal text.
+		text = ast.Text().Make(literal)
+		return text, token, true
 	}
 
-	// Attempt to parse the lowercase string.
+	// Attempt to parse the lowercase text.
 	var lowercase string
 	lowercase, token, ok = v.parseToken(LowercaseToken, "")
 	if ok {
-		// Found the lowercase string.
-		string_ = ast.String().Make(lowercase)
-		return string_, token, true
+		// Found the lowercase text.
+		text = ast.Text().Make(lowercase)
+		return text, token, true
 	}
 
-	// Attempt to parse the intrinsic string.
+	// Attempt to parse the intrinsic text.
 	var intrinsic string
 	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
 	if ok {
-		// Found the intrinsic string.
-		string_ = ast.String().Make(intrinsic)
-		return string_, token, true
+		// Found the intrinsic text.
+		text = ast.Text().Make(intrinsic)
+		return text, token, true
 	}
 
-	// This is not the string.
-	return string_, token, false
+	// This is not the text.
+	return text, token, false
 }
 
 func (v *parser_) parseSyntax() (
@@ -1066,17 +1077,17 @@ var syntax = map[string]string{
 	"Element": `
     Grouped
     Filtered
-    String`,
+    Text`,
 	"Grouped":  `"(" Pattern ")"`,
 	"Filtered": `negation? "[" Character+ "]"`,
-	"String": `
-    rune
+	"Text": `
+    glyph
     literal
     lowercase
     intrinsic`,
 	"Character": `
     Bounded
     intrinsic`,
-	"Bounded": `rune Extent?  ! A bounded range of runes is inclusive.`,
-	"Extent":  `".." rune`,
+	"Bounded": `glyph Extent?  ! A bounded range of glyph is inclusive.`,
+	"Extent":  `".." glyph`,
 }

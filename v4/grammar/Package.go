@@ -49,6 +49,7 @@ type TokenType uint8
 const (
 	ErrorToken TokenType = iota
 	CommentToken
+	GlyphToken
 	IntrinsicToken
 	LiteralToken
 	LowercaseToken
@@ -57,7 +58,6 @@ const (
 	NoteToken
 	NumberToken
 	QuantifiedToken
-	RuneToken
 	SeparatorToken
 	SpaceToken
 	UppercaseToken

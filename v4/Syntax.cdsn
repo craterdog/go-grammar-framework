@@ -39,7 +39,7 @@ pattern declarations:
 
 The negation "~" prefix within a regular expression pattern may only be applied
 to a bounded range of possible intrinsic character types or printable unicode
-characters called runes.
+characters called glyphs.
 <!
 
 !>
@@ -100,14 +100,14 @@ Alternative: "|" Part+
 Element:
     Grouped
     Filtered
-    String
+    Text
 
 Grouped: "(" Pattern ")"
 
 Filtered: negation? "[" Character+ "]"
 
-String:
-    rune
+Text:
+    glyph
     literal
     lowercase
     intrinsic
@@ -116,9 +116,9 @@ Character:
     Bounded
     intrinsic
 
-Bounded: rune Extent?  ! A bounded range of runes is inclusive.
+Bounded: glyph Extent?  ! A bounded range of glyphs is inclusive.
 
-Extent: ".." rune
+Extent: ".." glyph
 
 !>
 REGULAR EXPRESSION PATTERNS
@@ -138,6 +138,8 @@ comment: "!>" EOL (ANY | EOL)* EOL "<!" EOL  ! Chooses the shortest possible mat
 
 escape: '\' (unicode | ['a' 'b' 'f' 'n' 'r' 't' 'v' '"' '\'])
 
+glyph: "'" ~[CONTROL] "'"  ! Any printable unicode character.
+
 intrinsic: "ANY" | "CONTROL" | "DIGIT" | "EOL" | "LOWER" | "UPPER"
 
 literal: '"' (escape | ~['"' CONTROL])+ '"'
@@ -153,8 +155,6 @@ note: "! " ~[CONTROL]*
 number: DIGIT+
 
 quantified: "?" | "*" | "+"
-
-rune: "'" ~[CONTROL] "'"  ! Any printable unicode character.
 
 unicode: 'x' base16{2} | 'u' base16{4} | 'U' base16{8}
 

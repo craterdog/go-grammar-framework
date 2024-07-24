@@ -40,16 +40,22 @@ type extentClass_ struct {
 
 // Constructors
 
-func (c *extentClass_) Make(rune_ string) ExtentLike {
+func (c *extentClass_) Make(
+	separator string,
+	glyph string,
+) ExtentLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(rune_):
-		panic("The rune attribute is required by this class.")
+	case col.IsUndefined(separator):
+		panic("The separator attribute is required by this class.")
+	case col.IsUndefined(glyph):
+		panic("The glyph attribute is required by this class.")
 	default:
 		return &extent_{
 			// Initialize instance attributes.
-			class_: c,
-			rune_:  rune_,
+			class_:     c,
+			separator_: separator,
+			glyph_:     glyph,
 		}
 	}
 }
@@ -60,8 +66,9 @@ func (c *extentClass_) Make(rune_ string) ExtentLike {
 
 type extent_ struct {
 	// Define instance attributes.
-	class_ ExtentClassLike
-	rune_  string
+	class_     ExtentClassLike
+	separator_ string
+	glyph_     string
 }
 
 // Attributes
@@ -70,8 +77,12 @@ func (v *extent_) GetClass() ExtentClassLike {
 	return v.class_
 }
 
-func (v *extent_) GetRune() string {
-	return v.rune_
+func (v *extent_) GetSeparator() string {
+	return v.separator_
+}
+
+func (v *extent_) GetGlyph() string {
+	return v.glyph_
 }
 
 // Private

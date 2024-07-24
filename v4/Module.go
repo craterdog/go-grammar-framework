@@ -66,8 +66,8 @@ type (
 	PatternLike     = ast.PatternLike
 	PredicateLike   = ast.PredicateLike
 	RuleLike        = ast.RuleLike
-	StringLike      = ast.StringLike
 	SyntaxLike      = ast.SyntaxLike
+	TextLike        = ast.TextLike
 )
 
 // Grammar
@@ -82,6 +82,7 @@ type (
 const (
 	ErrorToken      = gra.ErrorToken
 	CommentToken    = gra.CommentToken
+	GlyphToken      = gra.GlyphToken
 	IntrinsicToken  = gra.IntrinsicToken
 	LiteralToken    = gra.LiteralToken
 	LowercaseToken  = gra.LowercaseToken
@@ -89,7 +90,6 @@ const (
 	NoteToken       = gra.NoteToken
 	NumberToken     = gra.NumberToken
 	QuantifiedToken = gra.QuantifiedToken
-	RuneToken       = gra.RuneToken
 	SeparatorToken  = gra.SeparatorToken
 	SpaceToken      = gra.SpaceToken
 	UppercaseToken  = gra.UppercaseToken
@@ -124,20 +124,24 @@ func Alternative(arguments ...any) AlternativeLike {
 	}
 
 	// Call the constructor.
-	var alternative = ast.Alternative().Make(parts)
+	var dotdot = ".."
+	var alternative = ast.Alternative().Make(
+		dotdot,
+		parts,
+	)
 	return alternative
 }
 
 func Bounded(arguments ...any) BoundedLike {
 	// Initialize the possible arguments.
-	var rune_ string
+	var glyph string
 	var extent ExtentLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case string:
-			rune_ = actual
+			glyph = actual
 		case ExtentLike:
 			extent = actual
 		default:
@@ -151,7 +155,7 @@ func Bounded(arguments ...any) BoundedLike {
 
 	// Call the constructor.
 	var bounded = ast.Bounded().Make(
-		rune_,
+		glyph,
 		extent,
 	)
 	return bounded
@@ -247,9 +251,13 @@ func Constrained(arguments ...any) ConstrainedLike {
 	}
 
 	// Call the constructor.
+	var left = "{"
+	var right = "}"
 	var constrained = ast.Constrained().Make(
+		left,
 		number,
 		limit,
+		right,
 	)
 	return constrained
 }
@@ -292,7 +300,7 @@ func Element(arguments ...any) ElementLike {
 	// Initialize the possible arguments.
 	var grouped GroupedLike
 	var filtered FilteredLike
-	var string_ StringLike
+	var text TextLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
@@ -301,8 +309,8 @@ func Element(arguments ...any) ElementLike {
 			grouped = actual
 		case FilteredLike:
 			filtered = actual
-		case StringLike:
-			string_ = actual
+		case TextLike:
+			text = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the element constructor: %T\n",
@@ -319,8 +327,8 @@ func Element(arguments ...any) ElementLike {
 		element = ast.Element().Make(grouped)
 	case col.IsDefined(filtered):
 		element = ast.Element().Make(filtered)
-	case col.IsDefined(string_):
-		element = ast.Element().Make(string_)
+	case col.IsDefined(text):
+		element = ast.Element().Make(text)
 	default:
 		panic("The constructor for an element requires an argument.")
 	}
@@ -358,10 +366,12 @@ func Expression(arguments ...any) ExpressionLike {
 	}
 
 	// Call the constructor.
+	var colon = ":"
 	var newlines = col.List[string]([]string{"\n", "\n"})
 	var expression = ast.Expression().Make(
 		comment,
 		lowercase,
+		colon,
 		pattern,
 		note,
 		newlines,
@@ -371,13 +381,13 @@ func Expression(arguments ...any) ExpressionLike {
 
 func Extent(arguments ...any) ExtentLike {
 	// Initialize the possible arguments.
-	var rune_ string
+	var glyph string
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case string:
-			rune_ = actual
+			glyph = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the extent constructor: %T\n",
@@ -388,7 +398,11 @@ func Extent(arguments ...any) ExtentLike {
 	}
 
 	// Call the constructor.
-	var extent = ast.Extent().Make(rune_)
+	var dotdot = ".."
+	var extent = ast.Extent().Make(
+		dotdot,
+		glyph,
+	)
 	return extent
 }
 
@@ -443,9 +457,13 @@ func Filtered(arguments ...any) FilteredLike {
 	}
 
 	// Call the constructor.
+	var left = "["
+	var right = "]"
 	var filtered = ast.Filtered().Make(
+		left,
 		negation,
 		characters,
+		right,
 	)
 	return filtered
 }
@@ -469,7 +487,13 @@ func Grouped(arguments ...any) GroupedLike {
 	}
 
 	// Call the constructor.
-	var grouped = ast.Grouped().Make(pattern)
+	var left = "("
+	var right = ")"
+	var grouped = ast.Grouped().Make(
+		left,
+		pattern,
+		right,
+	)
 	return grouped
 }
 
@@ -617,7 +641,11 @@ func Limit(arguments ...any) LimitLike {
 	}
 
 	// Call the constructor.
-	var limit = ast.Limit().Make(number)
+	var dotdot = ".."
+	var limit = ast.Limit().Make(
+		dotdot,
+		number,
+	)
 	return limit
 }
 
@@ -777,19 +805,21 @@ func Rule(arguments ...any) RuleLike {
 	}
 
 	// Call the constructor.
+	var colon = ":"
 	var newlines = col.List[string]([]string{"\n", "\n"})
 	var rule = ast.Rule().Make(
 		comment,
 		uppercase,
+		colon,
 		definition,
 		newlines,
 	)
 	return rule
 }
 
-func String(arguments ...any) StringLike {
+func Text(arguments ...any) TextLike {
 	// Initialize the possible arguments.
-	var rune_ string
+	var glyph string
 	var literal string
 	var lowercase string
 	var intrinsic string
@@ -799,8 +829,8 @@ func String(arguments ...any) StringLike {
 		switch actual := argument.(type) {
 		case string:
 			switch {
-			case gra.Scanner().MatchesType(actual, RuneToken):
-				rune_ = actual
+			case gra.Scanner().MatchesType(actual, GlyphToken):
+				glyph = actual
 			case gra.Scanner().MatchesType(actual, LiteralToken):
 				literal = actual
 			case gra.Scanner().MatchesType(actual, LowercaseToken):
@@ -824,20 +854,20 @@ func String(arguments ...any) StringLike {
 	}
 
 	// Call the constructor.
-	var string_ StringLike
+	var text TextLike
 	switch {
-	case col.IsDefined(rune_):
-		string_ = ast.String().Make(rune_)
+	case col.IsDefined(glyph):
+		text = ast.Text().Make(glyph)
 	case col.IsDefined(literal):
-		string_ = ast.String().Make(literal)
+		text = ast.Text().Make(literal)
 	case col.IsDefined(lowercase):
-		string_ = ast.String().Make(lowercase)
+		text = ast.Text().Make(lowercase)
 	case col.IsDefined(intrinsic):
-		string_ = ast.String().Make(intrinsic)
+		text = ast.Text().Make(intrinsic)
 	default:
 		panic("The constructor for an string requires an argument.")
 	}
-	return string_
+	return text
 }
 
 func Syntax(arguments ...any) SyntaxLike {

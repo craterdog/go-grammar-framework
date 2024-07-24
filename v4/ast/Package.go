@@ -42,7 +42,10 @@ concrete alternative-like class.
 */
 type AlternativeClassLike interface {
 	// Constructors
-	Make(parts abs.Sequential[PartLike]) AlternativeLike
+	Make(
+		separator string,
+		parts abs.Sequential[PartLike],
+	) AlternativeLike
 }
 
 /*
@@ -53,7 +56,7 @@ concrete bounded-like class.
 type BoundedClassLike interface {
 	// Constructors
 	Make(
-		rune_ string,
+		glyph string,
 		optionalExtent ExtentLike,
 	) BoundedLike
 }
@@ -86,8 +89,10 @@ concrete constrained-like class.
 type ConstrainedClassLike interface {
 	// Constructors
 	Make(
+		separator string,
 		number string,
 		optionalLimit LimitLike,
+		separator2 string,
 	) ConstrainedLike
 }
 
@@ -121,6 +126,7 @@ type ExpressionClassLike interface {
 	Make(
 		optionalComment string,
 		lowercase string,
+		separator string,
 		pattern PatternLike,
 		optionalNote string,
 		newlines abs.Sequential[string],
@@ -134,7 +140,10 @@ concrete extent-like class.
 */
 type ExtentClassLike interface {
 	// Constructors
-	Make(rune_ string) ExtentLike
+	Make(
+		separator string,
+		glyph string,
+	) ExtentLike
 }
 
 /*
@@ -159,7 +168,9 @@ type FilteredClassLike interface {
 	// Constructors
 	Make(
 		optionalNegation string,
+		separator string,
 		characters abs.Sequential[CharacterLike],
+		separator2 string,
 	) FilteredLike
 }
 
@@ -170,7 +181,11 @@ concrete grouped-like class.
 */
 type GroupedClassLike interface {
 	// Constructors
-	Make(pattern PatternLike) GroupedLike
+	Make(
+		separator string,
+		pattern PatternLike,
+		separator2 string,
+	) GroupedLike
 }
 
 /*
@@ -216,7 +231,10 @@ concrete limit-like class.
 */
 type LimitClassLike interface {
 	// Constructors
-	Make(optionalNumber string) LimitLike
+	Make(
+		separator string,
+		optionalNumber string,
+	) LimitLike
 }
 
 /*
@@ -289,19 +307,10 @@ type RuleClassLike interface {
 	Make(
 		optionalComment string,
 		uppercase string,
+		separator string,
 		definition DefinitionLike,
 		newlines abs.Sequential[string],
 	) RuleLike
-}
-
-/*
-StringClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete string-like class.
-*/
-type StringClassLike interface {
-	// Constructors
-	Make(any_ any) StringLike
 }
 
 /*
@@ -318,6 +327,16 @@ type SyntaxClassLike interface {
 	) SyntaxLike
 }
 
+/*
+TextClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete text-like class.
+*/
+type TextClassLike interface {
+	// Constructors
+	Make(any_ any) TextLike
+}
+
 // Instances
 
 /*
@@ -328,6 +347,7 @@ instance of a concrete alternative-like class.
 type AlternativeLike interface {
 	// Attributes
 	GetClass() AlternativeClassLike
+	GetSeparator() string
 	GetParts() abs.Sequential[PartLike]
 }
 
@@ -339,7 +359,7 @@ instance of a concrete bounded-like class.
 type BoundedLike interface {
 	// Attributes
 	GetClass() BoundedClassLike
-	GetRune() string
+	GetGlyph() string
 	GetOptionalExtent() ExtentLike
 }
 
@@ -373,8 +393,10 @@ instance of a concrete constrained-like class.
 type ConstrainedLike interface {
 	// Attributes
 	GetClass() ConstrainedClassLike
+	GetSeparator() string
 	GetNumber() string
 	GetOptionalLimit() LimitLike
+	GetSeparator2() string
 }
 
 /*
@@ -409,6 +431,7 @@ type ExpressionLike interface {
 	GetClass() ExpressionClassLike
 	GetOptionalComment() string
 	GetLowercase() string
+	GetSeparator() string
 	GetPattern() PatternLike
 	GetOptionalNote() string
 	GetNewlines() abs.Sequential[string]
@@ -422,7 +445,8 @@ instance of a concrete extent-like class.
 type ExtentLike interface {
 	// Attributes
 	GetClass() ExtentClassLike
-	GetRune() string
+	GetSeparator() string
+	GetGlyph() string
 }
 
 /*
@@ -446,7 +470,9 @@ type FilteredLike interface {
 	// Attributes
 	GetClass() FilteredClassLike
 	GetOptionalNegation() string
+	GetSeparator() string
 	GetCharacters() abs.Sequential[CharacterLike]
+	GetSeparator2() string
 }
 
 /*
@@ -457,7 +483,9 @@ instance of a concrete grouped-like class.
 type GroupedLike interface {
 	// Attributes
 	GetClass() GroupedClassLike
+	GetSeparator() string
 	GetPattern() PatternLike
+	GetSeparator2() string
 }
 
 /*
@@ -503,6 +531,7 @@ instance of a concrete limit-like class.
 type LimitLike interface {
 	// Attributes
 	GetClass() LimitClassLike
+	GetSeparator() string
 	GetOptionalNumber() string
 }
 
@@ -575,19 +604,9 @@ type RuleLike interface {
 	GetClass() RuleClassLike
 	GetOptionalComment() string
 	GetUppercase() string
+	GetSeparator() string
 	GetDefinition() DefinitionLike
 	GetNewlines() abs.Sequential[string]
-}
-
-/*
-StringLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete string-like class.
-*/
-type StringLike interface {
-	// Attributes
-	GetClass() StringClassLike
-	GetAny() any
 }
 
 /*
@@ -601,4 +620,15 @@ type SyntaxLike interface {
 	GetHeaders() abs.Sequential[HeaderLike]
 	GetRules() abs.Sequential[RuleLike]
 	GetExpressions() abs.Sequential[ExpressionLike]
+}
+
+/*
+TextLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete text-like class.
+*/
+type TextLike interface {
+	// Attributes
+	GetClass() TextClassLike
+	GetAny() any
 }

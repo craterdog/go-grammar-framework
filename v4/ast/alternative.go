@@ -41,16 +41,22 @@ type alternativeClass_ struct {
 
 // Constructors
 
-func (c *alternativeClass_) Make(parts abs.Sequential[PartLike]) AlternativeLike {
+func (c *alternativeClass_) Make(
+	separator string,
+	parts abs.Sequential[PartLike],
+) AlternativeLike {
 	// Validate the arguments.
 	switch {
+	case col.IsUndefined(separator):
+		panic("The separator attribute is required by this class.")
 	case col.IsUndefined(parts):
 		panic("The parts attribute is required by this class.")
 	default:
 		return &alternative_{
 			// Initialize instance attributes.
-			class_: c,
-			parts_: parts,
+			class_:     c,
+			separator_: separator,
+			parts_:     parts,
 		}
 	}
 }
@@ -61,14 +67,19 @@ func (c *alternativeClass_) Make(parts abs.Sequential[PartLike]) AlternativeLike
 
 type alternative_ struct {
 	// Define instance attributes.
-	class_ AlternativeClassLike
-	parts_ abs.Sequential[PartLike]
+	class_     AlternativeClassLike
+	separator_ string
+	parts_     abs.Sequential[PartLike]
 }
 
 // Attributes
 
 func (v *alternative_) GetClass() AlternativeClassLike {
 	return v.class_
+}
+
+func (v *alternative_) GetSeparator() string {
+	return v.separator_
 }
 
 func (v *alternative_) GetParts() abs.Sequential[PartLike] {

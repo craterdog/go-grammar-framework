@@ -28,6 +28,7 @@ var scannerClass = &scannerClass_{
 	tokens_: map[TokenType]string{
 		ErrorToken:      "error",
 		CommentToken:    "comment",
+		GlyphToken:      "glyph",
 		IntrinsicToken:  "intrinsic",
 		LiteralToken:    "literal",
 		LowercaseToken:  "lowercase",
@@ -36,7 +37,6 @@ var scannerClass = &scannerClass_{
 		NoteToken:       "note",
 		NumberToken:     "number",
 		QuantifiedToken: "quantified",
-		RuneToken:       "rune",
 		SeparatorToken:  "separator",
 		SpaceToken:      "space",
 		UppercaseToken:  "uppercase",
@@ -44,6 +44,7 @@ var scannerClass = &scannerClass_{
 	matchers_: map[TokenType]*reg.Regexp{
 		// Define pattern matchers for each type of token.
 		CommentToken:    reg.MustCompile("^" + comment_),
+		GlyphToken:      reg.MustCompile("^" + glyph_),
 		IntrinsicToken:  reg.MustCompile("^" + intrinsic_),
 		LiteralToken:    reg.MustCompile("^" + literal_),
 		LowercaseToken:  reg.MustCompile("^" + lowercase_),
@@ -52,7 +53,6 @@ var scannerClass = &scannerClass_{
 		NoteToken:       reg.MustCompile("^" + note_),
 		NumberToken:     reg.MustCompile("^" + number_),
 		QuantifiedToken: reg.MustCompile("^" + quantified_),
-		RuneToken:       reg.MustCompile("^" + rune_),
 		SeparatorToken:  reg.MustCompile("^" + separator_),
 		SpaceToken:      reg.MustCompile("^" + space_),
 		UppercaseToken:  reg.MustCompile("^" + uppercase_),
@@ -223,6 +223,7 @@ loop:
 		switch {
 		// Find the next token type.
 		case v.foundToken(CommentToken):
+		case v.foundToken(GlyphToken):
 		case v.foundToken(IntrinsicToken):
 		case v.foundToken(LiteralToken):
 		case v.foundToken(LowercaseToken):
@@ -231,7 +232,6 @@ loop:
 		case v.foundToken(NoteToken):
 		case v.foundToken(NumberToken):
 		case v.foundToken(QuantifiedToken):
-		case v.foundToken(RuneToken):
 		case v.foundToken(SeparatorToken):
 		case v.foundToken(SpaceToken):
 		case v.foundToken(UppercaseToken):
@@ -260,6 +260,7 @@ const (
 	digit_      = "\\p{Nd}"
 	eol_        = "\\r?\\n"
 	escape_     = "(?:\\\\((?:" + unicode_ + ")|[abfnrtv\"\\\\]))"
+	glyph_      = "(?:'[^" + control_ + "]')"
 	intrinsic_  = "(?:ANY|CONTROL|DIGIT|EOL|LOWER|UPPER)"
 	literal_    = "(?:\"((?:" + escape_ + ")|[^\"" + control_ + "])+\")"
 	lower_      = "\\p{Ll}"
@@ -269,7 +270,6 @@ const (
 	note_       = "(?:! [^" + control_ + "]*)"
 	number_     = "(?:" + digit_ + "+)"
 	quantified_ = "(?:\\?|\\*|\\+)"
-	rune_       = "(?:'[^" + control_ + "]')"
 	separator_  = "(?::|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
 	space_      = "[ \\t]+"
 	unicode_    = "(?:x(?:" + base16_ + "){2}|u(?:" + base16_ + "){4}|U(?:" + base16_ + "){8})"

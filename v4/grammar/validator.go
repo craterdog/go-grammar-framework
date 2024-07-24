@@ -143,18 +143,18 @@ func (v *validator_) validateBounded(
 	name string,
 	bounded ast.BoundedLike,
 ) {
-	// Validate the initial rune.
-	var rune_ = bounded.GetRune()
-	v.validateToken(name, RuneToken, rune_)
+	// Validate the initial glyph.
+	var glyph = bounded.GetGlyph()
+	v.validateToken(name, GlyphToken, glyph)
 
-	// Validate the optional extent rune.
+	// Validate the optional extent glyph.
 	var extent = bounded.GetOptionalExtent()
 	if col.IsDefined(extent) {
 		v.validateExtent(name, extent)
-		if rune_ > extent.GetRune() {
+		if glyph > extent.GetGlyph() {
 			var message = v.formatError(
 				name,
-				"The extent rune in a bounded cannot come before the initial rune.",
+				"The extent glyph in a bounded cannot come before the initial glyph.",
 			)
 			panic(message)
 		}
@@ -251,8 +251,8 @@ func (v *validator_) validateElement(
 		v.validateGrouped(name, actual)
 	case ast.FilteredLike:
 		v.validateFiltered(name, actual)
-	case ast.StringLike:
-		v.validateString(name, actual)
+	case ast.TextLike:
+		v.validateText(name, actual)
 	default:
 		panic("An element must have a value.")
 	}
@@ -299,9 +299,9 @@ func (v *validator_) validateExtent(
 	name string,
 	extent ast.ExtentLike,
 ) {
-	// Validate the rune.
-	var rune_ = extent.GetRune()
-	v.validateToken(name, RuneToken, rune_)
+	// Validate the glyph.
+	var glyph = extent.GetGlyph()
+	v.validateToken(name, GlyphToken, glyph)
 }
 
 func (v *validator_) validateFactor(
@@ -547,15 +547,15 @@ func (v *validator_) validateRule(
 	rules.SetValue(uppercase, definition)
 }
 
-func (v *validator_) validateString(
+func (v *validator_) validateText(
 	name string,
-	string_ ast.StringLike,
+	text ast.TextLike,
 ) {
 	// Validate the possible string types.
-	switch actual := string_.GetAny().(type) {
+	switch actual := text.GetAny().(type) {
 	case string:
 		switch {
-		case Scanner().MatchesType(actual, RuneToken):
+		case Scanner().MatchesType(actual, GlyphToken):
 		case Scanner().MatchesType(actual, LiteralToken):
 		case Scanner().MatchesType(actual, LowercaseToken):
 		case Scanner().MatchesType(actual, IntrinsicToken):

@@ -104,8 +104,8 @@ func (v *formatter_) formatAlternative(alternative ast.AlternativeLike) {
 }
 
 func (v *formatter_) formatBounded(bounded ast.BoundedLike) {
-	var rune_ = bounded.GetRune()
-	v.appendString(rune_)
+	var glyph = bounded.GetGlyph()
+	v.appendString(glyph)
 	var extent = bounded.GetOptionalExtent()
 	if col.IsDefined(extent) {
 		v.formatExtent(extent)
@@ -162,8 +162,8 @@ func (v *formatter_) formatElement(element ast.ElementLike) {
 		v.formatGrouped(actual)
 	case ast.FilteredLike:
 		v.formatFiltered(actual)
-	case ast.StringLike:
-		v.formatString(actual)
+	case ast.TextLike:
+		v.formatText(actual)
 	default:
 		panic("Attempted to format an empty element.")
 	}
@@ -190,8 +190,8 @@ func (v *formatter_) formatExpression(expression ast.ExpressionLike) {
 
 func (v *formatter_) formatExtent(extent ast.ExtentLike) {
 	v.appendString("..")
-	var rune_ = extent.GetRune()
-	v.appendString(rune_)
+	var glyph = extent.GetGlyph()
+	v.appendString(glyph)
 }
 
 func (v *formatter_) formatFactor(factor ast.FactorLike) {
@@ -334,35 +334,35 @@ func (v *formatter_) formatRule(rule ast.RuleLike) {
 	v.appendNewline()
 }
 
-func (v *formatter_) formatString(string_ ast.StringLike) {
-	switch actual := string_.GetAny().(type) {
-	case string:
-		v.appendString(actual)
-	default:
-		panic("Attempted to format an empty string.")
-	}
-}
-
 func (v *formatter_) formatSyntax(syntax ast.SyntaxLike) {
 	// Format the headers.
-	var headerIterator = syntax.GetHeaders().GetIterator()
-	for headerIterator.HasNext() {
-		var header = headerIterator.GetNext()
+	var headers = syntax.GetHeaders().GetIterator()
+	for headers.HasNext() {
+		var header = headers.GetNext()
 		v.formatHeader(header)
 	}
 
 	// Format the rules.
-	var ruleIterator = syntax.GetRules().GetIterator()
-	for ruleIterator.HasNext() {
-		var rule = ruleIterator.GetNext()
+	var rules = syntax.GetRules().GetIterator()
+	for rules.HasNext() {
+		var rule = rules.GetNext()
 		v.formatRule(rule)
 	}
 
 	// Format the expressions.
-	var expressionIterator = syntax.GetExpressions().GetIterator()
-	for expressionIterator.HasNext() {
-		var expression = expressionIterator.GetNext()
+	var expressions = syntax.GetExpressions().GetIterator()
+	for expressions.HasNext() {
+		var expression = expressions.GetNext()
 		v.formatExpression(expression)
+	}
+}
+
+func (v *formatter_) formatText(text ast.TextLike) {
+	switch actual := text.GetAny().(type) {
+	case string:
+		v.appendString(actual)
+	default:
+		panic("Attempted to format an empty text string.")
 	}
 }
 
