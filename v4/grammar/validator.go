@@ -547,26 +547,6 @@ func (v *validator_) validateRule(
 	rules.SetValue(uppercase, definition)
 }
 
-func (v *validator_) validateText(
-	name string,
-	text ast.TextLike,
-) {
-	// Validate the possible string types.
-	switch actual := text.GetAny().(type) {
-	case string:
-		switch {
-		case Scanner().MatchesType(actual, GlyphToken):
-		case Scanner().MatchesType(actual, LiteralToken):
-		case Scanner().MatchesType(actual, LowercaseToken):
-		case Scanner().MatchesType(actual, IntrinsicToken):
-		default:
-			panic("A string must have a value.")
-		}
-	default:
-		panic("A string must have a value.")
-	}
-}
-
 func (v *validator_) validateSyntax(
 	name string,
 	syntax ast.SyntaxLike,
@@ -607,6 +587,26 @@ func (v *validator_) validateSyntax(
 	for expressionIterator.HasNext() {
 		var expression = expressionIterator.GetNext()
 		v.validateExpression(name, expression, expressions)
+	}
+}
+
+func (v *validator_) validateText(
+	name string,
+	text ast.TextLike,
+) {
+	// Validate the possible string types.
+	switch actual := text.GetAny().(type) {
+	case string:
+		switch {
+		case Scanner().MatchesType(actual, GlyphToken):
+		case Scanner().MatchesType(actual, LiteralToken):
+		case Scanner().MatchesType(actual, LowercaseToken):
+		case Scanner().MatchesType(actual, IntrinsicToken):
+		default:
+			panic("A string must have a value.")
+		}
+	default:
+		panic("A string must have a value.")
 	}
 }
 

@@ -913,51 +913,6 @@ func (v *parser_) parseRule() (
 	return rule, token, true
 }
 
-func (v *parser_) parseText() (
-	text ast.TextLike,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse the glyph text.
-	var glyph string
-	glyph, token, ok = v.parseToken(GlyphToken, "")
-	if ok {
-		// Found the glyph text.
-		text = ast.Text().Make(glyph)
-		return text, token, true
-	}
-
-	// Attempt to parse the literal text.
-	var literal string
-	literal, token, ok = v.parseToken(LiteralToken, "")
-	if ok {
-		// Found the literal text.
-		text = ast.Text().Make(literal)
-		return text, token, true
-	}
-
-	// Attempt to parse the lowercase text.
-	var lowercase string
-	lowercase, token, ok = v.parseToken(LowercaseToken, "")
-	if ok {
-		// Found the lowercase text.
-		text = ast.Text().Make(lowercase)
-		return text, token, true
-	}
-
-	// Attempt to parse the intrinsic text.
-	var intrinsic string
-	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
-	if ok {
-		// Found the intrinsic text.
-		text = ast.Text().Make(intrinsic)
-		return text, token, true
-	}
-
-	// This is not the text.
-	return text, token, false
-}
-
 func (v *parser_) parseSyntax() (
 	syntax ast.SyntaxLike,
 	token TokenLike,
@@ -1017,6 +972,51 @@ func (v *parser_) parseSyntax() (
 	// Found the syntax.
 	syntax = ast.Syntax().Make(headers, rules, expressions)
 	return syntax, token, true
+}
+
+func (v *parser_) parseText() (
+	text ast.TextLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the glyph text.
+	var glyph string
+	glyph, token, ok = v.parseToken(GlyphToken, "")
+	if ok {
+		// Found the glyph text.
+		text = ast.Text().Make(glyph)
+		return text, token, true
+	}
+
+	// Attempt to parse the literal text.
+	var literal string
+	literal, token, ok = v.parseToken(LiteralToken, "")
+	if ok {
+		// Found the literal text.
+		text = ast.Text().Make(literal)
+		return text, token, true
+	}
+
+	// Attempt to parse the lowercase text.
+	var lowercase string
+	lowercase, token, ok = v.parseToken(LowercaseToken, "")
+	if ok {
+		// Found the lowercase text.
+		text = ast.Text().Make(lowercase)
+		return text, token, true
+	}
+
+	// Attempt to parse the intrinsic text.
+	var intrinsic string
+	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
+	if ok {
+		// Found the intrinsic text.
+		text = ast.Text().Make(intrinsic)
+		return text, token, true
+	}
+
+	// This is not the text.
+	return text, token, false
 }
 
 func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
