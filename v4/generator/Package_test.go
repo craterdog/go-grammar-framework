@@ -521,6 +521,31 @@ func (v *scanner_) GetClass() ScannerClassLike {
 
 // Private
 
+/*
+NOTE:
+These private constants define the regular expression sub-patterns that make up
+the intrinsic types and token types.  Unfortunately there is no way to make them
+private to the scanner class since they must be TRUE Go constants to be used in
+this way.  We append an underscore to each name to lessen the chance of a name
+collision with other private Go class constants in this package.
+*/
+const (
+	// Define the regular expression patterns for each intrinsic type.
+	any_     = "." // This does NOT include newline characters.
+	control_ = "\\p{Cc}"
+	digit_   = "\\p{Nd}"
+	eol_     = "\\r?\\n"
+	lower_   = "\\p{Ll}"
+	upper_   = "\\p{Lu}"
+
+	// Define the regular expression patterns for each token type.
+	integer_ = "(?:0|-?[1-9]" + digit_ + "*)"
+	rune_ = "(?:'[^" + control_ + "]')"
+	separator_ = "(?:,|\\[|\\])"
+	space_ = "(?:[ \\t]+)"
+	text_ = "(?:\"[^\"" + control_ + "]+\")"
+)
+
 func (v *scanner_) emitToken(tokenType TokenType) {
 	switch v.GetClass().FormatType(tokenType) {
 	// Ignore the implicit token types.
@@ -610,29 +635,6 @@ loop:
 	}
 	v.tokens_.CloseQueue()
 }
-
-/*
-NOTE:
-These private constants define the regular expression sub-patterns that make up
-all token types.  Unfortunately there is no way to make them private to the
-scanner class since they must be TRUE Go constants to be initialized in this
-way.  We append an underscore to each name to lessen the chance of a name
-collision with other private Go class constants in this package.
-*/
-const (
-	// Define the regular expression patterns for each type.
-	any_ = "."
-	control_ = "\\p{Cc}"
-	digit_ = "\\p{Nd}"
-	eol_ = "\\r?\\n"
-	integer_ = "(?:0|-?[1-9]" + digit_ + "*)"
-	lower_ = "\\p{Ll}"
-	rune_ = "(?:'[^" + control_ + "]')"
-	separator_ = "(?:,|\\[|\\])"
-	space_ = "[ \\t]+"
-	text_ = "(?:\"[^\"" + control_ + "]+\")"
-	upper_ = "\\p{Lu}"
-)
 `
 
 const tokenClass = `/*

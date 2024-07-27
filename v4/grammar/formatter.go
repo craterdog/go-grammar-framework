@@ -94,7 +94,8 @@ func (v *formatter_) appendString(s string) {
 }
 
 func (v *formatter_) formatAlternative(alternative ast.AlternativeLike) {
-	v.appendString("|")
+	var separator = alternative.GetSeparator()
+	v.appendString(separator)
 	var iterator = alternative.GetParts().GetIterator()
 	for iterator.HasNext() {
 		var part = iterator.GetNext()
@@ -135,14 +136,16 @@ func (v *formatter_) formatCharacter(character ast.CharacterLike) {
 }
 
 func (v *formatter_) formatConstrained(constrained ast.ConstrainedLike) {
-	v.appendString("{")
+	var separator = constrained.GetSeparator()
+	v.appendString(separator)
 	var number = constrained.GetNumber()
 	v.appendString(number)
 	var limit = constrained.GetOptionalLimit()
 	if col.IsDefined(limit) {
 		v.formatLimit(limit)
 	}
-	v.appendString("}")
+	separator = constrained.GetSeparator2()
+	v.appendString(separator)
 }
 
 func (v *formatter_) formatDefinition(definition ast.DefinitionLike) {
@@ -176,7 +179,9 @@ func (v *formatter_) formatExpression(expression ast.ExpressionLike) {
 	}
 	var lower = expression.GetLowercase()
 	v.appendString(lower)
-	v.appendString(": ")
+	var separator = expression.GetSeparator()
+	v.appendString(separator)
+	v.appendString(" ")
 	var pattern = expression.GetPattern()
 	v.formatPattern(pattern)
 	var note = expression.GetOptionalNote()
@@ -189,7 +194,8 @@ func (v *formatter_) formatExpression(expression ast.ExpressionLike) {
 }
 
 func (v *formatter_) formatExtent(extent ast.ExtentLike) {
-	v.appendString("..")
+	var separator = extent.GetSeparator()
+	v.appendString(separator)
 	var glyph = extent.GetGlyph()
 	v.appendString(glyph)
 }
@@ -208,7 +214,8 @@ func (v *formatter_) formatFiltered(filtered ast.FilteredLike) {
 	if col.IsDefined(negation) {
 		v.appendString(negation)
 	}
-	v.appendString("[")
+	var separator = filtered.GetSeparator()
+	v.appendString(separator)
 	var iterator = filtered.GetCharacters().GetIterator()
 	var character = iterator.GetNext()
 	v.formatCharacter(character) // The first one is not prepended with a space.
@@ -217,14 +224,17 @@ func (v *formatter_) formatFiltered(filtered ast.FilteredLike) {
 		v.appendString(" ")
 		v.formatCharacter(character)
 	}
-	v.appendString("]")
+	separator = filtered.GetSeparator2()
+	v.appendString(separator)
 }
 
 func (v *formatter_) formatGrouped(grouped ast.GroupedLike) {
-	v.appendString("(")
+	var separator = grouped.GetSeparator()
+	v.appendString(separator)
 	var pattern = grouped.GetPattern()
 	v.formatPattern(pattern)
-	v.appendString(")")
+	separator = grouped.GetSeparator2()
+	v.appendString(separator)
 }
 
 func (v *formatter_) formatHeader(header ast.HeaderLike) {
@@ -268,7 +278,8 @@ func (v *formatter_) formatLine(line ast.LineLike) {
 }
 
 func (v *formatter_) formatLimit(limit ast.LimitLike) {
-	v.appendString("..")
+	var separator = limit.GetSeparator()
+	v.appendString(separator)
 	var number = limit.GetOptionalNumber()
 	if col.IsDefined(number) {
 		v.appendString(number)
@@ -327,7 +338,8 @@ func (v *formatter_) formatRule(rule ast.RuleLike) {
 	}
 	var upper = rule.GetUppercase()
 	v.appendString(upper)
-	v.appendString(":")
+	var separator = rule.GetSeparator()
+	v.appendString(separator)
 	var definition = rule.GetDefinition()
 	v.formatDefinition(definition)
 	v.appendNewline()

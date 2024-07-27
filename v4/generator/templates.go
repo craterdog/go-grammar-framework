@@ -13,7 +13,6 @@
 package generator
 
 var templates_ = map[string]map[string]string{
-	"syntax":    syntaxTemplates_,
 	"ast":       astTemplates_,
 	"grammar":   grammarTemplates_,
 	"token":     tokenTemplates_,
@@ -21,13 +20,6 @@ var templates_ = map[string]map[string]string{
 	"parser":    parserTemplates_,
 	"validator": validatorTemplates_,
 	"formatter": formatterTemplates_,
-}
-
-var syntaxTemplates_ = map[string]string{
-	"notice":      syntaxNoticeTemplate_,
-	"header":      syntaxHeaderTemplate_,
-	"rules":       syntaxRulesTemplate_,
-	"expressions": syntaxExpressionsTemplate_,
 }
 
 var astTemplates_ = map[string]string{
@@ -113,10 +105,8 @@ const noticeTemplate_ = `
 
 // SYNTAX TEMPLATES
 
-const syntaxNoticeTemplate_ = `!><Notice><!
-`
+const syntaxTemplate_ = `!><Notice><!
 
-const syntaxHeaderTemplate_ = `
 !>
 <SYNTAX> NOTATION
 This document contains a formal definition of the <Syntax> Notation
@@ -148,9 +138,7 @@ The negation "~" prefix within a regular expression pattern may only be applied
 to a bounded range of possible intrinsic character types or printable unicode
 characters called runes.
 <!
-`
 
-const syntaxRulesTemplate_ = `
 !>
 RULE DEFINITIONS
 The following rules are used by the parser when parsing the stream of tokens
@@ -178,9 +166,6 @@ List: "[" Component Additional* "]"
 
 Additional: "," Component
 
-`
-
-const syntaxExpressionsTemplate_ = `
 !>
 EXPRESSION DEFINITIONS
 The following expression definitions are used by the scanner to generate the
@@ -676,6 +661,26 @@ func (v *scanner_) GetClass() ScannerClassLike {
 
 // Private
 
+/*
+NOTE:
+These private constants define the regular expression sub-patterns that make up
+the intrinsic types and token types.  Unfortunately there is no way to make them
+private to the scanner class since they must be TRUE Go constants to be used in
+this way.  We append an underscore to each name to lessen the chance of a name
+collision with other private Go class constants in this package.
+*/
+const (
+	// Define the regular expression patterns for each intrinsic type.
+	any_     = "." // This does NOT include newline characters.
+	control_ = "\\p{Cc}"
+	digit_   = "\\p{Nd}"
+	eol_     = "\\r?\\n"
+	lower_   = "\\p{Ll}"
+	upper_   = "\\p{Lu}"
+
+	<Expressions>
+)
+
 func (v *scanner_) emitToken(tokenType TokenType) {
 	switch v.GetClass().FormatType(tokenType) {
 	<IgnoredCases>
@@ -757,18 +762,6 @@ loop:
 	}
 	v.tokens_.CloseQueue()
 }
-
-/*
-NOTE:
-These private constants define the regular expression sub-patterns that make up
-all token types.  Unfortunately there is no way to make them private to the
-scanner class since they must be TRUE Go constants to be initialized in this
-way.  We append an underscore to each name to lessen the chance of a name
-collision with other private Go class constants in this package.
-*/
-const (
-	<Expressions>
-)
 `
 
 // PARSER TEMPLATES

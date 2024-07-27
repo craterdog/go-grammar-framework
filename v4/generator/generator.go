@@ -71,6 +71,7 @@ type generator_ struct {
 	modules_    abs.CatalogLike[string, mod.ModuleLike]
 	classes_    abs.CatalogLike[string, mod.ClassLike]
 	instances_  abs.CatalogLike[string, mod.InstanceLike]
+	templates_  abs.CatalogLike[string, string]
 }
 
 // Attributes
@@ -85,8 +86,7 @@ func (v *generator_) CreateSyntax(
 	name string,
 	copyright string,
 ) ast.SyntaxLike {
-	var template = v.generateSyntaxTemplate()
-	var source = v.populateSyntaxTemplate(template, name, copyright)
+	var source = v.populateSyntaxTemplate(name, copyright)
 	var parser = gra.Parser().Make()
 	var syntax = parser.ParseSource(source)
 	return syntax
@@ -98,8 +98,7 @@ func (v *generator_) GenerateAst(
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
 	v.analyzeSyntax(syntax)
-	var template = v.generateModelTemplate("ast", syntax)
-	var source = v.populateModelTemplate(template, module, wiki, syntax)
+	var source = v.populateModelTemplate("ast", module, wiki, syntax)
 	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
 	model = v.augmentAstModel(model)
@@ -114,8 +113,7 @@ func (v *generator_) GenerateFormatter(
 	implementation string,
 ) {
 	v.analyzeSyntax(syntax)
-	var template = v.generateClassTemplate("formatter", syntax)
-	implementation = v.populateClassTemplate(template, module, wiki, syntax)
+	implementation = v.populateFormatterTemplate(module, wiki, syntax)
 	return implementation
 }
 
@@ -125,8 +123,7 @@ func (v *generator_) GenerateGrammar(
 	syntax ast.SyntaxLike,
 ) mod.ModelLike {
 	v.analyzeSyntax(syntax)
-	var template = v.generateModelTemplate("grammar", syntax)
-	var source = v.populateModelTemplate(template, module, wiki, syntax)
+	var source = v.populateModelTemplate("grammar", module, wiki, syntax)
 	var parser = mod.Parser()
 	var model = parser.ParseSource(source)
 	return model
@@ -140,8 +137,7 @@ func (v *generator_) GenerateParser(
 	implementation string,
 ) {
 	v.analyzeSyntax(syntax)
-	var template = v.generateClassTemplate("parser", syntax)
-	implementation = v.populateClassTemplate(template, module, wiki, syntax)
+	implementation = v.populateClassTemplate("parser", module, syntax)
 	return implementation
 }
 
@@ -153,8 +149,7 @@ func (v *generator_) GenerateScanner(
 	implementation string,
 ) {
 	v.analyzeSyntax(syntax)
-	var template = v.generateClassTemplate("scanner", syntax)
-	implementation = v.populateScannerTemplate(template, syntax)
+	implementation = v.populateScannerTemplate(syntax)
 	return implementation
 }
 
@@ -166,8 +161,7 @@ func (v *generator_) GenerateToken(
 	implementation string,
 ) {
 	v.analyzeSyntax(syntax)
-	var template = v.generateClassTemplate("token", syntax)
-	implementation = v.populateClassTemplate(template, module, wiki, syntax)
+	implementation = v.populateClassTemplate("token", module, syntax)
 	return implementation
 }
 
@@ -179,8 +173,7 @@ func (v *generator_) GenerateValidator(
 	implementation string,
 ) {
 	v.analyzeSyntax(syntax)
-	var template = v.generateClassTemplate("validator", syntax)
-	implementation = v.populateClassTemplate(template, module, wiki, syntax)
+	implementation = v.populateClassTemplate("validator", module, syntax)
 	return implementation
 }
 
@@ -192,16 +185,15 @@ func (v *generator_) analyzeSyntax(syntax ast.SyntaxLike) {
 		return
 	}
 
-	// Define the regular expressions for each intrinsic.
-	var map_ = map[string]string{
-		"any":     `"."`,
-		"control": `"\\p{Cc}"`,
-		"digit":   `"\\p{Nd}"`,
-		"eol":     `"\\r?\\n"`,
-		"lower":   `"\\p{Ll}"`,
-		"space":   `"[ \\t]+"`,
-		"upper":   `"\\p{Lu}"`,
-	}
+	// Generate the templates.
+	v.templates_ = col.Catalog[string, string]()
+	v.generateModelTemplate("ast")
+	v.generateModelTemplate("grammar")
+	v.generateClassTemplate("token")
+	v.generateClassTemplate("scanner")
+	v.generateClassTemplate("parser")
+	v.generateClassTemplate("validator")
+	v.generateClassTemplate("formatter")
 
 	// Process the syntax rule definitions.
 	v.ignored_ = col.Set[string]([]string{"newline", "space"})
@@ -222,8 +214,11 @@ func (v *generator_) analyzeSyntax(syntax ast.SyntaxLike) {
 	v.instances_.SortValues()
 
 	// Process the syntax expression definitions.
-	v.greedy_ = true
-	v.regexps_ = col.Catalog[string, string](map_)
+	var implicit = map[string]string{
+		"space": `"(?:[ \\t]+)"`,
+	}
+	v.regexps_ = col.Catalog[string, string](implicit)
+	v.greedy_ = true // The default is "greedy" scanning.
 	var expressions = syntax.GetExpressions().GetIterator()
 	for expressions.HasNext() {
 		var expression = expressions.GetNext()
@@ -324,7 +319,7 @@ func (v *generator_) expandCopyright(copyright string) string {
 }
 
 func (v *generator_) extractExpressions() string {
-	var expressions = "// Define the regular expression patterns for each type."
+	var expressions = "// Define the regular expression patterns for each token type."
 	var iterator = v.regexps_.GetIterator()
 	for iterator.HasNext() {
 		var association = iterator.GetNext()
@@ -464,19 +459,14 @@ func (v *generator_) generateClass(
 	return class
 }
 
-func (v *generator_) generateClassTemplate(
-	class string,
-	syntax ast.SyntaxLike,
-) (
-	template string,
-) {
-	template = templates_[class]["notice"]
+func (v *generator_) generateClassTemplate(class string) {
+	var template = templates_[class]["notice"]
 	template += templates_[class]["header"]
 	template += templates_[class]["imports"]
 	template += templates_[class]["access"]
 	template += templates_[class]["class"]
 	template += templates_[class]["instance"]
-	return template
+	v.templates_.SetValue(class, template)
 }
 
 func (v *generator_) generateInstance(
@@ -542,13 +532,8 @@ func (v *generator_) generateMethods(
 }
 */
 
-func (v *generator_) generateModelTemplate(
-	model string,
-	syntax ast.SyntaxLike,
-) (
-	template string,
-) {
-	template = templates_[model]["notice"]
+func (v *generator_) generateModelTemplate(model string) {
+	var template = templates_[model]["notice"]
 	template += templates_[model]["header"]
 	template += templates_[model]["imports"]
 	template += templates_[model]["types"]
@@ -556,17 +541,7 @@ func (v *generator_) generateModelTemplate(
 	template += templates_[model]["classes"]
 	template += templates_[model]["instances"]
 	template += templates_[model]["aspects"]
-	return template
-}
-
-func (v *generator_) generateSyntaxTemplate() (
-	template string,
-) {
-	template = templates_["syntax"]["notice"]
-	template += templates_["syntax"]["header"]
-	template += templates_["syntax"]["rules"]
-	template += templates_["syntax"]["expressions"]
-	return template
+	v.templates_.SetValue(model, template)
 }
 
 func (v *generator_) makeLowercase(name string) string {
@@ -633,7 +608,25 @@ func (v *generator_) pluralizeAttribute(
 }
 
 func (v *generator_) populateClassTemplate(
-	template string,
+	class string,
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	var notice = v.extractNotice(syntax)
+	var name = v.extractSyntaxName(syntax)
+	var uppercase = v.makeUppercase(name)
+	var lowercase = v.makeLowercase(name)
+	var template = v.templates_.GetValue(class)
+	implementation = sts.ReplaceAll(template, "<Notice>", notice)
+	implementation = sts.ReplaceAll(implementation, "<module>", module)
+	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
+	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
+	return implementation
+}
+
+func (v *generator_) populateFormatterTemplate(
 	module string,
 	wiki string,
 	syntax ast.SyntaxLike,
@@ -644,16 +637,16 @@ func (v *generator_) populateClassTemplate(
 	var name = v.extractSyntaxName(syntax)
 	var uppercase = v.makeUppercase(name)
 	var lowercase = v.makeLowercase(name)
+	var template = v.templates_.GetValue("formatter")
 	implementation = sts.ReplaceAll(template, "<Notice>", notice)
 	implementation = sts.ReplaceAll(implementation, "<module>", module)
-	implementation = sts.ReplaceAll(implementation, "<wiki>", wiki)
 	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
 	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
 	return implementation
 }
 
 func (v *generator_) populateModelTemplate(
-	template string,
+	model string,
 	module string,
 	wiki string,
 	syntax ast.SyntaxLike,
@@ -665,6 +658,7 @@ func (v *generator_) populateModelTemplate(
 	var uppercase = v.makeUppercase(name)
 	var lowercase = v.makeLowercase(name)
 	var tokenTypes = v.extractTokenTypes()
+	var template = v.templates_.GetValue(model)
 	implementation = sts.ReplaceAll(template, "<Notice>", notice)
 	implementation = sts.ReplaceAll(implementation, "<module>", module)
 	implementation = sts.ReplaceAll(implementation, "<wiki>", wiki)
@@ -676,7 +670,6 @@ func (v *generator_) populateModelTemplate(
 }
 
 func (v *generator_) populateScannerTemplate(
-	template string,
 	syntax ast.SyntaxLike,
 ) (
 	implementation string,
@@ -687,6 +680,7 @@ func (v *generator_) populateScannerTemplate(
 	var foundCases = v.extractFoundCases()
 	var ignoredCases = v.extractIgnoredCases()
 	var expressions = v.extractExpressions()
+	var template = v.templates_.GetValue("scanner")
 	implementation = sts.ReplaceAll(template, "<Notice>", notice)
 	implementation = sts.ReplaceAll(implementation, "<TokenNames>", tokenNames)
 	implementation = sts.ReplaceAll(implementation, "<TokenMatchers>", tokenMatchers)
@@ -697,7 +691,6 @@ func (v *generator_) populateScannerTemplate(
 }
 
 func (v *generator_) populateSyntaxTemplate(
-	template string,
 	syntax string,
 	copyright string,
 ) (
@@ -708,7 +701,7 @@ func (v *generator_) populateSyntaxTemplate(
 	var allCaps = sts.ToUpper(syntax)
 	var uppercase = v.makeUppercase(syntax)
 	var lowercase = v.makeLowercase(syntax)
-	implementation = sts.ReplaceAll(template, "<Notice>", notice)
+	implementation = sts.ReplaceAll(syntaxTemplate_, "<Notice>", notice)
 	implementation = sts.ReplaceAll(implementation, "<Copyright>", copyright)
 	implementation = sts.ReplaceAll(implementation, "<SYNTAX>", allCaps)
 	implementation = sts.ReplaceAll(implementation, "<Syntax>", uppercase)
@@ -1010,7 +1003,7 @@ func (v *generator_) processPart(
 		}
 		if !v.greedy_ {
 			regexp += "?"
-			v.greedy_ = true
+			v.greedy_ = true // Reset scanning back to "greedy".
 		}
 	}
 	return regexp
@@ -1116,7 +1109,7 @@ func (v *generator_) processText(
 	case gra.Scanner().MatchesType(actual, gra.IntrinsicToken):
 		var intrinsic = sts.ToLower(actual)
 		if intrinsic == "any" {
-			v.greedy_ = false
+			v.greedy_ = false // Turn off "greedy" for expressions containing ANY.
 		}
 		regexp += `" + ` + intrinsic + `_ + "`
 	default:
