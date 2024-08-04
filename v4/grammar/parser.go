@@ -172,9 +172,9 @@ func (v *parser_) parseAlternative() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the bar separator.
+	// Attempt to parse the bar reserved string.
 	var bar string
-	bar, token, ok = v.parseToken(SeparatorToken, "|")
+	bar, token, ok = v.parseToken(ReservedToken, "|")
 	if !ok {
 		// This is not the alternative.
 		return alternative, token, false
@@ -280,7 +280,7 @@ func (v *parser_) parseConstrained() (
 ) {
 	// Attempt to parse the opening bracket for the constrained.
 	var left string
-	left, token, ok = v.parseToken(SeparatorToken, "{")
+	left, token, ok = v.parseToken(ReservedToken, "{")
 	if !ok {
 		// This is not the constrained.
 		return constrained, token, false
@@ -304,7 +304,7 @@ func (v *parser_) parseConstrained() (
 
 	// Attempt to parse the closing bracket for the constrained.
 	var right string
-	right, token, ok = v.parseToken(SeparatorToken, "}")
+	right, token, ok = v.parseToken(ReservedToken, "}")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("}",
@@ -403,9 +403,9 @@ func (v *parser_) parseExpression() (
 		return expression, token, false
 	}
 
-	// Attempt to parse the colon separator.
+	// Attempt to parse the colon reserved string.
 	var colon string
-	colon, token, ok = v.parseToken(SeparatorToken, ":")
+	colon, token, ok = v.parseToken(ReservedToken, ":")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax(":",
@@ -465,9 +465,9 @@ func (v *parser_) parseExtent() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the dot-dot separator.
+	// Attempt to parse the dot-dot reserved string.
 	var dotdot string
-	dotdot, token, ok = v.parseToken(SeparatorToken, "..")
+	dotdot, token, ok = v.parseToken(ReservedToken, "..")
 	if !ok {
 		// This is not the extent glyph.
 		return extent, token, false
@@ -526,7 +526,7 @@ func (v *parser_) parseFiltered() (
 
 	// Attempt to parse the opening bracket for the filtered element.
 	var left string
-	left, token, ok = v.parseToken(SeparatorToken, "[")
+	left, token, ok = v.parseToken(ReservedToken, "[")
 	if !ok {
 		// This is not the filtered element, put back any negation token.
 		if col.IsDefined(negation) {
@@ -554,7 +554,7 @@ func (v *parser_) parseFiltered() (
 
 	// Attempt to parse the closing bracket for the filtered element.
 	var right string
-	right, token, ok = v.parseToken(SeparatorToken, "]")
+	right, token, ok = v.parseToken(ReservedToken, "]")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax("]",
@@ -576,7 +576,7 @@ func (v *parser_) parseGrouped() (
 ) {
 	// Attempt to parse the opening bracket for the grouped pattern.
 	var left string
-	left, token, ok = v.parseToken(SeparatorToken, "(")
+	left, token, ok = v.parseToken(ReservedToken, "(")
 	if !ok {
 		// This is not the grouped.
 		return grouped, token, false
@@ -596,7 +596,7 @@ func (v *parser_) parseGrouped() (
 
 	// Attempt to parse the closing bracket for the grouped pattern.
 	var right string
-	right, token, ok = v.parseToken(SeparatorToken, ")")
+	right, token, ok = v.parseToken(ReservedToken, ")")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax(")",
@@ -728,9 +728,9 @@ func (v *parser_) parseLimit() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the dot-dot separator.
+	// Attempt to parse the dot-dot reserved string.
 	var dotdot string
-	dotdot, token, ok = v.parseToken(SeparatorToken, "..")
+	dotdot, token, ok = v.parseToken(ReservedToken, "..")
 	if !ok {
 		// This is not the limit number.
 		return limit, token, false
@@ -855,9 +855,9 @@ func (v *parser_) parseRule() (
 		return rule, token, false
 	}
 
-	// Attempt to parse the colon separator.
+	// Attempt to parse the colon reserved string.
 	var colon string
-	colon, token, ok = v.parseToken(SeparatorToken, ":")
+	colon, token, ok = v.parseToken(ReservedToken, ":")
 	if !ok {
 		var message = v.formatError(token)
 		message += v.generateSyntax(":",

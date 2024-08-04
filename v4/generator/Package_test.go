@@ -514,8 +514,8 @@ var scannerClass = &scannerClass_{
 		ErrorToken: "error",
 		IntegerToken: "integer",
 		NewlineToken: "newline",
+		ReservedToken: "reserved",
 		RuneToken: "rune",
-		SeparatorToken: "separator",
 		SpaceToken: "space",
 		TextToken: "text",
 	},
@@ -523,8 +523,8 @@ var scannerClass = &scannerClass_{
 		// Define pattern matchers for each type of token.
 		IntegerToken: reg.MustCompile("^" + integer_),
 		NewlineToken: reg.MustCompile("^" + newline_),
+		ReservedToken: reg.MustCompile("^" + reserved_),
 		RuneToken: reg.MustCompile("^" + rune_),
-		SeparatorToken: reg.MustCompile("^" + separator_),
 		SpaceToken: reg.MustCompile("^" + space_),
 		TextToken: reg.MustCompile("^" + text_),
 	},
@@ -636,8 +636,8 @@ const (
 
 	// Define the regular expression patterns for each token type.
 	integer_ = "(?:0|(-?[1-9]" + digit_ + "*))"
+	reserved_ = "(?:,|\\[|\\])"
 	rune_ = "(?:'[^" + control_ + "]')"
-	separator_ = "(?:,|\\[|\\])"
 	space_ = "(?:[ \\t]+)"
 	text_ = "(?:\"[^\"" + control_ + "]+\")"
 )
@@ -720,8 +720,8 @@ loop:
 		// Find the next token type.
 		case v.foundToken(IntegerToken):
 		case v.foundToken(NewlineToken):
+		case v.foundToken(ReservedToken):
 		case v.foundToken(RuneToken):
-		case v.foundToken(SeparatorToken):
 		case v.foundToken(SpaceToken):
 		case v.foundToken(TextToken):
 		default:
@@ -963,8 +963,8 @@ const (
 	ErrorToken TokenType = iota
 	IntegerToken
 	NewlineToken
+	ReservedToken
 	RuneToken
-	SeparatorToken
 	SpaceToken
 	TextToken
 )
@@ -1141,6 +1141,10 @@ on interfaces, not on each other.
 */
 package ast
 
+import (
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
+)
+
 // Classes
 
 /*
@@ -1150,7 +1154,10 @@ concrete additional-like class.
 */
 type AdditionalClassLike interface {
 	// Constructors
-	Make(component ComponentLike) AdditionalLike
+	Make(
+		reserved string,
+		component ComponentLike,
+	) AdditionalLike
 }
 
 /*
@@ -1170,7 +1177,10 @@ concrete document-like class.
 */
 type DocumentClassLike interface {
 	// Constructors
-	Make(component ComponentLike) DocumentLike
+	Make(
+		component ComponentLike,
+		newlines abs.Sequential[string],
+	) DocumentLike
 }
 
 /*
@@ -1191,8 +1201,10 @@ concrete list-like class.
 type ListClassLike interface {
 	// Constructors
 	Make(
+		reserved string,
 		component ComponentLike,
-		additional AdditionalLike,
+		additionals abs.Sequential[AdditionalLike],
+		reserved2 string,
 	) ListLike
 }
 
@@ -1206,6 +1218,7 @@ instance of a concrete additional-like class.
 type AdditionalLike interface {
 	// Attributes
 	GetClass() AdditionalClassLike
+	GetReserved() string
 	GetComponent() ComponentLike
 }
 
@@ -1229,6 +1242,7 @@ type DocumentLike interface {
 	// Attributes
 	GetClass() DocumentClassLike
 	GetComponent() ComponentLike
+	GetNewlines() abs.Sequential[string]
 }
 
 /*
@@ -1250,7 +1264,9 @@ instance of a concrete list-like class.
 type ListLike interface {
 	// Attributes
 	GetClass() ListClassLike
+	GetReserved() string
 	GetComponent() ComponentLike
-	GetAdditional() AdditionalLike
+	GetAdditionals() abs.Sequential[AdditionalLike]
+	GetReserved2() string
 }
 `

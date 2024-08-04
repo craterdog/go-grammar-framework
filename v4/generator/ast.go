@@ -85,14 +85,15 @@ func (v *ast_) GetClass() AstClassLike {
 
 // Methodical
 
-func (v *ast_) PreprocessIdentifier(
-	identifier ast.IdentifierLike,
+func (v *ast_) PreprocessFactor(
+	factor ast.FactorLike,
+	index uint,
 ) {
-	var uppercase = identifier.GetAny().(string)
-	if gra.Scanner().MatchesType(uppercase, gra.UppercaseToken) {
-		var abstraction = mod.Abstraction(uppercase + "Like")
+	switch factor.GetAny().(type) {
+	case string:
+		var abstraction = mod.Abstraction("string")
 		var attribute = mod.Attribute(
-			"Get"+uppercase,
+			"GetReserved",
 			abstraction,
 		)
 		v.attributes_.AppendValue(attribute)
@@ -110,6 +111,41 @@ func (v *ast_) PostprocessMultilined(multilined ast.MultilinedLike) {
 		abstraction,
 	)
 	v.attributes_ = col.List[mod.AttributeLike]()
+	v.attributes_.AppendValue(attribute)
+}
+
+func (v *ast_) PreprocessPredicate(
+	predicate ast.PredicateLike,
+) {
+	var identifier = predicate.GetIdentifier().GetAny().(string)
+	var attributeName = v.makeUppercase(identifier)
+	var attributeType mod.AbstractionLike
+	switch {
+	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
+		attributeType = mod.Abstraction("string")
+	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
+		attributeType = mod.Abstraction(identifier + "Like")
+	}
+	var attribute = mod.Attribute(
+		"Get"+attributeName,
+		attributeType,
+	)
+	var cardinality = predicate.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		switch actual := cardinality.GetAny().(type) {
+		case ast.ConstrainedLike:
+			attribute = v.pluralizeAttribute(attribute)
+		case string:
+			switch actual {
+			case "?":
+				// This attribute is optional.
+				attribute = v.optionalizeAttribute(attribute)
+			case "*", "+":
+				// Turn the attribute into a sequence of that type attribute.
+				attribute = v.pluralizeAttribute(attribute)
+			}
+		}
+	}
 	v.attributes_.AppendValue(attribute)
 }
 
@@ -343,6 +379,53 @@ func (v *ast_) makeUppercase(name string) string {
 	runes := []rune(name)
 	runes[0] = uni.ToUpper(runes[0])
 	return string(runes)
+}
+
+func (v *ast_) optionalizeAttribute(
+	attribute mod.AttributeLike,
+) mod.AttributeLike {
+	var name = attribute.GetName()
+	name = "GetOptional" + sts.TrimPrefix(name, "Get")
+	var attributeType = attribute.GetOptionalAbstraction()
+	attribute = mod.Attribute(name, attributeType)
+	return attribute
+}
+
+func (v *ast_) pluralizeAttribute(
+	attribute mod.AttributeLike,
+) mod.AttributeLike {
+	// Add the collections module to the catalog of imported modules.
+	var alias = "abs"
+	var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
+	var module = mod.Module(
+		alias,
+		path,
+	)
+	v.modules_.SetValue(path, module)
+
+	// Extract the name and attribute type from the attribute.
+	var name = attribute.GetName()
+	if sts.HasSuffix(name, "s") {
+		name += "es"
+	} else {
+		name += "s"
+	}
+	var attributeType = attribute.GetOptionalAbstraction() // Not optional here.
+
+	// Create the generic arguments list for the pluralized attribute.
+	var argument = mod.Argument(attributeType)
+	var additionalArguments = col.List[mod.AdditionalArgumentLike]()
+	var arguments = mod.Arguments(argument, additionalArguments)
+	var genericArguments = mod.GenericArguments(arguments)
+
+	// Create the result type for the pluralized attribute.
+	attributeType = mod.Abstraction(
+		mod.Alias(alias),
+		"Sequential",
+		genericArguments,
+	)
+	attribute = mod.Attribute(name, attributeType)
+	return attribute
 }
 
 const astTemplate_ = `/*<Notice>*/

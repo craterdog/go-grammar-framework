@@ -90,7 +90,7 @@ func (v *grammar_) PreprocessIdentifier(
 }
 
 func (v *grammar_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]([]string{"separator", "newline", "space"})
+	v.tokens_ = col.Set[string]([]string{"newline", "reserved", "space"})
 }
 
 func (v *grammar_) GenerateGrammarModel(

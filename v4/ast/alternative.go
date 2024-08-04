@@ -41,21 +41,21 @@ type alternativeClass_ struct {
 // Constructors
 
 func (c *alternativeClass_) Make(
-	separator string,
+	reserved string,
 	part PartLike,
 ) AlternativeLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(separator):
-		panic("The separator attribute is required by this class.")
+	case col.IsUndefined(reserved):
+		panic("The reserved attribute is required by this class.")
 	case col.IsUndefined(part):
 		panic("The part attribute is required by this class.")
 	default:
 		return &alternative_{
 			// Initialize instance attributes.
-			class_:     c,
-			separator_: separator,
-			part_:      part,
+			class_:    c,
+			reserved_: reserved,
+			part_:     part,
 		}
 	}
 }
@@ -66,9 +66,9 @@ func (c *alternativeClass_) Make(
 
 type alternative_ struct {
 	// Define instance attributes.
-	class_     AlternativeClassLike
-	separator_ string
-	part_      PartLike
+	class_    AlternativeClassLike
+	reserved_ string
+	part_     PartLike
 }
 
 // Attributes
@@ -77,8 +77,8 @@ func (v *alternative_) GetClass() AlternativeClassLike {
 	return v.class_
 }
 
-func (v *alternative_) GetSeparator() string {
-	return v.separator_
+func (v *alternative_) GetReserved() string {
+	return v.reserved_
 }
 
 func (v *alternative_) GetPart() PartLike {

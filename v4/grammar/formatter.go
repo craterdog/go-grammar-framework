@@ -118,8 +118,8 @@ func (v *formatter_) ProcessQuantified(quantified string) {
 	v.appendString(quantified)
 }
 
-func (v *formatter_) ProcessSeparator(separator string) {
-	v.appendString(separator)
+func (v *formatter_) ProcessReserved(reserved string) {
+	v.appendString(reserved)
 }
 
 func (v *formatter_) ProcessUppercase(uppercase string) {

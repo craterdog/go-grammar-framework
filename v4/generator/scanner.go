@@ -64,15 +64,15 @@ func (c *scannerClass_) Make() ScannerLike {
 
 type scanner_ struct {
 	// Define the instance attributes.
-	class_      ScannerClassLike
-	visitor_    gra.VisitorLike
-	pattern_    bool
-	greedy_     bool
-	ignored_    abs.SetLike[string]
-	tokens_     abs.SetLike[string]
-	separators_ abs.SetLike[string]
-	regexp_     string
-	regexps_    abs.CatalogLike[string, string]
+	class_    ScannerClassLike
+	visitor_  gra.VisitorLike
+	pattern_  bool
+	greedy_   bool
+	ignored_  abs.SetLike[string]
+	tokens_   abs.SetLike[string]
+	reserved_ abs.SetLike[string]
+	regexp_   string
+	regexps_  abs.CatalogLike[string, string]
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -104,7 +104,7 @@ func (v *scanner_) ProcessLiteral(literal string) {
 	literal = literal[1 : len(literal)-1] // Remove the double quotes.
 	literal = v.escapeText(literal)
 	if !v.pattern_ {
-		v.separators_.AddValue(literal)
+		v.reserved_.AddValue(literal)
 	}
 	v.regexp_ += literal
 }
@@ -206,8 +206,8 @@ func (v *scanner_) PostprocessPattern(pattern ast.PatternLike) {
 func (v *scanner_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.greedy_ = true // The default is "greedy" scanning.
 	v.ignored_ = col.Set[string]([]string{"newline", "space"})
-	v.tokens_ = col.Set[string]([]string{"separator"})
-	v.separators_ = col.Set[string]()
+	v.tokens_ = col.Set[string]([]string{"reserved"})
+	v.reserved_ = col.Set[string]()
 	var implicit = map[string]string{"space": `"(?:[ \\t]+)"`}
 	v.regexps_ = col.Catalog[string, string](implicit)
 }
@@ -215,8 +215,8 @@ func (v *scanner_) PreprocessSyntax(syntax ast.SyntaxLike) {
 func (v *scanner_) PostprocessSyntax(syntax ast.SyntaxLike) {
 	v.ignored_ = v.ignored_.GetClass().Sans(v.ignored_, v.tokens_)
 	v.tokens_.AddValues(v.ignored_)
-	var separators = v.extractSeparators()
-	v.regexps_.SetValue("separator", separators)
+	var reserved = v.extractReserved()
+	v.regexps_.SetValue("reserved", reserved)
 	v.regexps_.SortValues()
 }
 
@@ -308,19 +308,17 @@ func (v *scanner_) extractNotice(syntax ast.SyntaxLike) string {
 	return notice
 }
 
-func (v *scanner_) extractSeparators() string {
-	var separators = `"(?:`
-	if !v.separators_.IsEmpty() {
-		var iterator = v.separators_.GetIterator()
-		var separator = iterator.GetNext()
-		separators += separator
+func (v *scanner_) extractReserved() string {
+	var reserved = `"(?:`
+	if !v.reserved_.IsEmpty() {
+		var iterator = v.reserved_.GetIterator()
+		reserved += iterator.GetNext()
 		for iterator.HasNext() {
-			separator = iterator.GetNext()
-			separators += "|" + separator
+			reserved += "|" + iterator.GetNext()
 		}
 	}
-	separators += `)"`
-	return separators
+	reserved += `)"`
+	return reserved
 }
 
 func (v *scanner_) extractTokenMatchers() string {

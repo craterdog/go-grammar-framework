@@ -41,18 +41,18 @@ type limitClass_ struct {
 // Constructors
 
 func (c *limitClass_) Make(
-	separator string,
+	reserved string,
 	optionalNumber string,
 ) LimitLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(separator):
-		panic("The separator attribute is required by this class.")
+	case col.IsUndefined(reserved):
+		panic("The reserved attribute is required by this class.")
 	default:
 		return &limit_{
 			// Initialize instance attributes.
 			class_:          c,
-			separator_:      separator,
+			reserved_:       reserved,
 			optionalNumber_: optionalNumber,
 		}
 	}
@@ -65,7 +65,7 @@ func (c *limitClass_) Make(
 type limit_ struct {
 	// Define instance attributes.
 	class_          LimitClassLike
-	separator_      string
+	reserved_       string
 	optionalNumber_ string
 }
 
@@ -75,8 +75,8 @@ func (v *limit_) GetClass() LimitClassLike {
 	return v.class_
 }
 
-func (v *limit_) GetSeparator() string {
-	return v.separator_
+func (v *limit_) GetReserved() string {
+	return v.reserved_
 }
 
 func (v *limit_) GetOptionalNumber() string {

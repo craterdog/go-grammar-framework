@@ -58,7 +58,7 @@ const (
 	NoteToken
 	NumberToken
 	QuantifiedToken
-	SeparatorToken
+	ReservedToken
 	SpaceToken
 	UppercaseToken
 )
@@ -295,8 +295,8 @@ type Methodical interface {
 	ProcessQuantified(
 		quantified string,
 	)
-	ProcessSeparator(
-		separator string,
+	ProcessReserved(
+		reserved string,
 	)
 	ProcessUppercase(
 		uppercase string,

@@ -43,7 +43,7 @@ concrete alternative-like class.
 type AlternativeClassLike interface {
 	// Constructors
 	Make(
-		separator string,
+		reserved string,
 		part PartLike,
 	) AlternativeLike
 }
@@ -89,10 +89,10 @@ concrete constrained-like class.
 type ConstrainedClassLike interface {
 	// Constructors
 	Make(
-		separator string,
+		reserved string,
 		number string,
 		optionalLimit LimitLike,
-		separator2 string,
+		reserved2 string,
 	) ConstrainedLike
 }
 
@@ -126,7 +126,7 @@ type ExpressionClassLike interface {
 	Make(
 		optionalComment string,
 		lowercase string,
-		separator string,
+		reserved string,
 		pattern PatternLike,
 		optionalNote string,
 		newlines abs.Sequential[string],
@@ -141,7 +141,7 @@ concrete extent-like class.
 type ExtentClassLike interface {
 	// Constructors
 	Make(
-		separator string,
+		reserved string,
 		glyph string,
 	) ExtentLike
 }
@@ -165,9 +165,9 @@ type FilteredClassLike interface {
 	// Constructors
 	Make(
 		optionalNegation string,
-		separator string,
+		reserved string,
 		characters abs.Sequential[CharacterLike],
-		separator2 string,
+		reserved2 string,
 	) FilteredLike
 }
 
@@ -179,9 +179,9 @@ concrete grouped-like class.
 type GroupedClassLike interface {
 	// Constructors
 	Make(
-		separator string,
+		reserved string,
 		pattern PatternLike,
-		separator2 string,
+		reserved2 string,
 	) GroupedLike
 }
 
@@ -229,7 +229,7 @@ concrete limit-like class.
 type LimitClassLike interface {
 	// Constructors
 	Make(
-		separator string,
+		reserved string,
 		optionalNumber string,
 	) LimitLike
 }
@@ -287,7 +287,7 @@ type PatternClassLike interface {
 /*
 PredicateClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
-concrete factor-like class.
+concrete predicate-like class.
 */
 type PredicateClassLike interface {
 	// Constructors
@@ -307,7 +307,7 @@ type RuleClassLike interface {
 	Make(
 		optionalComment string,
 		uppercase string,
-		separator string,
+		reserved string,
 		definition DefinitionLike,
 		newlines abs.Sequential[string],
 	) RuleLike
@@ -377,7 +377,7 @@ instance of a concrete alternative-like class.
 type AlternativeLike interface {
 	// Attributes
 	GetClass() AlternativeClassLike
-	GetSeparator() string
+	GetReserved() string
 	GetPart() PartLike
 }
 
@@ -423,10 +423,10 @@ instance of a concrete constrained-like class.
 type ConstrainedLike interface {
 	// Attributes
 	GetClass() ConstrainedClassLike
-	GetSeparator() string
+	GetReserved() string
 	GetNumber() string
 	GetOptionalLimit() LimitLike
-	GetSeparator2() string
+	GetReserved2() string
 }
 
 /*
@@ -461,7 +461,7 @@ type ExpressionLike interface {
 	GetClass() ExpressionClassLike
 	GetOptionalComment() string
 	GetLowercase() string
-	GetSeparator() string
+	GetReserved() string
 	GetPattern() PatternLike
 	GetOptionalNote() string
 	GetNewlines() abs.Sequential[string]
@@ -475,7 +475,7 @@ instance of a concrete extent-like class.
 type ExtentLike interface {
 	// Attributes
 	GetClass() ExtentClassLike
-	GetSeparator() string
+	GetReserved() string
 	GetGlyph() string
 }
 
@@ -499,9 +499,9 @@ type FilteredLike interface {
 	// Attributes
 	GetClass() FilteredClassLike
 	GetOptionalNegation() string
-	GetSeparator() string
+	GetReserved() string
 	GetCharacters() abs.Sequential[CharacterLike]
-	GetSeparator2() string
+	GetReserved2() string
 }
 
 /*
@@ -512,9 +512,9 @@ instance of a concrete grouped-like class.
 type GroupedLike interface {
 	// Attributes
 	GetClass() GroupedClassLike
-	GetSeparator() string
+	GetReserved() string
 	GetPattern() PatternLike
-	GetSeparator2() string
+	GetReserved2() string
 }
 
 /*
@@ -560,7 +560,7 @@ instance of a concrete limit-like class.
 type LimitLike interface {
 	// Attributes
 	GetClass() LimitClassLike
-	GetSeparator() string
+	GetReserved() string
 	GetOptionalNumber() string
 }
 
@@ -634,7 +634,7 @@ type RuleLike interface {
 	GetClass() RuleClassLike
 	GetOptionalComment() string
 	GetUppercase() string
-	GetSeparator() string
+	GetReserved() string
 	GetDefinition() DefinitionLike
 	GetNewlines() abs.Sequential[string]
 }

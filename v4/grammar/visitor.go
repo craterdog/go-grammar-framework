@@ -86,9 +86,9 @@ func (v *visitor_) VisitSyntax(syntax ast.SyntaxLike) {
 func (v *visitor_) visitAlternative(
 	alternative ast.AlternativeLike,
 ) {
-	// Visit the separator.
-	var separator = alternative.GetSeparator()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the reserved string.
+	var reserved = alternative.GetReserved()
+	v.processor_.ProcessReserved(reserved)
 
 	// Visit the part.
 	var part = alternative.GetPart()
@@ -148,9 +148,9 @@ func (v *visitor_) visitCharacter(
 func (v *visitor_) visitConstrained(
 	constrained ast.ConstrainedLike,
 ) {
-	// Visit the opening separator.
-	var separator = constrained.GetSeparator()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the opening reserved string.
+	var reserved = constrained.GetReserved()
+	v.processor_.ProcessReserved(reserved)
 
 	// Visit the minimum value.
 	var number = constrained.GetNumber()
@@ -164,9 +164,9 @@ func (v *visitor_) visitConstrained(
 		v.processor_.PostprocessLimit(limit)
 	}
 
-	// Visit the closing separator.
-	separator = constrained.GetSeparator2()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the closing reserved string.
+	reserved = constrained.GetReserved2()
+	v.processor_.ProcessReserved(reserved)
 }
 
 func (v *visitor_) visitDefinition(
@@ -222,9 +222,9 @@ func (v *visitor_) visitExpression(
 	var lowercase = expression.GetLowercase()
 	v.processor_.ProcessLowercase(lowercase)
 
-	// Visit the separator.
-	var separator = expression.GetSeparator()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the reserved string.
+	var reserved = expression.GetReserved()
+	v.processor_.ProcessReserved(reserved)
 
 	// Visit the pattern.
 	var pattern = expression.GetPattern()
@@ -251,9 +251,9 @@ func (v *visitor_) visitExpression(
 func (v *visitor_) visitExtent(
 	extent ast.ExtentLike,
 ) {
-	// Visit the separator.
-	var separator = extent.GetSeparator()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the reserved string.
+	var reserved = extent.GetReserved()
+	v.processor_.ProcessReserved(reserved)
 
 	// Visit the glyph.
 	var glyph = extent.GetGlyph()
@@ -290,9 +290,9 @@ func (v *visitor_) visitFiltered(
 		v.processor_.ProcessNegation(negation)
 	}
 
-	// Visit the opening separator.
-	var separator = filtered.GetSeparator()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the opening reserved string.
+	var reserved = filtered.GetReserved()
+	v.processor_.ProcessReserved(reserved)
 
 	// Visit each character.
 	var index uint
@@ -305,17 +305,17 @@ func (v *visitor_) visitFiltered(
 		v.processor_.PostprocessCharacter(character, index)
 	}
 
-	// Visit the closing separator.
-	separator = filtered.GetSeparator2()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the closing reserved string.
+	reserved = filtered.GetReserved2()
+	v.processor_.ProcessReserved(reserved)
 }
 
 func (v *visitor_) visitGrouped(
 	grouped ast.GroupedLike,
 ) {
-	// Visit the opening separator.
-	var separator = grouped.GetSeparator()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the opening reserved string.
+	var reserved = grouped.GetReserved()
+	v.processor_.ProcessReserved(reserved)
 
 	// Visit the pattern.
 	var pattern = grouped.GetPattern()
@@ -323,9 +323,9 @@ func (v *visitor_) visitGrouped(
 	v.visitPattern(pattern)
 	v.processor_.PostprocessPattern(pattern)
 
-	// Visit the closing separator.
-	separator = grouped.GetSeparator2()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the closing reserved string.
+	reserved = grouped.GetReserved2()
+	v.processor_.ProcessReserved(reserved)
 }
 
 func (v *visitor_) visitHeader(
@@ -403,9 +403,9 @@ func (v *visitor_) visitLine(
 func (v *visitor_) visitLimit(
 	limit ast.LimitLike,
 ) {
-	// Visit the separator.
-	var separator = limit.GetSeparator()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the reserved string.
+	var reserved = limit.GetReserved()
+	v.processor_.ProcessReserved(reserved)
 
 	// Visit the optional number.
 	var number = limit.GetOptionalNumber()
@@ -496,9 +496,9 @@ func (v *visitor_) visitRule(
 	var uppercase = rule.GetUppercase()
 	v.processor_.ProcessUppercase(uppercase)
 
-	// Visit the separator.
-	var separator = rule.GetSeparator()
-	v.processor_.ProcessSeparator(separator)
+	// Visit the reserved string.
+	var reserved = rule.GetReserved()
+	v.processor_.ProcessReserved(reserved)
 
 	// Visit the definition.
 	var definition = rule.GetDefinition()

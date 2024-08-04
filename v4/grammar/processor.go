@@ -98,7 +98,7 @@ func (v *processor_) ProcessNumber(number string) {
 func (v *processor_) ProcessQuantified(quantified string) {
 }
 
-func (v *processor_) ProcessSeparator(separator string) {
+func (v *processor_) ProcessReserved(reserved string) {
 }
 
 func (v *processor_) ProcessUppercase(uppercase string) {

@@ -37,7 +37,7 @@ var scannerClass = &scannerClass_{
 		NoteToken:       "note",
 		NumberToken:     "number",
 		QuantifiedToken: "quantified",
-		SeparatorToken:  "separator",
+		ReservedToken:   "reserved",
 		SpaceToken:      "space",
 		UppercaseToken:  "uppercase",
 	},
@@ -53,7 +53,7 @@ var scannerClass = &scannerClass_{
 		NoteToken:       reg.MustCompile("^" + note_),
 		NumberToken:     reg.MustCompile("^" + number_),
 		QuantifiedToken: reg.MustCompile("^" + quantified_),
-		SeparatorToken:  reg.MustCompile("^" + separator_),
+		ReservedToken:   reg.MustCompile("^" + reserved_),
 		SpaceToken:      reg.MustCompile("^" + space_),
 		UppercaseToken:  reg.MustCompile("^" + uppercase_),
 	},
@@ -176,7 +176,7 @@ const (
 	note_       = "(?:! [^" + control_ + "]*)"
 	number_     = "(?:" + digit_ + "+)"
 	quantified_ = "(?:\\?|\\*|\\+)"
-	separator_  = "(?::|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
+	reserved_   = "(?::|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
 	space_      = "(?:[ \\t]+)"
 	unicode_    = "(?:x(?:" + base16_ + "){2}|u(?:" + base16_ + "){4}|U(?:" + base16_ + "){8})"
 	uppercase_  = "(?:" + upper_ + "(" + digit_ + "|" + lower_ + "|" + upper_ + ")*)"
@@ -268,7 +268,7 @@ loop:
 		case v.foundToken(NoteToken):
 		case v.foundToken(NumberToken):
 		case v.foundToken(QuantifiedToken):
-		case v.foundToken(SeparatorToken):
+		case v.foundToken(ReservedToken):
 		case v.foundToken(SpaceToken):
 		case v.foundToken(UppercaseToken):
 		default:

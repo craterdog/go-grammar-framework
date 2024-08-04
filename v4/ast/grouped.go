@@ -41,25 +41,25 @@ type groupedClass_ struct {
 // Constructors
 
 func (c *groupedClass_) Make(
-	separator string,
+	reserved string,
 	pattern PatternLike,
-	separator2 string,
+	reserved2 string,
 ) GroupedLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(separator):
-		panic("The separator attribute is required by this class.")
+	case col.IsUndefined(reserved):
+		panic("The reserved attribute is required by this class.")
 	case col.IsUndefined(pattern):
 		panic("The pattern attribute is required by this class.")
-	case col.IsUndefined(separator2):
-		panic("The separator2 attribute is required by this class.")
+	case col.IsUndefined(reserved2):
+		panic("The reserved2 attribute is required by this class.")
 	default:
 		return &grouped_{
 			// Initialize instance attributes.
-			class_:      c,
-			separator_:  separator,
-			pattern_:    pattern,
-			separator2_: separator2,
+			class_:     c,
+			reserved_:  reserved,
+			pattern_:   pattern,
+			reserved2_: reserved2,
 		}
 	}
 }
@@ -70,10 +70,10 @@ func (c *groupedClass_) Make(
 
 type grouped_ struct {
 	// Define instance attributes.
-	class_      GroupedClassLike
-	separator_  string
-	pattern_    PatternLike
-	separator2_ string
+	class_     GroupedClassLike
+	reserved_  string
+	pattern_   PatternLike
+	reserved2_ string
 }
 
 // Attributes
@@ -82,16 +82,16 @@ func (v *grouped_) GetClass() GroupedClassLike {
 	return v.class_
 }
 
-func (v *grouped_) GetSeparator() string {
-	return v.separator_
+func (v *grouped_) GetReserved() string {
+	return v.reserved_
 }
 
 func (v *grouped_) GetPattern() PatternLike {
 	return v.pattern_
 }
 
-func (v *grouped_) GetSeparator2() string {
-	return v.separator2_
+func (v *grouped_) GetReserved2() string {
+	return v.reserved2_
 }
 
 // Private

@@ -43,26 +43,26 @@ type filteredClass_ struct {
 
 func (c *filteredClass_) Make(
 	optionalNegation string,
-	separator string,
+	reserved string,
 	characters abs.Sequential[CharacterLike],
-	separator2 string,
+	reserved2 string,
 ) FilteredLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(separator):
-		panic("The separator attribute is required by this class.")
+	case col.IsUndefined(reserved):
+		panic("The reserved attribute is required by this class.")
 	case col.IsUndefined(characters):
 		panic("The characters attribute is required by this class.")
-	case col.IsUndefined(separator2):
-		panic("The separator2 attribute is required by this class.")
+	case col.IsUndefined(reserved2):
+		panic("The reserved2 attribute is required by this class.")
 	default:
 		return &filtered_{
 			// Initialize instance attributes.
 			class_:            c,
 			optionalNegation_: optionalNegation,
-			separator_:        separator,
+			reserved_:         reserved,
 			characters_:       characters,
-			separator2_:       separator2,
+			reserved2_:        reserved2,
 		}
 	}
 }
@@ -75,9 +75,9 @@ type filtered_ struct {
 	// Define instance attributes.
 	class_            FilteredClassLike
 	optionalNegation_ string
-	separator_        string
+	reserved_         string
 	characters_       abs.Sequential[CharacterLike]
-	separator2_       string
+	reserved2_        string
 }
 
 // Attributes
@@ -90,16 +90,16 @@ func (v *filtered_) GetOptionalNegation() string {
 	return v.optionalNegation_
 }
 
-func (v *filtered_) GetSeparator() string {
-	return v.separator_
+func (v *filtered_) GetReserved() string {
+	return v.reserved_
 }
 
 func (v *filtered_) GetCharacters() abs.Sequential[CharacterLike] {
 	return v.characters_
 }
 
-func (v *filtered_) GetSeparator2() string {
-	return v.separator2_
+func (v *filtered_) GetReserved2() string {
+	return v.reserved2_
 }
 
 // Private

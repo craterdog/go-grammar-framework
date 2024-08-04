@@ -93,7 +93,7 @@ const (
 	NoteToken       = gra.NoteToken
 	NumberToken     = gra.NumberToken
 	QuantifiedToken = gra.QuantifiedToken
-	SeparatorToken  = gra.SeparatorToken
+	ReservedToken   = gra.ReservedToken
 	SpaceToken      = gra.SpaceToken
 	UppercaseToken  = gra.UppercaseToken
 )

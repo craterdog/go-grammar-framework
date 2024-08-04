@@ -116,8 +116,8 @@ func (v *validator_) ProcessQuantified(quantified string) {
 	v.validateToken(QuantifiedToken, quantified)
 }
 
-func (v *validator_) ProcessSeparator(separator string) {
-	v.validateToken(SeparatorToken, separator)
+func (v *validator_) ProcessReserved(reserved string) {
+	v.validateToken(ReservedToken, reserved)
 }
 
 func (v *validator_) ProcessUppercase(uppercase string) {
