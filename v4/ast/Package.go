@@ -44,7 +44,7 @@ type AlternativeClassLike interface {
 	// Constructors
 	Make(
 		separator string,
-		parts abs.Sequential[PartLike],
+		part PartLike,
 	) AlternativeLike
 }
 
@@ -153,10 +153,7 @@ concrete factor-like class.
 */
 type FactorClassLike interface {
 	// Constructors
-	Make(
-		predicate PredicateLike,
-		optionalCardinality CardinalityLike,
-	) FactorLike
+	Make(any_ any) FactorLike
 }
 
 /*
@@ -282,19 +279,22 @@ concrete pattern-like class.
 type PatternClassLike interface {
 	// Constructors
 	Make(
-		parts abs.Sequential[PartLike],
-		alternatives abs.Sequential[AlternativeLike],
+		part PartLike,
+		optionalSupplement SupplementLike,
 	) PatternLike
 }
 
 /*
 PredicateClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
-concrete predicate-like class.
+concrete factor-like class.
 */
 type PredicateClassLike interface {
 	// Constructors
-	Make(any_ any) PredicateLike
+	Make(
+		identifier IdentifierLike,
+		optionalCardinality CardinalityLike,
+	) PredicateLike
 }
 
 /*
@@ -314,6 +314,36 @@ type RuleClassLike interface {
 }
 
 /*
+SelectiveClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete selective-like class.
+*/
+type SelectiveClassLike interface {
+	// Constructors
+	Make(alternatives abs.Sequential[AlternativeLike]) SelectiveLike
+}
+
+/*
+SequentialClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete sequential-like class.
+*/
+type SequentialClassLike interface {
+	// Constructors
+	Make(parts abs.Sequential[PartLike]) SequentialLike
+}
+
+/*
+SupplementClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete supplement-like class.
+*/
+type SupplementClassLike interface {
+	// Constructors
+	Make(any_ any) SupplementLike
+}
+
+/*
 SyntaxClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete syntax-like class.
@@ -328,13 +358,13 @@ type SyntaxClassLike interface {
 }
 
 /*
-TextClassLike is a class interface that defines the complete set of
+TextualClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
-concrete text-like class.
+concrete textual-like class.
 */
-type TextClassLike interface {
+type TextualClassLike interface {
 	// Constructors
-	Make(any_ any) TextLike
+	Make(any_ any) TextualLike
 }
 
 // Instances
@@ -348,7 +378,7 @@ type AlternativeLike interface {
 	// Attributes
 	GetClass() AlternativeClassLike
 	GetSeparator() string
-	GetParts() abs.Sequential[PartLike]
+	GetPart() PartLike
 }
 
 /*
@@ -457,8 +487,7 @@ instance of a concrete factor-like class.
 type FactorLike interface {
 	// Attributes
 	GetClass() FactorClassLike
-	GetPredicate() PredicateLike
-	GetOptionalCardinality() CardinalityLike
+	GetAny() any
 }
 
 /*
@@ -579,8 +608,8 @@ instance of a concrete pattern-like class.
 type PatternLike interface {
 	// Attributes
 	GetClass() PatternClassLike
-	GetParts() abs.Sequential[PartLike]
-	GetAlternatives() abs.Sequential[AlternativeLike]
+	GetPart() PartLike
+	GetOptionalSupplement() SupplementLike
 }
 
 /*
@@ -591,7 +620,8 @@ instance of a concrete predicate-like class.
 type PredicateLike interface {
 	// Attributes
 	GetClass() PredicateClassLike
-	GetAny() any
+	GetIdentifier() IdentifierLike
+	GetOptionalCardinality() CardinalityLike
 }
 
 /*
@@ -610,6 +640,39 @@ type RuleLike interface {
 }
 
 /*
+SelectiveLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete selective-like class.
+*/
+type SelectiveLike interface {
+	// Attributes
+	GetClass() SelectiveClassLike
+	GetAlternatives() abs.Sequential[AlternativeLike]
+}
+
+/*
+SequentialLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete sequential-like class.
+*/
+type SequentialLike interface {
+	// Attributes
+	GetClass() SequentialClassLike
+	GetParts() abs.Sequential[PartLike]
+}
+
+/*
+SupplementLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete supplement-like class.
+*/
+type SupplementLike interface {
+	// Attributes
+	GetClass() SupplementClassLike
+	GetAny() any
+}
+
+/*
 SyntaxLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete syntax-like class.
@@ -623,12 +686,12 @@ type SyntaxLike interface {
 }
 
 /*
-TextLike is an instance interface that defines the complete set of
+TextualLike is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
-instance of a concrete text-like class.
+instance of a concrete textual-like class.
 */
-type TextLike interface {
+type TextualLike interface {
 	// Attributes
-	GetClass() TextClassLike
+	GetClass() TextualClassLike
 	GetAny() any
 }

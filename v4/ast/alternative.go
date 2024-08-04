@@ -14,7 +14,6 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -43,20 +42,20 @@ type alternativeClass_ struct {
 
 func (c *alternativeClass_) Make(
 	separator string,
-	parts abs.Sequential[PartLike],
+	part PartLike,
 ) AlternativeLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(separator):
 		panic("The separator attribute is required by this class.")
-	case col.IsUndefined(parts):
-		panic("The parts attribute is required by this class.")
+	case col.IsUndefined(part):
+		panic("The part attribute is required by this class.")
 	default:
 		return &alternative_{
 			// Initialize instance attributes.
 			class_:     c,
 			separator_: separator,
-			parts_:     parts,
+			part_:      part,
 		}
 	}
 }
@@ -69,7 +68,7 @@ type alternative_ struct {
 	// Define instance attributes.
 	class_     AlternativeClassLike
 	separator_ string
-	parts_     abs.Sequential[PartLike]
+	part_      PartLike
 }
 
 // Attributes
@@ -82,8 +81,8 @@ func (v *alternative_) GetSeparator() string {
 	return v.separator_
 }
 
-func (v *alternative_) GetParts() abs.Sequential[PartLike] {
-	return v.parts_
+func (v *alternative_) GetPart() PartLike {
+	return v.part_
 }
 
 // Private

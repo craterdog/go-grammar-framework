@@ -32,68 +32,237 @@ package generator
 
 import (
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
-	mod "github.com/craterdog/go-model-framework/v4"
+	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
 
 // Classes
 
 /*
-GeneratorClassLike defines the set of class constants, constructors and
-functions that must be supported by all generator-class-like classes.
+FormatterClassLike defines the set of class constants, constructors and
+functions that must be supported by all formatter-class-like classes.
 */
-type GeneratorClassLike interface {
+type FormatterClassLike interface {
 	// Constructors
-	Make() GeneratorLike
+	Make() FormatterLike
+}
+
+/*
+GrammarClassLike defines the set of class constants, constructors and
+functions that must be supported by all grammar-class-like classes.
+*/
+type GrammarClassLike interface {
+	// Constructors
+	Make() GrammarLike
+}
+
+/*
+AstClassLike defines the set of class constants, constructors and
+functions that must be supported by all ast-class-like classes.
+*/
+type AstClassLike interface {
+	// Constructors
+	Make() AstLike
+}
+
+/*
+ParserClassLike defines the set of class constants, constructors and
+functions that must be supported by all parser-class-like classes.
+*/
+type ParserClassLike interface {
+	// Constructors
+	Make() ParserLike
+}
+
+/*
+ScannerClassLike defines the set of class constants, constructors and
+functions that must be supported by all scanner-class-like classes.
+*/
+type ScannerClassLike interface {
+	// Constructors
+	Make() ScannerLike
+}
+
+/*
+SyntaxClassLike defines the set of class constants, constructors and
+functions that must be supported by all syntax-class-like classes.
+*/
+type SyntaxClassLike interface {
+	// Constructors
+	Make() SyntaxLike
+}
+
+/*
+TokenClassLike defines the set of class constants, constructors and
+functions that must be supported by all token-class-like classes.
+*/
+type TokenClassLike interface {
+	// Constructors
+	Make() TokenLike
+}
+
+/*
+ValidatorClassLike defines the set of class constants, constructors and
+functions that must be supported by all validator-class-like classes.
+*/
+type ValidatorClassLike interface {
+	// Constructors
+	Make() ValidatorLike
 }
 
 // Instances
 
 /*
-GeneratorLike defines the set of aspects and methods that must be supported by
-all generator-like instances.
+FormatterLike defines the set of aspects and methods that must be supported by
+all formatter-like instances.
 */
-type GeneratorLike interface {
+type FormatterLike interface {
 	// Attributes
-	GetClass() GeneratorClassLike
+	GetClass() FormatterClassLike
+
+	// Abstractions
+	gra.Methodical
 
 	// Methods
-	CreateSyntax(
-		name string,
+	GenerateFormatterClass(
+		module string,
+		syntax ast.SyntaxLike,
+	) (
+		implementation string,
+	)
+}
+
+/*
+GrammarLike defines the set of aspects and methods that must be supported by
+all grammar-like instances.
+*/
+type GrammarLike interface {
+	// Attributes
+	GetClass() GrammarClassLike
+
+	// Abstractions
+	gra.Methodical
+
+	// Methods
+	GenerateGrammarModel(
+		module string,
+		wiki string,
+		syntax ast.SyntaxLike,
+	) (
+		implementation string,
+	)
+}
+
+/*
+AstLike defines the set of aspects and methods that must be supported by
+all ast-like instances.
+*/
+type AstLike interface {
+	// Attributes
+	GetClass() AstClassLike
+
+	// Abstractions
+	gra.Methodical
+
+	// Methods
+	GenerateAstModel(
+		module string,
+		wiki string,
+		syntax ast.SyntaxLike,
+	) (
+		implementation string,
+	)
+}
+
+/*
+ParserLike defines the set of aspects and methods that must be supported by
+all parser-like instances.
+*/
+type ParserLike interface {
+	// Attributes
+	GetClass() ParserClassLike
+
+	// Abstractions
+	gra.Methodical
+
+	// Methods
+	GenerateParserClass(
+		module string,
+		syntax ast.SyntaxLike,
+	) (
+		implementation string,
+	)
+}
+
+/*
+ScannerLike defines the set of aspects and methods that must be supported by
+all scanner-like instances.
+*/
+type ScannerLike interface {
+	// Attributes
+	GetClass() ScannerClassLike
+
+	// Abstractions
+	gra.Methodical
+
+	// Methods
+	GenerateScannerClass(
+		module string,
+		syntax ast.SyntaxLike,
+	) (
+		implementation string,
+	)
+}
+
+/*
+SyntaxLike defines the set of aspects and methods that must be supported by
+all syntax-like instances.
+*/
+type SyntaxLike interface {
+	// Attributes
+	GetClass() SyntaxClassLike
+
+	// Methods
+	GenerateSyntaxNotation(
+		syntax string,
 		copyright string,
-	) ast.SyntaxLike
-	GenerateAst(
+	) (
+		implementation string,
+	)
+}
+
+/*
+TokenLike defines the set of aspects and methods that must be supported by
+all token-like instances.
+*/
+type TokenLike interface {
+	// Attributes
+	GetClass() TokenClassLike
+
+	// Methods
+	GenerateTokenClass(
 		module string,
-		wiki string,
 		syntax ast.SyntaxLike,
-	) mod.ModelLike
-	GenerateGrammar(
+	) (
+		implementation string,
+	)
+}
+
+/*
+ValidatorLike defines the set of aspects and methods that must be supported by
+all validator-like instances.
+*/
+type ValidatorLike interface {
+	// Attributes
+	GetClass() ValidatorClassLike
+
+	// Abstractions
+	gra.Methodical
+
+	// Methods
+	GenerateValidatorClass(
 		module string,
-		wiki string,
 		syntax ast.SyntaxLike,
-	) mod.ModelLike
-	GenerateFormatter(
-		module string,
-		wiki string,
-		syntax ast.SyntaxLike,
-	) string
-	GenerateParser(
-		module string,
-		wiki string,
-		syntax ast.SyntaxLike,
-	) string
-	GenerateScanner(
-		module string,
-		wiki string,
-		syntax ast.SyntaxLike,
-	) string
-	GenerateToken(
-		module string,
-		wiki string,
-		syntax ast.SyntaxLike,
-	) string
-	GenerateValidator(
-		module string,
-		wiki string,
-		syntax ast.SyntaxLike,
-	) string
+	) (
+		implementation string,
+	)
 }

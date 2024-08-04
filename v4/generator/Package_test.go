@@ -21,55 +21,151 @@ import (
 )
 
 func TestLifecycle(t *tes.T) {
-	var generator = gen.Generator().Make()
+	//var generator = gen.Generator().Make()
 	var module = "github.com/craterdog/go-grammar-framework/v4"
 	var wiki = "github.com/craterdog/go-grammar-framework/wiki"
 	var name = "example"
 
 	// Generate a new syntax with a default copyright.
 	var copyright string
-	var syntax = generator.CreateSyntax(name, copyright)
-
-	// Format the syntax.
-	var formatter = gra.Formatter().Make()
-	var source = formatter.FormatSyntax(syntax)
+	var source = gen.Syntax().Make().GenerateSyntaxNotation(name, copyright)
+	ass.Equal(t, syntaxNotation, source)
 
 	// Parse the source code for the syntax.
 	var parser = gra.Parser().Make()
-	syntax = parser.ParseSource(source)
+	var syntax = parser.ParseSource(source)
 
 	// Validate the syntax.
 	var validator = gra.Validator().Make()
 	validator.ValidateSyntax(syntax)
 
-	// Generate the AST model for the syntax.
-	var model = generator.GenerateAst(module, wiki, syntax)
-	mod.Validator().ValidateModel(model)
+	// Format the syntax.
+	var formatter = gra.Formatter().Make()
+	source = formatter.FormatSyntax(syntax)
+	ass.Equal(t, syntaxNotation, source)
 
-	// Generate the language grammar model for the syntax.
-	model = generator.GenerateGrammar(module, wiki, syntax)
-	mod.Validator().ValidateModel(model)
+	// Generate the token class for the syntax.
+	source = gen.Token().Make().GenerateTokenClass(module, syntax)
+	ass.Equal(t, tokenClass, source)
+
+	// Generate the scanner class for the syntax.
+	source = gen.Scanner().Make().GenerateScannerClass(module, syntax)
+	ass.Equal(t, scannerClass, source)
 
 	// Generate the formatter class for the syntax.
-	source = generator.GenerateFormatter(module, wiki, syntax)
+	source = gen.Formatter().Make().GenerateFormatterClass(module, syntax)
 	ass.Equal(t, formatterClass, source)
 
 	// Generate the parser class for the syntax.
-	source = generator.GenerateParser(module, wiki, syntax)
+	source = gen.Parser().Make().GenerateParserClass(module, syntax)
 	ass.Equal(t, parserClass, source)
 
-	// Generate the scanner class for the syntax.
-	source = generator.GenerateScanner(module, wiki, syntax)
-	ass.Equal(t, scannerClass, source)
-
-	// Generate the token class for the syntax.
-	source = generator.GenerateToken(module, wiki, syntax)
-	ass.Equal(t, tokenClass, source)
-
 	// Generate the validator class for the syntax.
-	source = generator.GenerateValidator(module, wiki, syntax)
+	source = gen.Validator().Make().GenerateValidatorClass(module, syntax)
 	ass.Equal(t, validatorClass, source)
+
+	// Generate the language grammar model for the syntax.
+	source = gen.Grammar().Make().GenerateGrammarModel(module, wiki, syntax)
+	ass.Equal(t, grammarModel, source)
+	var model = mod.Parser().ParseSource(source)
+	mod.Validator().ValidateModel(model)
+
+	// Generate the abstract syntax tree model for the syntax.
+	source = gen.Ast().Make().GenerateAstModel(module, wiki, syntax)
+	ass.Equal(t, astModel, source)
+	model = mod.Parser().ParseSource(source)
+	mod.Validator().ValidateModel(model)
 }
+
+const syntaxNotation = `!>
+................................................................................
+.                   Copyright (c) 2024.  All Rights Reserved.                  .
+................................................................................
+.  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               .
+.                                                                              .
+.  This code is free software; you can redistribute it and/or modify it under  .
+.  the terms of The MIT License (MIT), as published by the Open Source         .
+.  Initiative. (See https://opensource.org/license/MIT)                        .
+................................................................................
+<!
+
+!>
+EXAMPLE NOTATION
+This document contains a formal definition of the Example Notation
+using Crater Dog Syntax Notation™ (CDSN):
+ * https://github.com/craterdog/go-grammar-framework/blob/main/v4/Syntax.cdsn
+
+A language syntax consists of a set of rule definitions and regular expression
+patterns.
+
+Each predicate within a rule definition may be constrained by one of the
+following cardinalities:
+ * predicate{M} - Exactly M instances of the specified predicate.
+ * predicate{M..N} - M to N instances of the specified predicate.
+ * predicate{M..} - M or more instances of the specified predicate.
+ * predicate? - Zero or one instances of the specified predicate.
+ * predicate* - Zero or more instances of the specified predicate.
+ * predicate+ - One or more instances of the specified predicate.
+
+The following intrinsic character types may be used within regular expression
+pattern declarations:
+ * ANY - Any language specific character.
+ * LOWER - Any language specific lowercase character.
+ * UPPER - Any language specific uppercase character.
+ * DIGIT - Any language specific digit.
+ * CONTROL - Any environment specific (non-printable) control character.
+ * EOL - The environment specific end-of-line character.
+
+The negation "~" prefix within a regular expression pattern may only be applied
+to a bounded range of possible intrinsic character types or printable unicode
+characters called runes.
+<!
+
+!>
+RULE DEFINITIONS
+The following rules are used by the parser when parsing the stream of tokens
+generated by the scanner based on the expression patterns.  Each rule name
+begins with an uppercase letter.  The rule definitions may specify the names of
+expressions or other rules and are matched by the parser in the order listed.  A
+rule definition may also be directly or indirectly recursive.  The parsing of
+tokens is greedy and will match as many repeated token types as possible. The
+sequence of factors within in a rule definition may be separated by spaces which
+are ignored by the parser.  Newlines are also ignored unless a "newline" regular
+expression pattern is defined and used in one or more rule definitions.
+<!
+Document: Component newline*
+
+Component:
+    Intrinsic
+    List
+
+Intrinsic:
+    integer
+    rune
+    text
+
+List: "[" Component Additional* "]"
+
+Additional: "," Component
+
+!>
+EXPRESSION DEFINITIONS
+The following expression definitions are used by the scanner to generate the
+stream of tokens—each an instance of an expression type—that are to be processed by
+the parser.  Each expression name begins with a lowercase letter.  Unlike with
+rule definitions, an expression definition cannot specify the name of a rule within
+its definition, but it may specify the name of another expression.  Expression
+definitions cannot be recursive and the scanning of expressions is NOT greedy.
+Any spaces within an expression definition are part of the expression and are NOT
+ignored.
+<!
+integer: '0' | ('-'? ['1'..'9'] DIGIT*)
+
+rune: "'" ~[CONTROL] "'"  ! Any single printable unicode character.
+
+text: '"' ~['"' CONTROL]+ '"'
+
+`
 
 const formatterClass = `/*
 ................................................................................
@@ -539,7 +635,7 @@ const (
 	upper_   = "\\p{Lu}"
 
 	// Define the regular expression patterns for each token type.
-	integer_ = "(?:0|-?[1-9]" + digit_ + "*)"
+	integer_ = "(?:0|(-?[1-9]" + digit_ + "*))"
 	rune_ = "(?:'[^" + control_ + "]')"
 	separator_ = "(?:,|\\[|\\])"
 	space_ = "(?:[ \\t]+)"
@@ -676,8 +772,8 @@ type tokenClass_ struct {
 // Constructors
 
 func (c *tokenClass_) Make(
-	line int,
-	position int,
+	line uint,
+	position uint,
 	type_ TokenType,
 	value string,
 ) TokenLike {
@@ -698,8 +794,8 @@ func (c *tokenClass_) Make(
 type token_ struct {
 	// Define the instance attributes.
 	class_    TokenClassLike
-	line_     int
-	position_ int
+	line_     uint
+	position_ uint
 	type_     TokenType
 	value_    string
 }
@@ -710,11 +806,11 @@ func (v *token_) GetClass() TokenClassLike {
 	return v.class_
 }
 
-func (v *token_) GetLine() int {
+func (v *token_) GetLine() uint {
 	return v.line_
 }
 
-func (v *token_) GetPosition() int {
+func (v *token_) GetPosition() uint {
 	return v.position_
 }
 
@@ -812,5 +908,349 @@ func (v *validator_) formatError(name, message string) string {
 		message,
 	)
 	return message
+}
+`
+
+const grammarModel = `/*
+................................................................................
+.                   Copyright (c) 2024.  All Rights Reserved.                  .
+................................................................................
+.  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               .
+.                                                                              .
+.  This code is free software; you can redistribute it and/or modify it under  .
+.  the terms of The MIT License (MIT), as published by the Open Source         .
+.  Initiative. (See https://opensource.org/license/MIT)                        .
+................................................................................
+*/
+
+/*
+Package "grammar" provides the following grammar classes that operate on the
+abstract syntax tree (AST) for this module:
+  - Token captures the attributes associated with a parsed token.
+  - Scanner is used to scan the source byte stream and recognize matching tokens.
+  - Parser is used to process the token stream and generate the AST.
+  - Validator is used to validate the semantics associated with an AST.
+  - Formatter is used to format an AST back into a canonical version of its source.
+
+For detailed documentation on this package refer to the wiki:
+  - https://github.com/craterdog/go-grammar-framework/wiki
+
+This package follows the Crater Dog Technologies™ Go Coding Conventions located
+here:
+  - https://github.com/craterdog/go-model-framework/wiki
+
+Additional concrete implementations of the classes defined by this package can
+be developed and used seamlessly since the interface definitions only depend on
+other interfaces and intrinsic types—and the class implementations only depend
+on interfaces, not on each other.
+*/
+package grammar
+
+import (
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+)
+
+// Types
+
+/*
+TokenType is a constrained type representing any token type recognized by a
+scanner.
+*/
+type TokenType uint8
+
+const (
+	ErrorToken TokenType = iota
+	IntegerToken
+	NewlineToken
+	RuneToken
+	SeparatorToken
+	SpaceToken
+	TextToken
+)
+
+// Classes
+
+/*
+FormatterClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete formatter-like class.
+*/
+type FormatterClassLike interface {
+	// Constructors
+	Make() FormatterLike
+}
+
+/*
+ParserClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete parser-like class.
+*/
+type ParserClassLike interface {
+	// Constructors
+	Make() ParserLike
+}
+
+/*
+ScannerClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete scanner-like class.  The following functions are supported:
+
+FormatToken() returns a formatted string containing the attributes of the token.
+
+FormatType() returns the string version of the token type.
+
+MatchesType() determines whether or not a token value is of a specified type.
+*/
+type ScannerClassLike interface {
+	// Constructors
+	Make(
+		source string,
+		tokens abs.QueueLike[TokenLike],
+	) ScannerLike
+
+	// Functions
+	FormatToken(token TokenLike) string
+	FormatType(tokenType TokenType) string
+	MatchesType(
+		tokenValue string,
+		tokenType TokenType,
+	) bool
+}
+
+/*
+TokenClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete token-like class.
+*/
+type TokenClassLike interface {
+	// Constructors
+	Make(
+		line uint,
+		position uint,
+		type_ TokenType,
+		value string,
+	) TokenLike
+}
+
+/*
+ValidatorClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete validator-like class.
+*/
+type ValidatorClassLike interface {
+	// Constructors
+	Make() ValidatorLike
+}
+
+// Instances
+
+/*
+FormatterLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete formatter-like class.
+*/
+type FormatterLike interface {
+	// Attributes
+	GetClass() FormatterClassLike
+	GetDepth() uint
+
+	// Methods
+	FormatDocument(document ast.DocumentLike) string
+}
+
+/*
+ParserLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete parser-like class.
+*/
+type ParserLike interface {
+	// Attributes
+	GetClass() ParserClassLike
+
+	// Methods
+	ParseSource(source string) ast.DocumentLike
+}
+
+/*
+ScannerLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete scanner-like class.
+*/
+type ScannerLike interface {
+	// Attributes
+	GetClass() ScannerClassLike
+}
+
+/*
+TokenLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete token-like class.
+*/
+type TokenLike interface {
+	// Attributes
+	GetClass() TokenClassLike
+	GetLine() uint
+	GetPosition() uint
+	GetType() TokenType
+	GetValue() string
+}
+
+/*
+ValidatorLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete validator-like class.
+*/
+type ValidatorLike interface {
+	// Attributes
+	GetClass() ValidatorClassLike
+
+	// Methods
+	ValidateDocument(document ast.DocumentLike)
+}
+`
+
+const astModel = `/*
+................................................................................
+.                   Copyright (c) 2024.  All Rights Reserved.                  .
+................................................................................
+.  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               .
+.                                                                              .
+.  This code is free software; you can redistribute it and/or modify it under  .
+.  the terms of The MIT License (MIT), as published by the Open Source         .
+.  Initiative. (See https://opensource.org/license/MIT)                        .
+................................................................................
+*/
+
+/*
+Package "ast" provides the abstract syntax tree (AST) classes for this module.
+Each AST class manages the attributes associated with the rule definition found
+in the syntax grammar with the same rule name as the class.
+
+For detailed documentation on this package refer to the wiki:
+  - https://github.com/craterdog/go-grammar-framework/wiki
+
+This package follows the Crater Dog Technologies™ Go Coding Conventions located
+here:
+  - https://github.com/craterdog/go-model-framework/wiki
+
+Additional concrete implementations of the classes defined by this package can
+be developed and used seamlessly since the interface definitions only depend on
+other interfaces and intrinsic types—and the class implementations only depend
+on interfaces, not on each other.
+*/
+package ast
+
+// Classes
+
+/*
+AdditionalClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete additional-like class.
+*/
+type AdditionalClassLike interface {
+	// Constructors
+	Make(component ComponentLike) AdditionalLike
+}
+
+/*
+ComponentClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete component-like class.
+*/
+type ComponentClassLike interface {
+	// Constructors
+	Make(any_ any) ComponentLike
+}
+
+/*
+DocumentClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete document-like class.
+*/
+type DocumentClassLike interface {
+	// Constructors
+	Make(component ComponentLike) DocumentLike
+}
+
+/*
+IntrinsicClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete intrinsic-like class.
+*/
+type IntrinsicClassLike interface {
+	// Constructors
+	Make(any_ any) IntrinsicLike
+}
+
+/*
+ListClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete list-like class.
+*/
+type ListClassLike interface {
+	// Constructors
+	Make(
+		component ComponentLike,
+		additional AdditionalLike,
+	) ListLike
+}
+
+// Instances
+
+/*
+AdditionalLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete additional-like class.
+*/
+type AdditionalLike interface {
+	// Attributes
+	GetClass() AdditionalClassLike
+	GetComponent() ComponentLike
+}
+
+/*
+ComponentLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete component-like class.
+*/
+type ComponentLike interface {
+	// Attributes
+	GetClass() ComponentClassLike
+	GetAny() any
+}
+
+/*
+DocumentLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete document-like class.
+*/
+type DocumentLike interface {
+	// Attributes
+	GetClass() DocumentClassLike
+	GetComponent() ComponentLike
+}
+
+/*
+IntrinsicLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete intrinsic-like class.
+*/
+type IntrinsicLike interface {
+	// Attributes
+	GetClass() IntrinsicClassLike
+	GetAny() any
+}
+
+/*
+ListLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete list-like class.
+*/
+type ListLike interface {
+	// Attributes
+	GetClass() ListClassLike
+	GetComponent() ComponentLike
+	GetAdditional() AdditionalLike
 }
 `

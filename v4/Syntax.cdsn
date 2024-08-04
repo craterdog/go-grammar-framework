@@ -61,10 +61,8 @@ Header: comment newline
 Rule: comment? uppercase ":" Definition newline+
 
 Definition:
-    Inlined
     Multilined
-
-Inlined: Factor+ note?
+    Inlined
 
 Multilined: Line+
 
@@ -74,12 +72,13 @@ Identifier:
     lowercase
     uppercase
 
-Factor: Predicate Cardinality?  ! The default cardinality is one.
+Inlined: Factor+ note?
 
-Predicate:
+Factor:
+    Predicate
     literal
-    lowercase
-    uppercase
+
+Predicate: Identifier Cardinality?  ! The default cardinality is one.
 
 Cardinality:
     Constrained
@@ -91,26 +90,34 @@ Limit: ".." number?
 
 Expression: comment? lowercase ":" Pattern note? newline+
 
-Pattern: Part+ Alternative*
+Pattern: Part Supplement?
+
+Supplement:
+    Sequential
+    Selective
+
+Sequential: Part+
+
+Selective: Alternative+
+
+Alternative: "|" Part
 
 Part: Element Cardinality?  ! The default cardinality is one.
-
-Alternative: "|" Part+
 
 Element:
     Grouped
     Filtered
-    Text
+    Textual
 
 Grouped: "(" Pattern ")"
 
 Filtered: negation? "[" Character+ "]"
 
-Text:
+Textual:
+    intrinsic
     glyph
     literal
     lowercase
-    intrinsic
 
 Character:
     Bounded
@@ -156,7 +163,7 @@ number: DIGIT+
 
 quantified: "?" | "*" | "+"
 
-unicode: 'x' base16{2} | 'u' base16{4} | 'U' base16{8}
+unicode: ('x' base16{2}) | ('u' base16{4}) | ('U' base16{8})
 
 uppercase: UPPER (DIGIT | LOWER | UPPER)*
 

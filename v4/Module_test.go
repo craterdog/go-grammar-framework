@@ -13,7 +13,6 @@
 package module_test
 
 import (
-	fmt "fmt"
 	gra "github.com/craterdog/go-grammar-framework/v4"
 	mod "github.com/craterdog/go-model-framework/v4"
 	ass "github.com/stretchr/testify/assert"
@@ -35,28 +34,23 @@ func TestRoundTrips(t *tes.T) {
 		panic(err)
 	}
 	var source = string(bytes)
-	var parser = gra.Parser()
-	var syntax = parser.ParseSource(source)
-	var formatter = gra.Formatter()
-	var actual = formatter.FormatSyntax(syntax)
+	var syntax = gra.ParseSource(source)
+	var actual = gra.FormatSyntax(syntax)
 	ass.Equal(t, actual, source)
-	var validator = gra.Validator()
-	validator.ValidateSyntax(syntax)
+	gra.ValidateSyntax(syntax)
 }
 
 func TestModelGeneration(t *tes.T) {
+	// Parse the Syntax.cdsn file.
 	var bytes, err = osx.ReadFile(syntaxFile)
 	if err != nil {
 		panic(err)
 	}
 	var source = string(bytes)
-	var parser = gra.Parser()
-	var syntax = parser.ParseSource(source)
-	var generator = gra.Generator()
-	var formatter = mod.Formatter()
+	var syntax = gra.ParseSource(source)
 
-	var model = generator.GenerateAst(module, wiki, syntax)
-	source = formatter.FormatModel(model)
+	// Generate the AST model.
+	source = gra.GenerateAstModel(module, wiki, syntax)
 	bytes = []byte(source)
 	var filename = "ast/Package.go"
 	err = osx.WriteFile(filename, bytes, 0644)
@@ -64,6 +58,9 @@ func TestModelGeneration(t *tes.T) {
 		panic(err)
 	}
 
+	// Generate the AST classes.
+	var parser = mod.Parser()
+	var model = parser.ParseSource(source)
 	var classes = model.GetClasses().GetClasses().GetIterator()
 	for classes.HasNext() {
 		var class = classes.GetNext()
@@ -81,8 +78,8 @@ func TestModelGeneration(t *tes.T) {
 		}
 	}
 
-	model = generator.GenerateGrammar(module, wiki, syntax)
-	source = formatter.FormatModel(model)
+	// Generate the grammar model.
+	source = gra.GenerateGrammarModel(module, wiki, syntax)
 	bytes = []byte(source)
 	filename = "grammar/Package.go"
 	err = osx.WriteFile(filename, bytes, 0644)
@@ -90,8 +87,17 @@ func TestModelGeneration(t *tes.T) {
 		panic(err)
 	}
 
-	// Generate the scanner class for the syntax.
-	source = generator.GenerateScanner(module, wiki, syntax)
+	// Generate the token class for the grammar.
+	source = gra.GenerateTokenClass(module, syntax)
+	bytes = []byte(source)
+	filename = "grammar/token.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	// Generate the scanner class for the grammar.
+	source = gra.GenerateScannerClass(module, syntax)
 	bytes = []byte(source)
 	filename = "grammar/scanner.go"
 	err = osx.WriteFile(filename, bytes, 0644)
@@ -99,10 +105,28 @@ func TestModelGeneration(t *tes.T) {
 		panic(err)
 	}
 
-	// Generate the token class for the syntax.
-	source = generator.GenerateToken(module, wiki, syntax)
+	// Generate the parser class for the grammar.
+	source = gra.GenerateParserClass(module, syntax)
 	bytes = []byte(source)
-	filename = "grammar/token.go"
+	filename = "grammar/parser.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	// Generate the validator class for the grammar.
+	source = gra.GenerateValidatorClass(module, syntax)
+	bytes = []byte(source)
+	filename = "grammar/validator.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	// Generate the formatter class for the grammar.
+	source = gra.GenerateFormatterClass(module, syntax)
+	bytes = []byte(source)
+	filename = "grammar/formatter.go"
 	err = osx.WriteFile(filename, bytes, 0644)
 	if err != nil {
 		panic(err)
@@ -110,54 +134,39 @@ func TestModelGeneration(t *tes.T) {
 }
 
 func TestLifecycle(t *tes.T) {
-	var generator = gra.Generator()
 	var name = "example"
 
-	// Generate a new syntax with a default copyright.
+	// Generate the source code for a new syntax with a default copyright.
 	var copyright string
-	var syntax = generator.CreateSyntax(name, copyright)
-
-	// Validate the syntax.
-	var validator = gra.Validator()
-	validator.ValidateSyntax(syntax)
-
-	// Format the syntax.
-	var formatter = gra.Formatter()
-	var source = formatter.FormatSyntax(syntax)
-	fmt.Println("Syntax:")
-	fmt.Println(source)
+	var source = gra.GenerateSyntaxNotation(name, copyright)
 
 	// Parse the source code for the syntax.
-	var parser = gra.Parser()
-	syntax = parser.ParseSource(source)
+	var syntax = gra.ParseSource(source)
+
+	// Validate the syntax.
+	gra.ValidateSyntax(syntax)
+
+	// Format the syntax.
+	gra.FormatSyntax(syntax)
 
 	// Generate the AST model for the syntax.
-	var model = generator.GenerateAst(module, wiki, syntax)
-	var formatter2 = mod.Formatter()
-	source = formatter2.FormatModel(model)
-	fmt.Println("AST Model:")
-	fmt.Println(source)
+	gra.GenerateAstModel(module, wiki, syntax)
 
 	// Generate the language grammar model for the syntax.
-	model = generator.GenerateGrammar(module, wiki, syntax)
-	source = formatter2.FormatModel(model)
-	fmt.Println("Grammar Model:")
-	fmt.Println(source)
+	gra.GenerateGrammarModel(module, wiki, syntax)
 
 	// Generate the formatter class for the syntax.
-	generator.GenerateFormatter(module, wiki, syntax)
+	gra.GenerateFormatterClass(module, syntax)
 
 	// Generate the parser class for the syntax.
-	generator.GenerateParser(module, wiki, syntax)
+	gra.GenerateParserClass(module, syntax)
 
 	// Generate the scanner class for the syntax.
-	source = generator.GenerateScanner(module, wiki, syntax)
-	fmt.Println("Scanner Class:")
-	fmt.Println(source)
+	gra.GenerateScannerClass(module, syntax)
 
 	// Generate the token class for the syntax.
-	generator.GenerateToken(module, wiki, syntax)
+	gra.GenerateTokenClass(module, syntax)
 
 	// Generate the validator class for the syntax.
-	generator.GenerateValidator(module, wiki, syntax)
+	gra.GenerateValidatorClass(module, syntax)
 }

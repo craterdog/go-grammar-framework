@@ -40,20 +40,16 @@ type factorClass_ struct {
 
 // Constructors
 
-func (c *factorClass_) Make(
-	predicate PredicateLike,
-	optionalCardinality CardinalityLike,
-) FactorLike {
+func (c *factorClass_) Make(any_ any) FactorLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(predicate):
-		panic("The predicate attribute is required by this class.")
+	case col.IsUndefined(any_):
+		panic("The any attribute is required by this class.")
 	default:
 		return &factor_{
 			// Initialize instance attributes.
-			class_:               c,
-			predicate_:           predicate,
-			optionalCardinality_: optionalCardinality,
+			class_: c,
+			any_:   any_,
 		}
 	}
 }
@@ -64,9 +60,8 @@ func (c *factorClass_) Make(
 
 type factor_ struct {
 	// Define instance attributes.
-	class_               FactorClassLike
-	predicate_           PredicateLike
-	optionalCardinality_ CardinalityLike
+	class_ FactorClassLike
+	any_   any
 }
 
 // Attributes
@@ -75,12 +70,8 @@ func (v *factor_) GetClass() FactorClassLike {
 	return v.class_
 }
 
-func (v *factor_) GetPredicate() PredicateLike {
-	return v.predicate_
-}
-
-func (v *factor_) GetOptionalCardinality() CardinalityLike {
-	return v.optionalCardinality_
+func (v *factor_) GetAny() any {
+	return v.any_
 }
 
 // Private

@@ -20,40 +20,36 @@ import (
 
 // Reference
 
-var predicateClass = &predicateClass_{
+var supplementClass = &supplementClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Predicate() PredicateClassLike {
-	return predicateClass
+func Supplement() SupplementClassLike {
+	return supplementClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type predicateClass_ struct {
+type supplementClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *predicateClass_) Make(
-	identifier IdentifierLike,
-	optionalCardinality CardinalityLike,
-) PredicateLike {
+func (c *supplementClass_) Make(any_ any) SupplementLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(identifier):
-		panic("The identifier attribute is required by this class.")
+	case col.IsUndefined(any_):
+		panic("The any attribute is required by this class.")
 	default:
-		return &predicate_{
+		return &supplement_{
 			// Initialize instance attributes.
-			class_:               c,
-			identifier_:          identifier,
-			optionalCardinality_: optionalCardinality,
+			class_: c,
+			any_:   any_,
 		}
 	}
 }
@@ -62,25 +58,20 @@ func (c *predicateClass_) Make(
 
 // Target
 
-type predicate_ struct {
+type supplement_ struct {
 	// Define instance attributes.
-	class_               PredicateClassLike
-	identifier_          IdentifierLike
-	optionalCardinality_ CardinalityLike
+	class_ SupplementClassLike
+	any_   any
 }
 
 // Attributes
 
-func (v *predicate_) GetClass() PredicateClassLike {
+func (v *supplement_) GetClass() SupplementClassLike {
 	return v.class_
 }
 
-func (v *predicate_) GetIdentifier() IdentifierLike {
-	return v.identifier_
-}
-
-func (v *predicate_) GetOptionalCardinality() CardinalityLike {
-	return v.optionalCardinality_
+func (v *supplement_) GetAny() any {
+	return v.any_
 }
 
 // Private

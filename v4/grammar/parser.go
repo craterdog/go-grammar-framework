@@ -180,7 +180,7 @@ func (v *parser_) parseAlternative() (
 		return alternative, token, false
 	}
 
-	// Attempt to parse one or more parts.
+	// Attempt to parse the part.
 	var part ast.PartLike
 	part, token, ok = v.parsePart()
 	if !ok {
@@ -191,14 +191,9 @@ func (v *parser_) parseAlternative() (
 		)
 		panic(message)
 	}
-	var parts = col.List[ast.PartLike]()
-	for ok {
-		parts.AppendValue(part)
-		part, token, ok = v.parsePart()
-	}
 
 	// Found the alternative.
-	alternative = ast.Alternative().Make(bar, parts)
+	alternative = ast.Alternative().Make(bar, part)
 	return alternative, token, true
 }
 
@@ -329,20 +324,20 @@ func (v *parser_) parseDefinition() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the in-line definition.
+	// Attempt to parse the inlined definition.
 	var inlined ast.InlinedLike
 	inlined, token, ok = v.parseInlined()
 	if ok {
-		// Found the in-line definition.
+		// Found the inlined definition.
 		definition = ast.Definition().Make(inlined)
 		return definition, token, true
 	}
 
-	// Attempt to parse the multi-line definition.
+	// Attempt to parse the multilined definition.
 	var multilined ast.MultilinedLike
 	multilined, token, ok = v.parseMultilined()
 	if ok {
-		// Found the multi-line definition.
+		// Found the multilined definition.
 		definition = ast.Definition().Make(multilined)
 		return definition, token, true
 	}
@@ -375,11 +370,11 @@ func (v *parser_) parseElement() (
 	}
 
 	// Attempt to parse the string element.
-	var text ast.TextLike
-	text, token, ok = v.parseText()
+	var textual ast.TextualLike
+	textual, token, ok = v.parseTextual()
 	if ok {
 		// Found the string element.
-		element = ast.Element().Make(text)
+		element = ast.Element().Make(textual)
 		return element, token, true
 	}
 
@@ -454,7 +449,14 @@ func (v *parser_) parseExpression() (
 	}
 
 	// Found the expression.
-	expression = ast.Expression().Make(comment, lowercase, colon, pattern, note, newlines)
+	expression = ast.Expression().Make(
+		comment,
+		lowercase,
+		colon,
+		pattern,
+		note,
+		newlines,
+	)
 	return expression, token, true
 }
 
@@ -471,7 +473,7 @@ func (v *parser_) parseExtent() (
 		return extent, token, false
 	}
 
-	// Attempt to parse the extent glyph.
+	// Attempt to parse the extent for the bounded character.
 	var glyph string
 	glyph, token, ok = v.parseToken(GlyphToken, "")
 	if !ok {
@@ -482,7 +484,7 @@ func (v *parser_) parseExtent() (
 		panic(message)
 	}
 
-	// Found the extent glyph.
+	// Found the extent for the bounded character.
 	extent = ast.Extent().Make(dotdot, glyph)
 	return extent, token, true
 }
@@ -492,21 +494,24 @@ func (v *parser_) parseFactor() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the predicate.
+	// Attempt to parse the predicate factor.
 	var predicate ast.PredicateLike
 	predicate, token, ok = v.parsePredicate()
-	if !ok {
-		// This is not the factor.
-		return factor, token, false
+	if ok {
+		factor = ast.Factor().Make(predicate)
+		return factor, token, true
 	}
 
-	// Attempt to parse the optional cardinality.
-	var cardinality ast.CardinalityLike
-	cardinality, token, _ = v.parseCardinality()
+	// Attempt to parse the literal factor.
+	var literal string
+	literal, token, ok = v.parseToken(LiteralToken, "")
+	if ok {
+		factor = ast.Factor().Make(literal)
+		return factor, token, true
+	}
 
-	// Found the factor.
-	factor = ast.Factor().Make(predicate, cardinality)
-	return factor, token, true
+	// This is not the factor.
+	return factor, token, false
 }
 
 func (v *parser_) parseFiltered() (
@@ -534,8 +539,12 @@ func (v *parser_) parseFiltered() (
 	var character ast.CharacterLike
 	character, token, ok = v.parseCharacter()
 	if !ok {
-		// This is not the filtered element.
-		return filtered, token, false
+		var message = v.formatError(token)
+		message += v.generateSyntax("Character",
+			"Filtered",
+			"Character",
+		)
+		panic(message)
 	}
 	var characters = col.List[ast.CharacterLike]()
 	for ok {
@@ -677,7 +686,7 @@ func (v *parser_) parseInlined() (
 	var note string
 	note, token, _ = v.parseToken(NoteToken, "")
 
-	// Found the in-line definition.
+	// Found the inlined definition.
 	inlined = ast.Inlined().Make(factors, note)
 	return inlined, token, true
 }
@@ -731,7 +740,7 @@ func (v *parser_) parseLimit() (
 	var number string
 	number, token, _ = v.parseToken(NumberToken, "")
 
-	// Found the limit number.
+	// Found the constrained limit.
 	limit = ast.Limit().Make(dotdot, number)
 	return limit, token, true
 }
@@ -754,7 +763,7 @@ func (v *parser_) parseMultilined() (
 		line, _, ok = v.parseLine()
 	}
 
-	// Found the multi-line definition.
+	// Found the multilined definition.
 	multilined = ast.Multilined().Make(lines)
 	return multilined, token, true
 }
@@ -786,30 +795,20 @@ func (v *parser_) parsePattern() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse one or more parts.
+	// Attempt to parse the part.
 	var part ast.PartLike
 	part, token, ok = v.parsePart()
 	if !ok {
 		// This is not the pattern.
 		return pattern, token, false
 	}
-	var parts = col.List[ast.PartLike]()
-	for ok {
-		parts.AppendValue(part)
-		part, _, ok = v.parsePart()
-	}
 
-	// Attempt to parse zero or more alternatives.
-	var alternative ast.AlternativeLike
-	alternative, token, ok = v.parseAlternative()
-	var alternatives = col.List[ast.AlternativeLike]()
-	for ok {
-		alternatives.AppendValue(alternative)
-		alternative, token, ok = v.parseAlternative()
-	}
+	// Attempt to parse the optional supplement.
+	var supplement ast.SupplementLike
+	supplement, token, _ = v.parseSupplement()
 
 	// Found the pattern.
-	pattern = ast.Pattern().Make(parts, alternatives)
+	pattern = ast.Pattern().Make(part, supplement)
 	return pattern, token, true
 }
 
@@ -818,32 +817,21 @@ func (v *parser_) parsePredicate() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the literal predicate.
-	var literal string
-	literal, token, ok = v.parseToken(LiteralToken, "")
-	if ok {
-		predicate = ast.Predicate().Make(literal)
-		return predicate, token, true
+	// Attempt to parse the identifier.
+	var identifier ast.IdentifierLike
+	identifier, token, ok = v.parseIdentifier()
+	if !ok {
+		// This is not the predicate.
+		return predicate, token, false
 	}
 
-	// Attempt to parse the lowercase predicate.
-	var lowercase string
-	lowercase, token, ok = v.parseToken(LowercaseToken, "")
-	if ok {
-		predicate = ast.Predicate().Make(lowercase)
-		return predicate, token, true
-	}
+	// Attempt to parse the optional cardinality.
+	var cardinality ast.CardinalityLike
+	cardinality, token, _ = v.parseCardinality()
 
-	// Attempt to parse the uppercase predicate.
-	var uppercase string
-	uppercase, token, ok = v.parseToken(UppercaseToken, "")
-	if ok {
-		predicate = ast.Predicate().Make(uppercase)
-		return predicate, token, true
-	}
-
-	// This is not the predicate.
-	return predicate, token, false
+	// Found the predicate.
+	predicate = ast.Predicate().Make(identifier, cardinality)
+	return predicate, token, true
 }
 
 func (v *parser_) parseRule() (
@@ -913,6 +901,79 @@ func (v *parser_) parseRule() (
 	return rule, token, true
 }
 
+func (v *parser_) parseSelective() (
+	selective ast.SelectiveLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse one or more alternatives.
+	var alternative ast.AlternativeLike
+	alternative, token, ok = v.parseAlternative()
+	if !ok {
+		// This is not the selective.
+		return selective, token, false
+	}
+	var alternatives = col.List[ast.AlternativeLike]()
+	for ok {
+		alternatives.AppendValue(alternative)
+		alternative, _, ok = v.parseAlternative()
+	}
+
+	// Found the selective.
+	selective = ast.Selective().Make(alternatives)
+	return selective, token, true
+}
+
+func (v *parser_) parseSequential() (
+	sequential ast.SequentialLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse one or more parts.
+	var part ast.PartLike
+	part, token, ok = v.parsePart()
+	if !ok {
+		// This is not the sequential.
+		return sequential, token, false
+	}
+	var parts = col.List[ast.PartLike]()
+	for ok {
+		parts.AppendValue(part)
+		part, _, ok = v.parsePart()
+	}
+
+	// Found the sequential.
+	sequential = ast.Sequential().Make(parts)
+	return sequential, token, true
+}
+
+func (v *parser_) parseSupplement() (
+	supplement ast.SupplementLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the sequential supplement.
+	var sequential ast.SequentialLike
+	sequential, token, ok = v.parseSequential()
+	if ok {
+		// Found the sequential supplement.
+		supplement = ast.Supplement().Make(sequential)
+		return supplement, token, true
+	}
+
+	// Attempt to parse the selective supplement.
+	var selective ast.SelectiveLike
+	selective, token, ok = v.parseSelective()
+	if ok {
+		// Found the selective supplement.
+		supplement = ast.Supplement().Make(selective)
+		return supplement, token, true
+	}
+
+	// This is not the supplement.
+	return supplement, token, false
+}
+
 func (v *parser_) parseSyntax() (
 	syntax ast.SyntaxLike,
 	token TokenLike,
@@ -974,49 +1035,49 @@ func (v *parser_) parseSyntax() (
 	return syntax, token, true
 }
 
-func (v *parser_) parseText() (
-	text ast.TextLike,
+func (v *parser_) parseTextual() (
+	textual ast.TextualLike,
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the glyph text.
+	// Attempt to parse the intrinsic textual element.
+	var intrinsic string
+	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
+	if ok {
+		// Found the intrinsic textual element.
+		textual = ast.Textual().Make(intrinsic)
+		return textual, token, true
+	}
+
+	// Attempt to parse the glyph textual element.
 	var glyph string
 	glyph, token, ok = v.parseToken(GlyphToken, "")
 	if ok {
-		// Found the glyph text.
-		text = ast.Text().Make(glyph)
-		return text, token, true
+		// Found the glyph textual element.
+		textual = ast.Textual().Make(glyph)
+		return textual, token, true
 	}
 
-	// Attempt to parse the literal text.
+	// Attempt to parse the literal textual element.
 	var literal string
 	literal, token, ok = v.parseToken(LiteralToken, "")
 	if ok {
-		// Found the literal text.
-		text = ast.Text().Make(literal)
-		return text, token, true
+		// Found the literal textual element.
+		textual = ast.Textual().Make(literal)
+		return textual, token, true
 	}
 
-	// Attempt to parse the lowercase text.
+	// Attempt to parse the lowercase textual element.
 	var lowercase string
 	lowercase, token, ok = v.parseToken(LowercaseToken, "")
 	if ok {
 		// Found the lowercase text.
-		text = ast.Text().Make(lowercase)
-		return text, token, true
+		textual = ast.Textual().Make(lowercase)
+		return textual, token, true
 	}
 
-	// Attempt to parse the intrinsic text.
-	var intrinsic string
-	intrinsic, token, ok = v.parseToken(IntrinsicToken, "")
-	if ok {
-		// Found the intrinsic text.
-		text = ast.Text().Make(intrinsic)
-		return text, token, true
-	}
-
-	// This is not the text.
-	return text, token, false
+	// This is not the textual element.
+	return textual, token, false
 }
 
 func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
@@ -1071,20 +1132,25 @@ var syntax = map[string]string{
 	"Constrained": `"{" number Limit? "}"  ! A constrained range of numbers is inclusive.`,
 	"Limit":       `".." number?`,
 	"Expression":  `comment? lowercase ":" Pattern note? newline+`,
-	"Pattern":     `Part+ Alternative*`,
+	"Pattern":     `Part Supplement?`,
+	"Supplement": `
+    Sequential
+    Selective`,
+	"Sequential":  `Part+`,
+	"Selective":   `Alternative+`,
+	"Alternative": `"|" Part`,
 	"Part":        `Element Cardinality?  ! The default cardinality is one.`,
-	"Alternative": `"|" Part+`,
 	"Element": `
     Grouped
     Filtered
-    Text`,
+    Textual`,
 	"Grouped":  `"(" Pattern ")"`,
 	"Filtered": `negation? "[" Character+ "]"`,
-	"Text": `
+	"Textual": `
+    intrinsic
     glyph
     literal
-    lowercase
-    intrinsic`,
+    lowercase`,
 	"Character": `
     Bounded
     intrinsic`,

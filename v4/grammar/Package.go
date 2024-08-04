@@ -86,6 +86,16 @@ type ParserClassLike interface {
 }
 
 /*
+ProcessorClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete processor-like class.
+*/
+type ProcessorClassLike interface {
+	// Constructors
+	Make() ProcessorLike
+}
+
+/*
 ScannerClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete scanner-like class.  The following functions are supported:
@@ -137,6 +147,18 @@ type ValidatorClassLike interface {
 	Make() ValidatorLike
 }
 
+/*
+VisitorClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete visitor-like class.
+*/
+type VisitorClassLike interface {
+	// Constructors
+	Make(
+		processor Methodical,
+	) VisitorLike
+}
+
 // Instances
 
 /*
@@ -148,6 +170,9 @@ type FormatterLike interface {
 	// Attributes
 	GetClass() FormatterClassLike
 	GetDepth() uint
+
+	// Abstractions
+	Methodical
 
 	// Methods
 	FormatSyntax(syntax ast.SyntaxLike) string
@@ -164,6 +189,19 @@ type ParserLike interface {
 
 	// Methods
 	ParseSource(source string) ast.SyntaxLike
+}
+
+/*
+ProcessorLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete processor-like class.
+*/
+type ProcessorLike interface {
+	// Attributes
+	GetClass() ProcessorClassLike
+
+	// Abstractions
+	Methodical
 }
 
 /*
@@ -199,6 +237,246 @@ type ValidatorLike interface {
 	// Attributes
 	GetClass() ValidatorClassLike
 
+	// Abstractions
+	Methodical
+
 	// Methods
 	ValidateSyntax(syntax ast.SyntaxLike)
+}
+
+/*
+VisitorLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete visitor-like class.
+*/
+type VisitorLike interface {
+	// Attributes
+	GetClass() VisitorClassLike
+
+	// Methods
+	VisitSyntax(syntax ast.SyntaxLike)
+}
+
+// Aspects
+
+/*
+Methodical defines the set of method signatures that must be supported
+by all methodical processors.
+*/
+type Methodical interface {
+	ProcessComment(
+		comment string,
+	)
+	ProcessGlyph(
+		glyph string,
+	)
+	ProcessIntrinsic(
+		intrinsic string,
+	)
+	ProcessLiteral(
+		literal string,
+	)
+	ProcessLowercase(
+		lowercase string,
+	)
+	ProcessNegation(
+		negation string,
+	)
+	ProcessNewline(
+		newline string,
+		index uint,
+	)
+	ProcessNote(
+		note string,
+	)
+	ProcessNumber(
+		number string,
+	)
+	ProcessQuantified(
+		quantified string,
+	)
+	ProcessSeparator(
+		separator string,
+	)
+	ProcessUppercase(
+		uppercase string,
+	)
+	PreprocessAlternative(
+		alternative ast.AlternativeLike,
+		index uint,
+	)
+	PostprocessAlternative(
+		alternative ast.AlternativeLike,
+		index uint,
+	)
+	PreprocessBounded(
+		bounded ast.BoundedLike,
+	)
+	PostprocessBounded(
+		bounded ast.BoundedLike,
+	)
+	PreprocessCardinality(
+		cardinality ast.CardinalityLike,
+	)
+	PostprocessCardinality(
+		cardinality ast.CardinalityLike,
+	)
+	PreprocessCharacter(
+		character ast.CharacterLike,
+		index uint,
+	)
+	PostprocessCharacter(
+		character ast.CharacterLike,
+		index uint,
+	)
+	PreprocessConstrained(
+		constrained ast.ConstrainedLike,
+	)
+	PostprocessConstrained(
+		constrained ast.ConstrainedLike,
+	)
+	PreprocessDefinition(
+		definition ast.DefinitionLike,
+	)
+	PostprocessDefinition(
+		definition ast.DefinitionLike,
+	)
+	PreprocessElement(
+		element ast.ElementLike,
+	)
+	PostprocessElement(
+		element ast.ElementLike,
+	)
+	PreprocessExpression(
+		expression ast.ExpressionLike,
+		index uint,
+	)
+	PostprocessExpression(
+		expression ast.ExpressionLike,
+		index uint,
+	)
+	PreprocessExtent(
+		extent ast.ExtentLike,
+	)
+	PostprocessExtent(
+		extent ast.ExtentLike,
+	)
+	PreprocessFactor(
+		factor ast.FactorLike,
+		index uint,
+	)
+	PostprocessFactor(
+		factor ast.FactorLike,
+		index uint,
+	)
+	PreprocessFiltered(
+		filtered ast.FilteredLike,
+	)
+	PostprocessFiltered(
+		filtered ast.FilteredLike,
+	)
+	PreprocessGrouped(
+		grouped ast.GroupedLike,
+	)
+	PostprocessGrouped(
+		grouped ast.GroupedLike,
+	)
+	PreprocessHeader(
+		header ast.HeaderLike,
+		index uint,
+	)
+	PostprocessHeader(
+		header ast.HeaderLike,
+		index uint,
+	)
+	PreprocessIdentifier(
+		identifier ast.IdentifierLike,
+	)
+	PostprocessIdentifier(
+		identifier ast.IdentifierLike,
+	)
+	PreprocessInlined(
+		inlined ast.InlinedLike,
+	)
+	PostprocessInlined(
+		inlined ast.InlinedLike,
+	)
+	PreprocessLimit(
+		limit ast.LimitLike,
+	)
+	PostprocessLimit(
+		limit ast.LimitLike,
+	)
+	PreprocessLine(
+		line ast.LineLike,
+		index uint,
+	)
+	PostprocessLine(
+		line ast.LineLike,
+		index uint,
+	)
+	PreprocessMultilined(
+		multilined ast.MultilinedLike,
+	)
+	PostprocessMultilined(
+		multilined ast.MultilinedLike,
+	)
+	PreprocessPart(
+		part ast.PartLike,
+		index uint,
+	)
+	PostprocessPart(
+		part ast.PartLike,
+		index uint,
+	)
+	PreprocessPattern(
+		pattern ast.PatternLike,
+	)
+	PostprocessPattern(
+		pattern ast.PatternLike,
+	)
+	PreprocessPredicate(
+		predicate ast.PredicateLike,
+	)
+	PostprocessPredicate(
+		predicate ast.PredicateLike,
+	)
+	PreprocessRule(
+		rule ast.RuleLike,
+		index uint,
+	)
+	PostprocessRule(
+		rule ast.RuleLike,
+		index uint,
+	)
+	PreprocessSelective(
+		selective ast.SelectiveLike,
+	)
+	PostprocessSelective(
+		selective ast.SelectiveLike,
+	)
+	PreprocessSequential(
+		sequential ast.SequentialLike,
+	)
+	PostprocessSequential(
+		sequential ast.SequentialLike,
+	)
+	PreprocessSupplement(
+		sequential ast.SupplementLike,
+	)
+	PostprocessSupplement(
+		sequential ast.SupplementLike,
+	)
+	PreprocessSyntax(
+		syntax ast.SyntaxLike,
+	)
+	PostprocessSyntax(
+		syntax ast.SyntaxLike,
+	)
+	PreprocessTextual(
+		textual ast.TextualLike,
+	)
+	PostprocessTextual(
+		textual ast.TextualLike,
+	)
 }

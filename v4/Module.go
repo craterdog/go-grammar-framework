@@ -35,8 +35,6 @@ import (
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gen "github.com/craterdog/go-grammar-framework/v4/generator"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
-	sts "strings"
-	uni "unicode"
 )
 
 // TYPE ALIASES
@@ -66,8 +64,11 @@ type (
 	PatternLike     = ast.PatternLike
 	PredicateLike   = ast.PredicateLike
 	RuleLike        = ast.RuleLike
+	SelectiveLike   = ast.SelectiveLike
+	SequentialLike  = ast.SequentialLike
+	SupplementLike  = ast.SupplementLike
 	SyntaxLike      = ast.SyntaxLike
-	TextLike        = ast.TextLike
+	TextualLike     = ast.TextualLike
 )
 
 // Grammar
@@ -75,8 +76,9 @@ type (
 type (
 	FormatterLike = gra.FormatterLike
 	ParserLike    = gra.ParserLike
-	ValidatorLike = gra.ValidatorLike
+	ScannerLike   = gra.ScannerLike
 	TokenType     = gra.TokenType
+	ValidatorLike = gra.ValidatorLike
 )
 
 const (
@@ -87,6 +89,7 @@ const (
 	LiteralToken    = gra.LiteralToken
 	LowercaseToken  = gra.LowercaseToken
 	NegationToken   = gra.NegationToken
+	NewlineToken    = gra.NewlineToken
 	NoteToken       = gra.NoteToken
 	NumberToken     = gra.NumberToken
 	QuantifiedToken = gra.QuantifiedToken
@@ -95,25 +98,19 @@ const (
 	UppercaseToken  = gra.UppercaseToken
 )
 
-// Generator
-
-type (
-	GeneratorLike = gen.GeneratorLike
-)
-
 // UNIVERSAL CONSTRUCTORS
 
 // AST
 
 func Alternative(arguments ...any) AlternativeLike {
 	// Initialize the possible arguments.
-	var parts abs.ListLike[PartLike]
+	var part PartLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case abs.ListLike[PartLike]:
-			parts = actual
+		case PartLike:
+			part = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the alternative constructor: %T\n",
@@ -124,10 +121,10 @@ func Alternative(arguments ...any) AlternativeLike {
 	}
 
 	// Call the constructor.
-	var dotdot = ".."
+	var bar = "|"
 	var alternative = ast.Alternative().Make(
-		dotdot,
-		parts,
+		bar,
+		part,
 	)
 	return alternative
 }
@@ -300,7 +297,7 @@ func Element(arguments ...any) ElementLike {
 	// Initialize the possible arguments.
 	var grouped GroupedLike
 	var filtered FilteredLike
-	var text TextLike
+	var textual TextualLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
@@ -309,8 +306,8 @@ func Element(arguments ...any) ElementLike {
 			grouped = actual
 		case FilteredLike:
 			filtered = actual
-		case TextLike:
-			text = actual
+		case TextualLike:
+			textual = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the element constructor: %T\n",
@@ -327,8 +324,8 @@ func Element(arguments ...any) ElementLike {
 		element = ast.Element().Make(grouped)
 	case col.IsDefined(filtered):
 		element = ast.Element().Make(filtered)
-	case col.IsDefined(text):
-		element = ast.Element().Make(text)
+	case col.IsDefined(textual):
+		element = ast.Element().Make(textual)
 	default:
 		panic("The constructor for an element requires an argument.")
 	}
@@ -347,9 +344,9 @@ func Expression(arguments ...any) ExpressionLike {
 		switch actual := argument.(type) {
 		case string:
 			switch {
-			case sts.HasPrefix(actual, "!>"):
+			case MatchesType(actual, CommentToken):
 				comment = actual
-			case sts.HasPrefix(actual, "! "):
+			case MatchesType(actual, NoteToken):
 				note = actual
 			default:
 				lowercase = actual
@@ -409,15 +406,15 @@ func Extent(arguments ...any) ExtentLike {
 func Factor(arguments ...any) FactorLike {
 	// Initialize the possible arguments.
 	var predicate PredicateLike
-	var cardinality CardinalityLike
+	var literal string
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case PredicateLike:
 			predicate = actual
-		case CardinalityLike:
-			cardinality = actual
+		case string:
+			literal = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the factor constructor: %T\n",
@@ -428,24 +425,29 @@ func Factor(arguments ...any) FactorLike {
 	}
 
 	// Call the constructor.
-	var factor = ast.Factor().Make(
-		predicate,
-		cardinality,
-	)
+	var factor FactorLike
+	switch {
+	case col.IsDefined(predicate):
+		factor = ast.Factor().Make(predicate)
+	case col.IsDefined(literal):
+		factor = ast.Factor().Make(literal)
+	default:
+		panic("The constructor for a factor requires an argument.")
+	}
 	return factor
 }
 
 func Filtered(arguments ...any) FilteredLike {
 	// Initialize the possible arguments.
 	var negation string
-	var characters abs.ListLike[CharacterLike]
+	var characters abs.Sequential[CharacterLike]
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case string:
 			negation = actual
-		case abs.ListLike[CharacterLike]:
+		case abs.Sequential[CharacterLike]:
 			characters = actual
 		default:
 			var message = fmt.Sprintf(
@@ -533,12 +535,17 @@ func Identifier(arguments ...any) IdentifierLike {
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case string:
-			var runes = []rune(actual)
 			switch {
-			case uni.IsLower(runes[0]):
+			case MatchesType(actual, LowercaseToken):
 				lowercase = actual
-			default:
+			case MatchesType(actual, UppercaseToken):
 				uppercase = actual
+			default:
+				var message = fmt.Sprintf(
+					"An invalid string was passed into the identifier constructor: %v\n",
+					actual,
+				)
+				panic(message)
 			}
 		default:
 			var message = fmt.Sprintf(
@@ -564,13 +571,13 @@ func Identifier(arguments ...any) IdentifierLike {
 
 func Inlined(arguments ...any) InlinedLike {
 	// Initialize the possible arguments.
-	var factors abs.ListLike[FactorLike]
+	var factors abs.Sequential[FactorLike]
 	var note string
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case abs.ListLike[FactorLike]:
+		case abs.Sequential[FactorLike]:
 			factors = actual
 		case string:
 			note = actual
@@ -651,12 +658,12 @@ func Limit(arguments ...any) LimitLike {
 
 func Multilined(arguments ...any) MultilinedLike {
 	// Initialize the possible arguments.
-	var lines abs.ListLike[LineLike]
+	var lines abs.Sequential[LineLike]
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case abs.ListLike[LineLike]:
+		case abs.Sequential[LineLike]:
 			lines = actual
 		default:
 			var message = fmt.Sprintf(
@@ -703,16 +710,16 @@ func Part(arguments ...any) PartLike {
 
 func Pattern(arguments ...any) PatternLike {
 	// Initialize the possible arguments.
-	var parts abs.ListLike[PartLike]
-	var alternatives abs.ListLike[AlternativeLike]
+	var part PartLike
+	var supplement SupplementLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case abs.ListLike[PartLike]:
-			parts = actual
-		case abs.ListLike[AlternativeLike]:
-			alternatives = actual
+		case PartLike:
+			part = actual
+		case SupplementLike:
+			supplement = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the pattern constructor: %T\n",
@@ -724,33 +731,24 @@ func Pattern(arguments ...any) PatternLike {
 
 	// Call the constructor.
 	var pattern = ast.Pattern().Make(
-		parts,
-		alternatives,
+		part,
+		supplement,
 	)
 	return pattern
 }
 
 func Predicate(arguments ...any) PredicateLike {
 	// Initialize the possible arguments.
-	var lowercase string
-	var uppercase string
-	var intrinsic string
-	var literal string
+	var identifier IdentifierLike
+	var cardinality CardinalityLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case string:
-			switch {
-			case gra.Scanner().MatchesType(actual, LowercaseToken):
-				lowercase = actual
-			case gra.Scanner().MatchesType(actual, UppercaseToken):
-				uppercase = actual
-			case gra.Scanner().MatchesType(actual, IntrinsicToken):
-				intrinsic = actual
-			case gra.Scanner().MatchesType(actual, LiteralToken):
-				literal = actual
-			}
+		case IdentifierLike:
+			identifier = actual
+		case CardinalityLike:
+			cardinality = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the predicate constructor: %T\n",
@@ -761,19 +759,10 @@ func Predicate(arguments ...any) PredicateLike {
 	}
 
 	// Call the constructor.
-	var predicate PredicateLike
-	switch {
-	case col.IsDefined(lowercase):
-		predicate = ast.Predicate().Make(lowercase)
-	case col.IsDefined(uppercase):
-		predicate = ast.Predicate().Make(uppercase)
-	case col.IsDefined(intrinsic):
-		predicate = ast.Predicate().Make(intrinsic)
-	case col.IsDefined(literal):
-		predicate = ast.Predicate().Make(literal)
-	default:
-		panic("The constructor for a predicate requires an argument.")
-	}
+	var predicate = ast.Predicate().Make(
+		identifier,
+		cardinality,
+	)
 	return predicate
 }
 
@@ -788,10 +777,16 @@ func Rule(arguments ...any) RuleLike {
 		switch actual := argument.(type) {
 		case string:
 			switch {
-			case sts.HasPrefix(actual, "!>"):
+			case MatchesType(actual, CommentToken):
 				comment = actual
-			default:
+			case MatchesType(actual, UppercaseToken):
 				uppercase = actual
+			default:
+				var message = fmt.Sprintf(
+					"An invalid string was passed into the rule constructor: %v\n",
+					actual,
+				)
+				panic(message)
 			}
 		case DefinitionLike:
 			definition = actual
@@ -817,36 +812,18 @@ func Rule(arguments ...any) RuleLike {
 	return rule
 }
 
-func Text(arguments ...any) TextLike {
+func Selective(arguments ...any) SelectiveLike {
 	// Initialize the possible arguments.
-	var glyph string
-	var literal string
-	var lowercase string
-	var intrinsic string
+	var alternatives abs.Sequential[AlternativeLike]
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case string:
-			switch {
-			case gra.Scanner().MatchesType(actual, GlyphToken):
-				glyph = actual
-			case gra.Scanner().MatchesType(actual, LiteralToken):
-				literal = actual
-			case gra.Scanner().MatchesType(actual, LowercaseToken):
-				lowercase = actual
-			case gra.Scanner().MatchesType(actual, IntrinsicToken):
-				intrinsic = actual
-			default:
-				var message = fmt.Sprintf(
-					"An invalid string was passed into the string constructor: %v\n",
-					actual,
-				)
-				panic(message)
-			}
+		case abs.Sequential[AlternativeLike]:
+			alternatives = actual
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the string constructor: %T\n",
+				"An unknown argument type passed into the selective constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -854,36 +831,81 @@ func Text(arguments ...any) TextLike {
 	}
 
 	// Call the constructor.
-	var text TextLike
-	switch {
-	case col.IsDefined(glyph):
-		text = ast.Text().Make(glyph)
-	case col.IsDefined(literal):
-		text = ast.Text().Make(literal)
-	case col.IsDefined(lowercase):
-		text = ast.Text().Make(lowercase)
-	case col.IsDefined(intrinsic):
-		text = ast.Text().Make(intrinsic)
-	default:
-		panic("The constructor for an string requires an argument.")
-	}
-	return text
+	var selective = ast.Selective().Make(alternatives)
+	return selective
 }
 
-func Syntax(arguments ...any) SyntaxLike {
+func Sequential(arguments ...any) SequentialLike {
 	// Initialize the possible arguments.
-	var headers abs.ListLike[HeaderLike]
-	var rules abs.ListLike[RuleLike]
-	var expressions abs.ListLike[ExpressionLike]
+	var parts abs.Sequential[PartLike]
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case abs.ListLike[HeaderLike]:
+		case abs.Sequential[PartLike]:
+			parts = actual
+		default:
+			var message = fmt.Sprintf(
+				"An unknown argument type passed into the sequential constructor: %T\n",
+				actual,
+			)
+			panic(message)
+		}
+	}
+
+	// Call the constructor.
+	var sequential = ast.Sequential().Make(parts)
+	return sequential
+}
+
+func Supplement(arguments ...any) SupplementLike {
+	// Initialize the possible arguments.
+	var sequential SequentialLike
+	var selective SelectiveLike
+
+	// Process the actual arguments.
+	for _, argument := range arguments {
+		switch actual := argument.(type) {
+		case SequentialLike:
+			sequential = actual
+		case SelectiveLike:
+			selective = actual
+		default:
+			var message = fmt.Sprintf(
+				"An unknown argument type passed into the supplement constructor: %T\n",
+				actual,
+			)
+			panic(message)
+		}
+	}
+
+	// Call the constructor.
+	var supplement SupplementLike
+	switch {
+	case col.IsDefined(sequential):
+		supplement = ast.Supplement().Make(sequential)
+	case col.IsDefined(selective):
+		supplement = ast.Supplement().Make(selective)
+	default:
+		panic("The constructor for a supplement requires an argument.")
+	}
+	return supplement
+}
+
+func Syntax(arguments ...any) SyntaxLike {
+	// Initialize the possible arguments.
+	var headers abs.Sequential[HeaderLike]
+	var rules abs.Sequential[RuleLike]
+	var expressions abs.Sequential[ExpressionLike]
+
+	// Process the actual arguments.
+	for _, argument := range arguments {
+		switch actual := argument.(type) {
+		case abs.Sequential[HeaderLike]:
 			headers = actual
-		case abs.ListLike[RuleLike]:
+		case abs.Sequential[RuleLike]:
 			rules = actual
-		case abs.ListLike[ExpressionLike]:
+		case abs.Sequential[ExpressionLike]:
 			expressions = actual
 		default:
 			var message = fmt.Sprintf(
@@ -901,6 +923,59 @@ func Syntax(arguments ...any) SyntaxLike {
 		expressions,
 	)
 	return syntax
+}
+
+func Textual(arguments ...any) TextualLike {
+	// Initialize the possible arguments.
+	var intrinsic string
+	var glyph string
+	var literal string
+	var lowercase string
+
+	// Process the actual arguments.
+	for _, argument := range arguments {
+		switch actual := argument.(type) {
+		case string:
+			switch {
+			case MatchesType(actual, IntrinsicToken):
+				intrinsic = actual
+			case MatchesType(actual, GlyphToken):
+				glyph = actual
+			case MatchesType(actual, LiteralToken):
+				literal = actual
+			case MatchesType(actual, LowercaseToken):
+				lowercase = actual
+			default:
+				var message = fmt.Sprintf(
+					"An invalid string was passed into the string constructor: %v\n",
+					actual,
+				)
+				panic(message)
+			}
+		default:
+			var message = fmt.Sprintf(
+				"An unknown argument type passed into the string constructor: %T\n",
+				actual,
+			)
+			panic(message)
+		}
+	}
+
+	// Call the constructor.
+	var text TextualLike
+	switch {
+	case col.IsDefined(intrinsic):
+		text = Textual(intrinsic)
+	case col.IsDefined(glyph):
+		text = Textual(glyph)
+	case col.IsDefined(literal):
+		text = Textual(literal)
+	case col.IsDefined(lowercase):
+		text = Textual(lowercase)
+	default:
+		panic("The constructor for an string requires an argument.")
+	}
+	return text
 }
 
 // Grammar
@@ -929,12 +1004,120 @@ func Validator(arguments ...any) ValidatorLike {
 	return validator
 }
 
+// GLOBAL FUNCTIONS
+
+// Grammar
+
+func FormatSyntax(syntax SyntaxLike) string {
+	var formatter = gra.Formatter().Make()
+	var source = formatter.FormatSyntax(syntax)
+	return source
+}
+
+func MatchesType(tokenValue string, tokenType TokenType) bool {
+	var scannerClass = gra.Scanner()
+	return scannerClass.MatchesType(tokenValue, tokenType)
+}
+
+func ParseSource(source string) SyntaxLike {
+	var parser = gra.Parser().Make()
+	var syntax = parser.ParseSource(source)
+	return syntax
+}
+
+func ValidateSyntax(syntax SyntaxLike) {
+	var validator = gra.Validator().Make()
+	validator.ValidateSyntax(syntax)
+}
+
 // Generator
 
-func Generator(arguments ...any) GeneratorLike {
-	if len(arguments) > 0 {
-		panic("The generator constructor does not take any arguments.")
-	}
-	var generator = gen.Generator().Make()
-	return generator
+func GenerateFormatterClass(
+	module string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Formatter().Make()
+	implementation = generator.GenerateFormatterClass(module, syntax)
+	return implementation
+}
+
+func GenerateGrammarModel(
+	module string,
+	wiki string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Grammar().Make()
+	implementation = generator.GenerateGrammarModel(module, wiki, syntax)
+	return implementation
+}
+
+func GenerateAstModel(
+	module string,
+	wiki string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Ast().Make()
+	implementation = generator.GenerateAstModel(module, wiki, syntax)
+	return implementation
+}
+
+func GenerateParserClass(
+	module string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Parser().Make()
+	implementation = generator.GenerateParserClass(module, syntax)
+	return implementation
+}
+
+func GenerateScannerClass(
+	module string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Scanner().Make()
+	implementation = generator.GenerateScannerClass(module, syntax)
+	return implementation
+}
+
+func GenerateSyntaxNotation(
+	syntax string,
+	copyright string,
+) (
+	implementation string,
+) {
+	var generator = gen.Syntax().Make()
+	implementation = generator.GenerateSyntaxNotation(syntax, copyright)
+	return implementation
+}
+
+func GenerateTokenClass(
+	module string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Token().Make()
+	implementation = generator.GenerateTokenClass(module, syntax)
+	return implementation
+}
+
+func GenerateValidatorClass(
+	module string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Validator().Make()
+	implementation = generator.GenerateValidatorClass(module, syntax)
+	return implementation
 }

@@ -14,46 +14,43 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var predicateClass = &predicateClass_{
+var selectiveClass = &selectiveClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Predicate() PredicateClassLike {
-	return predicateClass
+func Selective() SelectiveClassLike {
+	return selectiveClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type predicateClass_ struct {
+type selectiveClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *predicateClass_) Make(
-	identifier IdentifierLike,
-	optionalCardinality CardinalityLike,
-) PredicateLike {
+func (c *selectiveClass_) Make(alternatives abs.Sequential[AlternativeLike]) SelectiveLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(identifier):
-		panic("The identifier attribute is required by this class.")
+	case col.IsUndefined(alternatives):
+		panic("The alternatives attribute is required by this class.")
 	default:
-		return &predicate_{
+		return &selective_{
 			// Initialize instance attributes.
-			class_:               c,
-			identifier_:          identifier,
-			optionalCardinality_: optionalCardinality,
+			class_:        c,
+			alternatives_: alternatives,
 		}
 	}
 }
@@ -62,25 +59,20 @@ func (c *predicateClass_) Make(
 
 // Target
 
-type predicate_ struct {
+type selective_ struct {
 	// Define instance attributes.
-	class_               PredicateClassLike
-	identifier_          IdentifierLike
-	optionalCardinality_ CardinalityLike
+	class_        SelectiveClassLike
+	alternatives_ abs.Sequential[AlternativeLike]
 }
 
 // Attributes
 
-func (v *predicate_) GetClass() PredicateClassLike {
+func (v *selective_) GetClass() SelectiveClassLike {
 	return v.class_
 }
 
-func (v *predicate_) GetIdentifier() IdentifierLike {
-	return v.identifier_
-}
-
-func (v *predicate_) GetOptionalCardinality() CardinalityLike {
-	return v.optionalCardinality_
+func (v *selective_) GetAlternatives() abs.Sequential[AlternativeLike] {
+	return v.alternatives_
 }
 
 // Private

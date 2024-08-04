@@ -14,46 +14,43 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var predicateClass = &predicateClass_{
+var sequentialClass = &sequentialClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Predicate() PredicateClassLike {
-	return predicateClass
+func Sequential() SequentialClassLike {
+	return sequentialClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type predicateClass_ struct {
+type sequentialClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *predicateClass_) Make(
-	identifier IdentifierLike,
-	optionalCardinality CardinalityLike,
-) PredicateLike {
+func (c *sequentialClass_) Make(parts abs.Sequential[PartLike]) SequentialLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(identifier):
-		panic("The identifier attribute is required by this class.")
+	case col.IsUndefined(parts):
+		panic("The parts attribute is required by this class.")
 	default:
-		return &predicate_{
+		return &sequential_{
 			// Initialize instance attributes.
-			class_:               c,
-			identifier_:          identifier,
-			optionalCardinality_: optionalCardinality,
+			class_: c,
+			parts_: parts,
 		}
 	}
 }
@@ -62,25 +59,20 @@ func (c *predicateClass_) Make(
 
 // Target
 
-type predicate_ struct {
+type sequential_ struct {
 	// Define instance attributes.
-	class_               PredicateClassLike
-	identifier_          IdentifierLike
-	optionalCardinality_ CardinalityLike
+	class_ SequentialClassLike
+	parts_ abs.Sequential[PartLike]
 }
 
 // Attributes
 
-func (v *predicate_) GetClass() PredicateClassLike {
+func (v *sequential_) GetClass() SequentialClassLike {
 	return v.class_
 }
 
-func (v *predicate_) GetIdentifier() IdentifierLike {
-	return v.identifier_
-}
-
-func (v *predicate_) GetOptionalCardinality() CardinalityLike {
-	return v.optionalCardinality_
+func (v *sequential_) GetParts() abs.Sequential[PartLike] {
+	return v.parts_
 }
 
 // Private
