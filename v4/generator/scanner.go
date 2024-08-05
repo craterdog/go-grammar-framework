@@ -64,15 +64,16 @@ func (c *scannerClass_) Make() ScannerLike {
 
 type scanner_ struct {
 	// Define the instance attributes.
-	class_    ScannerClassLike
-	visitor_  gra.VisitorLike
-	pattern_  bool
-	greedy_   bool
-	ignored_  abs.SetLike[string]
-	tokens_   abs.SetLike[string]
-	reserved_ abs.SetLike[string]
-	regexp_   string
-	regexps_  abs.CatalogLike[string, string]
+	class_        ScannerClassLike
+	visitor_      gra.VisitorLike
+	inDefinition_ bool
+	isGreedy_     bool
+	depth_        uint
+	ignored_      abs.SetLike[string]
+	tokens_       abs.SetLike[string]
+	literals_     abs.SetLike[string]
+	regexp_       string
+	regexps_      abs.CatalogLike[string, string]
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -95,7 +96,7 @@ func (v *scanner_) ProcessGlyph(glyph string) {
 func (v *scanner_) ProcessIntrinsic(intrinsic string) {
 	intrinsic = sts.ToLower(intrinsic)
 	if intrinsic == "any" {
-		v.greedy_ = false // Turn off "greedy" for expressions containing ANY.
+		v.isGreedy_ = false // Turn off "greedy" for expressions containing ANY.
 	}
 	v.regexp_ += `" + ` + intrinsic + `_ + "`
 }
@@ -103,17 +104,15 @@ func (v *scanner_) ProcessIntrinsic(intrinsic string) {
 func (v *scanner_) ProcessLiteral(literal string) {
 	literal = literal[1 : len(literal)-1] // Remove the double quotes.
 	literal = v.escapeText(literal)
-	if !v.pattern_ {
-		v.reserved_.AddValue(literal)
+	if v.inDefinition_ {
+		v.literals_.AddValue(literal)
 	}
 	v.regexp_ += literal
 }
 
 func (v *scanner_) ProcessLowercase(lowercase string) {
-	if v.pattern_ {
+	if v.depth_ > 0 {
 		v.regexp_ += `(?:" + ` + lowercase + `_ + ")`
-	} else {
-		v.tokens_.AddValue(lowercase)
 	}
 }
 
@@ -121,8 +120,16 @@ func (v *scanner_) ProcessNegation(negation string) {
 	v.regexp_ += "^"
 }
 
+func (v *scanner_) ProcessNumber(number string) {
+	v.regexp_ += number
+}
+
 func (v *scanner_) ProcessQuantified(quantified string) {
 	v.regexp_ += quantified
+	if !v.isGreedy_ {
+		v.regexp_ += "?"
+		v.isGreedy_ = true // Reset scanning back to "greedy".
+	}
 }
 
 func (v *scanner_) PreprocessAlternative(
@@ -139,9 +146,9 @@ func (v *scanner_) PreprocessConstrained(constrained ast.ConstrainedLike) {
 
 func (v *scanner_) PostprocessConstrained(constrained ast.ConstrainedLike) {
 	v.regexp_ += "}"
-	if !v.greedy_ {
+	if !v.isGreedy_ {
 		v.regexp_ += "?"
-		v.greedy_ = true // Reset scanning back to "greedy".
+		v.isGreedy_ = true // Reset scanning back to "greedy".
 	}
 }
 
@@ -192,25 +199,29 @@ func (v *scanner_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 
 func (v *scanner_) PreprocessLimit(limit ast.LimitLike) {
 	v.regexp_ += ","
-	var number = limit.GetOptionalNumber()
-	if col.IsDefined(number) {
-		v.regexp_ += number
-	}
 }
 
-func (v *scanner_) PreprocessPattern(pattern ast.PatternLike) {
-	v.pattern_ = true
+func (v *scanner_) PreprocessDefinition(definition ast.DefinitionLike) {
+	v.inDefinition_ = true
 }
 
-func (v *scanner_) PostprocessPattern(pattern ast.PatternLike) {
-	v.pattern_ = false
+func (v *scanner_) PostprocessDefinition(definition ast.DefinitionLike) {
+	v.inDefinition_ = false
+}
+
+func (v *scanner_) PreprocessPattern(definition ast.PatternLike) {
+	v.depth_++
+}
+
+func (v *scanner_) PostprocessPattern(definition ast.PatternLike) {
+	v.depth_--
 }
 
 func (v *scanner_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.greedy_ = true // The default is "greedy" scanning.
+	v.isGreedy_ = true // The default is "greedy" scanning.
 	v.ignored_ = col.Set[string]([]string{"newline", "space"})
 	v.tokens_ = col.Set[string]([]string{"reserved"})
-	v.reserved_ = col.Set[string]()
+	v.literals_ = col.Set[string]()
 	var implicit = map[string]string{"space": `"(?:[ \\t]+)"`}
 	v.regexps_ = col.Catalog[string, string](implicit)
 }
@@ -218,8 +229,8 @@ func (v *scanner_) PreprocessSyntax(syntax ast.SyntaxLike) {
 func (v *scanner_) PostprocessSyntax(syntax ast.SyntaxLike) {
 	v.ignored_ = v.ignored_.GetClass().Sans(v.ignored_, v.tokens_)
 	v.tokens_.AddValues(v.ignored_)
-	var reserved = v.extractReserved()
-	v.regexps_.SetValue("reserved", reserved)
+	var literals = v.extractLiterals()
+	v.regexps_.SetValue("reserved", literals)
 	v.regexps_.SortValues()
 }
 
@@ -311,17 +322,17 @@ func (v *scanner_) extractNotice(syntax ast.SyntaxLike) string {
 	return notice
 }
 
-func (v *scanner_) extractReserved() string {
-	var reserved = `"(?:`
-	if !v.reserved_.IsEmpty() {
-		var iterator = v.reserved_.GetIterator()
-		reserved += iterator.GetNext()
+func (v *scanner_) extractLiterals() string {
+	var literals = `"(?:`
+	if !v.literals_.IsEmpty() {
+		var iterator = v.literals_.GetIterator()
+		literals += iterator.GetNext()
 		for iterator.HasNext() {
-			reserved += "|" + iterator.GetNext()
+			literals += "|" + iterator.GetNext()
 		}
 	}
-	reserved += `)"`
-	return reserved
+	literals += `)"`
+	return literals
 }
 
 func (v *scanner_) extractTokenMatchers() string {
@@ -473,10 +484,10 @@ func (c *scannerClass_) MatchesType(
 type scanner_ struct {
 	// Define the instance attributes.
 	class_    ScannerClassLike
-	first_    int // A zero based index of the first possible rune in the next token.
-	next_     int // A zero based index of the next possible rune in the next token.
-	line_     int // The line number in the source string of the next rune.
-	position_ int // The position in the current line of the next rune.
+	first_    uint // A zero based index of the first possible rune in the next token.
+	next_     uint // A zero based index of the next possible rune in the next token.
+	line_     uint // The line number in the source string of the next rune.
+	position_ uint // The position in the current line of the next rune.
 	runes_    []rune
 	tokens_   abs.QueueLike[TokenLike]
 }
@@ -548,12 +559,12 @@ func (v *scanner_) foundToken(tokenType TokenType) bool {
 	var match = matcher.FindString(text)
 	if len(match) > 0 {
 		var token = []rune(match)
-		var length = len(token)
+		var length = uint(len(token))
 
 		// Found the requested token type.
 		v.next_ += length
 		v.emitToken(tokenType)
-		var count = sts.Count(match, "\n")
+		var count = uint(sts.Count(match, "\n"))
 		if count > 0 {
 			v.line_ += count
 			v.position_ = v.indexOfLastEol(token)
@@ -568,8 +579,8 @@ func (v *scanner_) foundToken(tokenType TokenType) bool {
 	return false
 }
 
-func (v *scanner_) indexOfLastEol(runes []rune) int {
-	var length = len(runes)
+func (v *scanner_) indexOfLastEol(runes []rune) uint {
+	var length = uint(len(runes))
 	for index := length; index > 0; index-- {
 		if runes[index-1] == '\n' {
 			return length - index + 1
@@ -580,7 +591,7 @@ func (v *scanner_) indexOfLastEol(runes []rune) int {
 
 func (v *scanner_) scanTokens() {
 loop:
-	for v.next_ < len(v.runes_) {
+	for v.next_ < uint(len(v.runes_)) {
 		switch {
 		<FoundCases>
 		default:

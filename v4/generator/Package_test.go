@@ -403,7 +403,7 @@ func (v *parser_) formatError(token TokenLike) string {
 	message += "⌃\033[36m\n"
 
 	// Append the following source line for context.
-	if line < len(lines) {
+	if line < uint(len(lines)) {
 		message += fmt.Sprintf("%04d: ", line+1) + string(lines[line]) + "\n"
 	}
 	message += "\033[0m\n"
@@ -601,10 +601,10 @@ func (c *scannerClass_) MatchesType(
 type scanner_ struct {
 	// Define the instance attributes.
 	class_    ScannerClassLike
-	first_    int // A zero based index of the first possible rune in the next token.
-	next_     int // A zero based index of the next possible rune in the next token.
-	line_     int // The line number in the source string of the next rune.
-	position_ int // The position in the current line of the next rune.
+	first_    uint // A zero based index of the first possible rune in the next token.
+	next_     uint // A zero based index of the next possible rune in the next token.
+	line_     uint // The line number in the source string of the next rune.
+	position_ uint // The position in the current line of the next rune.
 	runes_    []rune
 	tokens_   abs.QueueLike[TokenLike]
 }
@@ -683,12 +683,12 @@ func (v *scanner_) foundToken(tokenType TokenType) bool {
 	var match = matcher.FindString(text)
 	if len(match) > 0 {
 		var token = []rune(match)
-		var length = len(token)
+		var length = uint(len(token))
 
 		// Found the requested token type.
 		v.next_ += length
 		v.emitToken(tokenType)
-		var count = sts.Count(match, "\n")
+		var count = uint(sts.Count(match, "\n"))
 		if count > 0 {
 			v.line_ += count
 			v.position_ = v.indexOfLastEol(token)
@@ -703,8 +703,8 @@ func (v *scanner_) foundToken(tokenType TokenType) bool {
 	return false
 }
 
-func (v *scanner_) indexOfLastEol(runes []rune) int {
-	var length = len(runes)
+func (v *scanner_) indexOfLastEol(runes []rune) uint {
+	var length = uint(len(runes))
 	for index := length; index > 0; index-- {
 		if runes[index-1] == '\n' {
 			return length - index + 1
@@ -715,7 +715,7 @@ func (v *scanner_) indexOfLastEol(runes []rune) int {
 
 func (v *scanner_) scanTokens() {
 loop:
-	for v.next_ < len(v.runes_) {
+	for v.next_ < uint(len(v.runes_)) {
 		switch {
 		// Find the next token type.
 		case v.foundToken(IntegerToken):
