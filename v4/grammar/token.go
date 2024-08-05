@@ -37,8 +37,8 @@ type tokenClass_ struct {
 // Constructors
 
 func (c *tokenClass_) Make(
-	line int,
-	position int,
+	line uint,
+	position uint,
 	type_ TokenType,
 	value string,
 ) TokenLike {
@@ -59,8 +59,8 @@ func (c *tokenClass_) Make(
 type token_ struct {
 	// Define the instance attributes.
 	class_    TokenClassLike
-	line_     int
-	position_ int
+	line_     uint
+	position_ uint
 	type_     TokenType
 	value_    string
 }
@@ -71,11 +71,11 @@ func (v *token_) GetClass() TokenClassLike {
 	return v.class_
 }
 
-func (v *token_) GetLine() int {
+func (v *token_) GetLine() uint {
 	return v.line_
 }
 
-func (v *token_) GetPosition() int {
+func (v *token_) GetPosition() uint {
 	return v.position_
 }
 

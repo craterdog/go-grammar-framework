@@ -92,9 +92,9 @@ func (v *visitor_) visitAlternative(
 
 	// Visit the part.
 	var part = alternative.GetPart()
-	v.processor_.PreprocessPart(part, 2)
+	v.processor_.PreprocessPart(part, 2, 1)
 	v.visitPart(part)
-	v.processor_.PostprocessPart(part, 2)
+	v.processor_.PostprocessPart(part, 2, 1)
 }
 
 func (v *visitor_) visitBounded(
@@ -241,10 +241,11 @@ func (v *visitor_) visitExpression(
 	// Visit each newline.
 	var index uint
 	var newlines = expression.GetNewlines().GetIterator()
+	var size = uint(newlines.GetSize())
 	for newlines.HasNext() {
 		index++
 		var newline = newlines.GetNext()
-		v.processor_.ProcessNewline(newline, index)
+		v.processor_.ProcessNewline(newline, index, size)
 	}
 }
 
@@ -297,12 +298,13 @@ func (v *visitor_) visitFiltered(
 	// Visit each character.
 	var index uint
 	var characters = filtered.GetCharacters().GetIterator()
+	var size = uint(characters.GetSize())
 	for characters.HasNext() {
 		index++
 		var character = characters.GetNext()
-		v.processor_.PreprocessCharacter(character, index)
+		v.processor_.PreprocessCharacter(character, index, size)
 		v.visitCharacter(character)
-		v.processor_.PostprocessCharacter(character, index)
+		v.processor_.PostprocessCharacter(character, index, size)
 	}
 
 	// Visit the closing reserved string.
@@ -337,7 +339,7 @@ func (v *visitor_) visitHeader(
 
 	// Visit the newline.
 	var newline = header.GetNewline()
-	v.processor_.ProcessNewline(newline, 1)
+	v.processor_.ProcessNewline(newline, 1, 1)
 }
 
 func (v *visitor_) visitIdentifier(
@@ -365,12 +367,13 @@ func (v *visitor_) visitInlined(
 	// Visit each factor.
 	var index uint
 	var factors = inlined.GetFactors().GetIterator()
+	var size = uint(factors.GetSize())
 	for factors.HasNext() {
 		index++
 		var factor = factors.GetNext()
-		v.processor_.PreprocessFactor(factor, index)
+		v.processor_.PreprocessFactor(factor, index, size)
 		v.visitFactor(factor)
-		v.processor_.PostprocessFactor(factor, index)
+		v.processor_.PostprocessFactor(factor, index, size)
 	}
 
 	// Visit the optional note.
@@ -385,7 +388,7 @@ func (v *visitor_) visitLine(
 ) {
 	// Visit the newline.
 	var newline = line.GetNewline()
-	v.processor_.ProcessNewline(newline, 1)
+	v.processor_.ProcessNewline(newline, 1, 1)
 
 	// Visit the identifier.
 	var identifier = line.GetIdentifier()
@@ -420,12 +423,13 @@ func (v *visitor_) visitMultilined(
 	// Visit each line.
 	var index uint
 	var lines = multilined.GetLines().GetIterator()
+	var size = uint(lines.GetSize())
 	for lines.HasNext() {
 		index++
 		var line = lines.GetNext()
-		v.processor_.PreprocessLine(line, index)
+		v.processor_.PreprocessLine(line, index, size)
 		v.visitLine(line)
-		v.processor_.PostprocessLine(line, index)
+		v.processor_.PostprocessLine(line, index, size)
 	}
 }
 
@@ -452,9 +456,9 @@ func (v *visitor_) visitPattern(
 ) {
 	// Visit the part.
 	var part = pattern.GetPart()
-	v.processor_.PreprocessPart(part, 1)
+	v.processor_.PreprocessPart(part, 1, 1)
 	v.visitPart(part)
-	v.processor_.PostprocessPart(part, 1)
+	v.processor_.PostprocessPart(part, 1, 1)
 
 	// Visit the optional supplement.
 	var supplement = pattern.GetOptionalSupplement()
@@ -509,10 +513,11 @@ func (v *visitor_) visitRule(
 	// Visit each newline.
 	var index uint
 	var newlines = rule.GetNewlines().GetIterator()
+	var size = uint(newlines.GetSize())
 	for newlines.HasNext() {
 		index++
 		var newline = newlines.GetNext()
-		v.processor_.ProcessNewline(newline, index)
+		v.processor_.ProcessNewline(newline, index, size)
 	}
 }
 
@@ -522,12 +527,13 @@ func (v *visitor_) visitSelective(
 	// Visit each alternative.
 	var index uint
 	var alternatives = selective.GetAlternatives().GetIterator()
+	var size = uint(alternatives.GetSize())
 	for alternatives.HasNext() {
 		index++
 		var alternative = alternatives.GetNext()
-		v.processor_.PreprocessAlternative(alternative, index)
+		v.processor_.PreprocessAlternative(alternative, index, size)
 		v.visitAlternative(alternative)
-		v.processor_.PostprocessAlternative(alternative, index)
+		v.processor_.PostprocessAlternative(alternative, index, size)
 	}
 }
 
@@ -537,12 +543,13 @@ func (v *visitor_) visitSequential(
 	// Visit each part.
 	var index uint = 1
 	var parts = sequential.GetParts().GetIterator()
+	var size = uint(parts.GetSize())
 	for parts.HasNext() {
 		index++
 		var part = parts.GetNext()
-		v.processor_.PreprocessPart(part, index)
+		v.processor_.PreprocessPart(part, index, size)
 		v.visitPart(part)
-		v.processor_.PostprocessPart(part, index)
+		v.processor_.PostprocessPart(part, index, size)
 	}
 }
 
@@ -570,12 +577,13 @@ func (v *visitor_) visitSyntax(
 	// Visit each header.
 	var index uint
 	var headers = syntax.GetHeaders().GetIterator()
+	var size = uint(headers.GetSize())
 	for headers.HasNext() {
 		index++
 		var header = headers.GetNext()
-		v.processor_.PreprocessHeader(header, index)
+		v.processor_.PreprocessHeader(header, index, size)
 		v.visitHeader(header)
-		v.processor_.PostprocessHeader(header, index)
+		v.processor_.PostprocessHeader(header, index, size)
 	}
 
 	// Visit each rule.
@@ -584,9 +592,9 @@ func (v *visitor_) visitSyntax(
 	for rules.HasNext() {
 		index++
 		var rule = rules.GetNext()
-		v.processor_.PreprocessRule(rule, index)
+		v.processor_.PreprocessRule(rule, index, size)
 		v.visitRule(rule)
-		v.processor_.PostprocessRule(rule, index)
+		v.processor_.PostprocessRule(rule, index, size)
 	}
 
 	// Visit each expression.
@@ -595,9 +603,9 @@ func (v *visitor_) visitSyntax(
 	for expressions.HasNext() {
 		index++
 		var expression = expressions.GetNext()
-		v.processor_.PreprocessExpression(expression, index)
+		v.processor_.PreprocessExpression(expression, index, size)
 		v.visitExpression(expression)
-		v.processor_.PostprocessExpression(expression, index)
+		v.processor_.PostprocessExpression(expression, index, size)
 	}
 }
 

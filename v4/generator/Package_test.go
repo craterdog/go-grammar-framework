@@ -931,6 +931,8 @@ abstract syntax tree (AST) for this module:
   - Parser is used to process the token stream and generate the AST.
   - Validator is used to validate the semantics associated with an AST.
   - Formatter is used to format an AST back into a canonical version of its source.
+  - Visitor walks the AST and calls processor methods for each node in the tree.
+  - Processor provides empty processor methods to be inherited by the processors.
 
 For detailed documentation on this package refer to the wiki:
   - https://github.com/craterdog/go-grammar-framework/wiki
@@ -992,6 +994,16 @@ type ParserClassLike interface {
 }
 
 /*
+ProcessorClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete processor-like class.
+*/
+type ProcessorClassLike interface {
+	// Constructors
+	Make() ProcessorLike
+}
+
+/*
 ScannerClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete scanner-like class.  The following functions are supported:
@@ -1043,6 +1055,18 @@ type ValidatorClassLike interface {
 	Make() ValidatorLike
 }
 
+/*
+VisitorClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete visitor-like class.
+*/
+type VisitorClassLike interface {
+	// Constructors
+	Make(
+		processor Methodical,
+	) VisitorLike
+}
+
 // Instances
 
 /*
@@ -1054,6 +1078,9 @@ type FormatterLike interface {
 	// Attributes
 	GetClass() FormatterClassLike
 	GetDepth() uint
+
+	// Abstractions
+	Methodical
 
 	// Methods
 	FormatDocument(document ast.DocumentLike) string
@@ -1070,6 +1097,19 @@ type ParserLike interface {
 
 	// Methods
 	ParseSource(source string) ast.DocumentLike
+}
+
+/*
+ProcessorLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete processor-like class.
+*/
+type ProcessorLike interface {
+	// Attributes
+	GetClass() ProcessorClassLike
+
+	// Abstractions
+	Methodical
 }
 
 /*
@@ -1105,8 +1145,60 @@ type ValidatorLike interface {
 	// Attributes
 	GetClass() ValidatorClassLike
 
+	// Abstractions
+	Methodical
+
 	// Methods
 	ValidateDocument(document ast.DocumentLike)
+}
+
+/*
+VisitorLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete visitor-like class.
+*/
+type VisitorLike interface {
+	// Attributes
+	GetClass() VisitorClassLike
+
+	// Methods
+	VisitDocument(document ast.DocumentLike)
+}
+
+// Aspects
+
+/*
+Methodical defines the set of method signatures that must be supported
+by all methodical processors.
+*/
+type Methodical interface {
+	ProcessInteger(integer string)
+	ProcessNewline(
+		newline string,
+		index uint,
+		size uint,
+	)
+	ProcessReserved(reserved string)
+	ProcessRune(rune string)
+	ProcessText(text string)
+	PreprocessAdditional(
+		additional ast.AdditionalLike,
+		index uint,
+		size uint,
+	)
+	PostprocessAdditional(
+		additional ast.AdditionalLike,
+		index uint,
+		size uint,
+	)
+	PreprocessComponent(component ast.ComponentLike)
+	PostprocessComponent(component ast.ComponentLike)
+	PreprocessDocument(document ast.DocumentLike)
+	PostprocessDocument(document ast.DocumentLike)
+	PreprocessIntrinsic(intrinsic ast.IntrinsicLike)
+	PostprocessIntrinsic(intrinsic ast.IntrinsicLike)
+	PreprocessList(list ast.ListLike)
+	PostprocessList(list ast.ListLike)
 }
 `
 

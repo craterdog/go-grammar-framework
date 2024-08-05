@@ -129,6 +129,7 @@ func (v *formatter_) ProcessUppercase(uppercase string) {
 func (v *formatter_) PreprocessAlternative(
 	alternative ast.AlternativeLike,
 	index uint,
+	size uint,
 ) {
 	v.appendString(" ")
 }
@@ -136,6 +137,7 @@ func (v *formatter_) PreprocessAlternative(
 func (v *formatter_) PreprocessCharacter(
 	character ast.CharacterLike,
 	index uint,
+	size uint,
 ) {
 	if index > 1 {
 		v.appendString(" ")
@@ -145,6 +147,7 @@ func (v *formatter_) PreprocessCharacter(
 func (v *formatter_) PostprocessExpression(
 	expression ast.ExpressionLike,
 	index uint,
+	size uint,
 ) {
 	v.appendNewline()
 	v.appendNewline()
@@ -153,6 +156,7 @@ func (v *formatter_) PostprocessExpression(
 func (v *formatter_) PreprocessFactor(
 	factor ast.FactorLike,
 	index uint,
+	size uint,
 ) {
 	v.appendString(" ")
 }
@@ -168,6 +172,7 @@ func (v *formatter_) PostprocessGrouped(grouped ast.GroupedLike) {
 func (v *formatter_) PostprocessHeader(
 	header ast.HeaderLike,
 	index uint,
+	size uint,
 ) {
 	v.appendNewline()
 }
@@ -175,6 +180,7 @@ func (v *formatter_) PostprocessHeader(
 func (v *formatter_) PreprocessLine(
 	line ast.LineLike,
 	index uint,
+	size uint,
 ) {
 	v.appendNewline()
 }
@@ -190,6 +196,7 @@ func (v *formatter_) PostprocessMultilined(multilined ast.MultilinedLike) {
 func (v *formatter_) PreprocessPart(
 	part ast.PartLike,
 	index uint,
+	size uint,
 ) {
 	if v.depth_ == 0 || index > 1 {
 		v.appendString(" ")
@@ -199,6 +206,7 @@ func (v *formatter_) PreprocessPart(
 func (v *formatter_) PostprocessRule(
 	rule ast.RuleLike,
 	index uint,
+	size uint,
 ) {
 	v.appendNewline()
 	v.appendNewline()

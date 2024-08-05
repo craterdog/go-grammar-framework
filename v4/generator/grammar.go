@@ -67,6 +67,8 @@ type grammar_ struct {
 	class_   GrammarClassLike
 	visitor_ gra.VisitorLike
 	tokens_  abs.SetLike[string]
+	rules_   abs.SetLike[string]
+	plurals_ abs.SetLike[string]
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -83,14 +85,44 @@ func (v *grammar_) GetClass() GrammarClassLike {
 func (v *grammar_) PreprocessIdentifier(
 	identifier ast.IdentifierLike,
 ) {
-	var lowercase = identifier.GetAny().(string)
-	if gra.Scanner().MatchesType(lowercase, gra.LowercaseToken) {
-		v.tokens_.AddValue(lowercase)
+	var name = identifier.GetAny().(string)
+	switch {
+	case gra.Scanner().MatchesType(name, gra.LowercaseToken):
+		v.tokens_.AddValue(name)
 	}
 }
 
+func (v *grammar_) PreprocessPredicate(
+	predicate ast.PredicateLike,
+) {
+	var identifier = v.makeLowercase(predicate.GetIdentifier().GetAny().(string))
+	var cardinality = predicate.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		switch actual := cardinality.GetAny().(type) {
+		case ast.ConstrainedLike:
+			v.plurals_.AddValue(identifier)
+		case string:
+			switch actual {
+			case "*", "+":
+				v.plurals_.AddValue(identifier)
+			}
+		}
+	}
+}
+
+func (v *grammar_) PreprocessRule(
+	rule ast.RuleLike,
+	index uint,
+	size uint,
+) {
+	var name = rule.GetUppercase()
+	v.rules_.AddValue(v.makeLowercase(name))
+}
+
 func (v *grammar_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]([]string{"newline", "reserved", "space"})
+	v.tokens_ = col.Set[string]([]string{"reserved"})
+	v.rules_ = col.Set[string]()
+	v.plurals_ = col.Set[string]()
 }
 
 func (v *grammar_) GenerateGrammarModel(
@@ -114,6 +146,10 @@ func (v *grammar_) GenerateGrammarModel(
 	implementation = sts.ReplaceAll(implementation, "<parameter>", lowercase)
 	var tokenTypes = v.extractTokenTypes()
 	implementation = sts.ReplaceAll(implementation, "<TokenTypes>", tokenTypes)
+	var processTokens = v.extractProcessTokens()
+	implementation = sts.ReplaceAll(implementation, "<ProcessTokens>", processTokens)
+	var processRules = v.extractProcessRules()
+	implementation = sts.ReplaceAll(implementation, "<ProcessRules>", processRules)
 	return implementation
 }
 
@@ -129,9 +165,57 @@ func (v *grammar_) extractNotice(syntax ast.SyntaxLike) string {
 	return notice
 }
 
+func (v *grammar_) extractProcessRules() string {
+	var processRules string
+	var iterator = v.rules_.GetIterator()
+	for iterator.HasNext() {
+		var lowercase = iterator.GetNext()
+		var isPlural = v.plurals_.ContainsValue(lowercase)
+		var uppercase = v.makeUppercase(lowercase)
+		var parameters = "("
+		if isPlural {
+			parameters += "\n\t\t"
+		}
+		parameters += lowercase + " ast." + uppercase + "Like"
+		if isPlural {
+			parameters += ",\n\t\tindex uint"
+			parameters += ",\n\t\tsize uint,\n\t"
+		}
+		parameters += ")"
+		processRules += "\n\tPreprocess" + uppercase + parameters
+		processRules += "\n\tPostprocess" + uppercase + parameters
+	}
+	processRules += "\n"
+	return processRules
+}
+
+func (v *grammar_) extractProcessTokens() string {
+	var processTokens string
+	var iterator = v.tokens_.GetIterator()
+	for iterator.HasNext() {
+		var name = iterator.GetNext()
+		var isPlural = v.plurals_.ContainsValue(name)
+		var parameters = "("
+		if isPlural {
+			parameters += "\n\t\t"
+		}
+		parameters += name + " string"
+		if isPlural {
+			parameters += ",\n\t\tindex uint"
+			parameters += ",\n\t\tsize uint,\n\t"
+		}
+		parameters += ")"
+		processTokens += "\n\tProcess" + v.makeUppercase(name) + parameters
+	}
+	return processTokens
+}
+
 func (v *grammar_) extractTokenTypes() string {
 	var tokenTypes = "ErrorToken TokenType = iota"
-	var iterator = v.tokens_.GetIterator()
+	var tokens = col.Set[string](v.tokens_)
+	tokens.AddValue("space")
+	tokens.AddValue("newline")
+	var iterator = tokens.GetIterator()
 	for iterator.HasNext() {
 		var name = iterator.GetNext()
 		var tokenType = v.makeUppercase(name) + "Token"
@@ -172,6 +256,8 @@ abstract syntax tree (AST) for this module:
   - Parser is used to process the token stream and generate the AST.
   - Validator is used to validate the semantics associated with an AST.
   - Formatter is used to format an AST back into a canonical version of its source.
+  - Visitor walks the AST and calls processor methods for each node in the tree.
+  - Processor provides empty processor methods to be inherited by the processors.
 
 For detailed documentation on this package refer to the wiki:
   - https://<wiki>
@@ -227,6 +313,16 @@ type ParserClassLike interface {
 }
 
 /*
+ProcessorClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete processor-like class.
+*/
+type ProcessorClassLike interface {
+	// Constructors
+	Make() ProcessorLike
+}
+
+/*
 ScannerClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete scanner-like class.  The following functions are supported:
@@ -278,6 +374,18 @@ type ValidatorClassLike interface {
 	Make() ValidatorLike
 }
 
+/*
+VisitorClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete visitor-like class.
+*/
+type VisitorClassLike interface {
+	// Constructors
+	Make(
+		processor Methodical,
+	) VisitorLike
+}
+
 // Instances
 
 /*
@@ -289,6 +397,9 @@ type FormatterLike interface {
 	// Attributes
 	GetClass() FormatterClassLike
 	GetDepth() uint
+
+	// Abstractions
+	Methodical
 
 	// Methods
 	Format<Name>(<parameter> ast.<Name>Like) string
@@ -305,6 +416,19 @@ type ParserLike interface {
 
 	// Methods
 	ParseSource(source string) ast.<Name>Like
+}
+
+/*
+ProcessorLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete processor-like class.
+*/
+type ProcessorLike interface {
+	// Attributes
+	GetClass() ProcessorClassLike
+
+	// Abstractions
+	Methodical
 }
 
 /*
@@ -340,7 +464,31 @@ type ValidatorLike interface {
 	// Attributes
 	GetClass() ValidatorClassLike
 
+	// Abstractions
+	Methodical
+
 	// Methods
 	Validate<Name>(<parameter> ast.<Name>Like)
 }
+
+/*
+VisitorLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete visitor-like class.
+*/
+type VisitorLike interface {
+	// Attributes
+	GetClass() VisitorClassLike
+
+	// Methods
+	Visit<Name>(<parameter> ast.<Name>Like)
+}
+
+// Aspects
+
+/*
+Methodical defines the set of method signatures that must be supported
+by all methodical processors.
+*/
+type Methodical interface {<ProcessTokens><ProcessRules>}
 `

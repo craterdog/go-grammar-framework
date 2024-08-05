@@ -128,6 +128,7 @@ func (v *scanner_) ProcessQuantified(quantified string) {
 func (v *scanner_) PreprocessAlternative(
 	alternative ast.AlternativeLike,
 	index uint,
+	size uint,
 ) {
 	v.regexp_ += "|"
 }
@@ -147,6 +148,7 @@ func (v *scanner_) PostprocessConstrained(constrained ast.ConstrainedLike) {
 func (v *scanner_) PreprocessExpression(
 	expression ast.ExpressionLike,
 	index uint,
+	size uint,
 ) {
 	v.regexp_ = `"(?:`
 }
@@ -154,6 +156,7 @@ func (v *scanner_) PreprocessExpression(
 func (v *scanner_) PostprocessExpression(
 	expression ast.ExpressionLike,
 	index uint,
+	size uint,
 ) {
 	v.regexp_ += `)"`
 	var name = expression.GetLowercase()

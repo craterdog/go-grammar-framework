@@ -88,6 +88,7 @@ func (v *ast_) GetClass() AstClassLike {
 func (v *ast_) PreprocessFactor(
 	factor ast.FactorLike,
 	index uint,
+	size uint,
 ) {
 	switch factor.GetAny().(type) {
 	case string:
@@ -152,6 +153,7 @@ func (v *ast_) PreprocessPredicate(
 func (v *ast_) PreprocessRule(
 	rule ast.RuleLike,
 	index uint,
+	size uint,
 ) {
 	v.attributes_ = col.List[mod.AttributeLike]()
 }
@@ -159,6 +161,7 @@ func (v *ast_) PreprocessRule(
 func (v *ast_) PostprocessRule(
 	rule ast.RuleLike,
 	index uint,
+	size uint,
 ) {
 	var name = rule.GetUppercase()
 

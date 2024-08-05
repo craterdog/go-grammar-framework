@@ -18,6 +18,8 @@ abstract syntax tree (AST) for this module:
   - Parser is used to process the token stream and generate the AST.
   - Validator is used to validate the semantics associated with an AST.
   - Formatter is used to format an AST back into a canonical version of its source.
+  - Visitor walks the AST and calls processor methods for each node in the tree.
+  - Processor provides empty processor methods to be inherited by the processors.
 
 For detailed documentation on this package refer to the wiki:
   - https://github.com/craterdog/go-grammar-framework/wiki
@@ -130,8 +132,8 @@ concrete token-like class.
 type TokenClassLike interface {
 	// Constructors
 	Make(
-		line int,
-		position int,
+		line uint,
+		position uint,
 		type_ TokenType,
 		value string,
 	) TokenLike
@@ -222,8 +224,8 @@ instance of a concrete token-like class.
 type TokenLike interface {
 	// Attributes
 	GetClass() TokenClassLike
-	GetLine() int
-	GetPosition() int
+	GetLine() uint
+	GetPosition() uint
 	GetType() TokenType
 	GetValue() string
 }
@@ -264,219 +266,138 @@ Methodical defines the set of method signatures that must be supported
 by all methodical processors.
 */
 type Methodical interface {
-	ProcessComment(
-		comment string,
-	)
-	ProcessGlyph(
-		glyph string,
-	)
-	ProcessIntrinsic(
-		intrinsic string,
-	)
-	ProcessLiteral(
-		literal string,
-	)
-	ProcessLowercase(
-		lowercase string,
-	)
-	ProcessNegation(
-		negation string,
-	)
+	ProcessComment(comment string)
+	ProcessGlyph(glyph string)
+	ProcessIntrinsic(intrinsic string)
+	ProcessLiteral(literal string)
+	ProcessLowercase(lowercase string)
+	ProcessNegation(negation string)
 	ProcessNewline(
 		newline string,
 		index uint,
+		size uint,
 	)
-	ProcessNote(
-		note string,
-	)
-	ProcessNumber(
-		number string,
-	)
-	ProcessQuantified(
-		quantified string,
-	)
-	ProcessReserved(
-		reserved string,
-	)
-	ProcessUppercase(
-		uppercase string,
-	)
+	ProcessNote(note string)
+	ProcessNumber(number string)
+	ProcessQuantified(quantified string)
+	ProcessReserved(reserved string)
+	ProcessUppercase(uppercase string)
 	PreprocessAlternative(
 		alternative ast.AlternativeLike,
 		index uint,
+		size uint,
 	)
 	PostprocessAlternative(
 		alternative ast.AlternativeLike,
 		index uint,
+		size uint,
 	)
-	PreprocessBounded(
-		bounded ast.BoundedLike,
-	)
-	PostprocessBounded(
-		bounded ast.BoundedLike,
-	)
-	PreprocessCardinality(
-		cardinality ast.CardinalityLike,
-	)
-	PostprocessCardinality(
-		cardinality ast.CardinalityLike,
-	)
+	PreprocessBounded(bounded ast.BoundedLike)
+	PostprocessBounded(bounded ast.BoundedLike)
+	PreprocessCardinality(cardinality ast.CardinalityLike)
+	PostprocessCardinality(cardinality ast.CardinalityLike)
 	PreprocessCharacter(
 		character ast.CharacterLike,
 		index uint,
+		size uint,
 	)
 	PostprocessCharacter(
 		character ast.CharacterLike,
 		index uint,
+		size uint,
 	)
-	PreprocessConstrained(
-		constrained ast.ConstrainedLike,
-	)
-	PostprocessConstrained(
-		constrained ast.ConstrainedLike,
-	)
-	PreprocessDefinition(
-		definition ast.DefinitionLike,
-	)
-	PostprocessDefinition(
-		definition ast.DefinitionLike,
-	)
-	PreprocessElement(
-		element ast.ElementLike,
-	)
-	PostprocessElement(
-		element ast.ElementLike,
-	)
+	PreprocessConstrained(constrained ast.ConstrainedLike)
+	PostprocessConstrained(constrained ast.ConstrainedLike)
+	PreprocessDefinition(definition ast.DefinitionLike)
+	PostprocessDefinition(definition ast.DefinitionLike)
+	PreprocessElement(element ast.ElementLike)
+	PostprocessElement(element ast.ElementLike)
 	PreprocessExpression(
 		expression ast.ExpressionLike,
 		index uint,
+		size uint,
 	)
 	PostprocessExpression(
 		expression ast.ExpressionLike,
 		index uint,
+		size uint,
 	)
-	PreprocessExtent(
-		extent ast.ExtentLike,
-	)
-	PostprocessExtent(
-		extent ast.ExtentLike,
-	)
+	PreprocessExtent(extent ast.ExtentLike)
+	PostprocessExtent(extent ast.ExtentLike)
 	PreprocessFactor(
 		factor ast.FactorLike,
 		index uint,
+		size uint,
 	)
 	PostprocessFactor(
 		factor ast.FactorLike,
 		index uint,
+		size uint,
 	)
-	PreprocessFiltered(
-		filtered ast.FilteredLike,
-	)
-	PostprocessFiltered(
-		filtered ast.FilteredLike,
-	)
-	PreprocessGrouped(
-		grouped ast.GroupedLike,
-	)
-	PostprocessGrouped(
-		grouped ast.GroupedLike,
-	)
+	PreprocessFiltered(filtered ast.FilteredLike)
+	PostprocessFiltered(filtered ast.FilteredLike)
+	PreprocessGrouped(grouped ast.GroupedLike)
+	PostprocessGrouped(grouped ast.GroupedLike)
 	PreprocessHeader(
 		header ast.HeaderLike,
 		index uint,
+		size uint,
 	)
 	PostprocessHeader(
 		header ast.HeaderLike,
 		index uint,
+		size uint,
 	)
-	PreprocessIdentifier(
-		identifier ast.IdentifierLike,
-	)
-	PostprocessIdentifier(
-		identifier ast.IdentifierLike,
-	)
-	PreprocessInlined(
-		inlined ast.InlinedLike,
-	)
-	PostprocessInlined(
-		inlined ast.InlinedLike,
-	)
-	PreprocessLimit(
-		limit ast.LimitLike,
-	)
-	PostprocessLimit(
-		limit ast.LimitLike,
-	)
+	PreprocessIdentifier(identifier ast.IdentifierLike)
+	PostprocessIdentifier(identifier ast.IdentifierLike)
+	PreprocessInlined(inlined ast.InlinedLike)
+	PostprocessInlined(inlined ast.InlinedLike)
+	PreprocessLimit(limit ast.LimitLike)
+	PostprocessLimit(limit ast.LimitLike)
 	PreprocessLine(
 		line ast.LineLike,
 		index uint,
+		size uint,
 	)
 	PostprocessLine(
 		line ast.LineLike,
 		index uint,
+		size uint,
 	)
-	PreprocessMultilined(
-		multilined ast.MultilinedLike,
-	)
-	PostprocessMultilined(
-		multilined ast.MultilinedLike,
-	)
+	PreprocessMultilined(multilined ast.MultilinedLike)
+	PostprocessMultilined(multilined ast.MultilinedLike)
 	PreprocessPart(
 		part ast.PartLike,
 		index uint,
+		size uint,
 	)
 	PostprocessPart(
 		part ast.PartLike,
 		index uint,
+		size uint,
 	)
-	PreprocessPattern(
-		pattern ast.PatternLike,
-	)
-	PostprocessPattern(
-		pattern ast.PatternLike,
-	)
-	PreprocessPredicate(
-		predicate ast.PredicateLike,
-	)
-	PostprocessPredicate(
-		predicate ast.PredicateLike,
-	)
+	PreprocessPattern(pattern ast.PatternLike)
+	PostprocessPattern(pattern ast.PatternLike)
+	PreprocessPredicate(predicate ast.PredicateLike)
+	PostprocessPredicate(predicate ast.PredicateLike)
 	PreprocessRule(
 		rule ast.RuleLike,
 		index uint,
+		size uint,
 	)
 	PostprocessRule(
 		rule ast.RuleLike,
 		index uint,
+		size uint,
 	)
-	PreprocessSelective(
-		selective ast.SelectiveLike,
-	)
-	PostprocessSelective(
-		selective ast.SelectiveLike,
-	)
-	PreprocessSequential(
-		sequential ast.SequentialLike,
-	)
-	PostprocessSequential(
-		sequential ast.SequentialLike,
-	)
-	PreprocessSupplement(
-		sequential ast.SupplementLike,
-	)
-	PostprocessSupplement(
-		sequential ast.SupplementLike,
-	)
-	PreprocessSyntax(
-		syntax ast.SyntaxLike,
-	)
-	PostprocessSyntax(
-		syntax ast.SyntaxLike,
-	)
-	PreprocessTextual(
-		textual ast.TextualLike,
-	)
-	PostprocessTextual(
-		textual ast.TextualLike,
-	)
+	PreprocessSelective(selective ast.SelectiveLike)
+	PostprocessSelective(selective ast.SelectiveLike)
+	PreprocessSequential(sequential ast.SequentialLike)
+	PostprocessSequential(sequential ast.SequentialLike)
+	PreprocessSupplement(supplement ast.SupplementLike)
+	PostprocessSupplement(supplement ast.SupplementLike)
+	PreprocessSyntax(syntax ast.SyntaxLike)
+	PostprocessSyntax(syntax ast.SyntaxLike)
+	PreprocessTextual(textual ast.TextualLike)
+	PostprocessTextual(textual ast.TextualLike)
 }

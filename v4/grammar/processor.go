@@ -86,6 +86,7 @@ func (v *processor_) ProcessNegation(negation string) {
 func (v *processor_) ProcessNewline(
 	newline string,
 	index uint,
+	size uint,
 ) {
 }
 
@@ -107,12 +108,14 @@ func (v *processor_) ProcessUppercase(uppercase string) {
 func (v *processor_) PreprocessAlternative(
 	alternative ast.AlternativeLike,
 	index uint,
+	size uint,
 ) {
 }
 
 func (v *processor_) PostprocessAlternative(
 	alternative ast.AlternativeLike,
 	index uint,
+	size uint,
 ) {
 }
 
@@ -131,12 +134,14 @@ func (v *processor_) PostprocessCardinality(cardinality ast.CardinalityLike) {
 func (v *processor_) PreprocessCharacter(
 	character ast.CharacterLike,
 	index uint,
+	size uint,
 ) {
 }
 
 func (v *processor_) PostprocessCharacter(
 	character ast.CharacterLike,
 	index uint,
+	size uint,
 ) {
 }
 
@@ -161,12 +166,14 @@ func (v *processor_) PostprocessElement(element ast.ElementLike) {
 func (v *processor_) PreprocessExpression(
 	expression ast.ExpressionLike,
 	index uint,
+	size uint,
 ) {
 }
 
 func (v *processor_) PostprocessExpression(
 	expression ast.ExpressionLike,
 	index uint,
+	size uint,
 ) {
 }
 
@@ -179,12 +186,14 @@ func (v *processor_) PostprocessExtent(extent ast.ExtentLike) {
 func (v *processor_) PreprocessFactor(
 	factor ast.FactorLike,
 	index uint,
+	size uint,
 ) {
 }
 
 func (v *processor_) PostprocessFactor(
 	factor ast.FactorLike,
 	index uint,
+	size uint,
 ) {
 }
 
@@ -203,12 +212,14 @@ func (v *processor_) PostprocessGrouped(grouped ast.GroupedLike) {
 func (v *processor_) PreprocessHeader(
 	header ast.HeaderLike,
 	index uint,
+	size uint,
 ) {
 }
 
 func (v *processor_) PostprocessHeader(
 	header ast.HeaderLike,
 	index uint,
+	size uint,
 ) {
 }
 
@@ -233,12 +244,14 @@ func (v *processor_) PostprocessLimit(limit ast.LimitLike) {
 func (v *processor_) PreprocessLine(
 	line ast.LineLike,
 	index uint,
+	size uint,
 ) {
 }
 
 func (v *processor_) PostprocessLine(
 	line ast.LineLike,
 	index uint,
+	size uint,
 ) {
 }
 
@@ -251,12 +264,14 @@ func (v *processor_) PostprocessMultilined(multilined ast.MultilinedLike) {
 func (v *processor_) PreprocessPart(
 	part ast.PartLike,
 	index uint,
+	size uint,
 ) {
 }
 
 func (v *processor_) PostprocessPart(
 	part ast.PartLike,
 	index uint,
+	size uint,
 ) {
 }
 
@@ -275,12 +290,14 @@ func (v *processor_) PostprocessPredicate(predicate ast.PredicateLike) {
 func (v *processor_) PreprocessRule(
 	rule ast.RuleLike,
 	index uint,
+	size uint,
 ) {
 }
 
 func (v *processor_) PostprocessRule(
 	rule ast.RuleLike,
 	index uint,
+	size uint,
 ) {
 }
 

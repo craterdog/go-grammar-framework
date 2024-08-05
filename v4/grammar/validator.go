@@ -158,6 +158,7 @@ func (v *validator_) PreprocessConstrained(constrained ast.ConstrainedLike) {
 func (v *validator_) PreprocessExpression(
 	expression ast.ExpressionLike,
 	index uint,
+	size uint,
 ) {
 	var lowercase = expression.GetLowercase()
 	var duplicate = v.expressions_.GetValue(lowercase)
@@ -174,6 +175,7 @@ func (v *validator_) PreprocessExpression(
 func (v *validator_) PreprocessRule(
 	rule ast.RuleLike,
 	index uint,
+	size uint,
 ) {
 	var uppercase = rule.GetUppercase()
 	var duplicate = v.rules_.GetValue(uppercase)
