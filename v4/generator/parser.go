@@ -13,6 +13,8 @@
 package generator
 
 import (
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	sts "strings"
@@ -64,6 +66,7 @@ type parser_ struct {
 	// Define the instance attributes.
 	class_   ParserClassLike
 	visitor_ gra.VisitorLike
+	rules_   abs.SetLike[string]
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -75,7 +78,7 @@ func (v *parser_) GetClass() ParserClassLike {
 	return v.class_
 }
 
-// Methodical
+// Public
 
 func (v *parser_) GenerateParserClass(
 	module string,
@@ -93,7 +96,24 @@ func (v *parser_) GenerateParserClass(
 	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
 	var lowercase = v.makeLowercase(name)
 	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
+	var processRules = v.extractParseRules()
+	implementation = sts.ReplaceAll(implementation, "<ParseRules>", processRules)
 	return implementation
+}
+
+// Methodical
+
+func (v *parser_) PreprocessRule(
+	rule ast.RuleLike,
+	index uint,
+	size uint,
+) {
+	var name = rule.GetUppercase()
+	v.rules_.AddValue(v.makeLowercase(name))
+}
+
+func (v *parser_) PreprocessSyntax(syntax ast.SyntaxLike) {
+	v.rules_ = col.Set[string]()
 }
 
 // Private
@@ -106,6 +126,20 @@ func (v *parser_) extractNotice(syntax ast.SyntaxLike) string {
 	var notice = comment[2 : len(comment)-3]
 
 	return notice
+}
+
+func (v *parser_) extractParseRules() string {
+	var parseRules string
+	var iterator = v.rules_.GetIterator()
+	for iterator.HasNext() {
+		var parseRule = parseTemplate_
+		var ruleName = iterator.GetNext()
+		parseRule = sts.ReplaceAll(parseRule, "<ruleName>", ruleName)
+		ruleName = v.makeUppercase(ruleName)
+		parseRule = sts.ReplaceAll(parseRule, "<RuleName>", ruleName)
+		parseRules += parseRule
+	}
+	return parseRules
 }
 
 func (v *parser_) extractSyntaxName(syntax ast.SyntaxLike) string {
@@ -129,6 +163,16 @@ func (v *parser_) makeUppercase(name string) string {
 	runes[0] = uni.ToUpper(runes[0])
 	return string(runes)
 }
+
+const parseTemplate_ = `
+func (v *parser_) parse<RuleName>() (
+	<ruleName> ast.<RuleName>Like,
+	token TokenLike,
+	ok bool,
+) {
+	panic("The parse<RuleName>() method has not yet been implemented.")
+}
+`
 
 const parserTemplate_ = `/*<Notice>*/
 
@@ -221,6 +265,30 @@ func (v *parser_) ParseSource(source string) ast.<Name>Like {
 
 // Private
 
+func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
+	value string,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the specific token.
+	token = v.getNextToken()
+	if token == nil {
+		// We are at the end-of-file marker.
+		return value, token, false
+	}
+	if token.GetType() == expectedType {
+		value = token.GetValue()
+		if col.IsUndefined(expectedValue) || value == expectedValue {
+			// Found the right token.
+			return value, token, true
+		}
+	}
+
+	// This is not the right token.
+	v.putBack(token)
+	return value, token, false
+}
+<ParseRules>
 func (v *parser_) formatError(token TokenLike) string {
 	// Format the error message.
 	var message = fmt.Sprintf(
@@ -261,7 +329,7 @@ func (v *parser_) generateSyntax(expected string, names ...string) string {
 		message += fmt.Sprintf(
 			"  \033[32m%v: \033[33m%v\033[0m\n\n",
 			name,
-			syntax[name],
+			syntax_[name],
 		)
 	}
 	return message
@@ -289,40 +357,11 @@ func (v *parser_) getNextToken() TokenLike {
 	return token
 }
 
-func (v *parser_) parse<Name>() (
-	<name> ast.<Name>Like,
-	token TokenLike,
-	ok bool,
-) {
-	// TBA - Add real method implementation.
-	return <name>, token, ok
-}
-
-func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
-	value string,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse a specific token.
-	token = v.getNextToken()
-	if token.GetType() == expectedType {
-		value = token.GetValue()
-		if col.IsUndefined(expectedValue) || value == expectedValue {
-			// Found the right token.
-			return value, token, true
-		}
-	}
-
-	// This is not the right token.
-	v.putBack(token)
-	return value, token, false
-}
-
 func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var syntax = map[string]string{
+var syntax_ = map[string]string{
 	"<Name>": "Component newline*",
 }
 `

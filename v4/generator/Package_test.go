@@ -410,6 +410,70 @@ func (v *parser_) ParseSource(source string) ast.DocumentLike {
 
 // Private
 
+func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
+	value string,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the specific token.
+	token = v.getNextToken()
+	if token == nil {
+		// We are at the end-of-file marker.
+		return value, token, false
+	}
+	if token.GetType() == expectedType {
+		value = token.GetValue()
+		if col.IsUndefined(expectedValue) || value == expectedValue {
+			// Found the right token.
+			return value, token, true
+		}
+	}
+
+	// This is not the right token.
+	v.putBack(token)
+	return value, token, false
+}
+
+func (v *parser_) parseAdditional() (
+	additional ast.AdditionalLike,
+	token TokenLike,
+	ok bool,
+) {
+	panic("The parseAdditional() method has not yet been implemented.")
+}
+
+func (v *parser_) parseComponent() (
+	component ast.ComponentLike,
+	token TokenLike,
+	ok bool,
+) {
+	panic("The parseComponent() method has not yet been implemented.")
+}
+
+func (v *parser_) parseDocument() (
+	document ast.DocumentLike,
+	token TokenLike,
+	ok bool,
+) {
+	panic("The parseDocument() method has not yet been implemented.")
+}
+
+func (v *parser_) parseIntrinsic() (
+	intrinsic ast.IntrinsicLike,
+	token TokenLike,
+	ok bool,
+) {
+	panic("The parseIntrinsic() method has not yet been implemented.")
+}
+
+func (v *parser_) parseList() (
+	list ast.ListLike,
+	token TokenLike,
+	ok bool,
+) {
+	panic("The parseList() method has not yet been implemented.")
+}
+
 func (v *parser_) formatError(token TokenLike) string {
 	// Format the error message.
 	var message = fmt.Sprintf(
@@ -450,7 +514,7 @@ func (v *parser_) generateSyntax(expected string, names ...string) string {
 		message += fmt.Sprintf(
 			"  \033[32m%v: \033[33m%v\033[0m\n\n",
 			name,
-			syntax[name],
+			syntax_[name],
 		)
 	}
 	return message
@@ -478,40 +542,11 @@ func (v *parser_) getNextToken() TokenLike {
 	return token
 }
 
-func (v *parser_) parseDocument() (
-	document ast.DocumentLike,
-	token TokenLike,
-	ok bool,
-) {
-	// TBA - Add real method implementation.
-	return document, token, ok
-}
-
-func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
-	value string,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse a specific token.
-	token = v.getNextToken()
-	if token.GetType() == expectedType {
-		value = token.GetValue()
-		if col.IsUndefined(expectedValue) || value == expectedValue {
-			// Found the right token.
-			return value, token, true
-		}
-	}
-
-	// This is not the right token.
-	v.putBack(token)
-	return value, token, false
-}
-
 func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var syntax = map[string]string{
+var syntax_ = map[string]string{
 	"Document": "Component newline*",
 }
 `
@@ -923,8 +958,6 @@ type validator_ struct {
 	// Define the instance attributes.
 	class_       ValidatorClassLike
 	visitor_     VisitorLike
-	rules_       abs.CatalogLike[string, ast.DefinitionLike]
-	expressions_ abs.CatalogLike[string, ast.PatternLike]
 
 	// Define the inherited aspects.
 	Methodical

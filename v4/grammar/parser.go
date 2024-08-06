@@ -99,72 +99,28 @@ func (v *parser_) ParseSource(source string) ast.SyntaxLike {
 
 // Private
 
-func (v *parser_) formatError(token TokenLike) string {
-	// Format the error message.
-	var message = fmt.Sprintf(
-		"An unexpected token was received by the parser: %v\n",
-		Scanner().FormatToken(token),
-	)
-	var line = token.GetLine()
-	var lines = sts.Split(v.source_, "\n")
-
-	// Append the source line with the error in it.
-	message += "\033[36m"
-	if line > 1 {
-		message += fmt.Sprintf("%04d: ", line-1) + string(lines[line-2]) + "\n"
+func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
+	value string,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the specific token.
+	token = v.getNextToken()
+	if token == nil {
+		// We are at the end-of-file marker.
+		return value, token, false
 	}
-	message += fmt.Sprintf("%04d: ", line) + string(lines[line-1]) + "\n"
-
-	// Append an arrow pointing to the error.
-	message += " \033[32m>>>─"
-	var count uint
-	for count < token.GetPosition() {
-		message += "─"
-		count++
-	}
-	message += "⌃\033[36m\n"
-
-	// Append the following source line for context.
-	if line < uint(len(lines)) {
-		message += fmt.Sprintf("%04d: ", line+1) + string(lines[line]) + "\n"
-	}
-	message += "\033[0m\n"
-
-	return message
-}
-
-func (v *parser_) generateSyntax(expected string, names ...string) string {
-	var message = "Was expecting '" + expected + "' from:\n"
-	for _, name := range names {
-		message += fmt.Sprintf(
-			"  \033[32m%v: \033[33m%v\033[0m\n\n",
-			name,
-			syntax[name],
-		)
-	}
-	return message
-}
-
-func (v *parser_) getNextToken() TokenLike {
-	// Check for any read, but unprocessed tokens.
-	if !v.next_.IsEmpty() {
-		return v.next_.RemoveTop()
+	if token.GetType() == expectedType {
+		value = token.GetValue()
+		if col.IsUndefined(expectedValue) || value == expectedValue {
+			// Found the right token.
+			return value, token, true
+		}
 	}
 
-	// Read a new token from the token stream.
-	var token, ok = v.tokens_.RemoveHead() // This will wait for a token.
-	if !ok {
-		// The token channel has been closed.
-		return nil
-	}
-
-	// Check for an error token.
-	if token.GetType() == ErrorToken {
-		var message = v.formatError(token)
-		panic(message)
-	}
-
-	return token
+	// This is not the right token.
+	v.putBack(token)
+	return value, token, false
 }
 
 func (v *parser_) parseAlternative() (
@@ -691,6 +647,28 @@ func (v *parser_) parseInlined() (
 	return inlined, token, true
 }
 
+func (v *parser_) parseLimit() (
+	limit ast.LimitLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the dot-dot reserved string.
+	var dotdot string
+	dotdot, token, ok = v.parseToken(ReservedToken, "..")
+	if !ok {
+		// This is not the limit number.
+		return limit, token, false
+	}
+
+	// Attempt to parse the optional limit number.
+	var number string
+	number, token, _ = v.parseToken(NumberToken, "")
+
+	// Found the constrained limit.
+	limit = ast.Limit().Make(dotdot, number)
+	return limit, token, true
+}
+
 func (v *parser_) parseLine() (
 	line ast.LineLike,
 	token TokenLike,
@@ -721,28 +699,6 @@ func (v *parser_) parseLine() (
 	// Found the line.
 	line = ast.Line().Make(newline, identifier, note)
 	return line, token, true
-}
-
-func (v *parser_) parseLimit() (
-	limit ast.LimitLike,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse the dot-dot reserved string.
-	var dotdot string
-	dotdot, token, ok = v.parseToken(ReservedToken, "..")
-	if !ok {
-		// This is not the limit number.
-		return limit, token, false
-	}
-
-	// Attempt to parse the optional limit number.
-	var number string
-	number, token, _ = v.parseToken(NumberToken, "")
-
-	// Found the constrained limit.
-	limit = ast.Limit().Make(dotdot, number)
-	return limit, token, true
 }
 
 func (v *parser_) parseMultilined() (
@@ -1080,35 +1036,79 @@ func (v *parser_) parseTextual() (
 	return textual, token, false
 }
 
-func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
-	value string,
-	token TokenLike,
-	ok bool,
-) {
-	// Attempt to parse the specific token.
-	token = v.getNextToken()
-	if token == nil {
-		// We are at the end-of-file marker.
-		return value, token, false
+func (v *parser_) formatError(token TokenLike) string {
+	// Format the error message.
+	var message = fmt.Sprintf(
+		"An unexpected token was received by the parser: %v\n",
+		Scanner().FormatToken(token),
+	)
+	var line = token.GetLine()
+	var lines = sts.Split(v.source_, "\n")
+
+	// Append the source line with the error in it.
+	message += "\033[36m"
+	if line > 1 {
+		message += fmt.Sprintf("%04d: ", line-1) + string(lines[line-2]) + "\n"
 	}
-	if token.GetType() == expectedType {
-		value = token.GetValue()
-		if col.IsUndefined(expectedValue) || value == expectedValue {
-			// Found the right token.
-			return value, token, true
-		}
+	message += fmt.Sprintf("%04d: ", line) + string(lines[line-1]) + "\n"
+
+	// Append an arrow pointing to the error.
+	message += " \033[32m>>>─"
+	var count uint
+	for count < token.GetPosition() {
+		message += "─"
+		count++
+	}
+	message += "⌃\033[36m\n"
+
+	// Append the following source line for context.
+	if line < uint(len(lines)) {
+		message += fmt.Sprintf("%04d: ", line+1) + string(lines[line]) + "\n"
+	}
+	message += "\033[0m\n"
+
+	return message
+}
+
+func (v *parser_) generateSyntax(expected string, names ...string) string {
+	var message = "Was expecting '" + expected + "' from:\n"
+	for _, name := range names {
+		message += fmt.Sprintf(
+			"  \033[32m%v: \033[33m%v\033[0m\n\n",
+			name,
+			syntax_[name],
+		)
+	}
+	return message
+}
+
+func (v *parser_) getNextToken() TokenLike {
+	// Check for any read, but unprocessed tokens.
+	if !v.next_.IsEmpty() {
+		return v.next_.RemoveTop()
 	}
 
-	// This is not the right token.
-	v.putBack(token)
-	return value, token, false
+	// Read a new token from the token stream.
+	var token, ok = v.tokens_.RemoveHead() // This will wait for a token.
+	if !ok {
+		// The token channel has been closed.
+		return nil
+	}
+
+	// Check for an error token.
+	if token.GetType() == ErrorToken {
+		var message = v.formatError(token)
+		panic(message)
+	}
+
+	return token
 }
 
 func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var syntax = map[string]string{
+var syntax_ = map[string]string{
 	"Syntax": `Header+ Rule+ Expression+`,
 	"Header": `comment newline`,
 	"Rule":   `comment? uppercase ":" Definition newline+`,

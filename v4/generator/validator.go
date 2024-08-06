@@ -247,8 +247,6 @@ type validator_ struct {
 	// Define the instance attributes.
 	class_       ValidatorClassLike
 	visitor_     VisitorLike
-	rules_       abs.CatalogLike[string, ast.DefinitionLike]
-	expressions_ abs.CatalogLike[string, ast.PatternLike]
 
 	// Define the inherited aspects.
 	Methodical

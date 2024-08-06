@@ -80,6 +80,36 @@ func (v *grammar_) GetClass() GrammarClassLike {
 	return v.class_
 }
 
+// Public
+
+func (v *grammar_) GenerateGrammarModel(
+	module string,
+	wiki string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	v.visitor_.VisitSyntax(syntax)
+	implementation = grammarTemplate_
+	implementation = sts.ReplaceAll(implementation, "<wiki>", wiki)
+	var name = v.extractSyntaxName(syntax)
+	implementation = sts.ReplaceAll(implementation, "<module>", module)
+	var notice = v.extractNotice(syntax)
+	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
+	var uppercase = v.makeUppercase(name)
+	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
+	var lowercase = v.makeLowercase(name)
+	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
+	implementation = sts.ReplaceAll(implementation, "<parameter>", lowercase)
+	var tokenTypes = v.extractTokenTypes()
+	implementation = sts.ReplaceAll(implementation, "<TokenTypes>", tokenTypes)
+	var processTokens = v.extractProcessTokens()
+	implementation = sts.ReplaceAll(implementation, "<ProcessTokens>", processTokens)
+	var processRules = v.extractProcessRules()
+	implementation = sts.ReplaceAll(implementation, "<ProcessRules>", processRules)
+	return implementation
+}
+
 // Methodical
 
 func (v *grammar_) PreprocessIdentifier(
@@ -123,34 +153,6 @@ func (v *grammar_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.tokens_ = col.Set[string]([]string{"reserved"})
 	v.rules_ = col.Set[string]()
 	v.plurals_ = col.Set[string]()
-}
-
-func (v *grammar_) GenerateGrammarModel(
-	module string,
-	wiki string,
-	syntax ast.SyntaxLike,
-) (
-	implementation string,
-) {
-	v.visitor_.VisitSyntax(syntax)
-	implementation = grammarTemplate_
-	implementation = sts.ReplaceAll(implementation, "<wiki>", wiki)
-	var name = v.extractSyntaxName(syntax)
-	implementation = sts.ReplaceAll(implementation, "<module>", module)
-	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
-	var uppercase = v.makeUppercase(name)
-	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
-	var lowercase = v.makeLowercase(name)
-	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
-	implementation = sts.ReplaceAll(implementation, "<parameter>", lowercase)
-	var tokenTypes = v.extractTokenTypes()
-	implementation = sts.ReplaceAll(implementation, "<TokenTypes>", tokenTypes)
-	var processTokens = v.extractProcessTokens()
-	implementation = sts.ReplaceAll(implementation, "<ProcessTokens>", processTokens)
-	var processRules = v.extractProcessRules()
-	implementation = sts.ReplaceAll(implementation, "<ProcessRules>", processRules)
-	return implementation
 }
 
 // Private
