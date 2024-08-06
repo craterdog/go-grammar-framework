@@ -839,7 +839,10 @@ package grammar
 
 import (
 	fmt "fmt"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	stc "strconv"
 )
 
 // CLASS ACCESS
@@ -867,10 +870,16 @@ type validatorClass_ struct {
 // Constructors
 
 func (c *validatorClass_) Make() ValidatorLike {
-	return &validator_{
+	var processor = Processor().Make()
+	var validator = &validator_{
 		// Initialize the instance attributes.
 		class_: c,
+
+		// Initialize the inherited aspects.
+		Methodical: processor,
 	}
+	validator.visitor_ = Visitor().Make(validator)
+	return validator
 }
 
 // INSTANCE METHODS
@@ -879,7 +888,13 @@ func (c *validatorClass_) Make() ValidatorLike {
 
 type validator_ struct {
 	// Define the instance attributes.
-	class_    ValidatorClassLike
+	class_       ValidatorClassLike
+	visitor_     VisitorLike
+	rules_       abs.CatalogLike[string, ast.DefinitionLike]
+	expressions_ abs.CatalogLike[string, ast.PatternLike]
+
+	// Define the inherited aspects.
+	Methodical
 }
 
 // Attributes
@@ -890,24 +905,50 @@ func (v *validator_) GetClass() ValidatorClassLike {
 
 // Public
 
-func (v *validator_) ValidateDocument(document ast.DocumentLike) {
-	// TBA - Add a real method implementation.
-	var name = "foobar"
-	if !v.matchesToken(ErrorToken, name) {
-		var message = v.formatError(name, "Oops!")
+func (v *validator_) ValidateToken(
+	tokenValue string,
+	tokenType TokenType,
+) {
+	if !Scanner().MatchesType(tokenValue, tokenType) {
+		var message = fmt.Sprintf(
+			"The following token value is not of type %v: %v",
+			Scanner().FormatType(tokenType),
+			tokenValue,
+		)
 		panic(message)
 	}
 }
 
-// Private
+func (v *validator_) ValidateDocument(document ast.DocumentLike) {
+	v.visitor_.VisitDocument(document)
+}
 
-func (v *validator_) formatError(name, message string) string {
-	message = fmt.Sprintf(
-		"The definition for %v is invalid:\n%v\n",
-		name,
-		message,
-	)
-	return message
+// Methodical
+
+func (v *validator_) ProcessInteger(integer string) {
+	v.ValidateToken(integer, IntegerToken)
+}
+
+func (v *validator_) ProcessNewline(newline string) {
+	v.ValidateToken(newline, NewlineToken)
+}
+
+func (v *validator_) ProcessReserved(reserved string) {
+	v.ValidateToken(reserved, ReservedToken)
+}
+
+func (v *validator_) ProcessRune(rune string) {
+	v.ValidateToken(rune, RuneToken)
+}
+
+func (v *validator_) ProcessText(text string) {
+	v.ValidateToken(text, TextToken)
+}
+
+func (v *validator_) PreprocessDocument(document ast.DocumentLike) {
+}
+
+func (v *validator_) PostprocessDocument(document ast.DocumentLike) {
 }
 `
 

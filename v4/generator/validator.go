@@ -13,6 +13,8 @@
 package generator
 
 import (
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	sts "strings"
@@ -64,6 +66,7 @@ type validator_ struct {
 	// Define the instance attributes.
 	class_   ValidatorClassLike
 	visitor_ gra.VisitorLike
+	tokens_  abs.SetLike[string]
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -75,7 +78,7 @@ func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
 }
 
-// Methodical
+// Public
 
 func (v *validator_) GenerateValidatorClass(
 	module string,
@@ -86,14 +89,49 @@ func (v *validator_) GenerateValidatorClass(
 	v.visitor_.VisitSyntax(syntax)
 	implementation = validatorTemplate_
 	var name = v.extractSyntaxName(syntax)
-	implementation = sts.ReplaceAll(implementation, "<module>", module)
+	implementation = sts.ReplaceAll(
+		implementation,
+		"<module>",
+		module,
+	)
 	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
+	implementation = sts.ReplaceAll(
+		implementation,
+		"<Notice>",
+		notice,
+	)
+	var tokenProcessors = v.extractTokenProcessors()
+	implementation = sts.ReplaceAll(
+		implementation,
+		"<TokenProcessors>",
+		tokenProcessors,
+	)
 	var uppercase = v.makeUppercase(name)
-	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
+	implementation = sts.ReplaceAll(
+		implementation,
+		"<Name>",
+		uppercase,
+	)
 	var lowercase = v.makeLowercase(name)
-	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
+	implementation = sts.ReplaceAll(
+		implementation,
+		"<name>",
+		lowercase,
+	)
 	return implementation
+}
+
+// Methodical
+
+func (v *validator_) PreprocessIdentifier(identifier ast.IdentifierLike) {
+	var name = identifier.GetAny().(string)
+	if gra.Scanner().MatchesType(name, gra.LowercaseToken) {
+		v.tokens_.AddValue(name)
+	}
+}
+
+func (v *validator_) PreprocessSyntax(syntax ast.SyntaxLike) {
+	v.tokens_ = col.Set[string]([]string{"reserved"})
 }
 
 // Private
@@ -114,6 +152,22 @@ func (v *validator_) extractSyntaxName(syntax ast.SyntaxLike) string {
 	return name
 }
 
+func (v *validator_) extractTokenProcessors() string {
+	var tokenProcessors string
+	var iterator = v.tokens_.GetIterator()
+	for iterator.HasNext() {
+		var tokenProcessor = processorTemplate_
+		var tokenName = iterator.GetNext()
+		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<tokenName>", tokenName)
+		tokenName = v.makeUppercase(tokenName)
+		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<TokenName>", tokenName)
+		var tokenType = tokenName + "Token"
+		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<TokenType>", tokenType)
+		tokenProcessors += tokenProcessor
+	}
+	return tokenProcessors
+}
+
 func (v *validator_) makeLowercase(name string) string {
 	runes := []rune(name)
 	runes[0] = uni.ToLower(runes[0])
@@ -130,13 +184,22 @@ func (v *validator_) makeUppercase(name string) string {
 	return string(runes)
 }
 
+const processorTemplate_ = `
+func (v *validator_) Process<TokenName>(<tokenName> string) {
+	v.ValidateToken(<tokenName>, <TokenType>)
+}
+`
+
 const validatorTemplate_ = `/*<Notice>*/
 
 package grammar
 
 import (
 	fmt "fmt"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "<module>/ast"
+	stc "strconv"
 )
 
 // CLASS ACCESS
@@ -164,10 +227,16 @@ type validatorClass_ struct {
 // Constructors
 
 func (c *validatorClass_) Make() ValidatorLike {
-	return &validator_{
+	var processor = Processor().Make()
+	var validator = &validator_{
 		// Initialize the instance attributes.
 		class_: c,
+
+		// Initialize the inherited aspects.
+		Methodical: processor,
 	}
+	validator.visitor_ = Visitor().Make(validator)
+	return validator
 }
 
 // INSTANCE METHODS
@@ -176,7 +245,13 @@ func (c *validatorClass_) Make() ValidatorLike {
 
 type validator_ struct {
 	// Define the instance attributes.
-	class_    ValidatorClassLike
+	class_       ValidatorClassLike
+	visitor_     VisitorLike
+	rules_       abs.CatalogLike[string, ast.DefinitionLike]
+	expressions_ abs.CatalogLike[string, ast.PatternLike]
+
+	// Define the inherited aspects.
+	Methodical
 }
 
 // Attributes
@@ -187,23 +262,29 @@ func (v *validator_) GetClass() ValidatorClassLike {
 
 // Public
 
-func (v *validator_) Validate<Name>(<name> ast.<Name>Like) {
-	// TBA - Add a real method implementation.
-	var name = "foobar"
-	if !v.matchesToken(ErrorToken, name) {
-		var message = v.formatError(name, "Oops!")
+func (v *validator_) ValidateToken(
+	tokenValue string,
+	tokenType TokenType,
+) {
+	if !Scanner().MatchesType(tokenValue, tokenType) {
+		var message = fmt.Sprintf(
+			"The following token value is not of type %v: %v",
+			Scanner().FormatType(tokenType),
+			tokenValue,
+		)
 		panic(message)
 	}
 }
 
-// Private
+func (v *validator_) Validate<Name>(<name> ast.<Name>Like) {
+	v.visitor_.Visit<Name>(<name>)
+}
 
-func (v *validator_) formatError(name, message string) string {
-	message = fmt.Sprintf(
-		"The definition for %v is invalid:\n%v\n",
-		name,
-		message,
-	)
-	return message
+// Methodical
+<TokenProcessors>
+func (v *validator_) Preprocess<Name>(<name> ast.<Name>Like) {
+}
+
+func (v *validator_) Postprocess<Name>(<name> ast.<Name>Like) {
 }
 `

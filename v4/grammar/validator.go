@@ -78,50 +78,72 @@ func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
 }
 
+// Public
+
+func (v *validator_) ValidateToken(
+	tokenValue string,
+	tokenType TokenType,
+) {
+	if !Scanner().MatchesType(tokenValue, tokenType) {
+		var message = fmt.Sprintf(
+			"The following token value is not of type %v: %v",
+			Scanner().FormatType(tokenType),
+			tokenValue,
+		)
+		panic(message)
+	}
+}
+
+func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
+	v.rules_ = col.Catalog[string, ast.DefinitionLike]()
+	v.expressions_ = col.Catalog[string, ast.PatternLike]()
+	v.visitor_.VisitSyntax(syntax)
+}
+
 // Methodical
 
 func (v *validator_) ProcessComment(comment string) {
-	v.validateToken(CommentToken, comment)
+	v.ValidateToken(comment, CommentToken)
 }
 
 func (v *validator_) ProcessGlyph(glyph string) {
-	v.validateToken(GlyphToken, glyph)
+	v.ValidateToken(glyph, GlyphToken)
 }
 
 func (v *validator_) ProcessIntrinsic(intrinsic string) {
-	v.validateToken(IntrinsicToken, intrinsic)
+	v.ValidateToken(intrinsic, IntrinsicToken)
 }
 
 func (v *validator_) ProcessLiteral(literal string) {
-	v.validateToken(LiteralToken, literal)
+	v.ValidateToken(literal, LiteralToken)
 }
 
 func (v *validator_) ProcessLowercase(lowercase string) {
-	v.validateToken(LowercaseToken, lowercase)
+	v.ValidateToken(lowercase, LowercaseToken)
 }
 
 func (v *validator_) ProcessNegation(negation string) {
-	v.validateToken(NegationToken, negation)
+	v.ValidateToken(negation, NegationToken)
 }
 
 func (v *validator_) ProcessNote(note string) {
-	v.validateToken(NoteToken, note)
+	v.ValidateToken(note, NoteToken)
 }
 
 func (v *validator_) ProcessNumber(number string) {
-	v.validateToken(NumberToken, number)
+	v.ValidateToken(number, NumberToken)
 }
 
 func (v *validator_) ProcessQuantified(quantified string) {
-	v.validateToken(QuantifiedToken, quantified)
+	v.ValidateToken(quantified, QuantifiedToken)
 }
 
 func (v *validator_) ProcessReserved(reserved string) {
-	v.validateToken(ReservedToken, reserved)
+	v.ValidateToken(reserved, ReservedToken)
 }
 
 func (v *validator_) ProcessUppercase(uppercase string) {
-	v.validateToken(UppercaseToken, uppercase)
+	v.ValidateToken(uppercase, UppercaseToken)
 }
 
 func (v *validator_) PreprocessBounded(bounded ast.BoundedLike) {
@@ -129,9 +151,7 @@ func (v *validator_) PreprocessBounded(bounded ast.BoundedLike) {
 	var extent = bounded.GetOptionalExtent()
 	if col.IsDefined(extent) {
 		if glyph > extent.GetGlyph() {
-			var message = v.formatError(
-				"The extent glyph in a bounded cannot come before the initial glyph.",
-			)
+			var message = "The extent glyph in a bounded character range cannot come before the initial glyph."
 			panic(message)
 		}
 	}
@@ -146,9 +166,7 @@ func (v *validator_) PreprocessConstrained(constrained ast.ConstrainedLike) {
 			var minimum, _ = stc.Atoi(number)
 			var maximum, _ = stc.Atoi(optionalNumber)
 			if minimum > maximum {
-				var message = v.formatError(
-					"The limit in a constrained cardinality cannot be less than the minimum.",
-				)
+				var message = "The limit in a constrained cardinality cannot be less than the minimum."
 				panic(message)
 			}
 		}
@@ -163,8 +181,9 @@ func (v *validator_) PreprocessExpression(
 	var lowercase = expression.GetLowercase()
 	var duplicate = v.expressions_.GetValue(lowercase)
 	if col.IsDefined(duplicate) {
-		var message = v.formatError(
-			fmt.Sprintf("The expression %q is defined more than once.", lowercase),
+		var message = fmt.Sprintf(
+			"The expression %q is defined more than once.",
+			lowercase,
 		)
 		panic(message)
 	}
@@ -180,8 +199,9 @@ func (v *validator_) PreprocessRule(
 	var uppercase = rule.GetUppercase()
 	var duplicate = v.rules_.GetValue(uppercase)
 	if col.IsDefined(duplicate) {
-		var message = v.formatError(
-			fmt.Sprintf("The rule %q is defined more than once.", uppercase),
+		var message = fmt.Sprintf(
+			"The rule %q is defined more than once.",
+			uppercase,
 		)
 		panic(message)
 	}
@@ -226,38 +246,6 @@ expressionLoop:
 		var message = fmt.Sprintf(
 			"The expression %q is missing a pattern.",
 			name,
-		)
-		panic(message)
-	}
-}
-
-// Public
-
-func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
-	v.rules_ = col.Catalog[string, ast.DefinitionLike]()
-	v.expressions_ = col.Catalog[string, ast.PatternLike]()
-	v.visitor_.VisitSyntax(syntax)
-}
-
-// Private
-
-func (v *validator_) formatError(message string) string {
-	message = fmt.Sprintf(
-		"The definition for this syntax tree is invalid:\n%v\n",
-		message,
-	)
-	return message
-}
-
-func (v *validator_) validateToken(
-	tokenType TokenType,
-	tokenValue string,
-) {
-	if !Scanner().MatchesType(tokenValue, tokenType) {
-		var message = fmt.Sprintf(
-			"The following token value is not of type %v: %v",
-			Scanner().FormatType(tokenType),
-			tokenValue,
 		)
 		panic(message)
 	}
