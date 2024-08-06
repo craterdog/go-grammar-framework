@@ -96,8 +96,8 @@ func (v *parser_) GenerateParserClass(
 	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
 	var lowercase = v.makeLowercase(name)
 	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
-	var processRules = v.extractParseRules()
-	implementation = sts.ReplaceAll(implementation, "<ParseRules>", processRules)
+	var parseRules = v.extractParseRules()
+	implementation = sts.ReplaceAll(implementation, "<ParseRules>", parseRules)
 	return implementation
 }
 

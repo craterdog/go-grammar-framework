@@ -79,6 +79,8 @@ type (
 	ScannerLike   = gra.ScannerLike
 	TokenType     = gra.TokenType
 	ValidatorLike = gra.ValidatorLike
+	VisitorLike   = gra.VisitorLike
+	Methodical    = gra.Methodical
 )
 
 const (
@@ -1004,6 +1006,29 @@ func Validator(arguments ...any) ValidatorLike {
 	return validator
 }
 
+func Visitor(arguments ...any) VisitorLike {
+	// Initialize the possible arguments.
+	var processor Methodical
+
+	// Process the actual arguments.
+	for _, argument := range arguments {
+		switch actual := argument.(type) {
+		case Methodical:
+			processor = actual
+		default:
+			var message = fmt.Sprintf(
+				"An unknown argument type passed into the visitor constructor: %T\n",
+				actual,
+			)
+			panic(message)
+		}
+	}
+
+	// Call the constructor.
+	var visitor = gra.Visitor().Make(processor)
+	return visitor
+}
+
 // GLOBAL FUNCTIONS
 
 // Grammar
@@ -1119,5 +1144,16 @@ func GenerateValidatorClass(
 ) {
 	var generator = gen.Validator().Make()
 	implementation = generator.GenerateValidatorClass(module, syntax)
+	return implementation
+}
+
+func GenerateVisitorClass(
+	module string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Visitor().Make()
+	implementation = generator.GenerateVisitorClass(module, syntax)
 	return implementation
 }

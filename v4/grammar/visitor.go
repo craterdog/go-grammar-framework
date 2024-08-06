@@ -83,9 +83,7 @@ func (v *visitor_) VisitSyntax(syntax ast.SyntaxLike) {
 
 // Private
 
-func (v *visitor_) visitAlternative(
-	alternative ast.AlternativeLike,
-) {
+func (v *visitor_) visitAlternative(alternative ast.AlternativeLike) {
 	// Visit the reserved string.
 	var reserved = alternative.GetReserved()
 	v.processor_.ProcessReserved(reserved)
@@ -97,9 +95,7 @@ func (v *visitor_) visitAlternative(
 	v.processor_.PostprocessPart(part, 2, 1)
 }
 
-func (v *visitor_) visitBounded(
-	bounded ast.BoundedLike,
-) {
+func (v *visitor_) visitBounded(bounded ast.BoundedLike) {
 	// Visit the initial glyph.
 	var glyph = bounded.GetGlyph()
 	v.processor_.ProcessGlyph(glyph)
@@ -113,9 +109,7 @@ func (v *visitor_) visitBounded(
 	}
 }
 
-func (v *visitor_) visitCardinality(
-	cardinality ast.CardinalityLike,
-) {
+func (v *visitor_) visitCardinality(cardinality ast.CardinalityLike) {
 	// Visit the possible cardinality types.
 	switch actual := cardinality.GetAny().(type) {
 	case ast.ConstrainedLike:
@@ -129,9 +123,7 @@ func (v *visitor_) visitCardinality(
 	}
 }
 
-func (v *visitor_) visitCharacter(
-	character ast.CharacterLike,
-) {
+func (v *visitor_) visitCharacter(character ast.CharacterLike) {
 	// Visit the possible character types.
 	switch actual := character.GetAny().(type) {
 	case ast.BoundedLike:
@@ -145,9 +137,7 @@ func (v *visitor_) visitCharacter(
 	}
 }
 
-func (v *visitor_) visitConstrained(
-	constrained ast.ConstrainedLike,
-) {
+func (v *visitor_) visitConstrained(constrained ast.ConstrainedLike) {
 	// Visit the opening reserved string.
 	var reserved = constrained.GetReserved()
 	v.processor_.ProcessReserved(reserved)
@@ -169,9 +159,7 @@ func (v *visitor_) visitConstrained(
 	v.processor_.ProcessReserved(reserved)
 }
 
-func (v *visitor_) visitDefinition(
-	definition ast.DefinitionLike,
-) {
+func (v *visitor_) visitDefinition(definition ast.DefinitionLike) {
 	// Visit the possible definition types.
 	switch actual := definition.GetAny().(type) {
 	case ast.InlinedLike:
@@ -187,9 +175,7 @@ func (v *visitor_) visitDefinition(
 	}
 }
 
-func (v *visitor_) visitElement(
-	element ast.ElementLike,
-) {
+func (v *visitor_) visitElement(element ast.ElementLike) {
 	// Visit the possible element types.
 	switch actual := element.GetAny().(type) {
 	case ast.GroupedLike:
@@ -209,9 +195,7 @@ func (v *visitor_) visitElement(
 	}
 }
 
-func (v *visitor_) visitExpression(
-	expression ast.ExpressionLike,
-) {
+func (v *visitor_) visitExpression(expression ast.ExpressionLike) {
 	// Visit the optional comment.
 	var comment = expression.GetOptionalComment()
 	if col.IsDefined(comment) {
@@ -249,9 +233,7 @@ func (v *visitor_) visitExpression(
 	}
 }
 
-func (v *visitor_) visitExtent(
-	extent ast.ExtentLike,
-) {
+func (v *visitor_) visitExtent(extent ast.ExtentLike) {
 	// Visit the reserved string.
 	var reserved = extent.GetReserved()
 	v.processor_.ProcessReserved(reserved)
@@ -261,9 +243,7 @@ func (v *visitor_) visitExtent(
 	v.processor_.ProcessGlyph(glyph)
 }
 
-func (v *visitor_) visitFactor(
-	factor ast.FactorLike,
-) {
+func (v *visitor_) visitFactor(factor ast.FactorLike) {
 	// Visit the possible factor types.
 	switch actual := factor.GetAny().(type) {
 	case ast.PredicateLike:
@@ -282,9 +262,7 @@ func (v *visitor_) visitFactor(
 	}
 }
 
-func (v *visitor_) visitFiltered(
-	filtered ast.FilteredLike,
-) {
+func (v *visitor_) visitFiltered(filtered ast.FilteredLike) {
 	// Visit the optional negation.
 	var negation = filtered.GetOptionalNegation()
 	if col.IsDefined(negation) {
@@ -312,9 +290,7 @@ func (v *visitor_) visitFiltered(
 	v.processor_.ProcessReserved(reserved)
 }
 
-func (v *visitor_) visitGrouped(
-	grouped ast.GroupedLike,
-) {
+func (v *visitor_) visitGrouped(grouped ast.GroupedLike) {
 	// Visit the opening reserved string.
 	var reserved = grouped.GetReserved()
 	v.processor_.ProcessReserved(reserved)
@@ -330,9 +306,7 @@ func (v *visitor_) visitGrouped(
 	v.processor_.ProcessReserved(reserved)
 }
 
-func (v *visitor_) visitHeader(
-	header ast.HeaderLike,
-) {
+func (v *visitor_) visitHeader(header ast.HeaderLike) {
 	// Visit the comment.
 	var comment = header.GetComment()
 	v.processor_.ProcessComment(comment)
@@ -342,9 +316,7 @@ func (v *visitor_) visitHeader(
 	v.processor_.ProcessNewline(newline, 1, 1)
 }
 
-func (v *visitor_) visitIdentifier(
-	identifier ast.IdentifierLike,
-) {
+func (v *visitor_) visitIdentifier(identifier ast.IdentifierLike) {
 	// Visit the possible identifier types.
 	var string_ = identifier.GetAny().(string)
 	switch {
@@ -361,9 +333,7 @@ func (v *visitor_) visitIdentifier(
 	}
 }
 
-func (v *visitor_) visitInlined(
-	inlined ast.InlinedLike,
-) {
+func (v *visitor_) visitInlined(inlined ast.InlinedLike) {
 	// Visit each factor.
 	var index uint
 	var factors = inlined.GetFactors().GetIterator()
@@ -383,9 +353,19 @@ func (v *visitor_) visitInlined(
 	}
 }
 
-func (v *visitor_) visitLine(
-	line ast.LineLike,
-) {
+func (v *visitor_) visitLimit(limit ast.LimitLike) {
+	// Visit the reserved string.
+	var reserved = limit.GetReserved()
+	v.processor_.ProcessReserved(reserved)
+
+	// Visit the optional number.
+	var number = limit.GetOptionalNumber()
+	if col.IsDefined(number) {
+		v.processor_.ProcessNumber(number)
+	}
+}
+
+func (v *visitor_) visitLine(line ast.LineLike) {
 	// Visit the newline.
 	var newline = line.GetNewline()
 	v.processor_.ProcessNewline(newline, 1, 1)
@@ -403,23 +383,7 @@ func (v *visitor_) visitLine(
 	}
 }
 
-func (v *visitor_) visitLimit(
-	limit ast.LimitLike,
-) {
-	// Visit the reserved string.
-	var reserved = limit.GetReserved()
-	v.processor_.ProcessReserved(reserved)
-
-	// Visit the optional number.
-	var number = limit.GetOptionalNumber()
-	if col.IsDefined(number) {
-		v.processor_.ProcessNumber(number)
-	}
-}
-
-func (v *visitor_) visitMultilined(
-	multilined ast.MultilinedLike,
-) {
+func (v *visitor_) visitMultilined(multilined ast.MultilinedLike) {
 	// Visit each line.
 	var index uint
 	var lines = multilined.GetLines().GetIterator()
@@ -433,9 +397,7 @@ func (v *visitor_) visitMultilined(
 	}
 }
 
-func (v *visitor_) visitPart(
-	part ast.PartLike,
-) {
+func (v *visitor_) visitPart(part ast.PartLike) {
 	// Visit the element.
 	var element = part.GetElement()
 	v.processor_.PreprocessElement(element)
@@ -451,9 +413,7 @@ func (v *visitor_) visitPart(
 	}
 }
 
-func (v *visitor_) visitPattern(
-	pattern ast.PatternLike,
-) {
+func (v *visitor_) visitPattern(pattern ast.PatternLike) {
 	// Visit the part.
 	var part = pattern.GetPart()
 	v.processor_.PreprocessPart(part, 1, 1)
@@ -469,9 +429,7 @@ func (v *visitor_) visitPattern(
 	}
 }
 
-func (v *visitor_) visitPredicate(
-	predicate ast.PredicateLike,
-) {
+func (v *visitor_) visitPredicate(predicate ast.PredicateLike) {
 	// Visit the identifier.
 	var identifier = predicate.GetIdentifier()
 	v.processor_.PreprocessIdentifier(identifier)
@@ -487,9 +445,7 @@ func (v *visitor_) visitPredicate(
 	}
 }
 
-func (v *visitor_) visitRule(
-	rule ast.RuleLike,
-) {
+func (v *visitor_) visitRule(rule ast.RuleLike) {
 	// Visit the optional comment.
 	var comment = rule.GetOptionalComment()
 	if col.IsDefined(comment) {
@@ -521,9 +477,7 @@ func (v *visitor_) visitRule(
 	}
 }
 
-func (v *visitor_) visitSelective(
-	selective ast.SelectiveLike,
-) {
+func (v *visitor_) visitSelective(selective ast.SelectiveLike) {
 	// Visit each alternative.
 	var index uint
 	var alternatives = selective.GetAlternatives().GetIterator()
@@ -537,9 +491,7 @@ func (v *visitor_) visitSelective(
 	}
 }
 
-func (v *visitor_) visitSequential(
-	sequential ast.SequentialLike,
-) {
+func (v *visitor_) visitSequential(sequential ast.SequentialLike) {
 	// Visit each part.
 	var index uint = 1
 	var parts = sequential.GetParts().GetIterator()
@@ -553,9 +505,7 @@ func (v *visitor_) visitSequential(
 	}
 }
 
-func (v *visitor_) visitSupplement(
-	pattern ast.SupplementLike,
-) {
+func (v *visitor_) visitSupplement(pattern ast.SupplementLike) {
 	// Visit the possible pattern types.
 	switch actual := pattern.GetAny().(type) {
 	case ast.SequentialLike:
@@ -571,9 +521,7 @@ func (v *visitor_) visitSupplement(
 	}
 }
 
-func (v *visitor_) visitSyntax(
-	syntax ast.SyntaxLike,
-) {
+func (v *visitor_) visitSyntax(syntax ast.SyntaxLike) {
 	// Visit each header.
 	var index uint
 	var headers = syntax.GetHeaders().GetIterator()
@@ -609,9 +557,7 @@ func (v *visitor_) visitSyntax(
 	}
 }
 
-func (v *visitor_) visitTextual(
-	textual ast.TextualLike,
-) {
+func (v *visitor_) visitTextual(textual ast.TextualLike) {
 	// Visit the possible textual element types.
 	var string_ = textual.GetAny().(string)
 	switch {

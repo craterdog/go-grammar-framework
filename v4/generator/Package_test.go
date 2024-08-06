@@ -43,6 +43,10 @@ func TestLifecycle(t *tes.T) {
 	source = formatter.FormatSyntax(syntax)
 	ass.Equal(t, syntaxNotation, source)
 
+	// Generate the visitor class for the syntax.
+	source = gen.Visitor().Make().GenerateVisitorClass(module, syntax)
+	ass.Equal(t, visitorClass, source)
+
 	// Generate the token class for the syntax.
 	source = gen.Token().Make().GenerateTokenClass(module, syntax)
 	ass.Equal(t, tokenClass, source)
@@ -1015,6 +1019,112 @@ func (v *validator_) PreprocessDocument(document ast.DocumentLike) {
 }
 
 func (v *validator_) PostprocessDocument(document ast.DocumentLike) {
+}
+`
+
+const visitorClass = `/*
+................................................................................
+.                   Copyright (c) 2024.  All Rights Reserved.                  .
+................................................................................
+.  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               .
+.                                                                              .
+.  This code is free software; you can redistribute it and/or modify it under  .
+.  the terms of The MIT License (MIT), as published by the Open Source         .
+.  Initiative. (See https://opensource.org/license/MIT)                        .
+................................................................................
+*/
+
+package grammar
+
+import (
+	fmt "fmt"
+	col "github.com/craterdog/go-collection-framework/v4"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+)
+
+// CLASS ACCESS
+
+// Reference
+
+var visitorClass = &visitorClass_{
+	// Initialize the class constants.
+}
+
+// Function
+
+func Visitor() VisitorClassLike {
+	return visitorClass
+}
+
+// CLASS METHODS
+
+// Target
+
+type visitorClass_ struct {
+	// Define the class constants.
+}
+
+// Constructors
+
+func (c *visitorClass_) Make(
+	processor Methodical,
+) VisitorLike {
+	return &visitor_{
+		// Initialize the instance attributes.
+		class_:     c,
+		processor_: processor,
+	}
+}
+
+// INSTANCE METHODS
+
+// Target
+
+type visitor_ struct {
+	// Define the instance attributes.
+	class_     VisitorClassLike
+	processor_ Methodical
+}
+
+// Attributes
+
+func (v *visitor_) GetClass() VisitorClassLike {
+	return v.class_
+}
+
+func (v *visitor_) GetProcessor() Methodical {
+	return v.processor_
+}
+
+// Public
+
+func (v *visitor_) VisitDocument(document ast.DocumentLike) {
+	// Visit the document.
+	v.processor_.PreprocessDocument(document)
+	v.visitDocument(document)
+	v.processor_.PostprocessDocument(document)
+}
+
+// Private
+
+func (v *visitor_) visitAdditional(additional ast.AdditionalLike) {
+	panic("The visitAdditional() method has not yet been implemented.")
+}
+
+func (v *visitor_) visitComponent(component ast.ComponentLike) {
+	panic("The visitComponent() method has not yet been implemented.")
+}
+
+func (v *visitor_) visitDocument(document ast.DocumentLike) {
+	panic("The visitDocument() method has not yet been implemented.")
+}
+
+func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {
+	panic("The visitIntrinsic() method has not yet been implemented.")
+}
+
+func (v *visitor_) visitList(list ast.ListLike) {
+	panic("The visitList() method has not yet been implemented.")
 }
 `
 

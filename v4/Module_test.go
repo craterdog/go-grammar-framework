@@ -87,6 +87,15 @@ func TestModelGeneration(t *tes.T) {
 		panic(err)
 	}
 
+	// Generate the visitor class for the grammar.
+	source = gra.GenerateVisitorClass(module, syntax)
+	bytes = []byte(source)
+	filename = "grammar/visitor.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+
 	// Generate the token class for the grammar.
 	source = gra.GenerateTokenClass(module, syntax)
 	bytes = []byte(source)

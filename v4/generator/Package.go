@@ -109,6 +109,15 @@ type ValidatorClassLike interface {
 	Make() ValidatorLike
 }
 
+/*
+VisitorClassLike defines the set of class constants, constructors and
+functions that must be supported by all visitor-class-like classes.
+*/
+type VisitorClassLike interface {
+	// Constructors
+	Make() VisitorLike
+}
+
 // Instances
 
 /*
@@ -260,6 +269,26 @@ type ValidatorLike interface {
 
 	// Methods
 	GenerateValidatorClass(
+		module string,
+		syntax ast.SyntaxLike,
+	) (
+		implementation string,
+	)
+}
+
+/*
+VisitorLike defines the set of aspects and methods that must be supported by
+all visitor-like instances.
+*/
+type VisitorLike interface {
+	// Attributes
+	GetClass() VisitorClassLike
+
+	// Abstractions
+	gra.Methodical
+
+	// Methods
+	GenerateVisitorClass(
 		module string,
 		syntax ast.SyntaxLike,
 	) (
