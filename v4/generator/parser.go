@@ -239,7 +239,7 @@ func (v *parser_) formatError(token TokenLike) string {
 
 	// Append an arrow pointing to the error.
 	message += " \033[32m>>>─"
-	var count = 0
+	var count uint
 	for count < token.GetPosition() {
 		message += "─"
 		count++

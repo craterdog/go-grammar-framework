@@ -156,7 +156,7 @@ func (v *validator_) extractTokenProcessors() string {
 	var tokenProcessors string
 	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
-		var tokenProcessor = processorTemplate_
+		var tokenProcessor = processTemplate_
 		var tokenName = iterator.GetNext()
 		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<tokenName>", tokenName)
 		tokenName = v.makeUppercase(tokenName)
@@ -184,7 +184,7 @@ func (v *validator_) makeUppercase(name string) string {
 	return string(runes)
 }
 
-const processorTemplate_ = `
+const processTemplate_ = `
 func (v *validator_) Process<TokenName>(<tokenName> string) {
 	v.ValidateToken(<tokenName>, <TokenType>)
 }

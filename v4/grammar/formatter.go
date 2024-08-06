@@ -225,7 +225,7 @@ func (v *formatter_) appendNewline() {
 	var newline = "\n"
 	var indentation = "    "
 	var level uint
-	for level = 0; level < v.depth_; level++ {
+	for ; level < v.depth_; level++ {
 		newline += indentation
 	}
 	v.appendString(newline)

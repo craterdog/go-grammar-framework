@@ -21,7 +21,6 @@ import (
 )
 
 func TestLifecycle(t *tes.T) {
-	//var generator = gen.Generator().Make()
 	var module = "github.com/craterdog/go-grammar-framework/v4"
 	var wiki = "github.com/craterdog/go-grammar-framework/wiki"
 	var name = "example"
@@ -182,7 +181,11 @@ const formatterClass = `/*
 package grammar
 
 import (
+	fmt "fmt"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	stc "strconv"
 	sts "strings"
 )
 
@@ -211,10 +214,16 @@ type formatterClass_ struct {
 // Constructors
 
 func (c *formatterClass_) Make() FormatterLike {
-	return &formatter_{
+	var processor = Processor().Make()
+	var formatter = &formatter_{
 		// Initialize the instance attributes.
-		class_:   c,
+		class_: c,
+
+		// Initialize the inherited aspects.
+		Methodical: processor,
 	}
+	formatter.visitor_ = Visitor().Make(formatter)
+	return formatter
 }
 
 // INSTANCE METHODS
@@ -224,8 +233,12 @@ func (c *formatterClass_) Make() FormatterLike {
 type formatter_ struct {
 	// Define the instance attributes.
 	class_   FormatterClassLike
+	visitor_ VisitorLike
 	depth_   uint
 	result_  sts.Builder
+
+	// Define the inherited aspects.
+	Methodical
 }
 
 // Attributes
@@ -241,15 +254,43 @@ func (v *formatter_) GetDepth() uint {
 // Public
 
 func (v *formatter_) FormatDocument(document ast.DocumentLike) string {
-	v.formatDocument(document)
+	v.visitor_.VisitDocument(document)
 	return v.getResult()
+}
+
+// Methodical
+
+func (v *formatter_) ProcessInteger(integer string) {
+	v.appendString(integer)
+}
+
+func (v *formatter_) ProcessNewline(newline string) {
+	v.appendString(newline)
+}
+
+func (v *formatter_) ProcessReserved(reserved string) {
+	v.appendString(reserved)
+}
+
+func (v *formatter_) ProcessRune(rune string) {
+	v.appendString(rune)
+}
+
+func (v *formatter_) ProcessText(text string) {
+	v.appendString(text)
+}
+
+func (v *formatter_) PreprocessDocument(document ast.DocumentLike) {
+}
+
+func (v *formatter_) PostprocessDocument(document ast.DocumentLike) {
 }
 
 // Private
 
 func (v *formatter_) appendNewline() {
 	var newline = "\n"
-	var indentation = "\t"
+	var indentation = "    "
 	var level uint
 	for ; level < v.depth_; level++ {
 		newline += indentation
@@ -259,14 +300,6 @@ func (v *formatter_) appendNewline() {
 
 func (v *formatter_) appendString(s string) {
 	v.result_.WriteString(s)
-}
-
-func (v *formatter_) formatDocument(document ast.DocumentLike) {
-	// TBA - Add real method implementation.
-	v.depth_++
-	v.appendString("test")
-	v.appendNewline()
-	v.depth_--
 }
 
 func (v *formatter_) getResult() string {
@@ -395,7 +428,7 @@ func (v *parser_) formatError(token TokenLike) string {
 
 	// Append an arrow pointing to the error.
 	message += " \033[32m>>>─"
-	var count = 0
+	var count uint
 	for count < token.GetPosition() {
 		message += "─"
 		count++
