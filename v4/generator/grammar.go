@@ -46,13 +46,12 @@ type grammarClass_ struct {
 // Constructors
 
 func (c *grammarClass_) Make() GrammarLike {
-	var processor = gra.Processor().Make()
 	var grammar = &grammar_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: gra.Processor().Make(),
 	}
 	grammar.visitor_ = gra.Visitor().Make(grammar)
 	return grammar

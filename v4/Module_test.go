@@ -87,6 +87,15 @@ func TestModelGeneration(t *tes.T) {
 		panic(err)
 	}
 
+	// Generate the processor class for the grammar.
+	source = gra.GenerateProcessorClass(module, syntax)
+	bytes = []byte(source)
+	filename = "grammar/processor.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+
 	// Generate the visitor class for the grammar.
 	source = gra.GenerateVisitorClass(module, syntax)
 	bytes = []byte(source)

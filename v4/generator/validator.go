@@ -46,13 +46,12 @@ type validatorClass_ struct {
 // Constructors
 
 func (c *validatorClass_) Make() ValidatorLike {
-	var processor = gra.Processor().Make()
 	var validator = &validator_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: gra.Processor().Make(),
 	}
 	validator.visitor_ = gra.Visitor().Make(validator)
 	return validator
@@ -100,11 +99,11 @@ func (v *validator_) GenerateValidatorClass(
 		"<Notice>",
 		notice,
 	)
-	var tokenProcessors = v.extractTokenProcessors()
+	var validateTokens = v.extractValidateTokens()
 	implementation = sts.ReplaceAll(
 		implementation,
-		"<TokenProcessors>",
-		tokenProcessors,
+		"<ProcessTokens>",
+		validateTokens,
 	)
 	var uppercase = v.makeUppercase(name)
 	implementation = sts.ReplaceAll(
@@ -152,20 +151,20 @@ func (v *validator_) extractSyntaxName(syntax ast.SyntaxLike) string {
 	return name
 }
 
-func (v *validator_) extractTokenProcessors() string {
-	var tokenProcessors string
+func (v *validator_) extractValidateTokens() string {
+	var validateTokens string
 	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
-		var tokenProcessor = processTemplate_
+		var validateToken = validateTokenTemplate_
 		var tokenName = iterator.GetNext()
-		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<tokenName>", tokenName)
+		validateToken = sts.ReplaceAll(validateToken, "<tokenName>", tokenName)
 		tokenName = v.makeUppercase(tokenName)
-		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<TokenName>", tokenName)
+		validateToken = sts.ReplaceAll(validateToken, "<TokenName>", tokenName)
 		var tokenType = tokenName + "Token"
-		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<TokenType>", tokenType)
-		tokenProcessors += tokenProcessor
+		validateToken = sts.ReplaceAll(validateToken, "<TokenType>", tokenType)
+		validateTokens += validateToken
 	}
-	return tokenProcessors
+	return validateTokens
 }
 
 func (v *validator_) makeLowercase(name string) string {
@@ -184,7 +183,7 @@ func (v *validator_) makeUppercase(name string) string {
 	return string(runes)
 }
 
-const processTemplate_ = `
+const validateTokenTemplate_ = `
 func (v *validator_) Process<TokenName>(<tokenName> string) {
 	v.ValidateToken(<tokenName>, <TokenType>)
 }
@@ -227,13 +226,12 @@ type validatorClass_ struct {
 // Constructors
 
 func (c *validatorClass_) Make() ValidatorLike {
-	var processor = Processor().Make()
 	var validator = &validator_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: Processor().Make(),
 	}
 	validator.visitor_ = Visitor().Make(validator)
 	return validator
@@ -279,7 +277,7 @@ func (v *validator_) Validate<Name>(<name> ast.<Name>Like) {
 }
 
 // Methodical
-<TokenProcessors>
+<ProcessTokens>
 func (v *validator_) Preprocess<Name>(<name> ast.<Name>Like) {
 }
 

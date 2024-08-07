@@ -76,6 +76,7 @@ type (
 type (
 	FormatterLike = gra.FormatterLike
 	ParserLike    = gra.ParserLike
+	ProcessorLike = gra.ProcessorLike
 	ScannerLike   = gra.ScannerLike
 	TokenType     = gra.TokenType
 	ValidatorLike = gra.ValidatorLike
@@ -998,6 +999,14 @@ func Parser(arguments ...any) ParserLike {
 	return parser
 }
 
+func Processor(arguments ...any) ProcessorLike {
+	if len(arguments) > 0 {
+		panic("The processor constructor does not take any arguments.")
+	}
+	var processor = gra.Processor().Make()
+	return processor
+}
+
 func Validator(arguments ...any) ValidatorLike {
 	if len(arguments) > 0 {
 		panic("The validator constructor does not take any arguments.")
@@ -1100,6 +1109,17 @@ func GenerateParserClass(
 ) {
 	var generator = gen.Parser().Make()
 	implementation = generator.GenerateParserClass(module, syntax)
+	return implementation
+}
+
+func GenerateProcessorClass(
+	module string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Processor().Make()
+	implementation = generator.GenerateProcessorClass(module, syntax)
 	return implementation
 }
 

@@ -46,13 +46,12 @@ type parserClass_ struct {
 // Constructors
 
 func (c *parserClass_) Make() ParserLike {
-	var processor = gra.Processor().Make()
 	var parser = &parser_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: gra.Processor().Make(),
 	}
 	parser.visitor_ = gra.Visitor().Make(parser)
 	return parser

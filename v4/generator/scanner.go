@@ -46,13 +46,12 @@ type scannerClass_ struct {
 // Constructors
 
 func (c *scannerClass_) Make() ScannerLike {
-	var processor = gra.Processor().Make()
 	var scanner = &scanner_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: gra.Processor().Make(),
 	}
 	scanner.visitor_ = gra.Visitor().Make(scanner)
 	return scanner

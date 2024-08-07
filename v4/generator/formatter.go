@@ -46,13 +46,12 @@ type formatterClass_ struct {
 // Constructors
 
 func (c *formatterClass_) Make() FormatterLike {
-	var processor = gra.Processor().Make()
 	var formatter = &formatter_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: gra.Processor().Make(),
 	}
 	formatter.visitor_ = gra.Visitor().Make(formatter)
 	return formatter
@@ -228,13 +227,12 @@ type formatterClass_ struct {
 // Constructors
 
 func (c *formatterClass_) Make() FormatterLike {
-	var processor = Processor().Make()
 	var formatter = &formatter_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: Processor().Make(),
 	}
 	formatter.visitor_ = Visitor().Make(formatter)
 	return formatter

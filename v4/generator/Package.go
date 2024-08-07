@@ -74,6 +74,15 @@ type ParserClassLike interface {
 }
 
 /*
+ProcessorClassLike defines the set of class constants, constructors and
+functions that must be supported by all processor-class-like classes.
+*/
+type ProcessorClassLike interface {
+	// Constructors
+	Make() ProcessorLike
+}
+
+/*
 ScannerClassLike defines the set of class constants, constructors and
 functions that must be supported by all scanner-class-like classes.
 */
@@ -195,6 +204,26 @@ type ParserLike interface {
 
 	// Methods
 	GenerateParserClass(
+		module string,
+		syntax ast.SyntaxLike,
+	) (
+		implementation string,
+	)
+}
+
+/*
+ProcessorLike defines the set of aspects and methods that must be supported by
+all processor-like instances.
+*/
+type ProcessorLike interface {
+	// Attributes
+	GetClass() ProcessorClassLike
+
+	// Abstractions
+	gra.Methodical
+
+	// Methods
+	GenerateProcessorClass(
 		module string,
 		syntax ast.SyntaxLike,
 	) (

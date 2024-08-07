@@ -313,10 +313,10 @@ func (v *processor_) PreprocessSequential(sequential ast.SequentialLike) {
 func (v *processor_) PostprocessSequential(sequential ast.SequentialLike) {
 }
 
-func (v *processor_) PreprocessSupplement(syntax ast.SupplementLike) {
+func (v *processor_) PreprocessSupplement(supplement ast.SupplementLike) {
 }
 
-func (v *processor_) PostprocessSupplement(syntax ast.SupplementLike) {
+func (v *processor_) PostprocessSupplement(supplement ast.SupplementLike) {
 }
 
 func (v *processor_) PreprocessSyntax(syntax ast.SyntaxLike) {

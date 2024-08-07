@@ -46,13 +46,12 @@ type visitorClass_ struct {
 // Constructors
 
 func (c *visitorClass_) Make() VisitorLike {
-	var processor = gra.Processor().Make()
 	var visitor = &visitor_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: gra.Processor().Make(),
 	}
 	visitor.visitor_ = gra.Visitor().Make(visitor)
 	return visitor

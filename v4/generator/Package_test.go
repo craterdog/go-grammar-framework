@@ -43,6 +43,10 @@ func TestLifecycle(t *tes.T) {
 	source = formatter.FormatSyntax(syntax)
 	ass.Equal(t, syntaxNotation, source)
 
+	// Generate the processor class for the syntax.
+	source = gen.Processor().Make().GenerateProcessorClass(module, syntax)
+	ass.Equal(t, processorClass, source)
+
 	// Generate the visitor class for the syntax.
 	source = gen.Visitor().Make().GenerateVisitorClass(module, syntax)
 	ass.Equal(t, visitorClass, source)
@@ -218,13 +222,12 @@ type formatterClass_ struct {
 // Constructors
 
 func (c *formatterClass_) Make() FormatterLike {
-	var processor = Processor().Make()
 	var formatter = &formatter_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: Processor().Make(),
 	}
 	formatter.visitor_ = Visitor().Make(formatter)
 	return formatter
@@ -942,13 +945,12 @@ type validatorClass_ struct {
 // Constructors
 
 func (c *validatorClass_) Make() ValidatorLike {
-	var processor = Processor().Make()
 	var validator = &validator_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: Processor().Make(),
 	}
 	validator.visitor_ = Visitor().Make(validator)
 	return validator
@@ -1019,6 +1021,131 @@ func (v *validator_) PreprocessDocument(document ast.DocumentLike) {
 }
 
 func (v *validator_) PostprocessDocument(document ast.DocumentLike) {
+}
+`
+
+const processorClass = `/*
+................................................................................
+.                   Copyright (c) 2024.  All Rights Reserved.                  .
+................................................................................
+.  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.               .
+.                                                                              .
+.  This code is free software; you can redistribute it and/or modify it under  .
+.  the terms of The MIT License (MIT), as published by the Open Source         .
+.  Initiative. (See https://opensource.org/license/MIT)                        .
+................................................................................
+*/
+
+package grammar
+
+import (
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+)
+
+// CLASS ACCESS
+
+// Reference
+
+var processorClass = &processorClass_{
+	// Initialize the class constants.
+}
+
+// Function
+
+func Processor() ProcessorClassLike {
+	return processorClass
+}
+
+// CLASS METHODS
+
+// Target
+
+type processorClass_ struct {
+	// Define the class constants.
+}
+
+// Constructors
+
+func (c *processorClass_) Make() ProcessorLike {
+	var processor = &processor_{
+		// Initialize the instance attributes.
+		class_: c,
+	}
+	return processor
+}
+
+// INSTANCE METHODS
+
+// Target
+
+type processor_ struct {
+	// Define the instance attributes.
+	class_ ProcessorClassLike
+}
+
+// Attributes
+
+func (v *processor_) GetClass() ProcessorClassLike {
+	return v.class_
+}
+
+// Methodical
+
+func (v *processor_) ProcessInteger(integer string) {
+}
+
+func (v *processor_) ProcessNewline(
+	newline string,
+	index uint,
+	size uint,
+) {
+}
+
+func (v *processor_) ProcessReserved(reserved string) {
+}
+
+func (v *processor_) ProcessRune(rune string) {
+}
+
+func (v *processor_) ProcessText(text string) {
+}
+
+func (v *processor_) PreprocessAdditional(
+	additional ast.AdditionalLike,
+	index uint,
+	size uint,
+) {
+}
+
+func (v *processor_) PostprocessAdditional(
+	additional ast.AdditionalLike,
+	index uint,
+	size uint,
+) {
+}
+
+func (v *processor_) PreprocessComponent(component ast.ComponentLike) {
+}
+
+func (v *processor_) PostprocessComponent(component ast.ComponentLike) {
+}
+
+func (v *processor_) PreprocessDocument(document ast.DocumentLike) {
+}
+
+func (v *processor_) PostprocessDocument(document ast.DocumentLike) {
+}
+
+func (v *processor_) PreprocessIntrinsic(intrinsic ast.IntrinsicLike) {
+}
+
+func (v *processor_) PostprocessIntrinsic(intrinsic ast.IntrinsicLike) {
+}
+
+func (v *processor_) PreprocessList(list ast.ListLike) {
+}
+
+func (v *processor_) PostprocessList(list ast.ListLike) {
 }
 `
 

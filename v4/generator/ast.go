@@ -48,13 +48,12 @@ type astClass_ struct {
 // Constructors
 
 func (c *astClass_) Make() AstLike {
-	var processor = gra.Processor().Make()
 	var ast = &ast_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: gra.Processor().Make(),
 	}
 	ast.visitor_ = gra.Visitor().Make(ast)
 	return ast
