@@ -106,6 +106,10 @@ func (v *validator_) ProcessComment(comment string) {
 	v.ValidateToken(comment, CommentToken)
 }
 
+func (v *validator_) ProcessDelimiter(delimiter string) {
+	v.ValidateToken(delimiter, DelimiterToken)
+}
+
 func (v *validator_) ProcessGlyph(glyph string) {
 	v.ValidateToken(glyph, GlyphToken)
 }
@@ -136,10 +140,6 @@ func (v *validator_) ProcessNumber(number string) {
 
 func (v *validator_) ProcessQuantified(quantified string) {
 	v.ValidateToken(quantified, QuantifiedToken)
-}
-
-func (v *validator_) ProcessReserved(reserved string) {
-	v.ValidateToken(reserved, ReservedToken)
 }
 
 func (v *validator_) ProcessUppercase(uppercase string) {

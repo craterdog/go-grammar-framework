@@ -51,6 +51,7 @@ type TokenType uint8
 const (
 	ErrorToken TokenType = iota
 	CommentToken
+	DelimiterToken
 	GlyphToken
 	IntrinsicToken
 	LiteralToken
@@ -60,7 +61,6 @@ const (
 	NoteToken
 	NumberToken
 	QuantifiedToken
-	ReservedToken
 	SpaceToken
 	UppercaseToken
 )
@@ -267,6 +267,7 @@ by all methodical processors.
 */
 type Methodical interface {
 	ProcessComment(comment string)
+	ProcessDelimiter(delimiter string)
 	ProcessGlyph(glyph string)
 	ProcessIntrinsic(intrinsic string)
 	ProcessLiteral(literal string)
@@ -280,7 +281,6 @@ type Methodical interface {
 	ProcessNote(note string)
 	ProcessNumber(number string)
 	ProcessQuantified(quantified string)
-	ProcessReserved(reserved string)
 	ProcessUppercase(uppercase string)
 	PreprocessAlternative(
 		alternative ast.AlternativeLike,

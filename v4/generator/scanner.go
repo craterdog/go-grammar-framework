@@ -219,7 +219,7 @@ func (v *scanner_) PostprocessPattern(definition ast.PatternLike) {
 func (v *scanner_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.isGreedy_ = true // The default is "greedy" scanning.
 	v.ignored_ = col.Set[string]([]string{"newline", "space"})
-	v.tokens_ = col.Set[string]([]string{"reserved"})
+	v.tokens_ = col.Set[string]([]string{"delimiter"})
 	v.literals_ = col.Set[string]()
 	var implicit = map[string]string{"space": `"(?:[ \\t]+)"`}
 	v.regexps_ = col.Catalog[string, string](implicit)
@@ -229,7 +229,7 @@ func (v *scanner_) PostprocessSyntax(syntax ast.SyntaxLike) {
 	v.ignored_ = v.ignored_.GetClass().Sans(v.ignored_, v.tokens_)
 	v.tokens_.AddValues(v.ignored_)
 	var literals = v.extractLiterals()
-	v.regexps_.SetValue("reserved", literals)
+	v.regexps_.SetValue("delimiter", literals)
 	v.regexps_.SortValues()
 }
 

@@ -41,27 +41,27 @@ type constrainedClass_ struct {
 // Constructors
 
 func (c *constrainedClass_) Make(
-	reserved string,
+	delimiter string,
 	number string,
 	optionalLimit LimitLike,
-	reserved2 string,
+	delimiter2 string,
 ) ConstrainedLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(reserved):
-		panic("The reserved attribute is required by this class.")
+	case col.IsUndefined(delimiter):
+		panic("The delimiter attribute is required by this class.")
 	case col.IsUndefined(number):
 		panic("The number attribute is required by this class.")
-	case col.IsUndefined(reserved2):
-		panic("The reserved2 attribute is required by this class.")
+	case col.IsUndefined(delimiter2):
+		panic("The delimiter2 attribute is required by this class.")
 	default:
 		return &constrained_{
 			// Initialize instance attributes.
 			class_:         c,
-			reserved_:      reserved,
+			delimiter_:     delimiter,
 			number_:        number,
 			optionalLimit_: optionalLimit,
-			reserved2_:     reserved2,
+			delimiter2_:    delimiter2,
 		}
 	}
 }
@@ -73,10 +73,10 @@ func (c *constrainedClass_) Make(
 type constrained_ struct {
 	// Define instance attributes.
 	class_         ConstrainedClassLike
-	reserved_      string
+	delimiter_     string
 	number_        string
 	optionalLimit_ LimitLike
-	reserved2_     string
+	delimiter2_    string
 }
 
 // Attributes
@@ -85,8 +85,8 @@ func (v *constrained_) GetClass() ConstrainedClassLike {
 	return v.class_
 }
 
-func (v *constrained_) GetReserved() string {
-	return v.reserved_
+func (v *constrained_) GetDelimiter() string {
+	return v.delimiter_
 }
 
 func (v *constrained_) GetNumber() string {
@@ -97,8 +97,8 @@ func (v *constrained_) GetOptionalLimit() LimitLike {
 	return v.optionalLimit_
 }
 
-func (v *constrained_) GetReserved2() string {
-	return v.reserved2_
+func (v *constrained_) GetDelimiter2() string {
+	return v.delimiter2_
 }
 
 // Private

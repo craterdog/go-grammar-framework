@@ -28,6 +28,7 @@ var scannerClass = &scannerClass_{
 	tokens_: map[TokenType]string{
 		ErrorToken:      "error",
 		CommentToken:    "comment",
+		DelimiterToken:  "delimiter",
 		GlyphToken:      "glyph",
 		IntrinsicToken:  "intrinsic",
 		LiteralToken:    "literal",
@@ -37,13 +38,13 @@ var scannerClass = &scannerClass_{
 		NoteToken:       "note",
 		NumberToken:     "number",
 		QuantifiedToken: "quantified",
-		ReservedToken:   "reserved",
 		SpaceToken:      "space",
 		UppercaseToken:  "uppercase",
 	},
 	matchers_: map[TokenType]*reg.Regexp{
 		// Define pattern matchers for each type of token.
 		CommentToken:    reg.MustCompile("^" + comment_),
+		DelimiterToken:  reg.MustCompile("^" + delimiter_),
 		GlyphToken:      reg.MustCompile("^" + glyph_),
 		IntrinsicToken:  reg.MustCompile("^" + intrinsic_),
 		LiteralToken:    reg.MustCompile("^" + literal_),
@@ -53,7 +54,6 @@ var scannerClass = &scannerClass_{
 		NoteToken:       reg.MustCompile("^" + note_),
 		NumberToken:     reg.MustCompile("^" + number_),
 		QuantifiedToken: reg.MustCompile("^" + quantified_),
-		ReservedToken:   reg.MustCompile("^" + reserved_),
 		SpaceToken:      reg.MustCompile("^" + space_),
 		UppercaseToken:  reg.MustCompile("^" + uppercase_),
 	},
@@ -166,6 +166,7 @@ const (
 	// Define the regular expression patterns for each token type.
 	base16_     = "(?:[0-9a-f])"
 	comment_    = "(?:!>" + eol_ + "(" + any_ + "|" + eol_ + ")*?" + eol_ + "<!" + eol_ + ")"
+	delimiter_  = "(?::|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
 	escape_     = "(?:\\\\((?:" + unicode_ + ")|[abfnrtv\"\\\\]))"
 	glyph_      = "(?:'[^" + control_ + "]')"
 	intrinsic_  = "(?:ANY|CONTROL|DIGIT|EOL|LOWER|UPPER)"
@@ -176,7 +177,6 @@ const (
 	note_       = "(?:! [^" + control_ + "]*)"
 	number_     = "(?:" + digit_ + "+)"
 	quantified_ = "(?:\\?|\\*|\\+)"
-	reserved_   = "(?::|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
 	space_      = "(?:[ \\t]+)"
 	unicode_    = "(?:(x(?:" + base16_ + "){2})|(u(?:" + base16_ + "){4})|(U(?:" + base16_ + "){8}))"
 	uppercase_  = "(?:" + upper_ + "(" + digit_ + "|" + lower_ + "|" + upper_ + ")*)"
@@ -259,6 +259,7 @@ loop:
 		switch {
 		// Find the next token type.
 		case v.foundToken(CommentToken):
+		case v.foundToken(DelimiterToken):
 		case v.foundToken(GlyphToken):
 		case v.foundToken(IntrinsicToken):
 		case v.foundToken(LiteralToken):
@@ -268,7 +269,6 @@ loop:
 		case v.foundToken(NoteToken):
 		case v.foundToken(NumberToken):
 		case v.foundToken(QuantifiedToken):
-		case v.foundToken(ReservedToken):
 		case v.foundToken(SpaceToken):
 		case v.foundToken(UppercaseToken):
 		default:

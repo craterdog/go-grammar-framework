@@ -68,6 +68,9 @@ func (v *processor_) GetClass() ProcessorClassLike {
 func (v *processor_) ProcessComment(comment string) {
 }
 
+func (v *processor_) ProcessDelimiter(delimiter string) {
+}
+
 func (v *processor_) ProcessGlyph(glyph string) {
 }
 
@@ -97,9 +100,6 @@ func (v *processor_) ProcessNumber(number string) {
 }
 
 func (v *processor_) ProcessQuantified(quantified string) {
-}
-
-func (v *processor_) ProcessReserved(reserved string) {
 }
 
 func (v *processor_) ProcessUppercase(uppercase string) {

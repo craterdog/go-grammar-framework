@@ -17,6 +17,7 @@ import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
+	mod "github.com/craterdog/go-model-framework/v4"
 	sts "strings"
 	uni "unicode"
 )
@@ -63,9 +64,10 @@ func (c *visitorClass_) Make() VisitorLike {
 
 type visitor_ struct {
 	// Define the instance attributes.
-	class_   VisitorClassLike
-	visitor_ gra.VisitorLike
-	rules_   abs.SetLike[string]
+	class_      VisitorClassLike
+	visitor_    gra.VisitorLike
+	rules_      abs.SetLike[string]
+	attributes_ abs.ListLike[mod.AttributeLike]
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -102,6 +104,32 @@ func (v *visitor_) GenerateVisitorClass(
 
 // Methodical
 
+func (v *visitor_) PreprocessFactor(
+	factor ast.FactorLike,
+	index uint,
+	size uint,
+) {
+	switch factor.GetAny().(type) {
+	case string:
+		var abstraction = mod.Abstraction("string")
+		var attribute = mod.Attribute(
+			"GetLiteral",
+			abstraction,
+		)
+		v.attributes_.AppendValue(attribute)
+	}
+}
+
+func (v *visitor_) PostprocessMultilined(multilined ast.MultilinedLike) {
+	var abstraction = mod.Abstraction("any")
+	var attribute = mod.Attribute(
+		"GetAny",
+		abstraction,
+	)
+	v.attributes_ = col.List[mod.AttributeLike]()
+	v.attributes_.AppendValue(attribute)
+}
+
 func (v *visitor_) PreprocessRule(
 	rule ast.RuleLike,
 	index uint,
@@ -109,6 +137,7 @@ func (v *visitor_) PreprocessRule(
 ) {
 	var name = rule.GetUppercase()
 	v.rules_.AddValue(v.makeLowercase(name))
+	v.attributes_ = col.List[mod.AttributeLike]()
 }
 
 func (v *visitor_) PreprocessSyntax(syntax ast.SyntaxLike) {

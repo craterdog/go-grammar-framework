@@ -84,9 +84,9 @@ func (v *visitor_) VisitSyntax(syntax ast.SyntaxLike) {
 // Private
 
 func (v *visitor_) visitAlternative(alternative ast.AlternativeLike) {
-	// Visit the reserved string.
-	var reserved = alternative.GetReserved()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the delimiter string.
+	var delimiter = alternative.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit the part.
 	var part = alternative.GetPart()
@@ -138,9 +138,9 @@ func (v *visitor_) visitCharacter(character ast.CharacterLike) {
 }
 
 func (v *visitor_) visitConstrained(constrained ast.ConstrainedLike) {
-	// Visit the opening reserved string.
-	var reserved = constrained.GetReserved()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the opening delimiter string.
+	var delimiter = constrained.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit the minimum value.
 	var number = constrained.GetNumber()
@@ -154,9 +154,9 @@ func (v *visitor_) visitConstrained(constrained ast.ConstrainedLike) {
 		v.processor_.PostprocessLimit(limit)
 	}
 
-	// Visit the closing reserved string.
-	reserved = constrained.GetReserved2()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the closing delimiter string.
+	delimiter = constrained.GetDelimiter2()
+	v.processor_.ProcessDelimiter(delimiter)
 }
 
 func (v *visitor_) visitDefinition(definition ast.DefinitionLike) {
@@ -206,9 +206,9 @@ func (v *visitor_) visitExpression(expression ast.ExpressionLike) {
 	var lowercase = expression.GetLowercase()
 	v.processor_.ProcessLowercase(lowercase)
 
-	// Visit the reserved string.
-	var reserved = expression.GetReserved()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the delimiter string.
+	var delimiter = expression.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit the pattern.
 	var pattern = expression.GetPattern()
@@ -234,9 +234,9 @@ func (v *visitor_) visitExpression(expression ast.ExpressionLike) {
 }
 
 func (v *visitor_) visitExtent(extent ast.ExtentLike) {
-	// Visit the reserved string.
-	var reserved = extent.GetReserved()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the delimiter string.
+	var delimiter = extent.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit the glyph.
 	var glyph = extent.GetGlyph()
@@ -269,9 +269,9 @@ func (v *visitor_) visitFiltered(filtered ast.FilteredLike) {
 		v.processor_.ProcessNegation(negation)
 	}
 
-	// Visit the opening reserved string.
-	var reserved = filtered.GetReserved()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the opening delimiter string.
+	var delimiter = filtered.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit each character.
 	var index uint
@@ -285,15 +285,15 @@ func (v *visitor_) visitFiltered(filtered ast.FilteredLike) {
 		v.processor_.PostprocessCharacter(character, index, size)
 	}
 
-	// Visit the closing reserved string.
-	reserved = filtered.GetReserved2()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the closing delimiter string.
+	delimiter = filtered.GetDelimiter2()
+	v.processor_.ProcessDelimiter(delimiter)
 }
 
 func (v *visitor_) visitGrouped(grouped ast.GroupedLike) {
-	// Visit the opening reserved string.
-	var reserved = grouped.GetReserved()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the opening delimiter string.
+	var delimiter = grouped.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit the pattern.
 	var pattern = grouped.GetPattern()
@@ -301,9 +301,9 @@ func (v *visitor_) visitGrouped(grouped ast.GroupedLike) {
 	v.visitPattern(pattern)
 	v.processor_.PostprocessPattern(pattern)
 
-	// Visit the closing reserved string.
-	reserved = grouped.GetReserved2()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the closing delimiter string.
+	delimiter = grouped.GetDelimiter2()
+	v.processor_.ProcessDelimiter(delimiter)
 }
 
 func (v *visitor_) visitHeader(header ast.HeaderLike) {
@@ -354,9 +354,9 @@ func (v *visitor_) visitInlined(inlined ast.InlinedLike) {
 }
 
 func (v *visitor_) visitLimit(limit ast.LimitLike) {
-	// Visit the reserved string.
-	var reserved = limit.GetReserved()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the delimiter string.
+	var delimiter = limit.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit the optional number.
 	var number = limit.GetOptionalNumber()
@@ -456,9 +456,9 @@ func (v *visitor_) visitRule(rule ast.RuleLike) {
 	var uppercase = rule.GetUppercase()
 	v.processor_.ProcessUppercase(uppercase)
 
-	// Visit the reserved string.
-	var reserved = rule.GetReserved()
-	v.processor_.ProcessReserved(reserved)
+	// Visit the delimiter string.
+	var delimiter = rule.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit the definition.
 	var definition = rule.GetDefinition()

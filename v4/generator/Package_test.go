@@ -267,16 +267,16 @@ func (v *formatter_) FormatDocument(document ast.DocumentLike) string {
 
 // Methodical
 
+func (v *formatter_) ProcessDelimiter(delimiter string) {
+	v.appendString(delimiter)
+}
+
 func (v *formatter_) ProcessInteger(integer string) {
 	v.appendString(integer)
 }
 
 func (v *formatter_) ProcessNewline(newline string) {
 	v.appendString(newline)
-}
-
-func (v *formatter_) ProcessReserved(reserved string) {
-	v.appendString(reserved)
 }
 
 func (v *formatter_) ProcessRune(rune string) {
@@ -587,18 +587,18 @@ var scannerClass = &scannerClass_{
 	// Initialize the class constants.
 	tokens_: map[TokenType]string{
 		ErrorToken: "error",
+		DelimiterToken: "delimiter",
 		IntegerToken: "integer",
 		NewlineToken: "newline",
-		ReservedToken: "reserved",
 		RuneToken: "rune",
 		SpaceToken: "space",
 		TextToken: "text",
 	},
 	matchers_: map[TokenType]*reg.Regexp{
 		// Define pattern matchers for each type of token.
+		DelimiterToken: reg.MustCompile("^" + delimiter_),
 		IntegerToken: reg.MustCompile("^" + integer_),
 		NewlineToken: reg.MustCompile("^" + newline_),
-		ReservedToken: reg.MustCompile("^" + reserved_),
 		RuneToken: reg.MustCompile("^" + rune_),
 		SpaceToken: reg.MustCompile("^" + space_),
 		TextToken: reg.MustCompile("^" + text_),
@@ -710,8 +710,8 @@ const (
 	upper_   = "\\p{Lu}"
 
 	// Define the regular expression patterns for each token type.
+	delimiter_ = "(?:,|\\[|\\])"
 	integer_ = "(?:0|(-?[1-9]" + digit_ + "*))"
-	reserved_ = "(?:,|\\[|\\])"
 	rune_ = "(?:'[^" + control_ + "]')"
 	space_ = "(?:[ \\t]+)"
 	text_ = "(?:\"[^\"" + control_ + "]+\")"
@@ -793,9 +793,9 @@ loop:
 	for v.next_ < uint(len(v.runes_)) {
 		switch {
 		// Find the next token type.
+		case v.foundToken(DelimiterToken):
 		case v.foundToken(IntegerToken):
 		case v.foundToken(NewlineToken):
-		case v.foundToken(ReservedToken):
 		case v.foundToken(RuneToken):
 		case v.foundToken(SpaceToken):
 		case v.foundToken(TextToken):
@@ -997,16 +997,16 @@ func (v *validator_) ValidateDocument(document ast.DocumentLike) {
 
 // Methodical
 
+func (v *validator_) ProcessDelimiter(delimiter string) {
+	v.ValidateToken(delimiter, DelimiterToken)
+}
+
 func (v *validator_) ProcessInteger(integer string) {
 	v.ValidateToken(integer, IntegerToken)
 }
 
 func (v *validator_) ProcessNewline(newline string) {
 	v.ValidateToken(newline, NewlineToken)
-}
-
-func (v *validator_) ProcessReserved(reserved string) {
-	v.ValidateToken(reserved, ReservedToken)
 }
 
 func (v *validator_) ProcessRune(rune string) {
@@ -1091,6 +1091,9 @@ func (v *processor_) GetClass() ProcessorClassLike {
 
 // Methodical
 
+func (v *processor_) ProcessDelimiter(delimiter string) {
+}
+
 func (v *processor_) ProcessInteger(integer string) {
 }
 
@@ -1099,9 +1102,6 @@ func (v *processor_) ProcessNewline(
 	index uint,
 	size uint,
 ) {
-}
-
-func (v *processor_) ProcessReserved(reserved string) {
 }
 
 func (v *processor_) ProcessRune(rune string) {
@@ -1307,9 +1307,9 @@ type TokenType uint8
 
 const (
 	ErrorToken TokenType = iota
+	DelimiterToken
 	IntegerToken
 	NewlineToken
-	ReservedToken
 	RuneToken
 	SpaceToken
 	TextToken
@@ -1516,13 +1516,13 @@ Methodical defines the set of method signatures that must be supported
 by all methodical processors.
 */
 type Methodical interface {
+	ProcessDelimiter(delimiter string)
 	ProcessInteger(integer string)
 	ProcessNewline(
 		newline string,
 		index uint,
 		size uint,
 	)
-	ProcessReserved(reserved string)
 	ProcessRune(rune string)
 	ProcessText(text string)
 	PreprocessAdditional(
@@ -1591,7 +1591,7 @@ concrete additional-like class.
 type AdditionalClassLike interface {
 	// Constructors
 	Make(
-		reserved string,
+		delimiter string,
 		component ComponentLike,
 	) AdditionalLike
 }
@@ -1637,10 +1637,10 @@ concrete list-like class.
 type ListClassLike interface {
 	// Constructors
 	Make(
-		reserved string,
+		delimiter string,
 		component ComponentLike,
 		additionals abs.Sequential[AdditionalLike],
-		reserved2 string,
+		delimiter2 string,
 	) ListLike
 }
 
@@ -1654,7 +1654,7 @@ instance of a concrete additional-like class.
 type AdditionalLike interface {
 	// Attributes
 	GetClass() AdditionalClassLike
-	GetReserved() string
+	GetDelimiter() string
 	GetComponent() ComponentLike
 }
 
@@ -1700,9 +1700,9 @@ instance of a concrete list-like class.
 type ListLike interface {
 	// Attributes
 	GetClass() ListClassLike
-	GetReserved() string
+	GetDelimiter() string
 	GetComponent() ComponentLike
 	GetAdditionals() abs.Sequential[AdditionalLike]
-	GetReserved2() string
+	GetDelimiter2() string
 }
 `

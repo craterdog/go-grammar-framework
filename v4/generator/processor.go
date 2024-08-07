@@ -165,7 +165,7 @@ func (v *processor_) PreprocessRule(
 }
 
 func (v *processor_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]([]string{"reserved"})
+	v.tokens_ = col.Set[string]([]string{"delimiter"})
 	v.rules_ = col.Set[string]()
 	v.plurals_ = col.Set[string]()
 }

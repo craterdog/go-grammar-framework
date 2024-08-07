@@ -41,18 +41,18 @@ type limitClass_ struct {
 // Constructors
 
 func (c *limitClass_) Make(
-	reserved string,
+	delimiter string,
 	optionalNumber string,
 ) LimitLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(reserved):
-		panic("The reserved attribute is required by this class.")
+	case col.IsUndefined(delimiter):
+		panic("The delimiter attribute is required by this class.")
 	default:
 		return &limit_{
 			// Initialize instance attributes.
 			class_:          c,
-			reserved_:       reserved,
+			delimiter_:      delimiter,
 			optionalNumber_: optionalNumber,
 		}
 	}
@@ -65,7 +65,7 @@ func (c *limitClass_) Make(
 type limit_ struct {
 	// Define instance attributes.
 	class_          LimitClassLike
-	reserved_       string
+	delimiter_      string
 	optionalNumber_ string
 }
 
@@ -75,8 +75,8 @@ func (v *limit_) GetClass() LimitClassLike {
 	return v.class_
 }
 
-func (v *limit_) GetReserved() string {
-	return v.reserved_
+func (v *limit_) GetDelimiter() string {
+	return v.delimiter_
 }
 
 func (v *limit_) GetOptionalNumber() string {

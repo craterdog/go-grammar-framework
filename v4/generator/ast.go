@@ -93,7 +93,7 @@ func (v *ast_) PreprocessFactor(
 	case string:
 		var abstraction = mod.Abstraction("string")
 		var attribute = mod.Attribute(
-			"GetReserved",
+			"GetDelimiter",
 			abstraction,
 		)
 		v.attributes_.AppendValue(attribute)

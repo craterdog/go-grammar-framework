@@ -130,7 +130,7 @@ func (v *validator_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 }
 
 func (v *validator_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]([]string{"reserved"})
+	v.tokens_ = col.Set[string]([]string{"delimiter"})
 }
 
 // Private

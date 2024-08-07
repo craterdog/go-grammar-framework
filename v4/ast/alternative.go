@@ -41,21 +41,21 @@ type alternativeClass_ struct {
 // Constructors
 
 func (c *alternativeClass_) Make(
-	reserved string,
+	delimiter string,
 	part PartLike,
 ) AlternativeLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(reserved):
-		panic("The reserved attribute is required by this class.")
+	case col.IsUndefined(delimiter):
+		panic("The delimiter attribute is required by this class.")
 	case col.IsUndefined(part):
 		panic("The part attribute is required by this class.")
 	default:
 		return &alternative_{
 			// Initialize instance attributes.
-			class_:    c,
-			reserved_: reserved,
-			part_:     part,
+			class_:     c,
+			delimiter_: delimiter,
+			part_:      part,
 		}
 	}
 }
@@ -66,9 +66,9 @@ func (c *alternativeClass_) Make(
 
 type alternative_ struct {
 	// Define instance attributes.
-	class_    AlternativeClassLike
-	reserved_ string
-	part_     PartLike
+	class_     AlternativeClassLike
+	delimiter_ string
+	part_      PartLike
 }
 
 // Attributes
@@ -77,8 +77,8 @@ func (v *alternative_) GetClass() AlternativeClassLike {
 	return v.class_
 }
 
-func (v *alternative_) GetReserved() string {
-	return v.reserved_
+func (v *alternative_) GetDelimiter() string {
+	return v.delimiter_
 }
 
 func (v *alternative_) GetPart() PartLike {

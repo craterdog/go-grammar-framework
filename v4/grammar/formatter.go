@@ -85,6 +85,10 @@ func (v *formatter_) ProcessComment(comment string) {
 	v.appendString(comment)
 }
 
+func (v *formatter_) ProcessDelimiter(delimiter string) {
+	v.appendString(delimiter)
+}
+
 func (v *formatter_) ProcessGlyph(glyph string) {
 	v.appendString(glyph)
 }
@@ -116,10 +120,6 @@ func (v *formatter_) ProcessNumber(number string) {
 
 func (v *formatter_) ProcessQuantified(quantified string) {
 	v.appendString(quantified)
-}
-
-func (v *formatter_) ProcessReserved(reserved string) {
-	v.appendString(reserved)
 }
 
 func (v *formatter_) ProcessUppercase(uppercase string) {

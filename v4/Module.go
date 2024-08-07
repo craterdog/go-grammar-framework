@@ -87,6 +87,7 @@ type (
 const (
 	ErrorToken      = gra.ErrorToken
 	CommentToken    = gra.CommentToken
+	DelimiterToken  = gra.DelimiterToken
 	GlyphToken      = gra.GlyphToken
 	IntrinsicToken  = gra.IntrinsicToken
 	LiteralToken    = gra.LiteralToken
@@ -96,7 +97,6 @@ const (
 	NoteToken       = gra.NoteToken
 	NumberToken     = gra.NumberToken
 	QuantifiedToken = gra.QuantifiedToken
-	ReservedToken   = gra.ReservedToken
 	SpaceToken      = gra.SpaceToken
 	UppercaseToken  = gra.UppercaseToken
 )

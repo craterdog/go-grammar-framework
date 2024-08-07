@@ -41,21 +41,21 @@ type extentClass_ struct {
 // Constructors
 
 func (c *extentClass_) Make(
-	reserved string,
+	delimiter string,
 	glyph string,
 ) ExtentLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(reserved):
-		panic("The reserved attribute is required by this class.")
+	case col.IsUndefined(delimiter):
+		panic("The delimiter attribute is required by this class.")
 	case col.IsUndefined(glyph):
 		panic("The glyph attribute is required by this class.")
 	default:
 		return &extent_{
 			// Initialize instance attributes.
-			class_:    c,
-			reserved_: reserved,
-			glyph_:    glyph,
+			class_:     c,
+			delimiter_: delimiter,
+			glyph_:     glyph,
 		}
 	}
 }
@@ -66,9 +66,9 @@ func (c *extentClass_) Make(
 
 type extent_ struct {
 	// Define instance attributes.
-	class_    ExtentClassLike
-	reserved_ string
-	glyph_    string
+	class_     ExtentClassLike
+	delimiter_ string
+	glyph_     string
 }
 
 // Attributes
@@ -77,8 +77,8 @@ func (v *extent_) GetClass() ExtentClassLike {
 	return v.class_
 }
 
-func (v *extent_) GetReserved() string {
-	return v.reserved_
+func (v *extent_) GetDelimiter() string {
+	return v.delimiter_
 }
 
 func (v *extent_) GetGlyph() string {

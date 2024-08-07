@@ -43,7 +43,7 @@ concrete alternative-like class.
 type AlternativeClassLike interface {
 	// Constructors
 	Make(
-		reserved string,
+		delimiter string,
 		part PartLike,
 	) AlternativeLike
 }
@@ -89,10 +89,10 @@ concrete constrained-like class.
 type ConstrainedClassLike interface {
 	// Constructors
 	Make(
-		reserved string,
+		delimiter string,
 		number string,
 		optionalLimit LimitLike,
-		reserved2 string,
+		delimiter2 string,
 	) ConstrainedLike
 }
 
@@ -126,7 +126,7 @@ type ExpressionClassLike interface {
 	Make(
 		optionalComment string,
 		lowercase string,
-		reserved string,
+		delimiter string,
 		pattern PatternLike,
 		optionalNote string,
 		newlines abs.Sequential[string],
@@ -141,7 +141,7 @@ concrete extent-like class.
 type ExtentClassLike interface {
 	// Constructors
 	Make(
-		reserved string,
+		delimiter string,
 		glyph string,
 	) ExtentLike
 }
@@ -165,9 +165,9 @@ type FilteredClassLike interface {
 	// Constructors
 	Make(
 		optionalNegation string,
-		reserved string,
+		delimiter string,
 		characters abs.Sequential[CharacterLike],
-		reserved2 string,
+		delimiter2 string,
 	) FilteredLike
 }
 
@@ -179,9 +179,9 @@ concrete grouped-like class.
 type GroupedClassLike interface {
 	// Constructors
 	Make(
-		reserved string,
+		delimiter string,
 		pattern PatternLike,
-		reserved2 string,
+		delimiter2 string,
 	) GroupedLike
 }
 
@@ -229,7 +229,7 @@ concrete limit-like class.
 type LimitClassLike interface {
 	// Constructors
 	Make(
-		reserved string,
+		delimiter string,
 		optionalNumber string,
 	) LimitLike
 }
@@ -307,7 +307,7 @@ type RuleClassLike interface {
 	Make(
 		optionalComment string,
 		uppercase string,
-		reserved string,
+		delimiter string,
 		definition DefinitionLike,
 		newlines abs.Sequential[string],
 	) RuleLike
@@ -377,7 +377,7 @@ instance of a concrete alternative-like class.
 type AlternativeLike interface {
 	// Attributes
 	GetClass() AlternativeClassLike
-	GetReserved() string
+	GetDelimiter() string
 	GetPart() PartLike
 }
 
@@ -423,10 +423,10 @@ instance of a concrete constrained-like class.
 type ConstrainedLike interface {
 	// Attributes
 	GetClass() ConstrainedClassLike
-	GetReserved() string
+	GetDelimiter() string
 	GetNumber() string
 	GetOptionalLimit() LimitLike
-	GetReserved2() string
+	GetDelimiter2() string
 }
 
 /*
@@ -461,7 +461,7 @@ type ExpressionLike interface {
 	GetClass() ExpressionClassLike
 	GetOptionalComment() string
 	GetLowercase() string
-	GetReserved() string
+	GetDelimiter() string
 	GetPattern() PatternLike
 	GetOptionalNote() string
 	GetNewlines() abs.Sequential[string]
@@ -475,7 +475,7 @@ instance of a concrete extent-like class.
 type ExtentLike interface {
 	// Attributes
 	GetClass() ExtentClassLike
-	GetReserved() string
+	GetDelimiter() string
 	GetGlyph() string
 }
 
@@ -499,9 +499,9 @@ type FilteredLike interface {
 	// Attributes
 	GetClass() FilteredClassLike
 	GetOptionalNegation() string
-	GetReserved() string
+	GetDelimiter() string
 	GetCharacters() abs.Sequential[CharacterLike]
-	GetReserved2() string
+	GetDelimiter2() string
 }
 
 /*
@@ -512,9 +512,9 @@ instance of a concrete grouped-like class.
 type GroupedLike interface {
 	// Attributes
 	GetClass() GroupedClassLike
-	GetReserved() string
+	GetDelimiter() string
 	GetPattern() PatternLike
-	GetReserved2() string
+	GetDelimiter2() string
 }
 
 /*
@@ -560,7 +560,7 @@ instance of a concrete limit-like class.
 type LimitLike interface {
 	// Attributes
 	GetClass() LimitClassLike
-	GetReserved() string
+	GetDelimiter() string
 	GetOptionalNumber() string
 }
 
@@ -634,7 +634,7 @@ type RuleLike interface {
 	GetClass() RuleClassLike
 	GetOptionalComment() string
 	GetUppercase() string
-	GetReserved() string
+	GetDelimiter() string
 	GetDefinition() DefinitionLike
 	GetNewlines() abs.Sequential[string]
 }
