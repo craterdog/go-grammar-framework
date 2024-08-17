@@ -1250,9 +1250,15 @@ func (v *visitor_) visitDocument(document ast.DocumentLike) {
 	v.visitComponent(component)
 	v.processor_.PostprocessComponent(component)
 
-	// Visit the newline token.
-	var newline = document.GetNewline()
-	v.processor_.ProcessNewline(newline)
+	// Visit each newline token.
+	var index uint
+	var newlines = document.GetNewlines().GetIterator()
+	var size = uint(newlines.GetSize())
+	for newlines.HasNext() {
+		index++
+		var newline = newlines.GetNext()
+		v.processor_.ProcessNewline(newline, index, size)
+	}
 }
 
 func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {}
@@ -1264,11 +1270,17 @@ func (v *visitor_) visitList(list ast.ListLike) {
 	v.visitComponent(component)
 	v.processor_.PostprocessComponent(component)
 
-	// Visit the additional.
-	var additional = list.GetAdditional()
-	v.processor_.PreprocessAdditional(additional)
-	v.visitAdditional(additional)
-	v.processor_.PostprocessAdditional(additional)
+	// Visit each additional.
+	var index uint
+	var additionals = list.GetAdditionals().GetIterator()
+	var size = uint(additionals.GetSize())
+	for additionals.HasNext() {
+		index++
+		var additional = additionals.GetNext()
+		v.processor_.PreprocessAdditional(additional, index, size)
+		v.visitAdditional(additional)
+		v.processor_.PostprocessAdditional(additional, index, size)
+	}
 }
 `
 

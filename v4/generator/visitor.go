@@ -13,7 +13,6 @@
 package generator
 
 import (
-	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
@@ -108,15 +107,20 @@ func (v *visitor_) GenerateVisitorClass(
 func (v *visitor_) PreprocessPredicate(
 	predicate ast.PredicateLike,
 ) {
-	// Check to see if the predicate is optional.
-	var optional bool
+	// Check to see if the predicate has plurality.
+	var plurality = "singlular"
 	var cardinality = predicate.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		switch actual := cardinality.GetAny().(type) {
 		case ast.ConstrainedLike:
-			if actual.GetAny().(string) == "?" {
-				optional = true
+			switch actual.GetAny().(string) {
+			case "?":
+				plurality = "optional"
+			case "*", "+":
+				plurality = "repeated"
 			}
+		case ast.QuantifiedLike:
+			plurality = "repeated"
 		}
 	}
 
@@ -127,25 +131,35 @@ func (v *visitor_) PreprocessPredicate(
 	var uppercase = v.makeUppercase(identifier)
 	switch {
 	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
-		template = visitTokenTemplate_
-		if optional {
+		switch plurality {
+		case "optional":
 			template = visitOptionalTokenTemplate_
+		case "repeated":
+			template = visitRepeatedTokenTemplate_
+		default:
+			template = visitTokenTemplate_
 		}
 		template = sts.ReplaceAll(template, "<tokenName>", lowercase)
 		template = sts.ReplaceAll(template, "<TokenName>", uppercase)
+		lowercase = v.makePlural(lowercase)
+		uppercase = v.makePlural(uppercase)
+		template = sts.ReplaceAll(template, "<tokensName>", lowercase)
+		template = sts.ReplaceAll(template, "<TokensName>", uppercase)
 	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
-		template = visitRuleTemplate_
-		if optional {
+		switch plurality {
+		case "optional":
 			template = visitOptionalRuleTemplate_
+		case "repeated":
+			template = visitRepeatedRuleTemplate_
+		default:
+			template = visitRuleTemplate_
 		}
 		template = sts.ReplaceAll(template, "<ruleName>", lowercase)
 		template = sts.ReplaceAll(template, "<RuleName>", uppercase)
-	default:
-		var message = fmt.Sprintf(
-			"An invalid identifier was found: %v\n",
-			identifier,
-		)
-		panic(message)
+		lowercase = v.makePlural(lowercase)
+		uppercase = v.makePlural(uppercase)
+		template = sts.ReplaceAll(template, "<rulesName>", lowercase)
+		template = sts.ReplaceAll(template, "<RulesName>", uppercase)
 	}
 
 	v.method_.WriteString(template)
@@ -219,6 +233,15 @@ func (v *visitor_) makeLowercase(name string) string {
 	return name
 }
 
+func (v *visitor_) makePlural(name string) string {
+	if sts.HasSuffix(name, "s") {
+		name += "es"
+	} else {
+		name += "s"
+	}
+	return name
+}
+
 func (v *visitor_) makeUppercase(name string) string {
 	runes := []rune(name)
 	runes[0] = uni.ToUpper(runes[0])
@@ -229,6 +252,12 @@ const methodTemplate_ = `
 func (v *visitor_) visit<Rule>(<rule> ast.<Rule>Like) {<Implementation>}
 `
 
+const visitTokenTemplate_ = `
+	// Visit the <tokenName> token.
+	var <tokenName> = <rule>.Get<TokenName>()
+	v.processor_.Process<TokenName>(<tokenName>)
+`
+
 const visitOptionalTokenTemplate_ = `
 	// Visit the optional <tokenName> token.
 	var <tokenName> = <rule>.GetOptional<TokenName>()
@@ -237,31 +266,25 @@ const visitOptionalTokenTemplate_ = `
 	}
 `
 
-const visitTokenTemplate_ = `
-	// Visit the <tokenName> token.
-	var <tokenName> = <rule>.Get<TokenName>()
-	v.processor_.Process<TokenName>(<tokenName>)
-`
-
 /*
 const visitSingleTokenTemplate_ = `
 	// Visit the <tokenName> token.
 	var <tokenName> = <rule>.Get<TokenName>()
 	v.processor_.Process<TokenName>(<tokenName>, 1, 1)
 `
+*/
 
-const visitTokensTemplate_ = `
+const visitRepeatedTokenTemplate_ = `
 	// Visit each <tokenName> token.
 	var index uint
-	var <tokens> = <rule>.Get<Tokens>().GetIterator()
-	var size = uint(<tokens>.GetSize())
-	for <tokens>.HasNext() {
+	var <tokensName> = <rule>.Get<TokensName>().GetIterator()
+	var size = uint(<tokensName>.GetSize())
+	for <tokensName>.HasNext() {
 		index++
-		var <tokenName> = <tokens>.GetNext()
+		var <tokenName> = <tokensName>.GetNext()
 		v.processor_.Process<TokenName>(<tokenName>, index, size)
 	}
 `
-*/
 
 const visitOptionalRuleTemplate_ = `
 	// Visit the optional <ruleName>.
@@ -289,21 +312,21 @@ const visitSingleRuleTemplate_ = `
 	v.visit<RuleName>(<ruleName>)
 	v.processor_.Postprocess<RuleName>(<ruleName>, 1, 1)
 `
+*/
 
-const visitRulesTemplate_ = `
+const visitRepeatedRuleTemplate_ = `
 	// Visit each <ruleName>.
 	var index uint
-	var <rules> = <rule>.Get<Rules>().GetIterator()
-	var size = uint(<rules>.GetSize())
-	for <rules>.HasNext() {
+	var <rulesName> = <rule>.Get<RulesName>().GetIterator()
+	var size = uint(<rulesName>.GetSize())
+	for <rulesName>.HasNext() {
 		index++
-		var <ruleName> = <rules>.GetNext()
+		var <ruleName> = <rulesName>.GetNext()
 		v.processor_.Preprocess<RuleName>(<ruleName>, index, size)
 		v.visit<RuleName>(<ruleName>)
 		v.processor_.Postprocess<RuleName>(<ruleName>, index, size)
 	}
 `
-*/
 
 const visitorTemplate_ = `/*<Notice>*/
 
