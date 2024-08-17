@@ -158,20 +158,20 @@ func (v *parser_) parseBounded() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the initial glyph.
-	var glyph string
-	glyph, token, ok = v.parseToken(GlyphToken, "")
+	// Attempt to parse the initial runic.
+	var runic string
+	runic, token, ok = v.parseToken(RunicToken, "")
 	if !ok {
 		// This is not the bounded.
 		return bounded, token, false
 	}
 
-	// Attempt to parse the optional extent glyph.
+	// Attempt to parse the optional extent runic.
 	var extent ast.ExtentLike
 	extent, token, _ = v.parseExtent()
 
 	// Found the bounded.
-	bounded = ast.Bounded().Make(glyph, extent)
+	bounded = ast.Bounded().Make(runic, extent)
 	return bounded, token, true
 }
 
@@ -190,8 +190,8 @@ func (v *parser_) parseCardinality() (
 	}
 
 	// Attempt to parse the quantified cardinality.
-	var quantified string
-	quantified, token, ok = v.parseToken(QuantifiedToken, "")
+	var quantified ast.QuantifiedLike
+	quantified, token, ok = v.parseQuantified()
 	if ok {
 		// Found the quantified cardinality.
 		cardinality = ast.Cardinality().Make(quantified)
@@ -234,45 +234,24 @@ func (v *parser_) parseConstrained() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the opening bracket for the constrained.
-	var left string
-	left, token, ok = v.parseToken(DelimiterToken, "{")
-	if !ok {
-		// This is not the constrained.
-		return constrained, token, false
+	// Attempt to parse the optional constrained.
+	var optional string
+	optional, token, ok = v.parseToken(OptionalToken, "")
+	if ok {
+		constrained = ast.Constrained().Make(optional)
+		return constrained, token, true
 	}
 
-	// Attempt to parse the minimum number.
-	var number string
-	number, token, ok = v.parseToken(NumberToken, "")
-	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("number",
-			"Constrained",
-			"Limit",
-		)
-		panic(message)
+	// Attempt to parse the repeated constrained.
+	var repeated string
+	repeated, token, ok = v.parseToken(RepeatedToken, "")
+	if ok {
+		constrained = ast.Constrained().Make(repeated)
+		return constrained, token, true
 	}
 
-	// Attempt to parse the optional limit number for the constrained.
-	var limit ast.LimitLike
-	limit, _, _ = v.parseLimit()
-
-	// Attempt to parse the closing bracket for the constrained.
-	var right string
-	right, token, ok = v.parseToken(DelimiterToken, "}")
-	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("}",
-			"Constrained",
-			"Limit",
-		)
-		panic(message)
-	}
-
-	// Found the constrained.
-	constrained = ast.Constrained().Make(left, number, limit, right)
-	return constrained, token, true
+	// This is not the constrained.
+	return constrained, token, false
 }
 
 func (v *parser_) parseDefinition() (
@@ -425,23 +404,23 @@ func (v *parser_) parseExtent() (
 	var dotdot string
 	dotdot, token, ok = v.parseToken(DelimiterToken, "..")
 	if !ok {
-		// This is not the extent glyph.
+		// This is not the extent runic.
 		return extent, token, false
 	}
 
 	// Attempt to parse the extent for the bounded character.
-	var glyph string
-	glyph, token, ok = v.parseToken(GlyphToken, "")
+	var runic string
+	runic, token, ok = v.parseToken(RunicToken, "")
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("glyph",
+		message += v.generateSyntax("runic",
 			"Extent",
 		)
 		panic(message)
 	}
 
 	// Found the extent for the bounded character.
-	extent = ast.Extent().Make(dotdot, glyph)
+	extent = ast.Extent().Make(dotdot, runic)
 	return extent, token, true
 }
 
@@ -475,18 +454,18 @@ func (v *parser_) parseFiltered() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the optional negation for the filtered element.
-	var negation string
-	var negationToken TokenLike
-	negation, negationToken, _ = v.parseToken(NegationToken, "")
+	// Attempt to parse the optional excluded for the filtered element.
+	var excluded string
+	var excludedToken TokenLike
+	excluded, excludedToken, _ = v.parseToken(ExcludedToken, "")
 
 	// Attempt to parse the opening bracket for the filtered element.
 	var left string
 	left, token, ok = v.parseToken(DelimiterToken, "[")
 	if !ok {
-		// This is not the filtered element, put back any negation token.
-		if col.IsDefined(negation) {
-			v.putBack(negationToken)
+		// This is not the filtered element, put back any excluded token.
+		if col.IsDefined(excluded) {
+			v.putBack(excludedToken)
 		}
 		return filtered, token, false
 	}
@@ -521,7 +500,7 @@ func (v *parser_) parseFiltered() (
 	}
 
 	// Found the filtered element.
-	filtered = ast.Filtered().Make(negation, left, characters, right)
+	filtered = ast.Filtered().Make(excluded, left, characters, right)
 	return filtered, token, true
 }
 
@@ -790,6 +769,52 @@ func (v *parser_) parsePredicate() (
 	return predicate, token, true
 }
 
+func (v *parser_) parseQuantified() (
+	quantified ast.QuantifiedLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse the opening bracket for the quantified.
+	var left string
+	left, token, ok = v.parseToken(DelimiterToken, "{")
+	if !ok {
+		// This is not the quantified.
+		return quantified, token, false
+	}
+
+	// Attempt to parse the minimum number.
+	var number string
+	number, token, ok = v.parseToken(NumberToken, "")
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateSyntax("number",
+			"Quantified",
+			"Limit",
+		)
+		panic(message)
+	}
+
+	// Attempt to parse the optional limit number for the quantified.
+	var limit ast.LimitLike
+	limit, _, _ = v.parseLimit()
+
+	// Attempt to parse the closing bracket for the quantified.
+	var right string
+	right, token, ok = v.parseToken(DelimiterToken, "}")
+	if !ok {
+		var message = v.formatError(token)
+		message += v.generateSyntax("}",
+			"Quantified",
+			"Limit",
+		)
+		panic(message)
+	}
+
+	// Found the quantified.
+	quantified = ast.Quantified().Make(left, number, limit, right)
+	return quantified, token, true
+}
+
 func (v *parser_) parseRule() (
 	rule ast.RuleLike,
 	token TokenLike,
@@ -1005,12 +1030,12 @@ func (v *parser_) parseTextual() (
 		return textual, token, true
 	}
 
-	// Attempt to parse the glyph textual element.
-	var glyph string
-	glyph, token, ok = v.parseToken(GlyphToken, "")
+	// Attempt to parse the runic textual element.
+	var runic string
+	runic, token, ok = v.parseToken(RunicToken, "")
 	if ok {
-		// Found the glyph textual element.
-		textual = ast.Textual().Make(glyph)
+		// Found the runic textual element.
+		textual = ast.Textual().Make(runic)
 		return textual, token, true
 	}
 
@@ -1113,26 +1138,28 @@ var syntax_ = map[string]string{
 	"Header": `comment newline`,
 	"Rule":   `comment? uppercase ":" Definition newline+`,
 	"Definition": `
-    Inlined
-    Multilined`,
-	"Inlined":    `Factor+ note?`,
+    Multilined
+    Inlined`,
 	"Multilined": `Line+`,
 	"Line":       `newline Identifier note?`,
 	"Identifier": `
     lowercase
     uppercase`,
-	"Factor": `Predicate Cardinality?  ! The default cardinality is one.`,
-	"Predicate": `
-    literal
-    lowercase
-    uppercase`,
+	"Inlined": `Factor+ note?`,
+	"Factor": `
+    Predicate
+    literal`,
+	"Predicate": `Identifier Cardinality?  ! The default cardinality is one.`,
 	"Cardinality": `
     Constrained
-    quantified`,
-	"Constrained": `"{" number Limit? "}"  ! A constrained range of numbers is inclusive.`,
-	"Limit":       `".." number?`,
-	"Expression":  `comment? lowercase ":" Pattern note? newline+`,
-	"Pattern":     `Part Supplement?`,
+    Quantified`,
+	"Constrained": `
+    optional
+    repeated`,
+	"Quantified": `"{" number Limit? "}"  ! A quantified range of numbers is inclusive.`,
+	"Limit":      `".." number?`,
+	"Expression": `comment? lowercase ":" Pattern note? newline+`,
+	"Pattern":    `Part Supplement?`,
 	"Supplement": `
     Sequential
     Selective`,
@@ -1145,15 +1172,15 @@ var syntax_ = map[string]string{
     Filtered
     Textual`,
 	"Grouped":  `"(" Pattern ")"`,
-	"Filtered": `negation? "[" Character+ "]"`,
+	"Filtered": `excluded? "[" Character+ "]"`,
 	"Textual": `
     intrinsic
-    glyph
+    runic
     literal
     lowercase`,
 	"Character": `
     Bounded
     intrinsic`,
-	"Bounded": `glyph Extent?  ! A bounded range of glyphs is inclusive.`,
-	"Extent":  `".." glyph`,
+	"Bounded": `runic Extent?  ! A bounded range of runic elements is inclusive.`,
+	"Extent":  `".." runic`,
 }

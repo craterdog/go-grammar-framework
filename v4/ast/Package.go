@@ -56,7 +56,7 @@ concrete bounded-like class.
 type BoundedClassLike interface {
 	// Constructors
 	Make(
-		glyph string,
+		runic string,
 		optionalExtent ExtentLike,
 	) BoundedLike
 }
@@ -88,12 +88,7 @@ concrete constrained-like class.
 */
 type ConstrainedClassLike interface {
 	// Constructors
-	Make(
-		delimiter string,
-		number string,
-		optionalLimit LimitLike,
-		delimiter2 string,
-	) ConstrainedLike
+	Make(any_ any) ConstrainedLike
 }
 
 /*
@@ -142,7 +137,7 @@ type ExtentClassLike interface {
 	// Constructors
 	Make(
 		delimiter string,
-		glyph string,
+		runic string,
 	) ExtentLike
 }
 
@@ -164,7 +159,7 @@ concrete filtered-like class.
 type FilteredClassLike interface {
 	// Constructors
 	Make(
-		optionalNegation string,
+		optionalExcluded string,
 		delimiter string,
 		characters abs.Sequential[CharacterLike],
 		delimiter2 string,
@@ -298,6 +293,21 @@ type PredicateClassLike interface {
 }
 
 /*
+QuantifiedClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete quantified-like class.
+*/
+type QuantifiedClassLike interface {
+	// Constructors
+	Make(
+		delimiter string,
+		number string,
+		optionalLimit LimitLike,
+		delimiter2 string,
+	) QuantifiedLike
+}
+
+/*
 RuleClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete rule-like class.
@@ -389,7 +399,7 @@ instance of a concrete bounded-like class.
 type BoundedLike interface {
 	// Attributes
 	GetClass() BoundedClassLike
-	GetGlyph() string
+	GetRunic() string
 	GetOptionalExtent() ExtentLike
 }
 
@@ -423,10 +433,7 @@ instance of a concrete constrained-like class.
 type ConstrainedLike interface {
 	// Attributes
 	GetClass() ConstrainedClassLike
-	GetDelimiter() string
-	GetNumber() string
-	GetOptionalLimit() LimitLike
-	GetDelimiter2() string
+	GetAny() any
 }
 
 /*
@@ -476,7 +483,7 @@ type ExtentLike interface {
 	// Attributes
 	GetClass() ExtentClassLike
 	GetDelimiter() string
-	GetGlyph() string
+	GetRunic() string
 }
 
 /*
@@ -498,7 +505,7 @@ instance of a concrete filtered-like class.
 type FilteredLike interface {
 	// Attributes
 	GetClass() FilteredClassLike
-	GetOptionalNegation() string
+	GetOptionalExcluded() string
 	GetDelimiter() string
 	GetCharacters() abs.Sequential[CharacterLike]
 	GetDelimiter2() string
@@ -622,6 +629,20 @@ type PredicateLike interface {
 	GetClass() PredicateClassLike
 	GetIdentifier() IdentifierLike
 	GetOptionalCardinality() CardinalityLike
+}
+
+/*
+QuantifiedLike is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete quantified-like class.
+*/
+type QuantifiedLike interface {
+	// Attributes
+	GetClass() QuantifiedClassLike
+	GetDelimiter() string
+	GetNumber() string
+	GetOptionalLimit() LimitLike
+	GetDelimiter2() string
 }
 
 /*

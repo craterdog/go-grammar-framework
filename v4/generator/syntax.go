@@ -170,9 +170,8 @@ pattern declarations:
  * CONTROL - Any environment specific (non-printable) control character.
  * EOL - The environment specific end-of-line character.
 
-The negation "~" prefix within a regular expression pattern may only be applied
-to a bounded range of possible intrinsic character types or printable unicode
-characters called runes.
+The excluded "~" prefix within a regular expression pattern may only be applied
+to a bounded range of possible character types.
 <!
 
 !>

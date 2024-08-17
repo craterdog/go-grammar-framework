@@ -86,10 +86,8 @@ func (v *scanner_) GetClass() ScannerClassLike {
 
 // Methodical
 
-func (v *scanner_) ProcessGlyph(glyph string) {
-	var character = glyph[1:2] //Remove the single quotes.
-	character = v.escapeText(character)
-	v.regexp_ += character
+func (v *scanner_) ProcessExcluded(excluded string) {
+	v.regexp_ += "^"
 }
 
 func (v *scanner_) ProcessIntrinsic(intrinsic string) {
@@ -115,20 +113,22 @@ func (v *scanner_) ProcessLowercase(lowercase string) {
 	}
 }
 
-func (v *scanner_) ProcessNegation(negation string) {
-	v.regexp_ += "^"
-}
-
 func (v *scanner_) ProcessNumber(number string) {
 	v.regexp_ += number
 }
 
-func (v *scanner_) ProcessQuantified(quantified string) {
-	v.regexp_ += quantified
-	if !v.isGreedy_ {
-		v.regexp_ += "?"
-		v.isGreedy_ = true // Reset scanning back to "greedy".
-	}
+func (v *scanner_) ProcessOptional(optional string) {
+	v.regexp_ += optional
+}
+
+func (v *scanner_) ProcessRepeated(repeated string) {
+	v.regexp_ += repeated
+}
+
+func (v *scanner_) ProcessRunic(runic string) {
+	var character = runic[1:2] //Remove the single quotes.
+	character = v.escapeText(character)
+	v.regexp_ += character
 }
 
 func (v *scanner_) PreprocessAlternative(
@@ -139,16 +139,15 @@ func (v *scanner_) PreprocessAlternative(
 	v.regexp_ += "|"
 }
 
-func (v *scanner_) PreprocessConstrained(constrained ast.ConstrainedLike) {
-	v.regexp_ += "{"
-}
-
 func (v *scanner_) PostprocessConstrained(constrained ast.ConstrainedLike) {
-	v.regexp_ += "}"
 	if !v.isGreedy_ {
 		v.regexp_ += "?"
 		v.isGreedy_ = true // Reset scanning back to "greedy".
 	}
+}
+
+func (v *scanner_) PreprocessQuantified(constrained ast.QuantifiedLike) {
+	v.regexp_ += "{"
 }
 
 func (v *scanner_) PreprocessExpression(
@@ -214,6 +213,14 @@ func (v *scanner_) PreprocessPattern(definition ast.PatternLike) {
 
 func (v *scanner_) PostprocessPattern(definition ast.PatternLike) {
 	v.depth_--
+}
+
+func (v *scanner_) PostprocessQuantified(constrained ast.QuantifiedLike) {
+	v.regexp_ += "}"
+	if !v.isGreedy_ {
+		v.regexp_ += "?"
+		v.isGreedy_ = true // Reset scanning back to "greedy".
+	}
 }
 
 func (v *scanner_) PreprocessSyntax(syntax ast.SyntaxLike) {

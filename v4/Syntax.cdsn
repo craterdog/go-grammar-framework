@@ -37,9 +37,8 @@ pattern declarations:
  * CONTROL - Any environment specific (non-printable) control character.
  * EOL - The environment specific end-of-line character.
 
-The negation "~" prefix within a regular expression pattern may only be applied
-to a bounded range of possible intrinsic character types or printable unicode
-characters called glyphs.
+The excluded "~" prefix within a regular expression pattern may only be applied
+to a bounded range of possible character types.
 <!
 
 !>
@@ -82,9 +81,13 @@ Predicate: Identifier Cardinality?  ! The default cardinality is one.
 
 Cardinality:
     Constrained
-    quantified
+    Quantified
 
-Constrained: "{" number Limit? "}"  ! A constrained range of numbers is inclusive.
+Constrained:
+    optional
+    repeated
+
+Quantified: "{" number Limit? "}"  ! A quantified range of numbers is inclusive.
 
 Limit: ".." number?
 
@@ -111,11 +114,11 @@ Element:
 
 Grouped: "(" Pattern ")"
 
-Filtered: negation? "[" Character+ "]"
+Filtered: excluded? "[" Character+ "]"
 
 Textual:
     intrinsic
-    glyph
+    runic
     literal
     lowercase
 
@@ -123,9 +126,9 @@ Character:
     Bounded
     intrinsic
 
-Bounded: glyph Extent?  ! A bounded range of glyphs is inclusive.
+Bounded: runic Extent?  ! A bounded range of runic elements is inclusive.
 
-Extent: ".." glyph
+Extent: ".." runic
 
 !>
 REGULAR EXPRESSION PATTERNS
@@ -145,7 +148,9 @@ comment: "!>" EOL (ANY | EOL)* EOL "<!" EOL  ! Chooses the shortest possible mat
 
 escape: '\' (unicode | ['a' 'b' 'f' 'n' 'r' 't' 'v' '"' '\'])
 
-glyph: "'" ~[CONTROL] "'"  ! Any printable unicode character.
+excluded: "~"
+
+runic: "'" ~[CONTROL] "'"  ! Any printable unicode character.
 
 intrinsic: "ANY" | "CONTROL" | "DIGIT" | "EOL" | "LOWER" | "UPPER"
 
@@ -153,15 +158,15 @@ literal: '"' (escape | ~['"' CONTROL])+ '"'
 
 lowercase: LOWER (DIGIT | LOWER | UPPER)*
 
-negation: "~"
-
 newline: EOL
 
 note: "! " ~[CONTROL]*
 
 number: DIGIT+
 
-quantified: "?" | "*" | "+"
+optional: "?"
+
+repeated: "*" | "+"
 
 unicode: ('x' base16{2}) | ('u' base16{4}) | ('U' base16{8})
 

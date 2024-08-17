@@ -71,7 +71,7 @@ func (v *processor_) ProcessComment(comment string) {
 func (v *processor_) ProcessDelimiter(delimiter string) {
 }
 
-func (v *processor_) ProcessGlyph(glyph string) {
+func (v *processor_) ProcessExcluded(excluded string) {
 }
 
 func (v *processor_) ProcessIntrinsic(intrinsic string) {
@@ -81,9 +81,6 @@ func (v *processor_) ProcessLiteral(literal string) {
 }
 
 func (v *processor_) ProcessLowercase(lowercase string) {
-}
-
-func (v *processor_) ProcessNegation(negation string) {
 }
 
 func (v *processor_) ProcessNewline(
@@ -99,7 +96,13 @@ func (v *processor_) ProcessNote(note string) {
 func (v *processor_) ProcessNumber(number string) {
 }
 
-func (v *processor_) ProcessQuantified(quantified string) {
+func (v *processor_) ProcessOptional(optional string) {
+}
+
+func (v *processor_) ProcessRepeated(repeated string) {
+}
+
+func (v *processor_) ProcessRunic(runic string) {
 }
 
 func (v *processor_) ProcessUppercase(uppercase string) {
@@ -285,6 +288,12 @@ func (v *processor_) PreprocessPredicate(predicate ast.PredicateLike) {
 }
 
 func (v *processor_) PostprocessPredicate(predicate ast.PredicateLike) {
+}
+
+func (v *processor_) PreprocessQuantified(quantified ast.QuantifiedLike) {
+}
+
+func (v *processor_) PostprocessQuantified(quantified ast.QuantifiedLike) {
 }
 
 func (v *processor_) PreprocessRule(

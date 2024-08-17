@@ -89,8 +89,8 @@ func (v *formatter_) ProcessDelimiter(delimiter string) {
 	v.appendString(delimiter)
 }
 
-func (v *formatter_) ProcessGlyph(glyph string) {
-	v.appendString(glyph)
+func (v *formatter_) ProcessExcluded(excluded string) {
+	v.appendString(excluded)
 }
 
 func (v *formatter_) ProcessIntrinsic(intrinsic string) {
@@ -105,10 +105,6 @@ func (v *formatter_) ProcessLowercase(lowercase string) {
 	v.appendString(lowercase)
 }
 
-func (v *formatter_) ProcessNegation(negation string) {
-	v.appendString(negation)
-}
-
 func (v *formatter_) ProcessNote(note string) {
 	v.appendString("  ")
 	v.appendString(note)
@@ -118,8 +114,16 @@ func (v *formatter_) ProcessNumber(number string) {
 	v.appendString(number)
 }
 
-func (v *formatter_) ProcessQuantified(quantified string) {
-	v.appendString(quantified)
+func (v *formatter_) ProcessOptional(optional string) {
+	v.appendString(optional)
+}
+
+func (v *formatter_) ProcessRepeated(repeated string) {
+	v.appendString(repeated)
+}
+
+func (v *formatter_) ProcessRunic(runic string) {
+	v.appendString(runic)
 }
 
 func (v *formatter_) ProcessUppercase(uppercase string) {

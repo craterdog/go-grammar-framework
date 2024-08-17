@@ -63,6 +63,7 @@ type (
 	PartLike        = ast.PartLike
 	PatternLike     = ast.PatternLike
 	PredicateLike   = ast.PredicateLike
+	QuantifiedLike  = ast.QuantifiedLike
 	RuleLike        = ast.RuleLike
 	SelectiveLike   = ast.SelectiveLike
 	SequentialLike  = ast.SequentialLike
@@ -85,20 +86,21 @@ type (
 )
 
 const (
-	ErrorToken      = gra.ErrorToken
-	CommentToken    = gra.CommentToken
-	DelimiterToken  = gra.DelimiterToken
-	GlyphToken      = gra.GlyphToken
-	IntrinsicToken  = gra.IntrinsicToken
-	LiteralToken    = gra.LiteralToken
-	LowercaseToken  = gra.LowercaseToken
-	NegationToken   = gra.NegationToken
-	NewlineToken    = gra.NewlineToken
-	NoteToken       = gra.NoteToken
-	NumberToken     = gra.NumberToken
-	QuantifiedToken = gra.QuantifiedToken
-	SpaceToken      = gra.SpaceToken
-	UppercaseToken  = gra.UppercaseToken
+	ErrorToken     = gra.ErrorToken
+	CommentToken   = gra.CommentToken
+	DelimiterToken = gra.DelimiterToken
+	ExcludedToken  = gra.ExcludedToken
+	IntrinsicToken = gra.IntrinsicToken
+	LiteralToken   = gra.LiteralToken
+	LowercaseToken = gra.LowercaseToken
+	NewlineToken   = gra.NewlineToken
+	NoteToken      = gra.NoteToken
+	NumberToken    = gra.NumberToken
+	OptionalToken  = gra.OptionalToken
+	RepeatedToken  = gra.RepeatedToken
+	RunicToken     = gra.RunicToken
+	SpaceToken     = gra.SpaceToken
+	UppercaseToken = gra.UppercaseToken
 )
 
 // UNIVERSAL CONSTRUCTORS
@@ -134,14 +136,14 @@ func Alternative(arguments ...any) AlternativeLike {
 
 func Bounded(arguments ...any) BoundedLike {
 	// Initialize the possible arguments.
-	var glyph string
+	var runic string
 	var extent ExtentLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case string:
-			glyph = actual
+			runic = actual
 		case ExtentLike:
 			extent = actual
 		default:
@@ -155,7 +157,7 @@ func Bounded(arguments ...any) BoundedLike {
 
 	// Call the constructor.
 	var bounded = ast.Bounded().Make(
-		glyph,
+		runic,
 		extent,
 	)
 	return bounded
@@ -164,14 +166,14 @@ func Bounded(arguments ...any) BoundedLike {
 func Cardinality(arguments ...any) CardinalityLike {
 	// Initialize the possible arguments.
 	var constrained ConstrainedLike
-	var quantified string
+	var quantified QuantifiedLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case ConstrainedLike:
 			constrained = actual
-		case string:
+		case QuantifiedLike:
 			quantified = actual
 		default:
 			var message = fmt.Sprintf(
@@ -231,16 +233,25 @@ func Character(arguments ...any) CharacterLike {
 
 func Constrained(arguments ...any) ConstrainedLike {
 	// Initialize the possible arguments.
-	var number string
-	var limit LimitLike
+	var optional string
+	var repeated string
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case string:
-			number = actual
-		case LimitLike:
-			limit = actual
+			switch {
+			case MatchesType(actual, OptionalToken):
+				optional = actual
+			case MatchesType(actual, RepeatedToken):
+				repeated = actual
+			default:
+				var message = fmt.Sprintf(
+					"An invalid string was passed into the constrained constructor: %v\n",
+					actual,
+				)
+				panic(message)
+			}
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the constrained constructor: %T\n",
@@ -251,14 +262,15 @@ func Constrained(arguments ...any) ConstrainedLike {
 	}
 
 	// Call the constructor.
-	var left = "{"
-	var right = "}"
-	var constrained = ast.Constrained().Make(
-		left,
-		number,
-		limit,
-		right,
-	)
+	var constrained ConstrainedLike
+	switch {
+	case col.IsDefined(optional):
+		constrained = ast.Constrained().Make(optional)
+	case col.IsDefined(repeated):
+		constrained = ast.Constrained().Make(repeated)
+	default:
+		panic("The constructor for an constrained requires an argument.")
+	}
 	return constrained
 }
 
@@ -381,13 +393,13 @@ func Expression(arguments ...any) ExpressionLike {
 
 func Extent(arguments ...any) ExtentLike {
 	// Initialize the possible arguments.
-	var glyph string
+	var runic string
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case string:
-			glyph = actual
+			runic = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the extent constructor: %T\n",
@@ -401,7 +413,7 @@ func Extent(arguments ...any) ExtentLike {
 	var dotdot = ".."
 	var extent = ast.Extent().Make(
 		dotdot,
-		glyph,
+		runic,
 	)
 	return extent
 }
@@ -442,14 +454,14 @@ func Factor(arguments ...any) FactorLike {
 
 func Filtered(arguments ...any) FilteredLike {
 	// Initialize the possible arguments.
-	var negation string
+	var excluded string
 	var characters abs.Sequential[CharacterLike]
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
 		case string:
-			negation = actual
+			excluded = actual
 		case abs.Sequential[CharacterLike]:
 			characters = actual
 		default:
@@ -466,7 +478,7 @@ func Filtered(arguments ...any) FilteredLike {
 	var right = "]"
 	var filtered = ast.Filtered().Make(
 		left,
-		negation,
+		excluded,
 		characters,
 		right,
 	)
@@ -769,6 +781,39 @@ func Predicate(arguments ...any) PredicateLike {
 	return predicate
 }
 
+func Quantified(arguments ...any) QuantifiedLike {
+	// Initialize the possible arguments.
+	var number string
+	var limit LimitLike
+
+	// Process the actual arguments.
+	for _, argument := range arguments {
+		switch actual := argument.(type) {
+		case string:
+			number = actual
+		case LimitLike:
+			limit = actual
+		default:
+			var message = fmt.Sprintf(
+				"An unknown argument type passed into the quantified constructor: %T\n",
+				actual,
+			)
+			panic(message)
+		}
+	}
+
+	// Call the constructor.
+	var left = "{"
+	var right = "}"
+	var quantified = ast.Quantified().Make(
+		left,
+		number,
+		limit,
+		right,
+	)
+	return quantified
+}
+
 func Rule(arguments ...any) RuleLike {
 	// Initialize the possible arguments.
 	var comment string
@@ -931,7 +976,7 @@ func Syntax(arguments ...any) SyntaxLike {
 func Textual(arguments ...any) TextualLike {
 	// Initialize the possible arguments.
 	var intrinsic string
-	var glyph string
+	var runic string
 	var literal string
 	var lowercase string
 
@@ -942,8 +987,8 @@ func Textual(arguments ...any) TextualLike {
 			switch {
 			case MatchesType(actual, IntrinsicToken):
 				intrinsic = actual
-			case MatchesType(actual, GlyphToken):
-				glyph = actual
+			case MatchesType(actual, RunicToken):
+				runic = actual
 			case MatchesType(actual, LiteralToken):
 				literal = actual
 			case MatchesType(actual, LowercaseToken):
@@ -969,8 +1014,8 @@ func Textual(arguments ...any) TextualLike {
 	switch {
 	case col.IsDefined(intrinsic):
 		text = Textual(intrinsic)
-	case col.IsDefined(glyph):
-		text = Textual(glyph)
+	case col.IsDefined(runic):
+		text = Textual(runic)
 	case col.IsDefined(literal):
 		text = Textual(literal)
 	case col.IsDefined(lowercase):

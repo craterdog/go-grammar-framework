@@ -41,18 +41,18 @@ type boundedClass_ struct {
 // Constructors
 
 func (c *boundedClass_) Make(
-	glyph string,
+	runic string,
 	optionalExtent ExtentLike,
 ) BoundedLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(glyph):
-		panic("The glyph attribute is required by this class.")
+	case col.IsUndefined(runic):
+		panic("The runic attribute is required by this class.")
 	default:
 		return &bounded_{
 			// Initialize instance attributes.
 			class_:          c,
-			glyph_:          glyph,
+			runic_:          runic,
 			optionalExtent_: optionalExtent,
 		}
 	}
@@ -65,7 +65,7 @@ func (c *boundedClass_) Make(
 type bounded_ struct {
 	// Define instance attributes.
 	class_          BoundedClassLike
-	glyph_          string
+	runic_          string
 	optionalExtent_ ExtentLike
 }
 
@@ -75,8 +75,8 @@ func (v *bounded_) GetClass() BoundedClassLike {
 	return v.class_
 }
 
-func (v *bounded_) GetGlyph() string {
-	return v.glyph_
+func (v *bounded_) GetRunic() string {
+	return v.runic_
 }
 
 func (v *bounded_) GetOptionalExtent() ExtentLike {

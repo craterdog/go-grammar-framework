@@ -110,8 +110,8 @@ func (v *validator_) ProcessDelimiter(delimiter string) {
 	v.ValidateToken(delimiter, DelimiterToken)
 }
 
-func (v *validator_) ProcessGlyph(glyph string) {
-	v.ValidateToken(glyph, GlyphToken)
+func (v *validator_) ProcessExcluded(excluded string) {
+	v.ValidateToken(excluded, ExcludedToken)
 }
 
 func (v *validator_) ProcessIntrinsic(intrinsic string) {
@@ -126,10 +126,6 @@ func (v *validator_) ProcessLowercase(lowercase string) {
 	v.ValidateToken(lowercase, LowercaseToken)
 }
 
-func (v *validator_) ProcessNegation(negation string) {
-	v.ValidateToken(negation, NegationToken)
-}
-
 func (v *validator_) ProcessNote(note string) {
 	v.ValidateToken(note, NoteToken)
 }
@@ -138,8 +134,16 @@ func (v *validator_) ProcessNumber(number string) {
 	v.ValidateToken(number, NumberToken)
 }
 
-func (v *validator_) ProcessQuantified(quantified string) {
-	v.ValidateToken(quantified, QuantifiedToken)
+func (v *validator_) ProcessOptional(optional string) {
+	v.ValidateToken(optional, OptionalToken)
+}
+
+func (v *validator_) ProcessRepeated(repeated string) {
+	v.ValidateToken(repeated, RepeatedToken)
+}
+
+func (v *validator_) ProcessRunic(runic string) {
+	v.ValidateToken(runic, RunicToken)
 }
 
 func (v *validator_) ProcessUppercase(uppercase string) {
@@ -147,28 +151,12 @@ func (v *validator_) ProcessUppercase(uppercase string) {
 }
 
 func (v *validator_) PreprocessBounded(bounded ast.BoundedLike) {
-	var glyph = bounded.GetGlyph()
+	var runic = bounded.GetRunic()
 	var extent = bounded.GetOptionalExtent()
 	if col.IsDefined(extent) {
-		if glyph > extent.GetGlyph() {
-			var message = "The extent glyph in a bounded character range cannot come before the initial glyph."
+		if runic > extent.GetRunic() {
+			var message = "The extent runic in a bounded character range cannot come before the initial runic."
 			panic(message)
-		}
-	}
-}
-
-func (v *validator_) PreprocessConstrained(constrained ast.ConstrainedLike) {
-	var number = constrained.GetNumber()
-	var limit = constrained.GetOptionalLimit()
-	if col.IsDefined(limit) {
-		var optionalNumber = limit.GetOptionalNumber()
-		if col.IsDefined(optionalNumber) {
-			var minimum, _ = stc.Atoi(number)
-			var maximum, _ = stc.Atoi(optionalNumber)
-			if minimum > maximum {
-				var message = "The limit in a constrained cardinality cannot be less than the minimum."
-				panic(message)
-			}
 		}
 	}
 }
@@ -189,6 +177,22 @@ func (v *validator_) PreprocessExpression(
 	}
 	var pattern = expression.GetPattern()
 	v.expressions_.SetValue(lowercase, pattern)
+}
+
+func (v *validator_) PreprocessQuantified(quantified ast.QuantifiedLike) {
+	var number = quantified.GetNumber()
+	var limit = quantified.GetOptionalLimit()
+	if col.IsDefined(limit) {
+		var optionalNumber = limit.GetOptionalNumber()
+		if col.IsDefined(optionalNumber) {
+			var minimum, _ = stc.Atoi(number)
+			var maximum, _ = stc.Atoi(optionalNumber)
+			if minimum > maximum {
+				var message = "The limit in a quantified cardinality cannot be less than the minimum."
+				panic(message)
+			}
+		}
+	}
 }
 
 func (v *validator_) PreprocessRule(

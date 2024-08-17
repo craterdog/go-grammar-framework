@@ -96,11 +96,11 @@ func (v *visitor_) visitAlternative(alternative ast.AlternativeLike) {
 }
 
 func (v *visitor_) visitBounded(bounded ast.BoundedLike) {
-	// Visit the initial glyph.
-	var glyph = bounded.GetGlyph()
-	v.processor_.ProcessGlyph(glyph)
+	// Visit the initial runic.
+	var runic = bounded.GetRunic()
+	v.processor_.ProcessRunic(runic)
 
-	// Visit the optional extent glyph.
+	// Visit the optional extent runic.
 	var extent = bounded.GetOptionalExtent()
 	if col.IsDefined(extent) {
 		v.processor_.PreprocessExtent(extent)
@@ -116,8 +116,10 @@ func (v *visitor_) visitCardinality(cardinality ast.CardinalityLike) {
 		v.processor_.PreprocessConstrained(actual)
 		v.visitConstrained(actual)
 		v.processor_.PostprocessConstrained(actual)
-	case string:
-		v.processor_.ProcessQuantified(actual)
+	case ast.QuantifiedLike:
+		v.processor_.PreprocessQuantified(actual)
+		v.visitQuantified(actual)
+		v.processor_.PostprocessQuantified(actual)
 	default:
 		panic("A cardinality must have a constrained or quantified value.")
 	}
@@ -138,25 +140,20 @@ func (v *visitor_) visitCharacter(character ast.CharacterLike) {
 }
 
 func (v *visitor_) visitConstrained(constrained ast.ConstrainedLike) {
-	// Visit the opening delimiter string.
-	var delimiter = constrained.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
-
-	// Visit the minimum value.
-	var number = constrained.GetNumber()
-	v.processor_.ProcessNumber(number)
-
-	// Visit the optional limit value.
-	var limit = constrained.GetOptionalLimit()
-	if col.IsDefined(limit) {
-		v.processor_.PreprocessLimit(limit)
-		v.visitLimit(limit)
-		v.processor_.PostprocessLimit(limit)
+	// Visit the possible constrained cardinality types.
+	var string_ = constrained.GetAny().(string)
+	switch {
+	case Scanner().MatchesType(string_, OptionalToken):
+		v.processor_.ProcessOptional(string_)
+	case Scanner().MatchesType(string_, RepeatedToken):
+		v.processor_.ProcessRepeated(string_)
+	default:
+		var message = fmt.Sprintf(
+			"An invalid constrained cardinality was found: %v",
+			string_,
+		)
+		panic(message)
 	}
-
-	// Visit the closing delimiter string.
-	delimiter = constrained.GetDelimiter2()
-	v.processor_.ProcessDelimiter(delimiter)
 }
 
 func (v *visitor_) visitDefinition(definition ast.DefinitionLike) {
@@ -238,9 +235,9 @@ func (v *visitor_) visitExtent(extent ast.ExtentLike) {
 	var delimiter = extent.GetDelimiter()
 	v.processor_.ProcessDelimiter(delimiter)
 
-	// Visit the glyph.
-	var glyph = extent.GetGlyph()
-	v.processor_.ProcessGlyph(glyph)
+	// Visit the runic.
+	var runic = extent.GetRunic()
+	v.processor_.ProcessRunic(runic)
 }
 
 func (v *visitor_) visitFactor(factor ast.FactorLike) {
@@ -263,10 +260,10 @@ func (v *visitor_) visitFactor(factor ast.FactorLike) {
 }
 
 func (v *visitor_) visitFiltered(filtered ast.FilteredLike) {
-	// Visit the optional negation.
-	var negation = filtered.GetOptionalNegation()
-	if col.IsDefined(negation) {
-		v.processor_.ProcessNegation(negation)
+	// Visit the optional excluded.
+	var excluded = filtered.GetOptionalExcluded()
+	if col.IsDefined(excluded) {
+		v.processor_.ProcessExcluded(excluded)
 	}
 
 	// Visit the opening delimiter string.
@@ -445,6 +442,28 @@ func (v *visitor_) visitPredicate(predicate ast.PredicateLike) {
 	}
 }
 
+func (v *visitor_) visitQuantified(quantified ast.QuantifiedLike) {
+	// Visit the opening delimiter string.
+	var delimiter = quantified.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
+
+	// Visit the minimum value.
+	var number = quantified.GetNumber()
+	v.processor_.ProcessNumber(number)
+
+	// Visit the optional limit value.
+	var limit = quantified.GetOptionalLimit()
+	if col.IsDefined(limit) {
+		v.processor_.PreprocessLimit(limit)
+		v.visitLimit(limit)
+		v.processor_.PostprocessLimit(limit)
+	}
+
+	// Visit the closing delimiter string.
+	delimiter = quantified.GetDelimiter2()
+	v.processor_.ProcessDelimiter(delimiter)
+}
+
 func (v *visitor_) visitRule(rule ast.RuleLike) {
 	// Visit the optional comment.
 	var comment = rule.GetOptionalComment()
@@ -563,8 +582,8 @@ func (v *visitor_) visitTextual(textual ast.TextualLike) {
 	switch {
 	case Scanner().MatchesType(string_, IntrinsicToken):
 		v.processor_.ProcessIntrinsic(string_)
-	case Scanner().MatchesType(string_, GlyphToken):
-		v.processor_.ProcessGlyph(string_)
+	case Scanner().MatchesType(string_, RunicToken):
+		v.processor_.ProcessRunic(string_)
 	case Scanner().MatchesType(string_, LiteralToken):
 		v.processor_.ProcessLiteral(string_)
 	case Scanner().MatchesType(string_, LowercaseToken):

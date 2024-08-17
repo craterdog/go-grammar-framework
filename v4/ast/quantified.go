@@ -14,55 +14,54 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var filteredClass = &filteredClass_{
+var quantifiedClass = &quantifiedClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Filtered() FilteredClassLike {
-	return filteredClass
+func Quantified() QuantifiedClassLike {
+	return quantifiedClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type filteredClass_ struct {
+type quantifiedClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *filteredClass_) Make(
-	optionalExcluded string,
+func (c *quantifiedClass_) Make(
 	delimiter string,
-	characters abs.Sequential[CharacterLike],
+	number string,
+	optionalLimit LimitLike,
 	delimiter2 string,
-) FilteredLike {
+) QuantifiedLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(delimiter):
 		panic("The delimiter attribute is required by this class.")
-	case col.IsUndefined(characters):
-		panic("The characters attribute is required by this class.")
+	case col.IsUndefined(number):
+		panic("The number attribute is required by this class.")
 	case col.IsUndefined(delimiter2):
 		panic("The delimiter2 attribute is required by this class.")
 	default:
-		return &filtered_{
+		return &quantified_{
 			// Initialize instance attributes.
-			class_:            c,
-			optionalExcluded_: optionalExcluded,
-			delimiter_:        delimiter,
-			characters_:       characters,
-			delimiter2_:       delimiter2,
+			class_:         c,
+			delimiter_:     delimiter,
+			number_:        number,
+			optionalLimit_: optionalLimit,
+			delimiter2_:    delimiter2,
 		}
 	}
 }
@@ -71,34 +70,34 @@ func (c *filteredClass_) Make(
 
 // Target
 
-type filtered_ struct {
+type quantified_ struct {
 	// Define instance attributes.
-	class_            FilteredClassLike
-	optionalExcluded_ string
-	delimiter_        string
-	characters_       abs.Sequential[CharacterLike]
-	delimiter2_       string
+	class_         QuantifiedClassLike
+	delimiter_     string
+	number_        string
+	optionalLimit_ LimitLike
+	delimiter2_    string
 }
 
 // Attributes
 
-func (v *filtered_) GetClass() FilteredClassLike {
+func (v *quantified_) GetClass() QuantifiedClassLike {
 	return v.class_
 }
 
-func (v *filtered_) GetOptionalExcluded() string {
-	return v.optionalExcluded_
-}
-
-func (v *filtered_) GetDelimiter() string {
+func (v *quantified_) GetDelimiter() string {
 	return v.delimiter_
 }
 
-func (v *filtered_) GetCharacters() abs.Sequential[CharacterLike] {
-	return v.characters_
+func (v *quantified_) GetNumber() string {
+	return v.number_
 }
 
-func (v *filtered_) GetDelimiter2() string {
+func (v *quantified_) GetOptionalLimit() LimitLike {
+	return v.optionalLimit_
+}
+
+func (v *quantified_) GetDelimiter2() string {
 	return v.delimiter2_
 }
 

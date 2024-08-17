@@ -42,20 +42,20 @@ type extentClass_ struct {
 
 func (c *extentClass_) Make(
 	delimiter string,
-	glyph string,
+	runic string,
 ) ExtentLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(delimiter):
 		panic("The delimiter attribute is required by this class.")
-	case col.IsUndefined(glyph):
-		panic("The glyph attribute is required by this class.")
+	case col.IsUndefined(runic):
+		panic("The runic attribute is required by this class.")
 	default:
 		return &extent_{
 			// Initialize instance attributes.
 			class_:     c,
 			delimiter_: delimiter,
-			glyph_:     glyph,
+			runic_:     runic,
 		}
 	}
 }
@@ -68,7 +68,7 @@ type extent_ struct {
 	// Define instance attributes.
 	class_     ExtentClassLike
 	delimiter_ string
-	glyph_     string
+	runic_     string
 }
 
 // Attributes
@@ -81,8 +81,8 @@ func (v *extent_) GetDelimiter() string {
 	return v.delimiter_
 }
 
-func (v *extent_) GetGlyph() string {
-	return v.glyph_
+func (v *extent_) GetRunic() string {
+	return v.runic_
 }
 
 // Private

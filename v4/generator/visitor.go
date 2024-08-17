@@ -13,11 +13,11 @@
 package generator
 
 import (
+	fmt "fmt"
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
-	mod "github.com/craterdog/go-model-framework/v4"
 	sts "strings"
 	uni "unicode"
 )
@@ -64,10 +64,11 @@ func (c *visitorClass_) Make() VisitorLike {
 
 type visitor_ struct {
 	// Define the instance attributes.
-	class_      VisitorClassLike
-	visitor_    gra.VisitorLike
-	rules_      abs.SetLike[string]
-	attributes_ abs.ListLike[mod.AttributeLike]
+	class_   VisitorClassLike
+	visitor_ gra.VisitorLike
+	rules_   abs.SetLike[string]
+	method_  sts.Builder
+	methods_ abs.CatalogLike[string, string]
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -97,37 +98,57 @@ func (v *visitor_) GenerateVisitorClass(
 	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
 	var lowercase = v.makeLowercase(name)
 	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
-	var visitRules = v.extractVisitRules()
-	implementation = sts.ReplaceAll(implementation, "<VisitRules>", visitRules)
+	var methods = v.extractMethods()
+	implementation = sts.ReplaceAll(implementation, "<Methods>", methods)
 	return implementation
 }
 
 // Methodical
 
-func (v *visitor_) PreprocessFactor(
-	factor ast.FactorLike,
-	index uint,
-	size uint,
+func (v *visitor_) PreprocessPredicate(
+	predicate ast.PredicateLike,
 ) {
-	switch factor.GetAny().(type) {
-	case string:
-		var abstraction = mod.Abstraction("string")
-		var attribute = mod.Attribute(
-			"GetLiteral",
-			abstraction,
-		)
-		v.attributes_.AppendValue(attribute)
+	// Check to see if the predicate is optional.
+	var optional bool
+	var cardinality = predicate.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		switch actual := cardinality.GetAny().(type) {
+		case ast.ConstrainedLike:
+			if actual.GetAny().(string) == "?" {
+				optional = true
+			}
+		}
 	}
-}
 
-func (v *visitor_) PostprocessMultilined(multilined ast.MultilinedLike) {
-	var abstraction = mod.Abstraction("any")
-	var attribute = mod.Attribute(
-		"GetAny",
-		abstraction,
-	)
-	v.attributes_ = col.List[mod.AttributeLike]()
-	v.attributes_.AppendValue(attribute)
+	// Choose the right method template.
+	var template string
+	var identifier = predicate.GetIdentifier().GetAny().(string)
+	var lowercase = v.makeLowercase(identifier)
+	var uppercase = v.makeUppercase(identifier)
+	switch {
+	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
+		template = visitTokenTemplate_
+		if optional {
+			template = visitOptionalTokenTemplate_
+		}
+		template = sts.ReplaceAll(template, "<tokenName>", lowercase)
+		template = sts.ReplaceAll(template, "<TokenName>", uppercase)
+	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
+		template = visitRuleTemplate_
+		if optional {
+			template = visitOptionalRuleTemplate_
+		}
+		template = sts.ReplaceAll(template, "<ruleName>", lowercase)
+		template = sts.ReplaceAll(template, "<RuleName>", uppercase)
+	default:
+		var message = fmt.Sprintf(
+			"An invalid identifier was found: %v\n",
+			identifier,
+		)
+		panic(message)
+	}
+
+	v.method_.WriteString(template)
 }
 
 func (v *visitor_) PreprocessRule(
@@ -135,16 +156,42 @@ func (v *visitor_) PreprocessRule(
 	index uint,
 	size uint,
 ) {
-	var name = rule.GetUppercase()
-	v.rules_.AddValue(v.makeLowercase(name))
-	v.attributes_ = col.List[mod.AttributeLike]()
+	var name = v.makeLowercase(rule.GetUppercase())
+	v.rules_.AddValue(name)
+	v.method_.Reset()
+}
+
+func (v *visitor_) PostprocessRule(
+	rule ast.RuleLike,
+	index uint,
+	size uint,
+) {
+	var name = v.makeLowercase(rule.GetUppercase())
+	v.methods_.SetValue(name, v.method_.String())
 }
 
 func (v *visitor_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.rules_ = col.Set[string]()
+	v.methods_ = col.Catalog[string, string]()
 }
 
 // Private
+
+func (v *visitor_) extractMethods() string {
+	var methods string
+	var iterator = v.rules_.GetIterator()
+	for iterator.HasNext() {
+		var rule = iterator.GetNext()
+		var implementation = v.methods_.GetValue(rule)
+		var method = methodTemplate_
+		method = sts.ReplaceAll(method, "<Implementation>", implementation)
+		method = sts.ReplaceAll(method, "<rule>", rule)
+		var uppercase = v.makeUppercase(rule)
+		method = sts.ReplaceAll(method, "<Rule>", uppercase)
+		methods += method
+	}
+	return methods
+}
 
 func (v *visitor_) extractNotice(syntax ast.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetIterator().GetNext()
@@ -160,20 +207,6 @@ func (v *visitor_) extractSyntaxName(syntax ast.SyntaxLike) string {
 	var rule = syntax.GetRules().GetIterator().GetNext()
 	var name = rule.GetUppercase()
 	return name
-}
-
-func (v *visitor_) extractVisitRules() string {
-	var visitRules string
-	var iterator = v.rules_.GetIterator()
-	for iterator.HasNext() {
-		var visitRule = visitTemplate_
-		var ruleName = iterator.GetNext()
-		visitRule = sts.ReplaceAll(visitRule, "<ruleName>", ruleName)
-		ruleName = v.makeUppercase(ruleName)
-		visitRule = sts.ReplaceAll(visitRule, "<RuleName>", ruleName)
-		visitRules += visitRule
-	}
-	return visitRules
 }
 
 func (v *visitor_) makeLowercase(name string) string {
@@ -192,11 +225,85 @@ func (v *visitor_) makeUppercase(name string) string {
 	return string(runes)
 }
 
-const visitTemplate_ = `
-func (v *visitor_) visit<RuleName>(<ruleName> ast.<RuleName>Like) {
-	panic("The visit<RuleName>() method has not yet been implemented.")
-}
+const methodTemplate_ = `
+func (v *visitor_) visit<Rule>(<rule> ast.<Rule>Like) {<Implementation>}
 `
+
+const visitOptionalTokenTemplate_ = `
+	// Visit the optional <tokenName> token.
+	var <tokenName> = <rule>.GetOptional<TokenName>()
+	if col.IsDefined(<tokenName>) {
+		v.processor_.Process<TokenName>(<tokenName>)
+	}
+`
+
+const visitTokenTemplate_ = `
+	// Visit the <tokenName> token.
+	var <tokenName> = <rule>.Get<TokenName>()
+	v.processor_.Process<TokenName>(<tokenName>)
+`
+
+/*
+const visitSingleTokenTemplate_ = `
+	// Visit the <tokenName> token.
+	var <tokenName> = <rule>.Get<TokenName>()
+	v.processor_.Process<TokenName>(<tokenName>, 1, 1)
+`
+
+const visitTokensTemplate_ = `
+	// Visit each <tokenName> token.
+	var index uint
+	var <tokens> = <rule>.Get<Tokens>().GetIterator()
+	var size = uint(<tokens>.GetSize())
+	for <tokens>.HasNext() {
+		index++
+		var <tokenName> = <tokens>.GetNext()
+		v.processor_.Process<TokenName>(<tokenName>, index, size)
+	}
+`
+*/
+
+const visitOptionalRuleTemplate_ = `
+	// Visit the optional <ruleName>.
+	var <ruleName> = <rule>.GetOptional<RuleName>()
+	if col.IsDefined(<ruleName>) {
+		v.processor_.Preprocess<RuleName>(<ruleName>)
+		v.visit<RuleName>(<ruleName>)
+		v.processor_.Postprocess<RuleName>(<ruleName>)
+	}
+`
+
+const visitRuleTemplate_ = `
+	// Visit the <ruleName>.
+	var <ruleName> = <rule>.Get<RuleName>()
+	v.processor_.Preprocess<RuleName>(<ruleName>)
+	v.visit<RuleName>(<ruleName>)
+	v.processor_.Postprocess<RuleName>(<ruleName>)
+`
+
+/*
+const visitSingleRuleTemplate_ = `
+	// Visit the <ruleName>.
+	var <ruleName> = <rule>.Get<RuleName>()
+	v.processor_.Preprocess<RuleName>(<ruleName>, 1, 1)
+	v.visit<RuleName>(<ruleName>)
+	v.processor_.Postprocess<RuleName>(<ruleName>, 1, 1)
+`
+
+const visitRulesTemplate_ = `
+	// Visit each <ruleName>.
+	var index uint
+	var <rules> = <rule>.Get<Rules>().GetIterator()
+	var size = uint(<rules>.GetSize())
+	for <rules>.HasNext() {
+		index++
+		var <ruleName> = <rules>.GetNext()
+		v.processor_.Preprocess<RuleName>(<ruleName>, index, size)
+		v.visit<RuleName>(<ruleName>)
+		v.processor_.Postprocess<RuleName>(<ruleName>, index, size)
+	}
+`
+*/
 
 const visitorTemplate_ = `/*<Notice>*/
 
@@ -272,4 +379,4 @@ func (v *visitor_) Visit<Name>(<name> ast.<Name>Like) {
 }
 
 // Private
-<VisitRules>`
+<Methods>`

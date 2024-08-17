@@ -52,15 +52,16 @@ const (
 	ErrorToken TokenType = iota
 	CommentToken
 	DelimiterToken
-	GlyphToken
+	ExcludedToken
 	IntrinsicToken
 	LiteralToken
 	LowercaseToken
-	NegationToken
 	NewlineToken
 	NoteToken
 	NumberToken
-	QuantifiedToken
+	OptionalToken
+	RepeatedToken
+	RunicToken
 	SpaceToken
 	UppercaseToken
 )
@@ -268,11 +269,10 @@ by all methodical processors.
 type Methodical interface {
 	ProcessComment(comment string)
 	ProcessDelimiter(delimiter string)
-	ProcessGlyph(glyph string)
+	ProcessExcluded(excluded string)
 	ProcessIntrinsic(intrinsic string)
 	ProcessLiteral(literal string)
 	ProcessLowercase(lowercase string)
-	ProcessNegation(negation string)
 	ProcessNewline(
 		newline string,
 		index uint,
@@ -280,7 +280,9 @@ type Methodical interface {
 	)
 	ProcessNote(note string)
 	ProcessNumber(number string)
-	ProcessQuantified(quantified string)
+	ProcessOptional(optional string)
+	ProcessRepeated(repeated string)
+	ProcessRunic(runic string)
 	ProcessUppercase(uppercase string)
 	PreprocessAlternative(
 		alternative ast.AlternativeLike,
@@ -380,6 +382,8 @@ type Methodical interface {
 	PostprocessPattern(pattern ast.PatternLike)
 	PreprocessPredicate(predicate ast.PredicateLike)
 	PostprocessPredicate(predicate ast.PredicateLike)
+	PreprocessQuantified(quantified ast.QuantifiedLike)
+	PostprocessQuantified(quantified ast.QuantifiedLike)
 	PreprocessRule(
 		rule ast.RuleLike,
 		index uint,

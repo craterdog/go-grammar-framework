@@ -26,36 +26,38 @@ import (
 var scannerClass = &scannerClass_{
 	// Initialize the class constants.
 	tokens_: map[TokenType]string{
-		ErrorToken:      "error",
-		CommentToken:    "comment",
-		DelimiterToken:  "delimiter",
-		GlyphToken:      "glyph",
-		IntrinsicToken:  "intrinsic",
-		LiteralToken:    "literal",
-		LowercaseToken:  "lowercase",
-		NegationToken:   "negation",
-		NewlineToken:    "newline",
-		NoteToken:       "note",
-		NumberToken:     "number",
-		QuantifiedToken: "quantified",
-		SpaceToken:      "space",
-		UppercaseToken:  "uppercase",
+		ErrorToken:     "error",
+		CommentToken:   "comment",
+		DelimiterToken: "delimiter",
+		ExcludedToken:  "excluded",
+		IntrinsicToken: "intrinsic",
+		LiteralToken:   "literal",
+		LowercaseToken: "lowercase",
+		NewlineToken:   "newline",
+		NoteToken:      "note",
+		NumberToken:    "number",
+		OptionalToken:  "optional",
+		RepeatedToken:  "repeated",
+		RunicToken:     "runic",
+		SpaceToken:     "space",
+		UppercaseToken: "uppercase",
 	},
 	matchers_: map[TokenType]*reg.Regexp{
 		// Define pattern matchers for each type of token.
-		CommentToken:    reg.MustCompile("^" + comment_),
-		DelimiterToken:  reg.MustCompile("^" + delimiter_),
-		GlyphToken:      reg.MustCompile("^" + glyph_),
-		IntrinsicToken:  reg.MustCompile("^" + intrinsic_),
-		LiteralToken:    reg.MustCompile("^" + literal_),
-		LowercaseToken:  reg.MustCompile("^" + lowercase_),
-		NegationToken:   reg.MustCompile("^" + negation_),
-		NewlineToken:    reg.MustCompile("^" + newline_),
-		NoteToken:       reg.MustCompile("^" + note_),
-		NumberToken:     reg.MustCompile("^" + number_),
-		QuantifiedToken: reg.MustCompile("^" + quantified_),
-		SpaceToken:      reg.MustCompile("^" + space_),
-		UppercaseToken:  reg.MustCompile("^" + uppercase_),
+		CommentToken:   reg.MustCompile("^" + comment_),
+		DelimiterToken: reg.MustCompile("^" + delimiter_),
+		ExcludedToken:  reg.MustCompile("^" + excluded_),
+		IntrinsicToken: reg.MustCompile("^" + intrinsic_),
+		LiteralToken:   reg.MustCompile("^" + literal_),
+		LowercaseToken: reg.MustCompile("^" + lowercase_),
+		NewlineToken:   reg.MustCompile("^" + newline_),
+		NoteToken:      reg.MustCompile("^" + note_),
+		NumberToken:    reg.MustCompile("^" + number_),
+		OptionalToken:  reg.MustCompile("^" + optional_),
+		RepeatedToken:  reg.MustCompile("^" + repeated_),
+		RunicToken:     reg.MustCompile("^" + runic_),
+		SpaceToken:     reg.MustCompile("^" + space_),
+		UppercaseToken: reg.MustCompile("^" + uppercase_),
 	},
 }
 
@@ -164,22 +166,23 @@ const (
 	upper_   = "\\p{Lu}"
 
 	// Define the regular expression patterns for each token type.
-	base16_     = "(?:[0-9a-f])"
-	comment_    = "(?:!>" + eol_ + "(" + any_ + "|" + eol_ + ")*?" + eol_ + "<!" + eol_ + ")"
-	delimiter_  = "(?::|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
-	escape_     = "(?:\\\\((?:" + unicode_ + ")|[abfnrtv\"\\\\]))"
-	glyph_      = "(?:'[^" + control_ + "]')"
-	intrinsic_  = "(?:ANY|CONTROL|DIGIT|EOL|LOWER|UPPER)"
-	literal_    = "(?:\"((?:" + escape_ + ")|[^\"" + control_ + "])+\")"
-	lowercase_  = "(?:" + lower_ + "(" + digit_ + "|" + lower_ + "|" + upper_ + ")*)"
-	negation_   = "(?:~)"
-	newline_    = "(?:" + eol_ + ")"
-	note_       = "(?:! [^" + control_ + "]*)"
-	number_     = "(?:" + digit_ + "+)"
-	quantified_ = "(?:\\?|\\*|\\+)"
-	space_      = "(?:[ \\t]+)"
-	unicode_    = "(?:(x(?:" + base16_ + "){2})|(u(?:" + base16_ + "){4})|(U(?:" + base16_ + "){8}))"
-	uppercase_  = "(?:" + upper_ + "(" + digit_ + "|" + lower_ + "|" + upper_ + ")*)"
+	base16_    = "(?:[0-9a-f])"
+	comment_   = "(?:!>" + eol_ + "(" + any_ + "|" + eol_ + ")*?" + eol_ + "<!" + eol_ + ")"
+	delimiter_ = "(?::|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
+	escape_    = "(?:\\\\((?:" + unicode_ + ")|[abfnrtv\"\\\\]))"
+	excluded_  = "(?:~)"
+	intrinsic_ = "(?:ANY|CONTROL|DIGIT|EOL|LOWER|UPPER)"
+	literal_   = "(?:\"((?:" + escape_ + ")|[^\"" + control_ + "])+\")"
+	lowercase_ = "(?:" + lower_ + "(" + digit_ + "|" + lower_ + "|" + upper_ + ")*)"
+	newline_   = "(?:" + eol_ + ")"
+	note_      = "(?:! [^" + control_ + "]*)"
+	number_    = "(?:" + digit_ + "+)"
+	optional_  = "(?:\\?)"
+	repeated_  = "(?:\\*|\\+)"
+	runic_     = "(?:'[^" + control_ + "]')"
+	space_     = "(?:[ \\t]+)"
+	unicode_   = "(?:(x(?:" + base16_ + "){2})|(u(?:" + base16_ + "){4})|(U(?:" + base16_ + "){8}))"
+	uppercase_ = "(?:" + upper_ + "(" + digit_ + "|" + lower_ + "|" + upper_ + ")*)"
 )
 
 func (v *scanner_) emitToken(tokenType TokenType) {
@@ -260,15 +263,16 @@ loop:
 		// Find the next token type.
 		case v.foundToken(CommentToken):
 		case v.foundToken(DelimiterToken):
-		case v.foundToken(GlyphToken):
+		case v.foundToken(ExcludedToken):
 		case v.foundToken(IntrinsicToken):
 		case v.foundToken(LiteralToken):
 		case v.foundToken(LowercaseToken):
-		case v.foundToken(NegationToken):
 		case v.foundToken(NewlineToken):
 		case v.foundToken(NoteToken):
 		case v.foundToken(NumberToken):
-		case v.foundToken(QuantifiedToken):
+		case v.foundToken(OptionalToken):
+		case v.foundToken(RepeatedToken):
+		case v.foundToken(RunicToken):
 		case v.foundToken(SpaceToken):
 		case v.foundToken(UppercaseToken):
 		default:

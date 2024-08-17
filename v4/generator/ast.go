@@ -133,10 +133,10 @@ func (v *ast_) PreprocessPredicate(
 	var cardinality = predicate.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		switch actual := cardinality.GetAny().(type) {
-		case ast.ConstrainedLike:
+		case ast.QuantifiedLike:
 			attribute = v.pluralizeAttribute(attribute)
-		case string:
-			switch actual {
+		case ast.ConstrainedLike:
+			switch actual.GetAny().(string) {
 			case "?":
 				// This attribute is optional.
 				attribute = v.optionalizeAttribute(attribute)

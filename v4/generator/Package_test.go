@@ -123,9 +123,8 @@ pattern declarations:
  * CONTROL - Any environment specific (non-printable) control character.
  * EOL - The environment specific end-of-line character.
 
-The negation "~" prefix within a regular expression pattern may only be applied
-to a bounded range of possible intrinsic character types or printable unicode
-characters called runes.
+The excluded "~" prefix within a regular expression pattern may only be applied
+to a bounded range of possible character types.
 <!
 
 !>
@@ -1235,23 +1234,41 @@ func (v *visitor_) VisitDocument(document ast.DocumentLike) {
 // Private
 
 func (v *visitor_) visitAdditional(additional ast.AdditionalLike) {
-	panic("The visitAdditional() method has not yet been implemented.")
+	// Visit the component.
+	var component = additional.GetComponent()
+	v.processor_.PreprocessComponent(component)
+	v.visitComponent(component)
+	v.processor_.PostprocessComponent(component)
 }
 
-func (v *visitor_) visitComponent(component ast.ComponentLike) {
-	panic("The visitComponent() method has not yet been implemented.")
-}
+func (v *visitor_) visitComponent(component ast.ComponentLike) {}
 
 func (v *visitor_) visitDocument(document ast.DocumentLike) {
-	panic("The visitDocument() method has not yet been implemented.")
+	// Visit the component.
+	var component = document.GetComponent()
+	v.processor_.PreprocessComponent(component)
+	v.visitComponent(component)
+	v.processor_.PostprocessComponent(component)
+
+	// Visit the newline token.
+	var newline = document.GetNewline()
+	v.processor_.ProcessNewline(newline)
 }
 
-func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {
-	panic("The visitIntrinsic() method has not yet been implemented.")
-}
+func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {}
 
 func (v *visitor_) visitList(list ast.ListLike) {
-	panic("The visitList() method has not yet been implemented.")
+	// Visit the component.
+	var component = list.GetComponent()
+	v.processor_.PreprocessComponent(component)
+	v.visitComponent(component)
+	v.processor_.PostprocessComponent(component)
+
+	// Visit the additional.
+	var additional = list.GetAdditional()
+	v.processor_.PreprocessAdditional(additional)
+	v.visitAdditional(additional)
+	v.processor_.PostprocessAdditional(additional)
 }
 `
 
