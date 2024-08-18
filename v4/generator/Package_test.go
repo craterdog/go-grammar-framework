@@ -1241,6 +1241,22 @@ func (v *visitor_) visitAdditional(additional ast.AdditionalLike) {
 	v.processor_.PostprocessComponent(component)
 }
 
+func (v *visitor_) visitComponent(component ast.ComponentLike) {
+	// Visit the possible component types.
+	switch actual := component.GetAny().(type) {
+	case ast.IntrinsicLike:
+		v.processor_.PreprocessIntrinsic(actual)
+		v.visitIntrinsic(actual)
+		v.processor_.PostprocessIntrinsic(actual)
+	case ast.ListLike:
+		v.processor_.PreprocessList(actual)
+		v.visitList(actual)
+		v.processor_.PostprocessList(actual)
+	default:
+		panic(fmt.Sprintf("Invalid rule type: %T", actual))
+	}
+}
+
 func (v *visitor_) visitDocument(document ast.DocumentLike) {
 	// Visit the component.
 	var component = document.GetComponent()
@@ -1256,42 +1272,6 @@ func (v *visitor_) visitDocument(document ast.DocumentLike) {
 		index++
 		var newline = newlines.GetNext()
 		v.processor_.ProcessNewline(newline, index, size)
-	}
-}
-
-func (v *visitor_) visitList(list ast.ListLike) {
-	// Visit the component.
-	var component = list.GetComponent()
-	v.processor_.PreprocessComponent(component)
-	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component)
-
-	// Visit each additional.
-	var index uint
-	var additionals = list.GetAdditionals().GetIterator()
-	var size = uint(additionals.GetSize())
-	for additionals.HasNext() {
-		index++
-		var additional = additionals.GetNext()
-		v.processor_.PreprocessAdditional(additional, index, size)
-		v.visitAdditional(additional)
-		v.processor_.PostprocessAdditional(additional, index, size)
-	}
-}
-
-func (v *visitor_) visitComponent(component ast.ComponentLike) {
-	// Visit the possible component types.
-	switch actual := component.GetAny().(type) {
-	case ast.IntrinsicLike:
-		v.processor_.PreprocessIntrinsic(intrinsic)
-		v.visitIntrinsic(intrinsic)
-		v.processor_.PostprocessIntrinsic(intrinsic)
-	case ast.ListLike:
-		v.processor_.PreprocessList(list)
-		v.visitList(list)
-		v.processor_.PostprocessList(list)
-	default:
-		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
 }
 
@@ -1312,6 +1292,26 @@ func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {
 
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
+	}
+}
+
+func (v *visitor_) visitList(list ast.ListLike) {
+	// Visit the component.
+	var component = list.GetComponent()
+	v.processor_.PreprocessComponent(component)
+	v.visitComponent(component)
+	v.processor_.PostprocessComponent(component)
+
+	// Visit each additional.
+	var index uint
+	var additionals = list.GetAdditionals().GetIterator()
+	var size = uint(additionals.GetSize())
+	for additionals.HasNext() {
+		index++
+		var additional = additionals.GetNext()
+		v.processor_.PreprocessAdditional(additional, index, size)
+		v.visitAdditional(additional)
+		v.processor_.PostprocessAdditional(additional, index, size)
 	}
 }
 `
