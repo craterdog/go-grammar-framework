@@ -139,7 +139,7 @@ sequence of factors within in a rule definition may be separated by spaces which
 are ignored by the parser.  Newlines are also ignored unless a "newline" regular
 expression pattern is defined and used in one or more rule definitions.
 <!
-Document: Component newline*
+Document: Component+ newline*
 
 Component:
     Intrinsic
@@ -1123,10 +1123,18 @@ func (v *processor_) PostprocessAdditional(
 ) {
 }
 
-func (v *processor_) PreprocessComponent(component ast.ComponentLike) {
+func (v *processor_) PreprocessComponent(
+	component ast.ComponentLike,
+	index uint,
+	size uint,
+) {
 }
 
-func (v *processor_) PostprocessComponent(component ast.ComponentLike) {
+func (v *processor_) PostprocessComponent(
+	component ast.ComponentLike,
+	index uint,
+	size uint,
+) {
 }
 
 func (v *processor_) PreprocessDocument(document ast.DocumentLike) {
@@ -1233,15 +1241,23 @@ func (v *visitor_) VisitDocument(document ast.DocumentLike) {
 
 // Private
 
-func (v *visitor_) visitAdditional(additional ast.AdditionalLike) {
+func (v *visitor_) visitAdditional(
+	additional ast.AdditionalLike,
+	index uint,
+	size uint,
+) {
 	// Visit the component.
 	var component = additional.GetComponent()
-	v.processor_.PreprocessComponent(component)
+	v.processor_.PreprocessComponent(component, 1, 1)
 	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component)
+	v.processor_.PostprocessComponent(component, 1, 1)
 }
 
-func (v *visitor_) visitComponent(component ast.ComponentLike) {
+func (v *visitor_) visitComponent(
+	component ast.ComponentLike,
+	index uint,
+	size uint,
+) {
 	// Visit the possible component types.
 	switch actual := component.GetAny().(type) {
 	case ast.IntrinsicLike:
@@ -1258,11 +1274,17 @@ func (v *visitor_) visitComponent(component ast.ComponentLike) {
 }
 
 func (v *visitor_) visitDocument(document ast.DocumentLike) {
-	// Visit the component.
-	var component = document.GetComponent()
-	v.processor_.PreprocessComponent(component)
-	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component)
+	// Visit each component.
+	var index uint
+	var components = document.GetComponents().GetIterator()
+	var size = uint(components.GetSize())
+	for components.HasNext() {
+		index++
+		var component = components.GetNext()
+		v.processor_.PreprocessComponent(component, index, size)
+		v.visitComponent(component)
+		v.processor_.PostprocessComponent(component, index, size)
+	}
 
 	// Visit each newline token.
 	var index uint
@@ -1298,9 +1320,9 @@ func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {
 func (v *visitor_) visitList(list ast.ListLike) {
 	// Visit the component.
 	var component = list.GetComponent()
-	v.processor_.PreprocessComponent(component)
+	v.processor_.PreprocessComponent(component, 1, 1)
 	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component)
+	v.processor_.PostprocessComponent(component, 1, 1)
 
 	// Visit each additional.
 	var index uint
@@ -1596,8 +1618,16 @@ type Methodical interface {
 		index uint,
 		size uint,
 	)
-	PreprocessComponent(component ast.ComponentLike)
-	PostprocessComponent(component ast.ComponentLike)
+	PreprocessComponent(
+		component ast.ComponentLike,
+		index uint,
+		size uint,
+	)
+	PostprocessComponent(
+		component ast.ComponentLike,
+		index uint,
+		size uint,
+	)
 	PreprocessDocument(document ast.DocumentLike)
 	PostprocessDocument(document ast.DocumentLike)
 	PreprocessIntrinsic(intrinsic ast.IntrinsicLike)
@@ -1675,7 +1705,7 @@ concrete document-like class.
 type DocumentClassLike interface {
 	// Constructors
 	Make(
-		component ComponentLike,
+		components abs.Sequential[ComponentLike],
 		newlines abs.Sequential[string],
 	) DocumentLike
 }
@@ -1738,7 +1768,7 @@ instance of a concrete document-like class.
 type DocumentLike interface {
 	// Attributes
 	GetClass() DocumentClassLike
-	GetComponent() ComponentLike
+	GetComponents() abs.Sequential[ComponentLike]
 	GetNewlines() abs.Sequential[string]
 }
 

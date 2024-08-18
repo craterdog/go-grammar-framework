@@ -186,7 +186,7 @@ sequence of factors within in a rule definition may be separated by spaces which
 are ignored by the parser.  Newlines are also ignored unless a "newline" regular
 expression pattern is defined and used in one or more rule definitions.
 <!
-Document: Component newline*
+Document: Component+ newline*
 
 Component:
     Intrinsic

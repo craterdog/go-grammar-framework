@@ -67,6 +67,7 @@ type visitor_ struct {
 	visitor_    gra.VisitorLike
 	attributes_ abs.ListLike[[2]string]
 	rules_      abs.CatalogLike[string, abs.ListLike[[2]string]]
+	plurals_    abs.SetLike[string]
 	result_     string
 
 	// Define the inherited aspects.
@@ -129,6 +130,9 @@ func (v *visitor_) PreprocessPredicate(
 			plurality = "repeated"
 		}
 	}
+	if plurality == "repeated" {
+		v.plurals_.AddValue(identifier)
+	}
 	v.attributes_.AppendValue([2]string{identifier, plurality})
 }
 
@@ -144,6 +148,7 @@ func (v *visitor_) PreprocessRule(
 
 func (v *visitor_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.rules_ = col.Catalog[string, abs.ListLike[[2]string]]()
+	v.plurals_ = col.Set[string]()
 }
 
 func (v *visitor_) PostprocessSyntax(syntax ast.SyntaxLike) {
@@ -154,48 +159,137 @@ func (v *visitor_) PostprocessSyntax(syntax ast.SyntaxLike) {
 
 // Private
 
+func (v *visitor_) extractMethods() string {
+	var methods string
+	var names = v.rules_.GetKeys().GetIterator()
+	for names.HasNext() {
+		var method string
+		var name = names.GetNext()
+		var attributes = v.rules_.GetValue(name)
+		var plurality = attributes.GetValue(1)[1]
+		switch plurality {
+		case "singular", "optional", "repeated":
+			method = v.extractInlineMethod(name)
+		case "alternative":
+			method = v.extractMultilineMethod(name)
+		}
+		var lowercase = v.makeLowercase(name)
+		method = sts.ReplaceAll(method, "<rule>", lowercase)
+		var uppercase = v.makeUppercase(name)
+		method = sts.ReplaceAll(method, "<Rule>", uppercase)
+		methods += method
+	}
+	return methods
+}
+
+func (v *visitor_) extractInlineMethod(name string) string {
+	var implementation string
+	var attributes = v.rules_.GetValue(name).GetIterator()
+	for attributes.HasNext() {
+		var attribute = attributes.GetNext()
+		implementation += v.extractInlineAttribute(attribute)
+	}
+	var method = methodTemplate_
+	if v.plurals_.ContainsValue(name) {
+		method = methodPluralizedTemplate_
+	}
+	method = sts.ReplaceAll(method, "<Implementation>", implementation)
+	return method
+}
+
 func (v *visitor_) extractInlineAttribute(attribute [2]string) string {
+	var implementation string
+	var identifier = attribute[0]
+	switch {
+	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
+		implementation = v.extractInlineTokenAttribute(attribute)
+	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
+		implementation = v.extractInlineRuleAttribute(attribute)
+	}
+	return implementation
+}
+
+func (v *visitor_) extractInlineTokenAttribute(attribute [2]string) string {
 	var implementation string
 	var identifier = attribute[0]
 	var lowercase = v.makeLowercase(identifier)
 	var uppercase = v.makeUppercase(identifier)
 	var plurality = attribute[1]
-	switch {
-	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
-		switch plurality {
-		case "optional":
-			implementation = visitOptionalTokenTemplate_
-		case "repeated":
-			implementation = visitRepeatedTokenTemplate_
-		default:
-			implementation = visitTokenTemplate_
+	switch plurality {
+	case "optional":
+		implementation = visitOptionalTokenTemplate_
+	case "repeated":
+		implementation = visitRepeatedTokenTemplate_
+	default:
+		implementation = visitTokenTemplate_
+		if v.plurals_.ContainsValue(identifier) {
+			implementation = visitSingleTokenTemplate_
 		}
-		implementation = sts.ReplaceAll(implementation, "<tokenName>", lowercase)
-		implementation = sts.ReplaceAll(implementation, "<TokenName>", uppercase)
-		lowercase = v.makePlural(lowercase)
-		uppercase = v.makePlural(uppercase)
-		implementation = sts.ReplaceAll(implementation, "<tokensName>", lowercase)
-		implementation = sts.ReplaceAll(implementation, "<TokensName>", uppercase)
-	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
-		switch plurality {
-		case "optional":
-			implementation = visitOptionalRuleTemplate_
-		case "repeated":
-			implementation = visitRepeatedRuleTemplate_
-		default:
-			implementation = visitRuleTemplate_
-		}
-		implementation = sts.ReplaceAll(implementation, "<ruleName>", lowercase)
-		implementation = sts.ReplaceAll(implementation, "<RuleName>", uppercase)
-		lowercase = v.makePlural(lowercase)
-		uppercase = v.makePlural(uppercase)
-		implementation = sts.ReplaceAll(implementation, "<rulesName>", lowercase)
-		implementation = sts.ReplaceAll(implementation, "<RulesName>", uppercase)
 	}
+	implementation = sts.ReplaceAll(implementation, "<tokenName>", lowercase)
+	implementation = sts.ReplaceAll(implementation, "<TokenName>", uppercase)
+	lowercase = v.makePlural(lowercase)
+	uppercase = v.makePlural(uppercase)
+	implementation = sts.ReplaceAll(implementation, "<tokensName>", lowercase)
+	implementation = sts.ReplaceAll(implementation, "<TokensName>", uppercase)
 	return implementation
 }
 
-func (v *visitor_) extractTokenAttribute(attribute [2]string) string {
+func (v *visitor_) extractInlineRuleAttribute(attribute [2]string) string {
+	var implementation string
+	var identifier = attribute[0]
+	var lowercase = v.makeLowercase(identifier)
+	var uppercase = v.makeUppercase(identifier)
+	var plurality = attribute[1]
+	switch plurality {
+	case "optional":
+		implementation = visitOptionalRuleTemplate_
+	case "repeated":
+		implementation = visitRepeatedRuleTemplate_
+	default:
+		implementation = visitRuleTemplate_
+		if v.plurals_.ContainsValue(identifier) {
+			implementation = visitSingleRuleTemplate_
+		}
+	}
+	implementation = sts.ReplaceAll(implementation, "<ruleName>", lowercase)
+	implementation = sts.ReplaceAll(implementation, "<RuleName>", uppercase)
+	lowercase = v.makePlural(lowercase)
+	uppercase = v.makePlural(uppercase)
+	implementation = sts.ReplaceAll(implementation, "<rulesName>", lowercase)
+	implementation = sts.ReplaceAll(implementation, "<RulesName>", uppercase)
+	return implementation
+}
+
+func (v *visitor_) extractMultilineMethod(name string) string {
+	var tokenCases string
+	var ruleCases string
+	var attributes = v.rules_.GetValue(name).GetIterator()
+	for attributes.HasNext() {
+		var attribute = attributes.GetNext()
+		var identifier = attribute[0]
+		switch {
+		case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
+			tokenCases += v.extractMultilineTokenAttribute(attribute)
+		case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
+			ruleCases += v.extractMultilineRuleAttribute(attribute)
+		}
+	}
+	var implementation = visitAnyTemplate_
+	implementation = sts.ReplaceAll(implementation, "<RuleCases>", ruleCases)
+	if len(tokenCases) > 0 {
+		tokenCases = sts.ReplaceAll(visitMatchesTemplate_, "<TokenCases>", tokenCases)
+	}
+	implementation = sts.ReplaceAll(implementation, "<TokenCases>", tokenCases)
+	var method = methodTemplate_
+	if v.plurals_.ContainsValue(name) {
+		method = methodPluralizedTemplate_
+	}
+	method = sts.ReplaceAll(method, "<Implementation>", implementation)
+	return method
+}
+
+func (v *visitor_) extractMultilineTokenAttribute(attribute [2]string) string {
 	var implementation string
 	var identifier = attribute[0]
 	var lowercase = v.makeLowercase(identifier)
@@ -206,7 +300,7 @@ func (v *visitor_) extractTokenAttribute(attribute [2]string) string {
 	return implementation
 }
 
-func (v *visitor_) extractRuleAttribute(attribute [2]string) string {
+func (v *visitor_) extractMultilineRuleAttribute(attribute [2]string) string {
 	var implementation string
 	var identifier = attribute[0]
 	var lowercase = v.makeLowercase(identifier)
@@ -215,52 +309,6 @@ func (v *visitor_) extractRuleAttribute(attribute [2]string) string {
 	implementation = sts.ReplaceAll(implementation, "<ruleName>", lowercase)
 	implementation = sts.ReplaceAll(implementation, "<RuleName>", uppercase)
 	return implementation
-}
-
-func (v *visitor_) extractMethods() string {
-	var methods string
-	var names = v.rules_.GetKeys().GetIterator()
-	for names.HasNext() {
-		var name = names.GetNext()
-		var implementation string
-		var ruleCases string
-		var tokenCases string
-		var method = methodTemplate_
-		var list = v.rules_.GetValue(name)
-		var attributes = list.GetIterator()
-		var plurality = list.GetValue(1)[1]
-		switch plurality {
-		case "singular", "optional", "repeated":
-			for attributes.HasNext() {
-				var attribute = attributes.GetNext()
-				implementation += v.extractInlineAttribute(attribute)
-			}
-			method = sts.ReplaceAll(method, "<Implementation>", implementation)
-		case "alternative":
-			for attributes.HasNext() {
-				var attribute = attributes.GetNext()
-				switch {
-				case gra.Scanner().MatchesType(attribute[0], gra.LowercaseToken):
-					tokenCases += v.extractTokenAttribute(attribute)
-				case gra.Scanner().MatchesType(attribute[0], gra.UppercaseToken):
-					ruleCases += v.extractRuleAttribute(attribute)
-				}
-			}
-			var implementation = visitAnyTemplate_
-			method = sts.ReplaceAll(method, "<Implementation>", implementation)
-			method = sts.ReplaceAll(method, "<RuleCases>", ruleCases)
-			if len(tokenCases) > 0 {
-				tokenCases = sts.ReplaceAll(visitMatchesTemplate_, "<TokenCases>", tokenCases)
-			}
-			method = sts.ReplaceAll(method, "<TokenCases>", tokenCases)
-		}
-		var lowercase = v.makeLowercase(name)
-		method = sts.ReplaceAll(method, "<rule>", lowercase)
-		var uppercase = v.makeUppercase(name)
-		method = sts.ReplaceAll(method, "<Rule>", uppercase)
-		methods += method
-	}
-	return methods
 }
 
 func (v *visitor_) extractNotice(syntax ast.SyntaxLike) string {
@@ -308,6 +356,14 @@ const methodTemplate_ = `
 func (v *visitor_) visit<Rule>(<rule> ast.<Rule>Like) {<Implementation>}
 `
 
+const methodPluralizedTemplate_ = `
+func (v *visitor_) visit<Rule>(
+	<rule> ast.<Rule>Like,
+	index uint,
+	size uint,
+) {<Implementation>}
+`
+
 const visitAnyTemplate_ = `
 	// Visit the possible <rule> types.
 	switch actual := <rule>.GetAny().(type) {<RuleCases><TokenCases>
@@ -338,13 +394,11 @@ const visitOptionalTokenTemplate_ = `
 	}
 `
 
-/*
 const visitSingleTokenTemplate_ = `
 	// Visit the <tokenName> token.
 	var <tokenName> = <rule>.Get<TokenName>()
 	v.processor_.Process<TokenName>(<tokenName>, 1, 1)
 `
-*/
 
 const visitRepeatedTokenTemplate_ = `
 	// Visit each <tokenName> token.
@@ -380,7 +434,6 @@ const visitRuleTemplate_ = `
 	v.processor_.Postprocess<RuleName>(<ruleName>)
 `
 
-/*
 const visitSingleRuleTemplate_ = `
 	// Visit the <ruleName>.
 	var <ruleName> = <rule>.Get<RuleName>()
@@ -388,7 +441,6 @@ const visitSingleRuleTemplate_ = `
 	v.visit<RuleName>(<ruleName>)
 	v.processor_.Postprocess<RuleName>(<ruleName>, 1, 1)
 `
-*/
 
 const visitRepeatedRuleTemplate_ = `
 	// Visit each <ruleName>.
