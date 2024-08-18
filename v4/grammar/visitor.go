@@ -248,8 +248,7 @@ func (v *visitor_) visitFactor(factor ast.FactorLike) {
 		v.visitPredicate(actual)
 		v.processor_.PostprocessPredicate(actual)
 	case string:
-		var string_ = factor.GetAny().(string)
-		v.processor_.ProcessLiteral(string_)
+		v.processor_.ProcessLiteral(actual)
 	default:
 		var message = fmt.Sprintf(
 			"An invalid factor type was found: %T",

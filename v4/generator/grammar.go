@@ -128,13 +128,13 @@ func (v *grammar_) PreprocessPredicate(
 	var cardinality = predicate.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		switch actual := cardinality.GetAny().(type) {
-		case ast.QuantifiedLike:
-			v.plurals_.AddValue(identifier)
 		case ast.ConstrainedLike:
 			switch actual.GetAny().(string) {
 			case "*", "+":
 				v.plurals_.AddValue(identifier)
 			}
+		case ast.QuantifiedLike:
+			v.plurals_.AddValue(identifier)
 		}
 	}
 }

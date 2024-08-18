@@ -1241,8 +1241,6 @@ func (v *visitor_) visitAdditional(additional ast.AdditionalLike) {
 	v.processor_.PostprocessComponent(component)
 }
 
-func (v *visitor_) visitComponent(component ast.ComponentLike) {}
-
 func (v *visitor_) visitDocument(document ast.DocumentLike) {
 	// Visit the component.
 	var component = document.GetComponent()
@@ -1261,8 +1259,6 @@ func (v *visitor_) visitDocument(document ast.DocumentLike) {
 	}
 }
 
-func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {}
-
 func (v *visitor_) visitList(list ast.ListLike) {
 	// Visit the component.
 	var component = list.GetComponent()
@@ -1280,6 +1276,42 @@ func (v *visitor_) visitList(list ast.ListLike) {
 		v.processor_.PreprocessAdditional(additional, index, size)
 		v.visitAdditional(additional)
 		v.processor_.PostprocessAdditional(additional, index, size)
+	}
+}
+
+func (v *visitor_) visitComponent(component ast.ComponentLike) {
+	// Visit the possible component types.
+	switch actual := component.GetAny().(type) {
+	case ast.IntrinsicLike:
+		v.processor_.PreprocessIntrinsic(intrinsic)
+		v.visitIntrinsic(intrinsic)
+		v.processor_.PostprocessIntrinsic(intrinsic)
+	case ast.ListLike:
+		v.processor_.PreprocessList(list)
+		v.visitList(list)
+		v.processor_.PostprocessList(list)
+	default:
+		panic(fmt.Sprintf("Invalid rule type: %T", actual))
+	}
+}
+
+func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {
+	// Visit the possible intrinsic types.
+	switch actual := intrinsic.GetAny().(type) {
+	case string:
+		switch {
+		case gra.Scanner().MatchesType(actual, gra.IntegerToken):
+			v.processor_.ProcessInteger(actual)
+		case gra.Scanner().MatchesType(actual, gra.RuneToken):
+			v.processor_.ProcessRune(actual)
+		case gra.Scanner().MatchesType(actual, gra.TextToken):
+			v.processor_.ProcessText(actual)
+		default:
+			panic(fmt.Sprintf("Invalid token: %v", actual))
+		}
+
+	default:
+		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
 }
 `
