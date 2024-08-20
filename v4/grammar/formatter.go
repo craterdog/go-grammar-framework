@@ -63,6 +63,7 @@ type formatter_ struct {
 	class_   FormatterClassLike
 	visitor_ VisitorLike
 	depth_   uint
+	skip_    bool
 	result_  sts.Builder
 
 	// Define the inherited aspects.
@@ -167,6 +168,7 @@ func (v *formatter_) PreprocessFactor(
 
 func (v *formatter_) PreprocessGrouped(grouped ast.GroupedLike) {
 	v.depth_++
+	v.skip_ = true
 }
 
 func (v *formatter_) PostprocessGrouped(grouped ast.GroupedLike) {
@@ -202,7 +204,9 @@ func (v *formatter_) PreprocessPart(
 	index uint,
 	size uint,
 ) {
-	if v.depth_ == 0 || index > 0 {
+	if v.skip_ {
+		v.skip_ = false
+	} else {
 		v.appendString(" ")
 	}
 }

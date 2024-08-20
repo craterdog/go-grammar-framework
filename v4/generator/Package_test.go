@@ -1248,9 +1248,9 @@ func (v *visitor_) visitAdditional(additional ast.AdditionalLike) {
 
 	// Visit the component.
 	var component = additional.GetComponent()
-	v.processor_.PreprocessComponent(component, 0, 1)
+	v.processor_.PreprocessComponent(component, 1, 1)
 	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component, 0, 1)
+	v.processor_.PostprocessComponent(component, 1, 1)
 }
 
 func (v *visitor_) visitComponent(component ast.ComponentLike) {
@@ -1320,9 +1320,9 @@ func (v *visitor_) visitList(list ast.ListLike) {
 
 	// Visit the component.
 	var component = list.GetComponent()
-	v.processor_.PreprocessComponent(component, 0, 1)
+	v.processor_.PreprocessComponent(component, 1, 1)
 	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component, 0, 1)
+	v.processor_.PostprocessComponent(component, 1, 1)
 
 	// Visit each additional.
 	var additionalIndex uint

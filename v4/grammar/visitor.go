@@ -90,9 +90,9 @@ func (v *visitor_) visitAlternative(alternative ast.AlternativeLike) {
 
 	// Visit the part.
 	var part = alternative.GetPart()
-	v.processor_.PreprocessPart(part, 2, 1)
+	v.processor_.PreprocessPart(part, 1, 1)
 	v.visitPart(part)
-	v.processor_.PostprocessPart(part, 2, 1)
+	v.processor_.PostprocessPart(part, 1, 1)
 }
 
 func (v *visitor_) visitBounded(bounded ast.BoundedLike) {
@@ -318,7 +318,7 @@ func (v *visitor_) visitHeader(header ast.HeaderLike) {
 
 	// Visit the newline token.
 	var newline = header.GetNewline()
-	v.processor_.ProcessNewline(newline, 0, 1)
+	v.processor_.ProcessNewline(newline, 1, 1)
 }
 
 func (v *visitor_) visitIdentifier(identifier ast.IdentifierLike) {
@@ -374,7 +374,7 @@ func (v *visitor_) visitLimit(limit ast.LimitLike) {
 func (v *visitor_) visitLine(line ast.LineLike) {
 	// Visit the newline token.
 	var newline = line.GetNewline()
-	v.processor_.ProcessNewline(newline, 0, 1)
+	v.processor_.ProcessNewline(newline, 1, 1)
 
 	// Visit the identifier.
 	var identifier = line.GetIdentifier()
@@ -422,9 +422,9 @@ func (v *visitor_) visitPart(part ast.PartLike) {
 func (v *visitor_) visitPattern(pattern ast.PatternLike) {
 	// Visit the part.
 	var part = pattern.GetPart()
-	v.processor_.PreprocessPart(part, 0, 1)
+	v.processor_.PreprocessPart(part, 1, 1)
 	v.visitPart(part)
-	v.processor_.PostprocessPart(part, 0, 1)
+	v.processor_.PostprocessPart(part, 1, 1)
 
 	// Visit the optional supplement.
 	var supplement = pattern.GetOptionalSupplement()
@@ -521,7 +521,7 @@ func (v *visitor_) visitSelective(selective ast.SelectiveLike) {
 
 func (v *visitor_) visitSequential(sequential ast.SequentialLike) {
 	// Visit each part.
-	var partIndex uint = 1
+	var partIndex uint
 	var parts = sequential.GetParts().GetIterator()
 	var partsSize = uint(parts.GetSize())
 	for parts.HasNext() {

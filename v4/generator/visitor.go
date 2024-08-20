@@ -434,7 +434,7 @@ const visitOptionalTokenTemplate_ = `
 const visitSingleTokenTemplate_ = `
 	// Visit the <tokenName> token.
 	var <tokenName> = <rule>.Get<TokenName>()
-	v.processor_.Process<TokenName>(<tokenName>, 0, 1)
+	v.processor_.Process<TokenName>(<tokenName>, 1, 1)
 `
 
 const visitRepeatedTokenTemplate_ = `
@@ -474,9 +474,9 @@ const visitRuleTemplate_ = `
 const visitSingleRuleTemplate_ = `
 	// Visit the <ruleName>.
 	var <ruleName> = <rule>.Get<RuleName>()
-	v.processor_.Preprocess<RuleName>(<ruleName>, 0, 1)
+	v.processor_.Preprocess<RuleName>(<ruleName>, 1, 1)
 	v.visit<RuleName>(<ruleName>)
-	v.processor_.Postprocess<RuleName>(<ruleName>, 0, 1)
+	v.processor_.Postprocess<RuleName>(<ruleName>, 1, 1)
 `
 
 const visitRepeatedRuleTemplate_ = `
