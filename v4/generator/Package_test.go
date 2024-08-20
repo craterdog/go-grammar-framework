@@ -1241,23 +1241,19 @@ func (v *visitor_) VisitDocument(document ast.DocumentLike) {
 
 // Private
 
-func (v *visitor_) visitAdditional(
-	additional ast.AdditionalLike,
-	index uint,
-	size uint,
-) {
+func (v *visitor_) visitAdditional(additional ast.AdditionalLike) {
+	// Visit the "," delimiter literal.
+	var delimiter = additional.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
+
 	// Visit the component.
 	var component = additional.GetComponent()
-	v.processor_.PreprocessComponent(component, 1, 1)
+	v.processor_.PreprocessComponent(component, 0, 1)
 	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component, 1, 1)
+	v.processor_.PostprocessComponent(component, 0, 1)
 }
 
-func (v *visitor_) visitComponent(
-	component ast.ComponentLike,
-	index uint,
-	size uint,
-) {
+func (v *visitor_) visitComponent(component ast.ComponentLike) {
 	// Visit the possible component types.
 	switch actual := component.GetAny().(type) {
 	case ast.IntrinsicLike:
@@ -1275,25 +1271,25 @@ func (v *visitor_) visitComponent(
 
 func (v *visitor_) visitDocument(document ast.DocumentLike) {
 	// Visit each component.
-	var index uint
+	var componentIndex uint
 	var components = document.GetComponents().GetIterator()
-	var size = uint(components.GetSize())
+	var componentsSize = uint(components.GetSize())
 	for components.HasNext() {
-		index++
+		componentIndex++
 		var component = components.GetNext()
-		v.processor_.PreprocessComponent(component, index, size)
+		v.processor_.PreprocessComponent(component, componentIndex, componentsSize)
 		v.visitComponent(component)
-		v.processor_.PostprocessComponent(component, index, size)
+		v.processor_.PostprocessComponent(component, componentIndex, componentsSize)
 	}
 
 	// Visit each newline token.
-	var index uint
+	var newlineIndex uint
 	var newlines = document.GetNewlines().GetIterator()
-	var size = uint(newlines.GetSize())
+	var newlinesSize = uint(newlines.GetSize())
 	for newlines.HasNext() {
-		index++
+		newlineIndex++
 		var newline = newlines.GetNext()
-		v.processor_.ProcessNewline(newline, index, size)
+		v.processor_.ProcessNewline(newline, newlineIndex, newlinesSize)
 	}
 }
 
@@ -1302,11 +1298,11 @@ func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {
 	switch actual := intrinsic.GetAny().(type) {
 	case string:
 		switch {
-		case gra.Scanner().MatchesType(actual, gra.IntegerToken):
+		case Scanner().MatchesType(actual, IntegerToken):
 			v.processor_.ProcessInteger(actual)
-		case gra.Scanner().MatchesType(actual, gra.RuneToken):
+		case Scanner().MatchesType(actual, RuneToken):
 			v.processor_.ProcessRune(actual)
-		case gra.Scanner().MatchesType(actual, gra.TextToken):
+		case Scanner().MatchesType(actual, TextToken):
 			v.processor_.ProcessText(actual)
 		default:
 			panic(fmt.Sprintf("Invalid token: %v", actual))
@@ -1318,23 +1314,31 @@ func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {
 }
 
 func (v *visitor_) visitList(list ast.ListLike) {
+	// Visit the "[" delimiter literal.
+	var delimiter = list.GetDelimiter()
+	v.processor_.ProcessDelimiter(delimiter)
+
 	// Visit the component.
 	var component = list.GetComponent()
-	v.processor_.PreprocessComponent(component, 1, 1)
+	v.processor_.PreprocessComponent(component, 0, 1)
 	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component, 1, 1)
+	v.processor_.PostprocessComponent(component, 0, 1)
 
 	// Visit each additional.
-	var index uint
+	var additionalIndex uint
 	var additionals = list.GetAdditionals().GetIterator()
-	var size = uint(additionals.GetSize())
+	var additionalsSize = uint(additionals.GetSize())
 	for additionals.HasNext() {
-		index++
+		additionalIndex++
 		var additional = additionals.GetNext()
-		v.processor_.PreprocessAdditional(additional, index, size)
+		v.processor_.PreprocessAdditional(additional, additionalIndex, additionalsSize)
 		v.visitAdditional(additional)
-		v.processor_.PostprocessAdditional(additional, index, size)
+		v.processor_.PostprocessAdditional(additional, additionalIndex, additionalsSize)
 	}
+
+	// Visit the "]" delimiter literal.
+	var delimiter2 = list.GetDelimiter2()
+	v.processor_.ProcessDelimiter(delimiter2)
 }
 `
 

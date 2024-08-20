@@ -17,6 +17,7 @@ import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
+	stc "strconv"
 	sts "strings"
 	uni "unicode"
 )
@@ -101,6 +102,22 @@ func (v *visitor_) GenerateVisitorClass(
 
 // Methodical
 
+func (v *visitor_) PreprocessFactor(
+	factor ast.FactorLike,
+	index uint,
+	size uint,
+) {
+	switch actual := factor.GetAny().(type) {
+	case string:
+		// Use the actual literal as the plurality.
+		v.attributes_.AppendValue([2]string{"delimiter", actual})
+	}
+}
+
+func (v *visitor_) PostprocessInlined(inlined ast.InlinedLike) {
+	v.consolidateAttributes()
+}
+
 func (v *visitor_) PreprocessLine(
 	line ast.LineLike,
 	index uint,
@@ -159,6 +176,24 @@ func (v *visitor_) PostprocessSyntax(syntax ast.SyntaxLike) {
 
 // Private
 
+func (v *visitor_) consolidateAttributes() {
+	// Compare each attribute type and rename duplicates.
+	for i := 1; i <= v.attributes_.GetSize(); i++ {
+		var attribute = v.attributes_.GetValue(i)
+		var first = attribute[0]
+		for j := i + 1; j <= v.attributes_.GetSize(); j++ {
+			var count = 1
+			attribute = v.attributes_.GetValue(j)
+			var second = attribute[0]
+			if first == second {
+				count++
+				attribute[0] = second + stc.Itoa(count)
+				v.attributes_.SetValue(j, attribute)
+			}
+		}
+	}
+}
+
 func (v *visitor_) extractMethods() string {
 	var methods string
 	var names = v.rules_.GetKeys().GetIterator()
@@ -168,10 +203,10 @@ func (v *visitor_) extractMethods() string {
 		var attributes = v.rules_.GetValue(name)
 		var plurality = attributes.GetValue(1)[1]
 		switch plurality {
-		case "singular", "optional", "repeated":
-			method = v.extractInlineMethod(name)
 		case "alternative":
 			method = v.extractMultilineMethod(name)
+		default:
+			method = v.extractInlineMethod(name)
 		}
 		var lowercase = v.makeLowercase(name)
 		method = sts.ReplaceAll(method, "<rule>", lowercase)
@@ -190,9 +225,6 @@ func (v *visitor_) extractInlineMethod(name string) string {
 		implementation += v.extractInlineAttribute(attribute)
 	}
 	var method = methodTemplate_
-	if v.plurals_.ContainsValue(name) {
-		method = methodPluralizedTemplate_
-	}
 	method = sts.ReplaceAll(method, "<Implementation>", implementation)
 	return method
 }
@@ -200,12 +232,28 @@ func (v *visitor_) extractInlineMethod(name string) string {
 func (v *visitor_) extractInlineAttribute(attribute [2]string) string {
 	var implementation string
 	var identifier = attribute[0]
+	var plurality = attribute[1]
 	switch {
+	case gra.Scanner().MatchesType(plurality, gra.LiteralToken):
+		implementation = v.extractInlineLiteralAttribute(attribute)
 	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
 		implementation = v.extractInlineTokenAttribute(attribute)
 	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
 		implementation = v.extractInlineRuleAttribute(attribute)
 	}
+	return implementation
+}
+
+func (v *visitor_) extractInlineLiteralAttribute(attribute [2]string) string {
+	var implementation string
+	var identifier = attribute[0]
+	var literal = attribute[1]
+	var lowercase = v.makeLowercase(identifier)
+	var uppercase = v.makeUppercase(identifier)
+	implementation = visitLiteralTemplate_
+	implementation = sts.ReplaceAll(implementation, "<delimiterName>", lowercase)
+	implementation = sts.ReplaceAll(implementation, "<DelimiterName>", uppercase)
+	implementation = sts.ReplaceAll(implementation, "<literal>", literal)
 	return implementation
 }
 
@@ -282,9 +330,6 @@ func (v *visitor_) extractMultilineMethod(name string) string {
 	}
 	implementation = sts.ReplaceAll(implementation, "<TokenCases>", tokenCases)
 	var method = methodTemplate_
-	if v.plurals_.ContainsValue(name) {
-		method = methodPluralizedTemplate_
-	}
 	method = sts.ReplaceAll(method, "<Implementation>", implementation)
 	return method
 }
@@ -356,14 +401,6 @@ const methodTemplate_ = `
 func (v *visitor_) visit<Rule>(<rule> ast.<Rule>Like) {<Implementation>}
 `
 
-const methodPluralizedTemplate_ = `
-func (v *visitor_) visit<Rule>(
-	<rule> ast.<Rule>Like,
-	index uint,
-	size uint,
-) {<Implementation>}
-`
-
 const visitAnyTemplate_ = `
 	// Visit the possible <rule> types.
 	switch actual := <rule>.GetAny().(type) {<RuleCases><TokenCases>
@@ -397,23 +434,23 @@ const visitOptionalTokenTemplate_ = `
 const visitSingleTokenTemplate_ = `
 	// Visit the <tokenName> token.
 	var <tokenName> = <rule>.Get<TokenName>()
-	v.processor_.Process<TokenName>(<tokenName>, 1, 1)
+	v.processor_.Process<TokenName>(<tokenName>, 0, 1)
 `
 
 const visitRepeatedTokenTemplate_ = `
 	// Visit each <tokenName> token.
-	var index uint
+	var <tokenName>Index uint
 	var <tokensName> = <rule>.Get<TokensName>().GetIterator()
-	var size = uint(<tokensName>.GetSize())
+	var <tokensName>Size = uint(<tokensName>.GetSize())
 	for <tokensName>.HasNext() {
-		index++
+		<tokenName>Index++
 		var <tokenName> = <tokensName>.GetNext()
-		v.processor_.Process<TokenName>(<tokenName>, index, size)
+		v.processor_.Process<TokenName>(<tokenName>, <tokenName>Index, <tokensName>Size)
 	}
 `
 
 const visitTokenCaseTemplate_ = `
-		case gra.Scanner().MatchesType(actual, gra.<TokenName>Token):
+		case Scanner().MatchesType(actual, <TokenName>Token):
 			v.processor_.Process<TokenName>(actual)`
 
 const visitOptionalRuleTemplate_ = `
@@ -437,22 +474,22 @@ const visitRuleTemplate_ = `
 const visitSingleRuleTemplate_ = `
 	// Visit the <ruleName>.
 	var <ruleName> = <rule>.Get<RuleName>()
-	v.processor_.Preprocess<RuleName>(<ruleName>, 1, 1)
+	v.processor_.Preprocess<RuleName>(<ruleName>, 0, 1)
 	v.visit<RuleName>(<ruleName>)
-	v.processor_.Postprocess<RuleName>(<ruleName>, 1, 1)
+	v.processor_.Postprocess<RuleName>(<ruleName>, 0, 1)
 `
 
 const visitRepeatedRuleTemplate_ = `
 	// Visit each <ruleName>.
-	var index uint
+	var <ruleName>Index uint
 	var <rulesName> = <rule>.Get<RulesName>().GetIterator()
-	var size = uint(<rulesName>.GetSize())
+	var <rulesName>Size = uint(<rulesName>.GetSize())
 	for <rulesName>.HasNext() {
-		index++
+		<ruleName>Index++
 		var <ruleName> = <rulesName>.GetNext()
-		v.processor_.Preprocess<RuleName>(<ruleName>, index, size)
+		v.processor_.Preprocess<RuleName>(<ruleName>, <ruleName>Index, <rulesName>Size)
 		v.visit<RuleName>(<ruleName>)
-		v.processor_.Postprocess<RuleName>(<ruleName>, index, size)
+		v.processor_.Postprocess<RuleName>(<ruleName>, <ruleName>Index, <rulesName>Size)
 	}
 `
 
@@ -461,6 +498,12 @@ const visitRuleCaseTemplate_ = `
 		v.processor_.Preprocess<RuleName>(actual)
 		v.visit<RuleName>(actual)
 		v.processor_.Postprocess<RuleName>(actual)`
+
+const visitLiteralTemplate_ = `
+	// Visit the <literal> delimiter literal.
+	var <delimiterName> = <rule>.Get<DelimiterName>()
+	v.processor_.ProcessDelimiter(<delimiterName>)
+`
 
 const visitorTemplate_ = `/*<Notice>*/
 

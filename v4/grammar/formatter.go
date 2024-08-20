@@ -202,7 +202,7 @@ func (v *formatter_) PreprocessPart(
 	index uint,
 	size uint,
 ) {
-	if v.depth_ == 0 || index > 1 {
+	if v.depth_ == 0 || index > 0 {
 		v.appendString(" ")
 	}
 }
