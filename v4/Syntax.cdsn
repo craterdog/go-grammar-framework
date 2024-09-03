@@ -19,14 +19,14 @@ fame.
 A language syntax consists of a set of rule definitions and regular expression
 patterns.
 
-Each predicate within a rule definition may be constrained by one of the
-following cardinalities:
- * predicate{M} - Exactly M instances of the specified predicate.
- * predicate{M..N} - M to N instances of the specified predicate.
- * predicate{M..} - M or more instances of the specified predicate.
- * predicate? - Zero or one instances of the specified predicate.
- * predicate* - Zero or more instances of the specified predicate.
- * predicate+ - One or more instances of the specified predicate.
+Most terms within a rule definition can be constrained by one of the following
+cardinalities:
+ * term{M} - Exactly M instances of the specified term.
+ * term{M..N} - M to N instances of the specified term.
+ * term{M..} - M or more instances of the specified term.
+ * term* - Zero or more instances of the specified term.
+ * term+ - One or more instances of the specified term.
+ * term? - An optional term.
 
 The following intrinsic character types may be used within regular expression
 pattern declarations:
@@ -38,7 +38,7 @@ pattern declarations:
  * EOL - The environment specific end-of-line character.
 
 The excluded "~" prefix within a regular expression pattern may only be applied
-to a bounded range of possible character types.
+to a filtered set of possible characters.
 <!
 
 !>
@@ -60,10 +60,10 @@ Header: comment newline
 Rule: comment? uppercase ":" Definition newline+
 
 Definition:
-    Multilined
-    Inlined
+    Inline
+    Multiline
 
-Multilined: Line+
+Multiline: Line+
 
 Line: newline Identifier note?
 
@@ -71,64 +71,58 @@ Identifier:
     lowercase
     uppercase
 
-Inlined: Factor+ note?
+Inline: Term+ note?
+
+Term:
+    Factor
+    Bracket
+
+Bracket: "(" Factor+ ")" Cardinality
 
 Factor:
-    Predicate
+    Reference
     literal
 
-Predicate: Identifier Cardinality?  ! The default cardinality is one.
+Reference: Identifier Cardinality?  ! The default cardinality is one.
 
 Cardinality:
-    Constrained
-    Quantified
+    Constraint
+    Count
 
-Constrained:
+Constraint:
     optional
     repeated
 
-Quantified: "{" number Limit? "}"  ! A quantified range of numbers is inclusive.
-
-Limit: ".." number?
+Count: "{" number (".." number?)? "}"  ! The range of numbers is inclusive.
 
 Expression: comment? lowercase ":" Pattern note? newline+
 
-Pattern: Part Supplement?
+Pattern: Alternative ("|" Alternative)*
 
-Supplement:
-    Sequential
-    Selective
+Alternative: Repetition+
 
-Sequential: Part+
-
-Selective: Alternative+
-
-Alternative: "|" Part
-
-Part: Element Cardinality?  ! The default cardinality is one.
+Repetition: Element Cardinality?  ! The default cardinality is one.
 
 Element:
-    Grouped
-    Filtered
-    Textual
+    Group
+    Filter
+    Text
 
-Grouped: "(" Pattern ")"
+Group: "(" Pattern ")"
 
-Filtered: excluded? "[" Character+ "]"
+Filter: excluded? "[" Character+ "]"
 
-Textual:
+Character:
+    Specific
+    intrinsic
+
+Specific: runic (".." runic)?  ! The range of runic elements is inclusive.
+
+Text:
     intrinsic
     runic
     literal
     lowercase
-
-Character:
-    Bounded
-    intrinsic
-
-Bounded: runic Extent?  ! A bounded range of runic elements is inclusive.
-
-Extent: ".." runic
 
 !>
 REGULAR EXPRESSION PATTERNS
@@ -150,8 +144,6 @@ escape: '\' (unicode | ['a' 'b' 'f' 'n' 'r' 't' 'v' '"' '\'])
 
 excluded: "~"
 
-runic: "'" ~[CONTROL] "'"  ! Any printable unicode character.
-
 intrinsic: "ANY" | "CONTROL" | "DIGIT" | "EOL" | "LOWER" | "UPPER"
 
 literal: '"' (escape | ~['"' CONTROL])+ '"'
@@ -167,6 +159,8 @@ number: DIGIT+
 optional: "?"
 
 repeated: "*" | "+"
+
+runic: "'" ~[CONTROL] "'"  ! Any printable unicode character.
 
 unicode: ('x' base16{2}) | ('u' base16{4}) | ('U' base16{8})
 

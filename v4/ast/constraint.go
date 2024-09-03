@@ -20,33 +20,33 @@ import (
 
 // Reference
 
-var constrainedClass = &constrainedClass_{
+var constraintClass = &constraintClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Constrained() ConstrainedClassLike {
-	return constrainedClass
+func Constraint() ConstraintClassLike {
+	return constraintClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type constrainedClass_ struct {
+type constraintClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *constrainedClass_) Make(any_ any) ConstrainedLike {
+func (c *constraintClass_) Make(any_ any) ConstraintLike {
 	// Validate the arguments.
 	switch {
 	case col.IsUndefined(any_):
 		panic("The any attribute is required by this class.")
 	default:
-		return &constrained_{
+		return &constraint_{
 			// Initialize instance attributes.
 			class_: c,
 			any_:   any_,
@@ -58,19 +58,19 @@ func (c *constrainedClass_) Make(any_ any) ConstrainedLike {
 
 // Target
 
-type constrained_ struct {
+type constraint_ struct {
 	// Define instance attributes.
-	class_ ConstrainedClassLike
+	class_ ConstraintClassLike
 	any_   any
 }
 
 // Attributes
 
-func (v *constrained_) GetClass() ConstrainedClassLike {
+func (v *constraint_) GetClass() ConstraintClassLike {
 	return v.class_
 }
 
-func (v *constrained_) GetAny() any {
+func (v *constraint_) GetAny() any {
 	return v.any_
 }
 

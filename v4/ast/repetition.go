@@ -14,43 +14,46 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var sequentialClass = &sequentialClass_{
+var repetitionClass = &repetitionClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Sequential() SequentialClassLike {
-	return sequentialClass
+func Repetition() RepetitionClassLike {
+	return repetitionClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type sequentialClass_ struct {
+type repetitionClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *sequentialClass_) Make(parts abs.Sequential[PartLike]) SequentialLike {
+func (c *repetitionClass_) Make(
+	element ElementLike,
+	optionalCardinality CardinalityLike,
+) RepetitionLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(parts):
-		panic("The parts attribute is required by this class.")
+	case col.IsUndefined(element):
+		panic("The element attribute is required by this class.")
 	default:
-		return &sequential_{
+		return &repetition_{
 			// Initialize instance attributes.
-			class_: c,
-			parts_: parts,
+			class_:               c,
+			element_:             element,
+			optionalCardinality_: optionalCardinality,
 		}
 	}
 }
@@ -59,20 +62,25 @@ func (c *sequentialClass_) Make(parts abs.Sequential[PartLike]) SequentialLike {
 
 // Target
 
-type sequential_ struct {
+type repetition_ struct {
 	// Define instance attributes.
-	class_ SequentialClassLike
-	parts_ abs.Sequential[PartLike]
+	class_               RepetitionClassLike
+	element_             ElementLike
+	optionalCardinality_ CardinalityLike
 }
 
 // Attributes
 
-func (v *sequential_) GetClass() SequentialClassLike {
+func (v *repetition_) GetClass() RepetitionClassLike {
 	return v.class_
 }
 
-func (v *sequential_) GetParts() abs.Sequential[PartLike] {
-	return v.parts_
+func (v *repetition_) GetElement() ElementLike {
+	return v.element_
+}
+
+func (v *repetition_) GetOptionalCardinality() CardinalityLike {
+	return v.optionalCardinality_
 }
 
 // Private

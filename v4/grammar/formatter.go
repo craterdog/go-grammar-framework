@@ -63,7 +63,6 @@ type formatter_ struct {
 	class_   FormatterClassLike
 	visitor_ VisitorLike
 	depth_   uint
-	skip_    bool
 	result_  sts.Builder
 
 	// Define the inherited aspects.
@@ -84,10 +83,6 @@ func (v *formatter_) GetDepth() uint {
 
 func (v *formatter_) ProcessComment(comment string) {
 	v.appendString(comment)
-}
-
-func (v *formatter_) ProcessDelimiter(delimiter string) {
-	v.appendString(delimiter)
 }
 
 func (v *formatter_) ProcessExcluded(excluded string) {
@@ -111,7 +106,14 @@ func (v *formatter_) ProcessNote(note string) {
 	v.appendString(note)
 }
 
-func (v *formatter_) ProcessNumber(number string) {
+func (v *formatter_) ProcessNumber(
+	number string,
+	index uint,
+	size uint,
+) {
+	if index == 2 {
+		v.appendString("..")
+	}
 	v.appendString(number)
 }
 
@@ -123,7 +125,14 @@ func (v *formatter_) ProcessRepeated(repeated string) {
 	v.appendString(repeated)
 }
 
-func (v *formatter_) ProcessRunic(runic string) {
+func (v *formatter_) ProcessRunic(
+	runic string,
+	index uint,
+	size uint,
+) {
+	if index == 2 {
+		v.appendString("..")
+	}
 	v.appendString(runic)
 }
 
@@ -136,7 +145,20 @@ func (v *formatter_) PreprocessAlternative(
 	index uint,
 	size uint,
 ) {
-	v.appendString(" ")
+	switch {
+	case v.depth_ > 0 && index > 1:
+		v.appendString(" | ")
+	case index > 1:
+		v.appendString(" |")
+	}
+}
+
+func (v *formatter_) PreprocessBracket(bracket ast.BracketLike) {
+	v.depth_++
+}
+
+func (v *formatter_) PostprocessBracket(bracket ast.BracketLike) {
+	v.depth_--
 }
 
 func (v *formatter_) PreprocessCharacter(
@@ -144,9 +166,33 @@ func (v *formatter_) PreprocessCharacter(
 	index uint,
 	size uint,
 ) {
-	if index > 1 {
+	if index == 1 {
+		v.appendString("[")
+	} else {
 		v.appendString(" ")
 	}
+}
+
+func (v *formatter_) PostprocessCharacter(
+	character ast.CharacterLike,
+	index uint,
+	size uint,
+) {
+	if index == size {
+		v.appendString("]")
+	}
+}
+
+func (v *formatter_) PreprocessCount(count ast.CountLike) {
+	v.appendString("{")
+}
+
+func (v *formatter_) PostprocessCount(count ast.CountLike) {
+	v.appendString("}")
+}
+
+func (v *formatter_) PreprocessDefinition(definition ast.DefinitionLike) {
+	v.appendString(":")
 }
 
 func (v *formatter_) PostprocessExpression(
@@ -164,15 +210,29 @@ func (v *formatter_) PreprocessFactor(
 	size uint,
 ) {
 	v.appendString(" ")
+	if v.depth_ > 0 && index == 1 {
+		v.appendString("(")
+	}
 }
 
-func (v *formatter_) PreprocessGrouped(grouped ast.GroupedLike) {
+func (v *formatter_) PostprocessFactor(
+	factor ast.FactorLike,
+	index uint,
+	size uint,
+) {
+	if v.depth_ > 0 && index == size {
+		v.appendString(")")
+	}
+}
+
+func (v *formatter_) PreprocessGroup(group ast.GroupLike) {
+	v.appendString("(")
 	v.depth_++
-	v.skip_ = true
 }
 
-func (v *formatter_) PostprocessGrouped(grouped ast.GroupedLike) {
+func (v *formatter_) PostprocessGroup(group ast.GroupLike) {
 	v.depth_--
+	v.appendString(")")
 }
 
 func (v *formatter_) PostprocessHeader(
@@ -191,22 +251,51 @@ func (v *formatter_) PreprocessLine(
 	v.appendNewline()
 }
 
-func (v *formatter_) PreprocessMultilined(multilined ast.MultilinedLike) {
+func (v *formatter_) PreprocessMultiline(multiline ast.MultilineLike) {
 	v.depth_++
 }
 
-func (v *formatter_) PostprocessMultilined(multilined ast.MultilinedLike) {
+func (v *formatter_) PostprocessMultiline(multiline ast.MultilineLike) {
 	v.depth_--
 }
 
-func (v *formatter_) PreprocessPart(
-	part ast.PartLike,
+func (v *formatter_) PreprocessNumber(
+	number string,
 	index uint,
 	size uint,
 ) {
-	if v.skip_ {
-		v.skip_ = false
+	if index == 1 {
+		v.appendString("{")
 	} else {
+		v.appendString("..")
+	}
+}
+
+func (v *formatter_) PostprocessNumber(
+	number string,
+	index uint,
+	size uint,
+) {
+	if index == size {
+		v.appendString("}")
+	}
+}
+
+func (v *formatter_) PreprocessPattern(pattern ast.PatternLike) {
+	if v.depth_ == 0 {
+		v.appendString(":")
+	}
+}
+
+func (v *formatter_) PreprocessRepetition(
+	repetition ast.RepetitionLike,
+	index uint,
+	size uint,
+) {
+	switch {
+	case v.depth_ > 0 && index > 1:
+		v.appendString(" ")
+	case v.depth_ == 0:
 		v.appendString(" ")
 	}
 }

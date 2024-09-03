@@ -17,8 +17,6 @@ import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
-	sts "strings"
-	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -63,11 +61,12 @@ func (c *grammarClass_) Make() GrammarLike {
 
 type grammar_ struct {
 	// Define the instance attributes.
-	class_   GrammarClassLike
-	visitor_ gra.VisitorLike
-	tokens_  abs.SetLike[string]
-	rules_   abs.SetLike[string]
-	plurals_ abs.SetLike[string]
+	class_       GrammarClassLike
+	visitor_     gra.VisitorLike
+	tokens_      abs.SetLike[string]
+	rules_       abs.SetLike[string]
+	plurals_     abs.SetLike[string]
+	cardinality_ ast.CardinalityLike
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -77,6 +76,61 @@ type grammar_ struct {
 
 func (v *grammar_) GetClass() GrammarClassLike {
 	return v.class_
+}
+
+// Methodical
+
+func (v *grammar_) PreprocessBracket(bracket ast.BracketLike) {
+	v.cardinality_ = bracket.GetCardinality()
+}
+
+func (v *grammar_) PostprocessBracket(bracket ast.BracketLike) {
+	v.cardinality_ = nil
+}
+
+func (v *grammar_) PreprocessIdentifier(
+	identifier ast.IdentifierLike,
+) {
+	var name = identifier.GetAny().(string)
+	switch {
+	case gra.Scanner().MatchesType(name, gra.LowercaseToken):
+		v.tokens_.AddValue(name)
+	}
+}
+
+func (v *grammar_) PreprocessReference(reference ast.ReferenceLike) {
+	var identifier = makeLowerCase(reference.GetIdentifier().GetAny().(string))
+	var cardinality = reference.GetOptionalCardinality()
+	if col.IsDefined(v.cardinality_) {
+		// The cardinality of a bracket takes precedence.
+		cardinality = v.cardinality_
+	}
+	if col.IsDefined(cardinality) {
+		switch actual := cardinality.GetAny().(type) {
+		case ast.ConstraintLike:
+			switch actual.GetAny().(string) {
+			case "*", "+":
+				v.plurals_.AddValue(identifier)
+			}
+		case ast.CountLike:
+			v.plurals_.AddValue(identifier)
+		}
+	}
+}
+
+func (v *grammar_) PreprocessRule(
+	rule ast.RuleLike,
+	index uint,
+	size uint,
+) {
+	var name = rule.GetUppercase()
+	v.rules_.AddValue(makeLowerCase(name))
+}
+
+func (v *grammar_) PreprocessSyntax(syntax ast.SyntaxLike) {
+	v.tokens_ = col.Set[string]()
+	v.rules_ = col.Set[string]()
+	v.plurals_ = col.Set[string]()
 }
 
 // Public
@@ -90,73 +144,25 @@ func (v *grammar_) GenerateGrammarModel(
 ) {
 	v.visitor_.VisitSyntax(syntax)
 	implementation = grammarTemplate_
-	implementation = sts.ReplaceAll(implementation, "<wiki>", wiki)
-	var name = v.extractSyntaxName(syntax)
-	implementation = sts.ReplaceAll(implementation, "<module>", module)
-	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
-	var uppercase = v.makeUppercase(name)
-	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
-	var lowercase = v.makeLowercase(name)
-	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
-	implementation = sts.ReplaceAll(implementation, "<parameter>", lowercase)
-	var tokenTypes = v.extractTokenTypes()
-	implementation = sts.ReplaceAll(implementation, "<TokenTypes>", tokenTypes)
-	var processTokens = v.extractProcessTokens()
-	implementation = sts.ReplaceAll(implementation, "<ProcessTokens>", processTokens)
-	var processRules = v.extractProcessRules()
-	implementation = sts.ReplaceAll(implementation, "<ProcessRules>", processRules)
+	implementation = replaceAll(implementation, "module", module)
+	implementation = replaceAll(implementation, "wiki", wiki)
+	var notice = v.generateNotice(syntax)
+	implementation = replaceAll(implementation, "notice", notice)
+	var name = v.generateSyntaxName(syntax)
+	implementation = replaceAll(implementation, "name", name)
+	implementation = replaceAll(implementation, "parameter", name)
+	var tokenTypes = v.generateTokenTypes()
+	implementation = replaceAll(implementation, "tokenTypes", tokenTypes)
+	var processTokens = v.generateProcessTokens()
+	implementation = replaceAll(implementation, "processTokens", processTokens)
+	var processRules = v.generateProcessRules()
+	implementation = replaceAll(implementation, "processRules", processRules)
 	return implementation
-}
-
-// Methodical
-
-func (v *grammar_) PreprocessIdentifier(
-	identifier ast.IdentifierLike,
-) {
-	var name = identifier.GetAny().(string)
-	switch {
-	case gra.Scanner().MatchesType(name, gra.LowercaseToken):
-		v.tokens_.AddValue(name)
-	}
-}
-
-func (v *grammar_) PreprocessPredicate(
-	predicate ast.PredicateLike,
-) {
-	var identifier = v.makeLowercase(predicate.GetIdentifier().GetAny().(string))
-	var cardinality = predicate.GetOptionalCardinality()
-	if col.IsDefined(cardinality) {
-		switch actual := cardinality.GetAny().(type) {
-		case ast.ConstrainedLike:
-			switch actual.GetAny().(string) {
-			case "*", "+":
-				v.plurals_.AddValue(identifier)
-			}
-		case ast.QuantifiedLike:
-			v.plurals_.AddValue(identifier)
-		}
-	}
-}
-
-func (v *grammar_) PreprocessRule(
-	rule ast.RuleLike,
-	index uint,
-	size uint,
-) {
-	var name = rule.GetUppercase()
-	v.rules_.AddValue(v.makeLowercase(name))
-}
-
-func (v *grammar_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]([]string{"delimiter"})
-	v.rules_ = col.Set[string]()
-	v.plurals_ = col.Set[string]()
 }
 
 // Private
 
-func (v *grammar_) extractNotice(syntax ast.SyntaxLike) string {
+func (v *grammar_) generateNotice(syntax ast.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetIterator().GetNext()
 	var comment = header.GetComment()
 
@@ -166,13 +172,17 @@ func (v *grammar_) extractNotice(syntax ast.SyntaxLike) string {
 	return notice
 }
 
-func (v *grammar_) extractProcessRules() string {
+func (v *grammar_) generateProcessRules() string {
 	var processRules string
 	var iterator = v.rules_.GetIterator()
 	for iterator.HasNext() {
 		var lowercase = iterator.GetNext()
+		var uppercase = makeUpperCase(lowercase)
 		var isPlural = v.plurals_.ContainsValue(lowercase)
-		var uppercase = v.makeUppercase(lowercase)
+		if col.IsDefined(v.cardinality_) {
+			// The cardinality of a bracket takes precedence.
+			isPlural = true
+		}
 		var parameters = "("
 		if isPlural {
 			parameters += "\n\t\t"
@@ -190,7 +200,7 @@ func (v *grammar_) extractProcessRules() string {
 	return processRules
 }
 
-func (v *grammar_) extractProcessTokens() string {
+func (v *grammar_) generateProcessTokens() string {
 	var processTokens string
 	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
@@ -206,45 +216,30 @@ func (v *grammar_) extractProcessTokens() string {
 			parameters += ",\n\t\tsize uint,\n\t"
 		}
 		parameters += ")"
-		processTokens += "\n\tProcess" + v.makeUppercase(name) + parameters
+		processTokens += "\n\tProcess" + makeUpperCase(name) + parameters
 	}
 	return processTokens
 }
 
-func (v *grammar_) extractTokenTypes() string {
+func (v *grammar_) generateTokenTypes() string {
 	var tokenTypes = "ErrorToken TokenType = iota"
 	var tokens = col.Set[string](v.tokens_)
+	tokens.AddValue("delimiter")
 	tokens.AddValue("space")
 	tokens.AddValue("newline")
 	var iterator = tokens.GetIterator()
 	for iterator.HasNext() {
 		var name = iterator.GetNext()
-		var tokenType = v.makeUppercase(name) + "Token"
+		var tokenType = makeUpperCase(name) + "Token"
 		tokenTypes += "\n\t" + tokenType
 	}
 	return tokenTypes
 }
 
-func (v *grammar_) extractSyntaxName(syntax ast.SyntaxLike) string {
+func (v *grammar_) generateSyntaxName(syntax ast.SyntaxLike) string {
 	var rule = syntax.GetRules().GetIterator().GetNext()
 	var name = rule.GetUppercase()
 	return name
-}
-
-func (v *grammar_) makeLowercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToLower(runes[0])
-	name = string(runes)
-	if reserved_[name] {
-		name += "_"
-	}
-	return name
-}
-
-func (v *grammar_) makeUppercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
 }
 
 const grammarTemplate_ = `/*<Notice>*/
@@ -382,9 +377,7 @@ concrete visitor-like class.
 */
 type VisitorClassLike interface {
 	// Constructors
-	Make(
-		processor Methodical,
-	) VisitorLike
+	Make(processor Methodical) VisitorLike
 }
 
 // Instances

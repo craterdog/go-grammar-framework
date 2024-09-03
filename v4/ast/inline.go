@@ -14,46 +14,47 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var boundedClass = &boundedClass_{
+var inlineClass = &inlineClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Bounded() BoundedClassLike {
-	return boundedClass
+func Inline() InlineClassLike {
+	return inlineClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type boundedClass_ struct {
+type inlineClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *boundedClass_) Make(
-	runic string,
-	optionalExtent ExtentLike,
-) BoundedLike {
+func (c *inlineClass_) Make(
+	terms abs.Sequential[TermLike],
+	optionalNote string,
+) InlineLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(runic):
-		panic("The runic attribute is required by this class.")
+	case col.IsUndefined(terms):
+		panic("The terms attribute is required by this class.")
 	default:
-		return &bounded_{
+		return &inline_{
 			// Initialize instance attributes.
-			class_:          c,
-			runic_:          runic,
-			optionalExtent_: optionalExtent,
+			class_:        c,
+			terms_:        terms,
+			optionalNote_: optionalNote,
 		}
 	}
 }
@@ -62,25 +63,25 @@ func (c *boundedClass_) Make(
 
 // Target
 
-type bounded_ struct {
+type inline_ struct {
 	// Define instance attributes.
-	class_          BoundedClassLike
-	runic_          string
-	optionalExtent_ ExtentLike
+	class_        InlineClassLike
+	terms_        abs.Sequential[TermLike]
+	optionalNote_ string
 }
 
 // Attributes
 
-func (v *bounded_) GetClass() BoundedClassLike {
+func (v *inline_) GetClass() InlineClassLike {
 	return v.class_
 }
 
-func (v *bounded_) GetRunic() string {
-	return v.runic_
+func (v *inline_) GetTerms() abs.Sequential[TermLike] {
+	return v.terms_
 }
 
-func (v *bounded_) GetOptionalExtent() ExtentLike {
-	return v.optionalExtent_
+func (v *inline_) GetOptionalNote() string {
+	return v.optionalNote_
 }
 
 // Private

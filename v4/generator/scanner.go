@@ -18,7 +18,6 @@ import (
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	sts "strings"
-	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -113,7 +112,14 @@ func (v *scanner_) ProcessLowercase(lowercase string) {
 	}
 }
 
-func (v *scanner_) ProcessNumber(number string) {
+func (v *scanner_) ProcessNumber(
+	number string,
+	index uint,
+	size uint,
+) {
+	if index == 2 {
+		v.regexp_ += ","
+	}
 	v.regexp_ += number
 }
 
@@ -125,9 +131,16 @@ func (v *scanner_) ProcessRepeated(repeated string) {
 	v.regexp_ += repeated
 }
 
-func (v *scanner_) ProcessRunic(runic string) {
+func (v *scanner_) ProcessRunic(
+	runic string,
+	index uint,
+	size uint,
+) {
 	var character = runic[1:2] //Remove the single quotes.
 	character = v.escapeText(character)
+	if index == 2 {
+		v.regexp_ += "-"
+	}
 	v.regexp_ += character
 }
 
@@ -136,18 +149,36 @@ func (v *scanner_) PreprocessAlternative(
 	index uint,
 	size uint,
 ) {
-	v.regexp_ += "|"
+	if index > 1 {
+		v.regexp_ += "|"
+	}
 }
 
-func (v *scanner_) PostprocessConstrained(constrained ast.ConstrainedLike) {
+func (v *scanner_) PostprocessConstraint(constraint ast.ConstraintLike) {
 	if !v.isGreedy_ {
 		v.regexp_ += "?"
 		v.isGreedy_ = true // Reset scanning back to "greedy".
 	}
 }
 
-func (v *scanner_) PreprocessQuantified(constrained ast.QuantifiedLike) {
+func (v *scanner_) PreprocessCount(count ast.CountLike) {
 	v.regexp_ += "{"
+}
+
+func (v *scanner_) PostprocessCount(constraint ast.CountLike) {
+	v.regexp_ += "}"
+	if !v.isGreedy_ {
+		v.regexp_ += "?"
+		v.isGreedy_ = true // Reset scanning back to "greedy".
+	}
+}
+
+func (v *scanner_) PreprocessDefinition(definition ast.DefinitionLike) {
+	v.inDefinition_ = true
+}
+
+func (v *scanner_) PostprocessDefinition(definition ast.DefinitionLike) {
+	v.inDefinition_ = false
 }
 
 func (v *scanner_) PreprocessExpression(
@@ -168,23 +199,19 @@ func (v *scanner_) PostprocessExpression(
 	v.regexps_.SetValue(name, v.regexp_)
 }
 
-func (v *scanner_) PreprocessExtent(extent ast.ExtentLike) {
-	v.regexp_ += "-"
-}
-
-func (v *scanner_) PreprocessFiltered(filtered ast.FilteredLike) {
+func (v *scanner_) PreprocessFilter(filter ast.FilterLike) {
 	v.regexp_ += "["
 }
 
-func (v *scanner_) PostprocessFiltered(filtered ast.FilteredLike) {
+func (v *scanner_) PostprocessFilter(filter ast.FilterLike) {
 	v.regexp_ += "]"
 }
 
-func (v *scanner_) PreprocessGrouped(grouped ast.GroupedLike) {
+func (v *scanner_) PreprocessGroup(group ast.GroupLike) {
 	v.regexp_ += "("
 }
 
-func (v *scanner_) PostprocessGrouped(grouped ast.GroupedLike) {
+func (v *scanner_) PostprocessGroup(group ast.GroupLike) {
 	v.regexp_ += ")"
 }
 
@@ -195,32 +222,12 @@ func (v *scanner_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 	}
 }
 
-func (v *scanner_) PreprocessLimit(limit ast.LimitLike) {
-	v.regexp_ += ","
-}
-
-func (v *scanner_) PreprocessDefinition(definition ast.DefinitionLike) {
-	v.inDefinition_ = true
-}
-
-func (v *scanner_) PostprocessDefinition(definition ast.DefinitionLike) {
-	v.inDefinition_ = false
-}
-
 func (v *scanner_) PreprocessPattern(definition ast.PatternLike) {
 	v.depth_++
 }
 
 func (v *scanner_) PostprocessPattern(definition ast.PatternLike) {
 	v.depth_--
-}
-
-func (v *scanner_) PostprocessQuantified(constrained ast.QuantifiedLike) {
-	v.regexp_ += "}"
-	if !v.isGreedy_ {
-		v.regexp_ += "?"
-		v.isGreedy_ = true // Reset scanning back to "greedy".
-	}
 }
 
 func (v *scanner_) PreprocessSyntax(syntax ast.SyntaxLike) {
@@ -235,7 +242,7 @@ func (v *scanner_) PreprocessSyntax(syntax ast.SyntaxLike) {
 func (v *scanner_) PostprocessSyntax(syntax ast.SyntaxLike) {
 	v.ignored_ = v.ignored_.GetClass().Sans(v.ignored_, v.tokens_)
 	v.tokens_.AddValues(v.ignored_)
-	var literals = v.extractLiterals()
+	var literals = v.generateLiterals()
 	v.regexps_.SetValue("delimiter", literals)
 	v.regexps_.SortValues()
 }
@@ -250,18 +257,18 @@ func (v *scanner_) GenerateScannerClass(
 ) {
 	v.visitor_.VisitSyntax(syntax)
 	implementation = scannerTemplate_
-	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
-	var tokenNames = v.extractTokenNames()
-	implementation = sts.ReplaceAll(implementation, "<TokenNames>", tokenNames)
-	var tokenMatchers = v.extractTokenMatchers()
-	implementation = sts.ReplaceAll(implementation, "<TokenMatchers>", tokenMatchers)
-	var foundCases = v.extractFoundCases()
-	implementation = sts.ReplaceAll(implementation, "<FoundCases>", foundCases)
-	var ignoredCases = v.extractIgnoredCases()
-	implementation = sts.ReplaceAll(implementation, "<IgnoredCases>", ignoredCases)
-	var expressions = v.extractExpressions()
-	implementation = sts.ReplaceAll(implementation, "<Expressions>", expressions)
+	var notice = v.generateNotice(syntax)
+	implementation = replaceAll(implementation, "notice", notice)
+	var tokenNames = v.generateTokenNames()
+	implementation = replaceAll(implementation, "tokenNames", tokenNames)
+	var tokenMatchers = v.generateTokenMatchers()
+	implementation = replaceAll(implementation, "tokenMatchers", tokenMatchers)
+	var foundCases = v.generateFoundCases()
+	implementation = replaceAll(implementation, "foundCases", foundCases)
+	var ignoredCases = v.generateIgnoredCases()
+	implementation = replaceAll(implementation, "ignoredCases", ignoredCases)
+	var expressions = v.generateExpressions()
+	implementation = replaceAll(implementation, "expressions", expressions)
 	return implementation
 }
 
@@ -284,7 +291,7 @@ func (v *scanner_) escapeText(text string) string {
 	return escaped
 }
 
-func (v *scanner_) extractExpressions() string {
+func (v *scanner_) generateExpressions() string {
 	var expressions = "// Define the regular expression patterns for each token type."
 	var iterator = v.regexps_.GetIterator()
 	for iterator.HasNext() {
@@ -296,18 +303,18 @@ func (v *scanner_) extractExpressions() string {
 	return expressions
 }
 
-func (v *scanner_) extractFoundCases() string {
+func (v *scanner_) generateFoundCases() string {
 	var foundCases = "// Find the next token type."
 	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
-		var tokenType = v.makeUppercase(tokenName) + "Token"
+		var tokenType = makeUpperCase(tokenName) + "Token"
 		foundCases += "\n\t\tcase v.foundToken(" + tokenType + "):"
 	}
 	return foundCases
 }
 
-func (v *scanner_) extractIgnoredCases() string {
+func (v *scanner_) generateIgnoredCases() string {
 	var ignoreCases = "// Ignore the implicit token types."
 	var iterator = v.ignored_.GetIterator()
 	for iterator.HasNext() {
@@ -318,17 +325,7 @@ func (v *scanner_) extractIgnoredCases() string {
 	return ignoreCases
 }
 
-func (v *scanner_) extractNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
-
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
-}
-
-func (v *scanner_) extractLiterals() string {
+func (v *scanner_) generateLiterals() string {
 	var literals = `"(?:`
 	if !v.literals_.IsEmpty() {
 		var iterator = v.literals_.GetIterator()
@@ -341,57 +338,37 @@ func (v *scanner_) extractLiterals() string {
 	return literals
 }
 
-func (v *scanner_) extractTokenMatchers() string {
+func (v *scanner_) generateNotice(syntax ast.SyntaxLike) string {
+	var header = syntax.GetHeaders().GetIterator().GetNext()
+	var comment = header.GetComment()
+
+	// Strip off the syntax style comment delimiters.
+	var notice = comment[2 : len(comment)-3]
+
+	return notice
+}
+
+func (v *scanner_) generateTokenMatchers() string {
 	var tokenMatchers = "// Define pattern matchers for each type of token."
 	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
-		var tokenType = v.makeUppercase(tokenName) + "Token"
+		var tokenType = makeUpperCase(tokenName) + "Token"
 		tokenMatchers += "\n\t\t" + tokenType +
 			`: reg.MustCompile("^" + ` + tokenName + `_),`
 	}
 	return tokenMatchers
 }
 
-func (v *scanner_) extractTokenNames() string {
+func (v *scanner_) generateTokenNames() string {
 	var tokenNames = `ErrorToken: "error",`
 	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
-		var tokenType = v.makeUppercase(tokenName) + "Token"
+		var tokenType = makeUpperCase(tokenName) + "Token"
 		tokenNames += "\n\t\t" + tokenType + `: "` + tokenName + `",`
 	}
 	return tokenNames
-}
-
-func (v *scanner_) makeUppercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
-}
-
-var reserved_ = map[string]bool{
-	"any":       true,
-	"byte":      true,
-	"case":      true,
-	"complex":   true,
-	"copy":      true,
-	"default":   true,
-	"error":     true,
-	"false":     true,
-	"import":    true,
-	"interface": true,
-	"map":       true,
-	"nil":       true,
-	"package":   true,
-	"range":     true,
-	"real":      true,
-	"return":    true,
-	"rune":      true,
-	"string":    true,
-	"switch":    true,
-	"true":      true,
-	"type":      true,
 }
 
 const scannerTemplate_ = `/*<Notice>*/

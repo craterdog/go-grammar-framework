@@ -17,8 +17,6 @@ import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
-	sts "strings"
-	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -77,6 +75,21 @@ func (v *parser_) GetClass() ParserClassLike {
 	return v.class_
 }
 
+// Methodical
+
+func (v *parser_) PreprocessRule(
+	rule ast.RuleLike,
+	index uint,
+	size uint,
+) {
+	var name = rule.GetUppercase()
+	v.rules_.AddValue(makeLowerCase(name))
+}
+
+func (v *parser_) PreprocessSyntax(syntax ast.SyntaxLike) {
+	v.rules_ = col.Set[string]()
+}
+
 // Public
 
 func (v *parser_) GenerateParserClass(
@@ -87,37 +100,19 @@ func (v *parser_) GenerateParserClass(
 ) {
 	v.visitor_.VisitSyntax(syntax)
 	implementation = parserTemplate_
-	var name = v.extractSyntaxName(syntax)
-	implementation = sts.ReplaceAll(implementation, "<module>", module)
-	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
-	var uppercase = v.makeUppercase(name)
-	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
-	var lowercase = v.makeLowercase(name)
-	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
-	var parseRules = v.extractParseRules()
-	implementation = sts.ReplaceAll(implementation, "<ParseRules>", parseRules)
+	implementation = replaceAll(implementation, "module", module)
+	var notice = v.generateNotice(syntax)
+	implementation = replaceAll(implementation, "notice", notice)
+	var name = v.generateSyntaxName(syntax)
+	implementation = replaceAll(implementation, "name", name)
+	var parseRules = v.generateParseRules()
+	implementation = replaceAll(implementation, "parseRules", parseRules)
 	return implementation
-}
-
-// Methodical
-
-func (v *parser_) PreprocessRule(
-	rule ast.RuleLike,
-	index uint,
-	size uint,
-) {
-	var name = rule.GetUppercase()
-	v.rules_.AddValue(v.makeLowercase(name))
-}
-
-func (v *parser_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.rules_ = col.Set[string]()
 }
 
 // Private
 
-func (v *parser_) extractNotice(syntax ast.SyntaxLike) string {
+func (v *parser_) generateNotice(syntax ast.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetIterator().GetNext()
 	var comment = header.GetComment()
 
@@ -127,40 +122,20 @@ func (v *parser_) extractNotice(syntax ast.SyntaxLike) string {
 	return notice
 }
 
-func (v *parser_) extractParseRules() string {
+func (v *parser_) generateParseRules() string {
 	var parseRules string
 	var iterator = v.rules_.GetIterator()
 	for iterator.HasNext() {
-		var parseRule = parseTemplate_
 		var ruleName = iterator.GetNext()
-		parseRule = sts.ReplaceAll(parseRule, "<ruleName>", ruleName)
-		ruleName = v.makeUppercase(ruleName)
-		parseRule = sts.ReplaceAll(parseRule, "<RuleName>", ruleName)
-		parseRules += parseRule
+		parseRules += replaceAll(parseTemplate_, "ruleName", ruleName)
 	}
 	return parseRules
 }
 
-func (v *parser_) extractSyntaxName(syntax ast.SyntaxLike) string {
+func (v *parser_) generateSyntaxName(syntax ast.SyntaxLike) string {
 	var rule = syntax.GetRules().GetIterator().GetNext()
 	var name = rule.GetUppercase()
 	return name
-}
-
-func (v *parser_) makeLowercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToLower(runes[0])
-	name = string(runes)
-	if reserved_[name] {
-		name += "_"
-	}
-	return name
-}
-
-func (v *parser_) makeUppercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
 }
 
 const parseTemplate_ = `

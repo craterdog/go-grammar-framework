@@ -84,42 +84,50 @@ func (v *visitor_) VisitSyntax(syntax ast.SyntaxLike) {
 // Private
 
 func (v *visitor_) visitAlternative(alternative ast.AlternativeLike) {
-	// Visit the "|" delimiter literal.
-	var delimiter = alternative.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
-
-	// Visit the part.
-	var part = alternative.GetPart()
-	v.processor_.PreprocessPart(part, 1, 1)
-	v.visitPart(part)
-	v.processor_.PostprocessPart(part, 1, 1)
+	// Visit each repetition.
+	var repetitionIndex uint
+	var repetitions = alternative.GetRepetitions().GetIterator()
+	var repetitionsSize = uint(repetitions.GetSize())
+	for repetitions.HasNext() {
+		repetitionIndex++
+		var repetition = repetitions.GetNext()
+		v.processor_.PreprocessRepetition(repetition, repetitionIndex, repetitionsSize)
+		v.visitRepetition(repetition)
+		v.processor_.PostprocessRepetition(repetition, repetitionIndex, repetitionsSize)
+	}
 }
 
-func (v *visitor_) visitBounded(bounded ast.BoundedLike) {
-	// Visit the runic token.
-	var runic = bounded.GetRunic()
-	v.processor_.ProcessRunic(runic)
-
-	// Visit the optional extent.
-	var extent = bounded.GetOptionalExtent()
-	if col.IsDefined(extent) {
-		v.processor_.PreprocessExtent(extent)
-		v.visitExtent(extent)
-		v.processor_.PostprocessExtent(extent)
+func (v *visitor_) visitBracket(bracket ast.BracketLike) {
+	// Visit each factor.
+	var factorIndex uint
+	var factors = bracket.GetFactors().GetIterator()
+	var factorsSize = uint(factors.GetSize())
+	for factors.HasNext() {
+		factorIndex++
+		var factor = factors.GetNext()
+		v.processor_.PreprocessFactor(factor, factorIndex, factorsSize)
+		v.visitFactor(factor)
+		v.processor_.PostprocessFactor(factor, factorIndex, factorsSize)
 	}
+
+	// Visit the cardinality.
+	var cardinality = bracket.GetCardinality()
+	v.processor_.PreprocessCardinality(cardinality)
+	v.visitCardinality(cardinality)
+	v.processor_.PostprocessCardinality(cardinality)
 }
 
 func (v *visitor_) visitCardinality(cardinality ast.CardinalityLike) {
 	// Visit the possible cardinality types.
 	switch actual := cardinality.GetAny().(type) {
-	case ast.ConstrainedLike:
-		v.processor_.PreprocessConstrained(actual)
-		v.visitConstrained(actual)
-		v.processor_.PostprocessConstrained(actual)
-	case ast.QuantifiedLike:
-		v.processor_.PreprocessQuantified(actual)
-		v.visitQuantified(actual)
-		v.processor_.PostprocessQuantified(actual)
+	case ast.ConstraintLike:
+		v.processor_.PreprocessConstraint(actual)
+		v.visitConstraint(actual)
+		v.processor_.PostprocessConstraint(actual)
+	case ast.CountLike:
+		v.processor_.PreprocessCount(actual)
+		v.visitCount(actual)
+		v.processor_.PostprocessCount(actual)
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -128,10 +136,10 @@ func (v *visitor_) visitCardinality(cardinality ast.CardinalityLike) {
 func (v *visitor_) visitCharacter(character ast.CharacterLike) {
 	// Visit the possible character types.
 	switch actual := character.GetAny().(type) {
-	case ast.BoundedLike:
-		v.processor_.PreprocessBounded(actual)
-		v.visitBounded(actual)
-		v.processor_.PostprocessBounded(actual)
+	case ast.SpecificLike:
+		v.processor_.PreprocessSpecific(actual)
+		v.visitSpecific(actual)
+		v.processor_.PostprocessSpecific(actual)
 	case string:
 		switch {
 		case Scanner().MatchesType(actual, IntrinsicToken):
@@ -145,9 +153,9 @@ func (v *visitor_) visitCharacter(character ast.CharacterLike) {
 	}
 }
 
-func (v *visitor_) visitConstrained(constrained ast.ConstrainedLike) {
-	// Visit the possible constrained types.
-	switch actual := constrained.GetAny().(type) {
+func (v *visitor_) visitConstraint(constraint ast.ConstraintLike) {
+	// Visit the possible constraint types.
+	switch actual := constraint.GetAny().(type) {
 	case string:
 		switch {
 		case Scanner().MatchesType(actual, OptionalToken):
@@ -163,17 +171,29 @@ func (v *visitor_) visitConstrained(constrained ast.ConstrainedLike) {
 	}
 }
 
+func (v *visitor_) visitCount(count ast.CountLike) {
+	// Visit each number token.
+	var numberIndex uint
+	var numbers = count.GetNumbers().GetIterator()
+	var numbersSize = uint(numbers.GetSize())
+	for numbers.HasNext() {
+		numberIndex++
+		var number = numbers.GetNext()
+		v.processor_.ProcessNumber(number, numberIndex, numbersSize)
+	}
+}
+
 func (v *visitor_) visitDefinition(definition ast.DefinitionLike) {
 	// Visit the possible definition types.
 	switch actual := definition.GetAny().(type) {
-	case ast.MultilinedLike:
-		v.processor_.PreprocessMultilined(actual)
-		v.visitMultilined(actual)
-		v.processor_.PostprocessMultilined(actual)
-	case ast.InlinedLike:
-		v.processor_.PreprocessInlined(actual)
-		v.visitInlined(actual)
-		v.processor_.PostprocessInlined(actual)
+	case ast.MultilineLike:
+		v.processor_.PreprocessMultiline(actual)
+		v.visitMultiline(actual)
+		v.processor_.PostprocessMultiline(actual)
+	case ast.InlineLike:
+		v.processor_.PreprocessInline(actual)
+		v.visitInline(actual)
+		v.processor_.PostprocessInline(actual)
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -182,18 +202,18 @@ func (v *visitor_) visitDefinition(definition ast.DefinitionLike) {
 func (v *visitor_) visitElement(element ast.ElementLike) {
 	// Visit the possible element types.
 	switch actual := element.GetAny().(type) {
-	case ast.GroupedLike:
-		v.processor_.PreprocessGrouped(actual)
-		v.visitGrouped(actual)
-		v.processor_.PostprocessGrouped(actual)
-	case ast.FilteredLike:
-		v.processor_.PreprocessFiltered(actual)
-		v.visitFiltered(actual)
-		v.processor_.PostprocessFiltered(actual)
-	case ast.TextualLike:
-		v.processor_.PreprocessTextual(actual)
-		v.visitTextual(actual)
-		v.processor_.PostprocessTextual(actual)
+	case ast.GroupLike:
+		v.processor_.PreprocessGroup(actual)
+		v.visitGroup(actual)
+		v.processor_.PostprocessGroup(actual)
+	case ast.FilterLike:
+		v.processor_.PreprocessFilter(actual)
+		v.visitFilter(actual)
+		v.processor_.PostprocessFilter(actual)
+	case ast.TextLike:
+		v.processor_.PreprocessText(actual)
+		v.visitText(actual)
+		v.processor_.PostprocessText(actual)
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -209,10 +229,6 @@ func (v *visitor_) visitExpression(expression ast.ExpressionLike) {
 	// Visit the lowercase token.
 	var lowercase = expression.GetLowercase()
 	v.processor_.ProcessLowercase(lowercase)
-
-	// Visit the ":" delimiter literal.
-	var delimiter = expression.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit the pattern.
 	var pattern = expression.GetPattern()
@@ -237,23 +253,13 @@ func (v *visitor_) visitExpression(expression ast.ExpressionLike) {
 	}
 }
 
-func (v *visitor_) visitExtent(extent ast.ExtentLike) {
-	// Visit the ".." delimiter literal.
-	var delimiter = extent.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
-
-	// Visit the runic token.
-	var runic = extent.GetRunic()
-	v.processor_.ProcessRunic(runic)
-}
-
 func (v *visitor_) visitFactor(factor ast.FactorLike) {
 	// Visit the possible factor types.
 	switch actual := factor.GetAny().(type) {
-	case ast.PredicateLike:
-		v.processor_.PreprocessPredicate(actual)
-		v.visitPredicate(actual)
-		v.processor_.PostprocessPredicate(actual)
+	case ast.ReferenceLike:
+		v.processor_.PreprocessReference(actual)
+		v.visitReference(actual)
+		v.processor_.PostprocessReference(actual)
 	case string:
 		switch {
 		case Scanner().MatchesType(actual, LiteralToken):
@@ -267,20 +273,16 @@ func (v *visitor_) visitFactor(factor ast.FactorLike) {
 	}
 }
 
-func (v *visitor_) visitFiltered(filtered ast.FilteredLike) {
+func (v *visitor_) visitFilter(filter ast.FilterLike) {
 	// Visit the optional excluded token.
-	var excluded = filtered.GetOptionalExcluded()
+	var excluded = filter.GetOptionalExcluded()
 	if col.IsDefined(excluded) {
 		v.processor_.ProcessExcluded(excluded)
 	}
 
-	// Visit the "[" delimiter literal.
-	var delimiter = filtered.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
-
 	// Visit each character.
 	var characterIndex uint
-	var characters = filtered.GetCharacters().GetIterator()
+	var characters = filter.GetCharacters().GetIterator()
 	var charactersSize = uint(characters.GetSize())
 	for characters.HasNext() {
 		characterIndex++
@@ -289,26 +291,14 @@ func (v *visitor_) visitFiltered(filtered ast.FilteredLike) {
 		v.visitCharacter(character)
 		v.processor_.PostprocessCharacter(character, characterIndex, charactersSize)
 	}
-
-	// Visit the "]" delimiter literal.
-	var delimiter2 = filtered.GetDelimiter2()
-	v.processor_.ProcessDelimiter(delimiter2)
 }
 
-func (v *visitor_) visitGrouped(grouped ast.GroupedLike) {
-	// Visit the "(" delimiter literal.
-	var delimiter = grouped.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
-
+func (v *visitor_) visitGroup(group ast.GroupLike) {
 	// Visit the pattern.
-	var pattern = grouped.GetPattern()
+	var pattern = group.GetPattern()
 	v.processor_.PreprocessPattern(pattern)
 	v.visitPattern(pattern)
 	v.processor_.PostprocessPattern(pattern)
-
-	// Visit the ")" delimiter literal.
-	var delimiter2 = grouped.GetDelimiter2()
-	v.processor_.ProcessDelimiter(delimiter2)
 }
 
 func (v *visitor_) visitHeader(header ast.HeaderLike) {
@@ -339,35 +329,23 @@ func (v *visitor_) visitIdentifier(identifier ast.IdentifierLike) {
 	}
 }
 
-func (v *visitor_) visitInlined(inlined ast.InlinedLike) {
-	// Visit each factor.
-	var factorIndex uint
-	var factors = inlined.GetFactors().GetIterator()
-	var factorsSize = uint(factors.GetSize())
-	for factors.HasNext() {
-		factorIndex++
-		var factor = factors.GetNext()
-		v.processor_.PreprocessFactor(factor, factorIndex, factorsSize)
-		v.visitFactor(factor)
-		v.processor_.PostprocessFactor(factor, factorIndex, factorsSize)
+func (v *visitor_) visitInline(inline ast.InlineLike) {
+	// Visit each term.
+	var termIndex uint
+	var terms = inline.GetTerms().GetIterator()
+	var termsSize = uint(terms.GetSize())
+	for terms.HasNext() {
+		termIndex++
+		var term = terms.GetNext()
+		v.processor_.PreprocessTerm(term, termIndex, termsSize)
+		v.visitTerm(term)
+		v.processor_.PostprocessTerm(term, termIndex, termsSize)
 	}
 
 	// Visit the optional note token.
-	var note = inlined.GetOptionalNote()
+	var note = inline.GetOptionalNote()
 	if col.IsDefined(note) {
 		v.processor_.ProcessNote(note)
-	}
-}
-
-func (v *visitor_) visitLimit(limit ast.LimitLike) {
-	// Visit the ".." delimiter literal.
-	var delimiter = limit.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
-
-	// Visit the optional number token.
-	var number = limit.GetOptionalNumber()
-	if col.IsDefined(number) {
-		v.processor_.ProcessNumber(number)
 	}
 }
 
@@ -389,10 +367,10 @@ func (v *visitor_) visitLine(line ast.LineLike) {
 	}
 }
 
-func (v *visitor_) visitMultilined(multilined ast.MultilinedLike) {
+func (v *visitor_) visitMultiline(multiline ast.MultilineLike) {
 	// Visit each line.
 	var lineIndex uint
-	var lines = multilined.GetLines().GetIterator()
+	var lines = multiline.GetLines().GetIterator()
 	var linesSize = uint(lines.GetSize())
 	for lines.HasNext() {
 		lineIndex++
@@ -403,47 +381,29 @@ func (v *visitor_) visitMultilined(multilined ast.MultilinedLike) {
 	}
 }
 
-func (v *visitor_) visitPart(part ast.PartLike) {
-	// Visit the element.
-	var element = part.GetElement()
-	v.processor_.PreprocessElement(element)
-	v.visitElement(element)
-	v.processor_.PostprocessElement(element)
-
-	// Visit the optional cardinality.
-	var cardinality = part.GetOptionalCardinality()
-	if col.IsDefined(cardinality) {
-		v.processor_.PreprocessCardinality(cardinality)
-		v.visitCardinality(cardinality)
-		v.processor_.PostprocessCardinality(cardinality)
-	}
-}
-
 func (v *visitor_) visitPattern(pattern ast.PatternLike) {
-	// Visit the part.
-	var part = pattern.GetPart()
-	v.processor_.PreprocessPart(part, 1, 1)
-	v.visitPart(part)
-	v.processor_.PostprocessPart(part, 1, 1)
-
-	// Visit the optional supplement.
-	var supplement = pattern.GetOptionalSupplement()
-	if col.IsDefined(supplement) {
-		v.processor_.PreprocessSupplement(supplement)
-		v.visitSupplement(supplement)
-		v.processor_.PostprocessSupplement(supplement)
+	// Visit each alternative.
+	var alternativeIndex uint
+	var alternatives = pattern.GetAlternatives().GetIterator()
+	var alternativesSize = uint(alternatives.GetSize())
+	for alternatives.HasNext() {
+		alternativeIndex++
+		var alternative = alternatives.GetNext()
+		v.processor_.PreprocessAlternative(alternative, alternativeIndex, alternativesSize)
+		v.visitAlternative(alternative)
+		v.processor_.PostprocessAlternative(alternative, alternativeIndex, alternativesSize)
 	}
 }
 
-func (v *visitor_) visitPredicate(predicate ast.PredicateLike) {
+func (v *visitor_) visitReference(reference ast.ReferenceLike) {
 	// Visit the identifier.
-	var identifier = predicate.GetIdentifier()
+	var identifier = reference.GetIdentifier()
 	v.processor_.PreprocessIdentifier(identifier)
 	v.visitIdentifier(identifier)
 	v.processor_.PostprocessIdentifier(identifier)
 
 	// Visit the optional cardinality.
-	var cardinality = predicate.GetOptionalCardinality()
+	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		v.processor_.PreprocessCardinality(cardinality)
 		v.visitCardinality(cardinality)
@@ -451,26 +411,20 @@ func (v *visitor_) visitPredicate(predicate ast.PredicateLike) {
 	}
 }
 
-func (v *visitor_) visitQuantified(quantified ast.QuantifiedLike) {
-	// Visit the "{" delimiter literal.
-	var delimiter = quantified.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
+func (v *visitor_) visitRepetition(repetition ast.RepetitionLike) {
+	// Visit the element.
+	var element = repetition.GetElement()
+	v.processor_.PreprocessElement(element)
+	v.visitElement(element)
+	v.processor_.PostprocessElement(element)
 
-	// Visit the number token.
-	var number = quantified.GetNumber()
-	v.processor_.ProcessNumber(number)
-
-	// Visit the optional limit.
-	var limit = quantified.GetOptionalLimit()
-	if col.IsDefined(limit) {
-		v.processor_.PreprocessLimit(limit)
-		v.visitLimit(limit)
-		v.processor_.PostprocessLimit(limit)
+	// Visit the optional cardinality.
+	var cardinality = repetition.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		v.processor_.PreprocessCardinality(cardinality)
+		v.visitCardinality(cardinality)
+		v.processor_.PostprocessCardinality(cardinality)
 	}
-
-	// Visit the "}" delimiter literal.
-	var delimiter2 = quantified.GetDelimiter2()
-	v.processor_.ProcessDelimiter(delimiter2)
 }
 
 func (v *visitor_) visitRule(rule ast.RuleLike) {
@@ -483,10 +437,6 @@ func (v *visitor_) visitRule(rule ast.RuleLike) {
 	// Visit the uppercase token.
 	var uppercase = rule.GetUppercase()
 	v.processor_.ProcessUppercase(uppercase)
-
-	// Visit the ":" delimiter literal.
-	var delimiter = rule.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
 
 	// Visit the definition.
 	var definition = rule.GetDefinition()
@@ -505,47 +455,15 @@ func (v *visitor_) visitRule(rule ast.RuleLike) {
 	}
 }
 
-func (v *visitor_) visitSelective(selective ast.SelectiveLike) {
-	// Visit each alternative.
-	var alternativeIndex uint
-	var alternatives = selective.GetAlternatives().GetIterator()
-	var alternativesSize = uint(alternatives.GetSize())
-	for alternatives.HasNext() {
-		alternativeIndex++
-		var alternative = alternatives.GetNext()
-		v.processor_.PreprocessAlternative(alternative, alternativeIndex, alternativesSize)
-		v.visitAlternative(alternative)
-		v.processor_.PostprocessAlternative(alternative, alternativeIndex, alternativesSize)
-	}
-}
-
-func (v *visitor_) visitSequential(sequential ast.SequentialLike) {
-	// Visit each part.
-	var partIndex uint
-	var parts = sequential.GetParts().GetIterator()
-	var partsSize = uint(parts.GetSize())
-	for parts.HasNext() {
-		partIndex++
-		var part = parts.GetNext()
-		v.processor_.PreprocessPart(part, partIndex, partsSize)
-		v.visitPart(part)
-		v.processor_.PostprocessPart(part, partIndex, partsSize)
-	}
-}
-
-func (v *visitor_) visitSupplement(supplement ast.SupplementLike) {
-	// Visit the possible supplement types.
-	switch actual := supplement.GetAny().(type) {
-	case ast.SequentialLike:
-		v.processor_.PreprocessSequential(actual)
-		v.visitSequential(actual)
-		v.processor_.PostprocessSequential(actual)
-	case ast.SelectiveLike:
-		v.processor_.PreprocessSelective(actual)
-		v.visitSelective(actual)
-		v.processor_.PostprocessSelective(actual)
-	default:
-		panic(fmt.Sprintf("Invalid rule type: %T", actual))
+func (v *visitor_) visitSpecific(specific ast.SpecificLike) {
+	// Visit each runic token.
+	var runicIndex uint
+	var runics = specific.GetRunics().GetIterator()
+	var runicsSize = uint(runics.GetSize())
+	for runics.HasNext() {
+		runicIndex++
+		var runic = runics.GetNext()
+		v.processor_.ProcessRunic(runic, runicIndex, runicsSize)
 	}
 }
 
@@ -587,15 +505,31 @@ func (v *visitor_) visitSyntax(syntax ast.SyntaxLike) {
 	}
 }
 
-func (v *visitor_) visitTextual(textual ast.TextualLike) {
-	// Visit the possible textual types.
-	switch actual := textual.GetAny().(type) {
+func (v *visitor_) visitTerm(term ast.TermLike) {
+	// Visit the possible term types.
+	switch actual := term.GetAny().(type) {
+	case ast.FactorLike:
+		v.processor_.PreprocessFactor(actual, 1, 1)
+		v.visitFactor(actual)
+		v.processor_.PostprocessFactor(actual, 1, 1)
+	case ast.BracketLike:
+		v.processor_.PreprocessBracket(actual)
+		v.visitBracket(actual)
+		v.processor_.PostprocessBracket(actual)
+	default:
+		panic(fmt.Sprintf("Invalid rule type: %T", actual))
+	}
+}
+
+func (v *visitor_) visitText(text ast.TextLike) {
+	// Visit the possible text types.
+	switch actual := text.GetAny().(type) {
 	case string:
 		switch {
 		case Scanner().MatchesType(actual, IntrinsicToken):
 			v.processor_.ProcessIntrinsic(actual)
 		case Scanner().MatchesType(actual, RunicToken):
-			v.processor_.ProcessRunic(actual)
+			v.processor_.ProcessRunic(actual, 1, 1)
 		case Scanner().MatchesType(actual, LiteralToken):
 			v.processor_.ProcessLiteral(actual)
 		case Scanner().MatchesType(actual, LowercaseToken):

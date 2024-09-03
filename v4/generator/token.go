@@ -16,7 +16,6 @@ package generator
 
 import (
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
-	sts "strings"
 )
 
 // Reference
@@ -71,15 +70,14 @@ func (v *token_) GenerateTokenClass(
 ) (
 	implementation string,
 ) {
-	implementation += tokenTemplate_
-	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
+	var notice = v.generateNotice(syntax)
+	implementation = replaceAll(tokenTemplate_, "notice", notice)
 	return implementation
 }
 
 // Private
 
-func (v *token_) extractNotice(syntax ast.SyntaxLike) string {
+func (v *token_) generateNotice(syntax ast.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetIterator().GetNext()
 	var comment = header.GetComment()
 

@@ -105,14 +105,14 @@ using Crater Dog Syntax Notation™ (CDSN):
 A language syntax consists of a set of rule definitions and regular expression
 patterns.
 
-Each predicate within a rule definition may be constrained by one of the
-following cardinalities:
- * predicate{M} - Exactly M instances of the specified predicate.
- * predicate{M..N} - M to N instances of the specified predicate.
- * predicate{M..} - M or more instances of the specified predicate.
- * predicate? - Zero or one instances of the specified predicate.
- * predicate* - Zero or more instances of the specified predicate.
- * predicate+ - One or more instances of the specified predicate.
+Most terms within a rule definition can be constrained by one of the following
+cardinalities:
+ * term{M} - Exactly M instances of the specified term.
+ * term{M..N} - M to N instances of the specified term.
+ * term{M..} - M or more instances of the specified term.
+ * term* - Zero or more instances of the specified term.
+ * term+ - One or more instances of the specified term.
+ * term? - An optional term.
 
 The following intrinsic character types may be used within regular expression
 pattern declarations:
@@ -150,9 +150,7 @@ Intrinsic:
     rune
     text
 
-List: "[" Component Additional* "]"
-
-Additional: "," Component
+List: "[" Component ("," Component)* "]"
 
 !>
 EXPRESSION DEFINITIONS
@@ -257,18 +255,7 @@ func (v *formatter_) GetDepth() uint {
 	return v.depth_
 }
 
-// Public
-
-func (v *formatter_) FormatDocument(document ast.DocumentLike) string {
-	v.visitor_.VisitDocument(document)
-	return v.getResult()
-}
-
 // Methodical
-
-func (v *formatter_) ProcessDelimiter(delimiter string) {
-	v.appendString(delimiter)
-}
 
 func (v *formatter_) ProcessInteger(integer string) {
 	v.appendString(integer)
@@ -278,8 +265,8 @@ func (v *formatter_) ProcessNewline(newline string) {
 	v.appendString(newline)
 }
 
-func (v *formatter_) ProcessRune(rune string) {
-	v.appendString(rune)
+func (v *formatter_) ProcessRune(rune_ string) {
+	v.appendString(rune_)
 }
 
 func (v *formatter_) ProcessText(text string) {
@@ -290,6 +277,13 @@ func (v *formatter_) PreprocessDocument(document ast.DocumentLike) {
 }
 
 func (v *formatter_) PostprocessDocument(document ast.DocumentLike) {
+}
+
+// Public
+
+func (v *formatter_) FormatDocument(document ast.DocumentLike) string {
+	v.visitor_.VisitDocument(document)
+	return v.getResult()
 }
 
 // Private
@@ -438,14 +432,6 @@ func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
 	// This is not the right token.
 	v.putBack(token)
 	return value, token, false
-}
-
-func (v *parser_) parseAdditional() (
-	additional ast.AdditionalLike,
-	token TokenLike,
-	ok bool,
-) {
-	panic("The parseAdditional() method has not yet been implemented.")
 }
 
 func (v *parser_) parseComponent() (
@@ -974,6 +960,30 @@ func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
 }
 
+// Methodical
+
+func (v *validator_) ProcessInteger(integer string) {
+	v.ValidateToken(integer, IntegerToken)
+}
+
+func (v *validator_) ProcessNewline(newline string) {
+	v.ValidateToken(newline, NewlineToken)
+}
+
+func (v *validator_) ProcessRune(rune_ string) {
+	v.ValidateToken(rune_, RuneToken)
+}
+
+func (v *validator_) ProcessText(text string) {
+	v.ValidateToken(text, TextToken)
+}
+
+func (v *validator_) PreprocessDocument(document ast.DocumentLike) {
+}
+
+func (v *validator_) PostprocessDocument(document ast.DocumentLike) {
+}
+
 // Public
 
 func (v *validator_) ValidateToken(
@@ -992,34 +1002,6 @@ func (v *validator_) ValidateToken(
 
 func (v *validator_) ValidateDocument(document ast.DocumentLike) {
 	v.visitor_.VisitDocument(document)
-}
-
-// Methodical
-
-func (v *validator_) ProcessDelimiter(delimiter string) {
-	v.ValidateToken(delimiter, DelimiterToken)
-}
-
-func (v *validator_) ProcessInteger(integer string) {
-	v.ValidateToken(integer, IntegerToken)
-}
-
-func (v *validator_) ProcessNewline(newline string) {
-	v.ValidateToken(newline, NewlineToken)
-}
-
-func (v *validator_) ProcessRune(rune string) {
-	v.ValidateToken(rune, RuneToken)
-}
-
-func (v *validator_) ProcessText(text string) {
-	v.ValidateToken(text, TextToken)
-}
-
-func (v *validator_) PreprocessDocument(document ast.DocumentLike) {
-}
-
-func (v *validator_) PostprocessDocument(document ast.DocumentLike) {
 }
 `
 
@@ -1090,9 +1072,6 @@ func (v *processor_) GetClass() ProcessorClassLike {
 
 // Methodical
 
-func (v *processor_) ProcessDelimiter(delimiter string) {
-}
-
 func (v *processor_) ProcessInteger(integer string) {
 }
 
@@ -1107,20 +1086,6 @@ func (v *processor_) ProcessRune(rune string) {
 }
 
 func (v *processor_) ProcessText(text string) {
-}
-
-func (v *processor_) PreprocessAdditional(
-	additional ast.AdditionalLike,
-	index uint,
-	size uint,
-) {
-}
-
-func (v *processor_) PostprocessAdditional(
-	additional ast.AdditionalLike,
-	index uint,
-	size uint,
-) {
 }
 
 func (v *processor_) PreprocessComponent(
@@ -1200,9 +1165,7 @@ type visitorClass_ struct {
 
 // Constructors
 
-func (c *visitorClass_) Make(
-	processor Methodical,
-) VisitorLike {
+func (c *visitorClass_) Make(processor Methodical) VisitorLike {
 	return &visitor_{
 		// Initialize the instance attributes.
 		class_:     c,
@@ -1241,18 +1204,6 @@ func (v *visitor_) VisitDocument(document ast.DocumentLike) {
 
 // Private
 
-func (v *visitor_) visitAdditional(additional ast.AdditionalLike) {
-	// Visit the "," delimiter literal.
-	var delimiter = additional.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
-
-	// Visit the component.
-	var component = additional.GetComponent()
-	v.processor_.PreprocessComponent(component, 1, 1)
-	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component, 1, 1)
-}
-
 func (v *visitor_) visitComponent(component ast.ComponentLike) {
 	// Visit the possible component types.
 	switch actual := component.GetAny().(type) {
@@ -1270,16 +1221,24 @@ func (v *visitor_) visitComponent(component ast.ComponentLike) {
 }
 
 func (v *visitor_) visitDocument(document ast.DocumentLike) {
-	// Visit each component.
+	// Visit each component rule.
 	var componentIndex uint
 	var components = document.GetComponents().GetIterator()
 	var componentsSize = uint(components.GetSize())
 	for components.HasNext() {
 		componentIndex++
 		var component = components.GetNext()
-		v.processor_.PreprocessComponent(component, componentIndex, componentsSize)
+		v.processor_.PreprocessComponent(
+			component,
+			componentIndex,
+			componentsSize,
+		)
 		v.visitComponent(component)
-		v.processor_.PostprocessComponent(component, componentIndex, componentsSize)
+		v.processor_.PostprocessComponent(
+			component,
+			componentIndex,
+			componentsSize,
+		)
 	}
 
 	// Visit each newline token.
@@ -1289,7 +1248,11 @@ func (v *visitor_) visitDocument(document ast.DocumentLike) {
 	for newlines.HasNext() {
 		newlineIndex++
 		var newline = newlines.GetNext()
-		v.processor_.ProcessNewline(newline, newlineIndex, newlinesSize)
+		v.processor_.ProcessNewline(
+			newline,
+			newlineIndex,
+			newlinesSize,
+		)
 	}
 }
 
@@ -1314,31 +1277,25 @@ func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {
 }
 
 func (v *visitor_) visitList(list ast.ListLike) {
-	// Visit the "[" delimiter literal.
-	var delimiter = list.GetDelimiter()
-	v.processor_.ProcessDelimiter(delimiter)
-
-	// Visit the component.
-	var component = list.GetComponent()
-	v.processor_.PreprocessComponent(component, 1, 1)
-	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component, 1, 1)
-
-	// Visit each additional.
-	var additionalIndex uint
-	var additionals = list.GetAdditionals().GetIterator()
-	var additionalsSize = uint(additionals.GetSize())
-	for additionals.HasNext() {
-		additionalIndex++
-		var additional = additionals.GetNext()
-		v.processor_.PreprocessAdditional(additional, additionalIndex, additionalsSize)
-		v.visitAdditional(additional)
-		v.processor_.PostprocessAdditional(additional, additionalIndex, additionalsSize)
+	// Visit each component rule.
+	var componentIndex uint
+	var components = list.GetComponents().GetIterator()
+	var componentsSize = uint(components.GetSize())
+	for components.HasNext() {
+		componentIndex++
+		var component = components.GetNext()
+		v.processor_.PreprocessComponent(
+			component,
+			componentIndex,
+			componentsSize,
+		)
+		v.visitComponent(component)
+		v.processor_.PostprocessComponent(
+			component,
+			componentIndex,
+			componentsSize,
+		)
 	}
-
-	// Visit the "]" delimiter literal.
-	var delimiter2 = list.GetDelimiter2()
-	v.processor_.ProcessDelimiter(delimiter2)
 }
 `
 
@@ -1493,9 +1450,7 @@ concrete visitor-like class.
 */
 type VisitorClassLike interface {
 	// Constructors
-	Make(
-		processor Methodical,
-	) VisitorLike
+	Make(processor Methodical) VisitorLike
 }
 
 // Instances
@@ -1603,7 +1558,6 @@ Methodical defines the set of method signatures that must be supported
 by all methodical processors.
 */
 type Methodical interface {
-	ProcessDelimiter(delimiter string)
 	ProcessInteger(integer string)
 	ProcessNewline(
 		newline string,
@@ -1612,16 +1566,6 @@ type Methodical interface {
 	)
 	ProcessRune(rune string)
 	ProcessText(text string)
-	PreprocessAdditional(
-		additional ast.AdditionalLike,
-		index uint,
-		size uint,
-	)
-	PostprocessAdditional(
-		additional ast.AdditionalLike,
-		index uint,
-		size uint,
-	)
 	PreprocessComponent(
 		component ast.ComponentLike,
 		index uint,
@@ -1679,19 +1623,6 @@ import (
 // Classes
 
 /*
-AdditionalClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete additional-like class.
-*/
-type AdditionalClassLike interface {
-	// Constructors
-	Make(
-		delimiter string,
-		component ComponentLike,
-	) AdditionalLike
-}
-
-/*
 ComponentClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete component-like class.
@@ -1731,27 +1662,10 @@ concrete list-like class.
 */
 type ListClassLike interface {
 	// Constructors
-	Make(
-		delimiter string,
-		component ComponentLike,
-		additionals abs.Sequential[AdditionalLike],
-		delimiter2 string,
-	) ListLike
+	Make(components abs.Sequential[ComponentLike]) ListLike
 }
 
 // Instances
-
-/*
-AdditionalLike is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete additional-like class.
-*/
-type AdditionalLike interface {
-	// Attributes
-	GetClass() AdditionalClassLike
-	GetDelimiter() string
-	GetComponent() ComponentLike
-}
 
 /*
 ComponentLike is an instance interface that defines the complete set of
@@ -1795,9 +1709,6 @@ instance of a concrete list-like class.
 type ListLike interface {
 	// Attributes
 	GetClass() ListClassLike
-	GetDelimiter() string
-	GetComponent() ComponentLike
-	GetAdditionals() abs.Sequential[AdditionalLike]
-	GetDelimiter2() string
+	GetComponents() abs.Sequential[ComponentLike]
 }
 `

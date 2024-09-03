@@ -14,6 +14,7 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -40,22 +41,16 @@ type alternativeClass_ struct {
 
 // Constructors
 
-func (c *alternativeClass_) Make(
-	delimiter string,
-	part PartLike,
-) AlternativeLike {
+func (c *alternativeClass_) Make(repetitions abs.Sequential[RepetitionLike]) AlternativeLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(delimiter):
-		panic("The delimiter attribute is required by this class.")
-	case col.IsUndefined(part):
-		panic("The part attribute is required by this class.")
+	case col.IsUndefined(repetitions):
+		panic("The repetitions attribute is required by this class.")
 	default:
 		return &alternative_{
 			// Initialize instance attributes.
-			class_:     c,
-			delimiter_: delimiter,
-			part_:      part,
+			class_:       c,
+			repetitions_: repetitions,
 		}
 	}
 }
@@ -66,9 +61,8 @@ func (c *alternativeClass_) Make(
 
 type alternative_ struct {
 	// Define instance attributes.
-	class_     AlternativeClassLike
-	delimiter_ string
-	part_      PartLike
+	class_       AlternativeClassLike
+	repetitions_ abs.Sequential[RepetitionLike]
 }
 
 // Attributes
@@ -77,12 +71,8 @@ func (v *alternative_) GetClass() AlternativeClassLike {
 	return v.class_
 }
 
-func (v *alternative_) GetDelimiter() string {
-	return v.delimiter_
-}
-
-func (v *alternative_) GetPart() PartLike {
-	return v.part_
+func (v *alternative_) GetRepetitions() abs.Sequential[RepetitionLike] {
+	return v.repetitions_
 }
 
 // Private

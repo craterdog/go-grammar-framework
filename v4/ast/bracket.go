@@ -14,42 +14,49 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var supplementClass = &supplementClass_{
+var bracketClass = &bracketClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Supplement() SupplementClassLike {
-	return supplementClass
+func Bracket() BracketClassLike {
+	return bracketClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type supplementClass_ struct {
+type bracketClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *supplementClass_) Make(any_ any) SupplementLike {
+func (c *bracketClass_) Make(
+	factors abs.Sequential[FactorLike],
+	cardinality CardinalityLike,
+) BracketLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(any_):
-		panic("The any attribute is required by this class.")
+	case col.IsUndefined(factors):
+		panic("The factors attribute is required by this class.")
+	case col.IsUndefined(cardinality):
+		panic("The cardinality attribute is required by this class.")
 	default:
-		return &supplement_{
+		return &bracket_{
 			// Initialize instance attributes.
-			class_: c,
-			any_:   any_,
+			class_:       c,
+			factors_:     factors,
+			cardinality_: cardinality,
 		}
 	}
 }
@@ -58,20 +65,25 @@ func (c *supplementClass_) Make(any_ any) SupplementLike {
 
 // Target
 
-type supplement_ struct {
+type bracket_ struct {
 	// Define instance attributes.
-	class_ SupplementClassLike
-	any_   any
+	class_       BracketClassLike
+	factors_     abs.Sequential[FactorLike]
+	cardinality_ CardinalityLike
 }
 
 // Attributes
 
-func (v *supplement_) GetClass() SupplementClassLike {
+func (v *bracket_) GetClass() BracketClassLike {
 	return v.class_
 }
 
-func (v *supplement_) GetAny() any {
-	return v.any_
+func (v *bracket_) GetFactors() abs.Sequential[FactorLike] {
+	return v.factors_
+}
+
+func (v *bracket_) GetCardinality() CardinalityLike {
+	return v.cardinality_
 }
 
 // Private

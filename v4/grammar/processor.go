@@ -68,9 +68,6 @@ func (v *processor_) GetClass() ProcessorClassLike {
 func (v *processor_) ProcessComment(comment string) {
 }
 
-func (v *processor_) ProcessDelimiter(delimiter string) {
-}
-
 func (v *processor_) ProcessExcluded(excluded string) {
 }
 
@@ -93,7 +90,11 @@ func (v *processor_) ProcessNewline(
 func (v *processor_) ProcessNote(note string) {
 }
 
-func (v *processor_) ProcessNumber(number string) {
+func (v *processor_) ProcessNumber(
+	number string,
+	index uint,
+	size uint,
+) {
 }
 
 func (v *processor_) ProcessOptional(optional string) {
@@ -102,7 +103,11 @@ func (v *processor_) ProcessOptional(optional string) {
 func (v *processor_) ProcessRepeated(repeated string) {
 }
 
-func (v *processor_) ProcessRunic(runic string) {
+func (v *processor_) ProcessRunic(
+	runic string,
+	index uint,
+	size uint,
+) {
 }
 
 func (v *processor_) ProcessUppercase(uppercase string) {
@@ -122,10 +127,10 @@ func (v *processor_) PostprocessAlternative(
 ) {
 }
 
-func (v *processor_) PreprocessBounded(bounded ast.BoundedLike) {
+func (v *processor_) PreprocessBracket(bracket ast.BracketLike) {
 }
 
-func (v *processor_) PostprocessBounded(bounded ast.BoundedLike) {
+func (v *processor_) PostprocessBracket(bracket ast.BracketLike) {
 }
 
 func (v *processor_) PreprocessCardinality(cardinality ast.CardinalityLike) {
@@ -148,10 +153,16 @@ func (v *processor_) PostprocessCharacter(
 ) {
 }
 
-func (v *processor_) PreprocessConstrained(constrained ast.ConstrainedLike) {
+func (v *processor_) PreprocessConstraint(constraint ast.ConstraintLike) {
 }
 
-func (v *processor_) PostprocessConstrained(constrained ast.ConstrainedLike) {
+func (v *processor_) PostprocessConstraint(constraint ast.ConstraintLike) {
+}
+
+func (v *processor_) PreprocessCount(count ast.CountLike) {
+}
+
+func (v *processor_) PostprocessCount(count ast.CountLike) {
 }
 
 func (v *processor_) PreprocessDefinition(definition ast.DefinitionLike) {
@@ -180,12 +191,6 @@ func (v *processor_) PostprocessExpression(
 ) {
 }
 
-func (v *processor_) PreprocessExtent(extent ast.ExtentLike) {
-}
-
-func (v *processor_) PostprocessExtent(extent ast.ExtentLike) {
-}
-
 func (v *processor_) PreprocessFactor(
 	factor ast.FactorLike,
 	index uint,
@@ -200,16 +205,16 @@ func (v *processor_) PostprocessFactor(
 ) {
 }
 
-func (v *processor_) PreprocessFiltered(filtered ast.FilteredLike) {
+func (v *processor_) PreprocessFilter(filter ast.FilterLike) {
 }
 
-func (v *processor_) PostprocessFiltered(filtered ast.FilteredLike) {
+func (v *processor_) PostprocessFilter(filter ast.FilterLike) {
 }
 
-func (v *processor_) PreprocessGrouped(grouped ast.GroupedLike) {
+func (v *processor_) PreprocessGroup(group ast.GroupLike) {
 }
 
-func (v *processor_) PostprocessGrouped(grouped ast.GroupedLike) {
+func (v *processor_) PostprocessGroup(group ast.GroupLike) {
 }
 
 func (v *processor_) PreprocessHeader(
@@ -232,16 +237,10 @@ func (v *processor_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 func (v *processor_) PostprocessIdentifier(identifier ast.IdentifierLike) {
 }
 
-func (v *processor_) PreprocessInlined(inlined ast.InlinedLike) {
+func (v *processor_) PreprocessInline(inline ast.InlineLike) {
 }
 
-func (v *processor_) PostprocessInlined(inlined ast.InlinedLike) {
-}
-
-func (v *processor_) PreprocessLimit(limit ast.LimitLike) {
-}
-
-func (v *processor_) PostprocessLimit(limit ast.LimitLike) {
+func (v *processor_) PostprocessInline(inline ast.InlineLike) {
 }
 
 func (v *processor_) PreprocessLine(
@@ -258,24 +257,10 @@ func (v *processor_) PostprocessLine(
 ) {
 }
 
-func (v *processor_) PreprocessMultilined(multilined ast.MultilinedLike) {
+func (v *processor_) PreprocessMultiline(multiline ast.MultilineLike) {
 }
 
-func (v *processor_) PostprocessMultilined(multilined ast.MultilinedLike) {
-}
-
-func (v *processor_) PreprocessPart(
-	part ast.PartLike,
-	index uint,
-	size uint,
-) {
-}
-
-func (v *processor_) PostprocessPart(
-	part ast.PartLike,
-	index uint,
-	size uint,
-) {
+func (v *processor_) PostprocessMultiline(multiline ast.MultilineLike) {
 }
 
 func (v *processor_) PreprocessPattern(pattern ast.PatternLike) {
@@ -284,16 +269,24 @@ func (v *processor_) PreprocessPattern(pattern ast.PatternLike) {
 func (v *processor_) PostprocessPattern(pattern ast.PatternLike) {
 }
 
-func (v *processor_) PreprocessPredicate(predicate ast.PredicateLike) {
+func (v *processor_) PreprocessReference(reference ast.ReferenceLike) {
 }
 
-func (v *processor_) PostprocessPredicate(predicate ast.PredicateLike) {
+func (v *processor_) PostprocessReference(reference ast.ReferenceLike) {
 }
 
-func (v *processor_) PreprocessQuantified(quantified ast.QuantifiedLike) {
+func (v *processor_) PreprocessRepetition(
+	repetition ast.RepetitionLike,
+	index uint,
+	size uint,
+) {
 }
 
-func (v *processor_) PostprocessQuantified(quantified ast.QuantifiedLike) {
+func (v *processor_) PostprocessRepetition(
+	repetition ast.RepetitionLike,
+	index uint,
+	size uint,
+) {
 }
 
 func (v *processor_) PreprocessRule(
@@ -310,22 +303,10 @@ func (v *processor_) PostprocessRule(
 ) {
 }
 
-func (v *processor_) PreprocessSelective(selective ast.SelectiveLike) {
+func (v *processor_) PreprocessSpecific(specific ast.SpecificLike) {
 }
 
-func (v *processor_) PostprocessSelective(selective ast.SelectiveLike) {
-}
-
-func (v *processor_) PreprocessSequential(sequential ast.SequentialLike) {
-}
-
-func (v *processor_) PostprocessSequential(sequential ast.SequentialLike) {
-}
-
-func (v *processor_) PreprocessSupplement(supplement ast.SupplementLike) {
-}
-
-func (v *processor_) PostprocessSupplement(supplement ast.SupplementLike) {
+func (v *processor_) PostprocessSpecific(specific ast.SpecificLike) {
 }
 
 func (v *processor_) PreprocessSyntax(syntax ast.SyntaxLike) {
@@ -334,8 +315,22 @@ func (v *processor_) PreprocessSyntax(syntax ast.SyntaxLike) {
 func (v *processor_) PostprocessSyntax(syntax ast.SyntaxLike) {
 }
 
-func (v *processor_) PreprocessTextual(textual ast.TextualLike) {
+func (v *processor_) PreprocessTerm(
+	term ast.TermLike,
+	index uint,
+	size uint,
+) {
 }
 
-func (v *processor_) PostprocessTextual(textual ast.TextualLike) {
+func (v *processor_) PostprocessTerm(
+	term ast.TermLike,
+	index uint,
+	size uint,
+) {
+}
+
+func (v *processor_) PreprocessText(text ast.TextLike) {
+}
+
+func (v *processor_) PostprocessText(text ast.TextLike) {
 }

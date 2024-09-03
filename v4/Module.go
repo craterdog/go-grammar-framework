@@ -43,33 +43,30 @@ import (
 
 type (
 	AlternativeLike = ast.AlternativeLike
-	BoundedLike     = ast.BoundedLike
+	BracketLike     = ast.BracketLike
 	CardinalityLike = ast.CardinalityLike
 	CharacterLike   = ast.CharacterLike
-	ConstrainedLike = ast.ConstrainedLike
+	ConstraintLike  = ast.ConstraintLike
+	CountLike       = ast.CountLike
 	DefinitionLike  = ast.DefinitionLike
 	ElementLike     = ast.ElementLike
 	ExpressionLike  = ast.ExpressionLike
-	ExtentLike      = ast.ExtentLike
 	FactorLike      = ast.FactorLike
-	FilteredLike    = ast.FilteredLike
-	GroupedLike     = ast.GroupedLike
+	FilterLike      = ast.FilterLike
+	GroupLike       = ast.GroupLike
 	HeaderLike      = ast.HeaderLike
 	IdentifierLike  = ast.IdentifierLike
-	InlinedLike     = ast.InlinedLike
-	LimitLike       = ast.LimitLike
+	InlineLike      = ast.InlineLike
 	LineLike        = ast.LineLike
-	MultilinedLike  = ast.MultilinedLike
-	PartLike        = ast.PartLike
+	MultilineLike   = ast.MultilineLike
 	PatternLike     = ast.PatternLike
-	PredicateLike   = ast.PredicateLike
-	QuantifiedLike  = ast.QuantifiedLike
+	ReferenceLike   = ast.ReferenceLike
+	RepetitionLike  = ast.RepetitionLike
 	RuleLike        = ast.RuleLike
-	SelectiveLike   = ast.SelectiveLike
-	SequentialLike  = ast.SequentialLike
-	SupplementLike  = ast.SupplementLike
+	SpecificLike    = ast.SpecificLike
 	SyntaxLike      = ast.SyntaxLike
-	TextualLike     = ast.TextualLike
+	TermLike        = ast.TermLike
+	TextLike        = ast.TextLike
 )
 
 // Grammar
@@ -109,13 +106,19 @@ const (
 
 func Alternative(arguments ...any) AlternativeLike {
 	// Initialize the possible arguments.
-	var part PartLike
+	var repetition RepetitionLike
+	var repetitions abs.Sequential[RepetitionLike]
 
 	// Process the actual arguments.
+	var list = col.List[RepetitionLike]()
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case PartLike:
-			part = actual
+		case RepetitionLike:
+			repetition = actual
+			list.AppendValue(repetition)
+		case abs.Sequential[RepetitionLike]:
+			repetitions = actual
+			list.AppendValues(repetitions)
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the alternative constructor: %T\n",
@@ -124,31 +127,33 @@ func Alternative(arguments ...any) AlternativeLike {
 			panic(message)
 		}
 	}
+	if list.IsEmpty() {
+		panic("The alternative constructor requires at least one argument.")
+	}
+	repetitions = list
 
 	// Call the constructor.
-	var bar = "|"
 	var alternative = ast.Alternative().Make(
-		bar,
-		part,
+		repetitions,
 	)
 	return alternative
 }
 
-func Bounded(arguments ...any) BoundedLike {
+func Bracket(arguments ...any) BracketLike {
 	// Initialize the possible arguments.
-	var runic string
-	var extent ExtentLike
+	var factors abs.Sequential[ast.FactorLike]
+	var cardinality ast.CardinalityLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case string:
-			runic = actual
-		case ExtentLike:
-			extent = actual
+		case abs.Sequential[FactorLike]:
+			factors = actual
+		case ast.CardinalityLike:
+			cardinality = actual
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the bounded constructor: %T\n",
+				"An unknown argument type passed into the bracket constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -156,25 +161,25 @@ func Bounded(arguments ...any) BoundedLike {
 	}
 
 	// Call the constructor.
-	var bounded = ast.Bounded().Make(
-		runic,
-		extent,
+	var bracket = ast.Bracket().Make(
+		factors,
+		cardinality,
 	)
-	return bounded
+	return bracket
 }
 
 func Cardinality(arguments ...any) CardinalityLike {
 	// Initialize the possible arguments.
-	var constrained ConstrainedLike
-	var quantified QuantifiedLike
+	var constraint ConstraintLike
+	var count CountLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case ConstrainedLike:
-			constrained = actual
-		case QuantifiedLike:
-			quantified = actual
+		case ConstraintLike:
+			constraint = actual
+		case CountLike:
+			count = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the cardinality constructor: %T\n",
@@ -187,10 +192,10 @@ func Cardinality(arguments ...any) CardinalityLike {
 	// Call the constructor.
 	var cardinality CardinalityLike
 	switch {
-	case col.IsDefined(constrained):
-		cardinality = ast.Cardinality().Make(constrained)
-	case col.IsDefined(quantified):
-		cardinality = ast.Cardinality().Make(quantified)
+	case col.IsDefined(constraint):
+		cardinality = ast.Cardinality().Make(constraint)
+	case col.IsDefined(count):
+		cardinality = ast.Cardinality().Make(count)
 	default:
 		panic("The constructor for a cardinality requires an argument.")
 	}
@@ -199,14 +204,14 @@ func Cardinality(arguments ...any) CardinalityLike {
 
 func Character(arguments ...any) CharacterLike {
 	// Initialize the possible arguments.
-	var bounded BoundedLike
+	var specific SpecificLike
 	var intrinsic string
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case BoundedLike:
-			bounded = actual
+		case SpecificLike:
+			specific = actual
 		case string:
 			intrinsic = actual
 		default:
@@ -221,8 +226,8 @@ func Character(arguments ...any) CharacterLike {
 	// Call the constructor.
 	var character CharacterLike
 	switch {
-	case col.IsDefined(bounded):
-		character = ast.Character().Make(bounded)
+	case col.IsDefined(specific):
+		character = ast.Character().Make(specific)
 	case col.IsDefined(intrinsic):
 		character = ast.Character().Make(intrinsic)
 	default:
@@ -231,7 +236,7 @@ func Character(arguments ...any) CharacterLike {
 	return character
 }
 
-func Constrained(arguments ...any) ConstrainedLike {
+func Constraint(arguments ...any) ConstraintLike {
 	// Initialize the possible arguments.
 	var optional string
 	var repeated string
@@ -247,14 +252,14 @@ func Constrained(arguments ...any) ConstrainedLike {
 				repeated = actual
 			default:
 				var message = fmt.Sprintf(
-					"An invalid string was passed into the constrained constructor: %v\n",
+					"An invalid string was passed into the constraint constructor: %q\n",
 					actual,
 				)
 				panic(message)
 			}
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the constrained constructor: %T\n",
+				"An unknown argument type passed into the constraint constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -262,30 +267,53 @@ func Constrained(arguments ...any) ConstrainedLike {
 	}
 
 	// Call the constructor.
-	var constrained ConstrainedLike
+	var constraint ConstraintLike
 	switch {
 	case col.IsDefined(optional):
-		constrained = ast.Constrained().Make(optional)
+		constraint = ast.Constraint().Make(optional)
 	case col.IsDefined(repeated):
-		constrained = ast.Constrained().Make(repeated)
+		constraint = ast.Constraint().Make(repeated)
 	default:
-		panic("The constructor for an constrained requires an argument.")
+		panic("The constructor for an constraint requires an argument.")
 	}
-	return constrained
+	return constraint
 }
 
-func Definition(arguments ...any) DefinitionLike {
+func Count(arguments ...any) CountLike {
 	// Initialize the possible arguments.
-	var inlined InlinedLike
-	var multilined MultilinedLike
+	var numbers = col.List[string]()
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case InlinedLike:
-			inlined = actual
-		case MultilinedLike:
-			multilined = actual
+		case string:
+			numbers.AppendValue(actual)
+		default:
+			var message = fmt.Sprintf(
+				"An unknown argument type passed into the count constructor: %T\n",
+				actual,
+			)
+			panic(message)
+		}
+	}
+
+	// Call the constructor.
+	var count = ast.Count().Make(numbers)
+	return count
+}
+
+func Definition(arguments ...any) DefinitionLike {
+	// Initialize the possible arguments.
+	var inline InlineLike
+	var multiline MultilineLike
+
+	// Process the actual arguments.
+	for _, argument := range arguments {
+		switch actual := argument.(type) {
+		case InlineLike:
+			inline = actual
+		case MultilineLike:
+			multiline = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the definition constructor: %T\n",
@@ -298,10 +326,10 @@ func Definition(arguments ...any) DefinitionLike {
 	// Call the constructor.
 	var definition DefinitionLike
 	switch {
-	case col.IsDefined(inlined):
-		definition = ast.Definition().Make(inlined)
-	case col.IsDefined(multilined):
-		definition = ast.Definition().Make(multilined)
+	case col.IsDefined(inline):
+		definition = ast.Definition().Make(inline)
+	case col.IsDefined(multiline):
+		definition = ast.Definition().Make(multiline)
 	default:
 		panic("The constructor for a definition requires an argument.")
 	}
@@ -310,19 +338,19 @@ func Definition(arguments ...any) DefinitionLike {
 
 func Element(arguments ...any) ElementLike {
 	// Initialize the possible arguments.
-	var grouped GroupedLike
-	var filtered FilteredLike
-	var textual TextualLike
+	var group GroupLike
+	var filter FilterLike
+	var text TextLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case GroupedLike:
-			grouped = actual
-		case FilteredLike:
-			filtered = actual
-		case TextualLike:
-			textual = actual
+		case GroupLike:
+			group = actual
+		case FilterLike:
+			filter = actual
+		case TextLike:
+			text = actual
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the element constructor: %T\n",
@@ -335,12 +363,12 @@ func Element(arguments ...any) ElementLike {
 	// Call the constructor.
 	var element ElementLike
 	switch {
-	case col.IsDefined(grouped):
-		element = ast.Element().Make(grouped)
-	case col.IsDefined(filtered):
-		element = ast.Element().Make(filtered)
-	case col.IsDefined(textual):
-		element = ast.Element().Make(textual)
+	case col.IsDefined(group):
+		element = ast.Element().Make(group)
+	case col.IsDefined(filter):
+		element = ast.Element().Make(filter)
+	case col.IsDefined(text):
+		element = ast.Element().Make(text)
 	default:
 		panic("The constructor for an element requires an argument.")
 	}
@@ -378,12 +406,10 @@ func Expression(arguments ...any) ExpressionLike {
 	}
 
 	// Call the constructor.
-	var colon = ":"
 	var newlines = col.List[string]([]string{"\n", "\n"})
 	var expression = ast.Expression().Make(
 		comment,
 		lowercase,
-		colon,
 		pattern,
 		note,
 		newlines,
@@ -391,43 +417,16 @@ func Expression(arguments ...any) ExpressionLike {
 	return expression
 }
 
-func Extent(arguments ...any) ExtentLike {
-	// Initialize the possible arguments.
-	var runic string
-
-	// Process the actual arguments.
-	for _, argument := range arguments {
-		switch actual := argument.(type) {
-		case string:
-			runic = actual
-		default:
-			var message = fmt.Sprintf(
-				"An unknown argument type passed into the extent constructor: %T\n",
-				actual,
-			)
-			panic(message)
-		}
-	}
-
-	// Call the constructor.
-	var dotdot = ".."
-	var extent = ast.Extent().Make(
-		dotdot,
-		runic,
-	)
-	return extent
-}
-
 func Factor(arguments ...any) FactorLike {
 	// Initialize the possible arguments.
-	var predicate PredicateLike
+	var reference ReferenceLike
 	var literal string
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case PredicateLike:
-			predicate = actual
+		case ReferenceLike:
+			reference = actual
 		case string:
 			literal = actual
 		default:
@@ -442,8 +441,8 @@ func Factor(arguments ...any) FactorLike {
 	// Call the constructor.
 	var factor FactorLike
 	switch {
-	case col.IsDefined(predicate):
-		factor = ast.Factor().Make(predicate)
+	case col.IsDefined(reference):
+		factor = ast.Factor().Make(reference)
 	case col.IsDefined(literal):
 		factor = ast.Factor().Make(literal)
 	default:
@@ -452,7 +451,7 @@ func Factor(arguments ...any) FactorLike {
 	return factor
 }
 
-func Filtered(arguments ...any) FilteredLike {
+func Filter(arguments ...any) FilterLike {
 	// Initialize the possible arguments.
 	var excluded string
 	var characters abs.Sequential[CharacterLike]
@@ -466,7 +465,7 @@ func Filtered(arguments ...any) FilteredLike {
 			characters = actual
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the filtered constructor: %T\n",
+				"An unknown argument type passed into the filter constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -474,18 +473,14 @@ func Filtered(arguments ...any) FilteredLike {
 	}
 
 	// Call the constructor.
-	var left = "["
-	var right = "]"
-	var filtered = ast.Filtered().Make(
-		left,
+	var filter = ast.Filter().Make(
 		excluded,
 		characters,
-		right,
 	)
-	return filtered
+	return filter
 }
 
-func Grouped(arguments ...any) GroupedLike {
+func Group(arguments ...any) GroupLike {
 	// Initialize the possible arguments.
 	var pattern PatternLike
 
@@ -496,7 +491,7 @@ func Grouped(arguments ...any) GroupedLike {
 			pattern = actual
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the grouped constructor: %T\n",
+				"An unknown argument type passed into the group constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -504,14 +499,10 @@ func Grouped(arguments ...any) GroupedLike {
 	}
 
 	// Call the constructor.
-	var left = "("
-	var right = ")"
-	var grouped = ast.Grouped().Make(
-		left,
+	var group = ast.Group().Make(
 		pattern,
-		right,
 	)
-	return grouped
+	return group
 }
 
 func Header(arguments ...any) HeaderLike {
@@ -557,7 +548,7 @@ func Identifier(arguments ...any) IdentifierLike {
 				uppercase = actual
 			default:
 				var message = fmt.Sprintf(
-					"An invalid string was passed into the identifier constructor: %v\n",
+					"An invalid string was passed into the identifier constructor: %q\n",
 					actual,
 				)
 				panic(message)
@@ -584,21 +575,21 @@ func Identifier(arguments ...any) IdentifierLike {
 	return identifier
 }
 
-func Inlined(arguments ...any) InlinedLike {
+func Inline(arguments ...any) InlineLike {
 	// Initialize the possible arguments.
-	var factors abs.Sequential[FactorLike]
+	var terms abs.Sequential[TermLike]
 	var note string
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case abs.Sequential[FactorLike]:
-			factors = actual
+		case abs.Sequential[TermLike]:
+			terms = actual
 		case string:
 			note = actual
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the inlined constructor: %T\n",
+				"An unknown argument type passed into the inline constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -606,11 +597,11 @@ func Inlined(arguments ...any) InlinedLike {
 	}
 
 	// Call the constructor.
-	var inlined = ast.Inlined().Make(
-		factors,
+	var inline = ast.Inline().Make(
+		terms,
 		note,
 	)
-	return inlined
+	return inline
 }
 
 func Line(arguments ...any) LineLike {
@@ -644,34 +635,7 @@ func Line(arguments ...any) LineLike {
 	return line
 }
 
-func Limit(arguments ...any) LimitLike {
-	// Initialize the possible arguments.
-	var number string
-
-	// Process the actual arguments.
-	for _, argument := range arguments {
-		switch actual := argument.(type) {
-		case string:
-			number = actual
-		default:
-			var message = fmt.Sprintf(
-				"An unknown argument type passed into the limit constructor: %T\n",
-				actual,
-			)
-			panic(message)
-		}
-	}
-
-	// Call the constructor.
-	var dotdot = ".."
-	var limit = ast.Limit().Make(
-		dotdot,
-		number,
-	)
-	return limit
-}
-
-func Multilined(arguments ...any) MultilinedLike {
+func Multiline(arguments ...any) MultilineLike {
 	// Initialize the possible arguments.
 	var lines abs.Sequential[LineLike]
 
@@ -682,7 +646,7 @@ func Multilined(arguments ...any) MultilinedLike {
 			lines = actual
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the multilined constructor: %T\n",
+				"An unknown argument type passed into the multiline constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -690,51 +654,21 @@ func Multilined(arguments ...any) MultilinedLike {
 	}
 
 	// Call the constructor.
-	var multilined = ast.Multilined().Make(lines)
-	return multilined
-}
-
-func Part(arguments ...any) PartLike {
-	// Initialize the possible arguments.
-	var element ElementLike
-	var cardinality CardinalityLike
-
-	// Process the actual arguments.
-	for _, argument := range arguments {
-		switch actual := argument.(type) {
-		case ElementLike:
-			element = actual
-		case CardinalityLike:
-			cardinality = actual
-		default:
-			var message = fmt.Sprintf(
-				"An unknown argument type passed into the part constructor: %T\n",
-				actual,
-			)
-			panic(message)
-		}
-	}
-
-	// Call the constructor.
-	var part = ast.Part().Make(
-		element,
-		cardinality,
-	)
-	return part
+	var multiline = ast.Multiline().Make(lines)
+	return multiline
 }
 
 func Pattern(arguments ...any) PatternLike {
 	// Initialize the possible arguments.
-	var part PartLike
-	var supplement SupplementLike
+	var alternatives = col.List[AlternativeLike]()
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case PartLike:
-			part = actual
-		case SupplementLike:
-			supplement = actual
+		case AlternativeLike:
+			alternatives.AppendValue(actual)
+		case abs.Sequential[AlternativeLike]:
+			alternatives.AppendValues(actual)
 		default:
 			var message = fmt.Sprintf(
 				"An unknown argument type passed into the pattern constructor: %T\n",
@@ -743,16 +677,18 @@ func Pattern(arguments ...any) PatternLike {
 			panic(message)
 		}
 	}
+	if alternatives.IsEmpty() {
+		panic("The pattern constructor requires at least one argument.")
+	}
 
 	// Call the constructor.
 	var pattern = ast.Pattern().Make(
-		part,
-		supplement,
+		alternatives,
 	)
 	return pattern
 }
 
-func Predicate(arguments ...any) PredicateLike {
+func Reference(arguments ...any) ReferenceLike {
 	// Initialize the possible arguments.
 	var identifier IdentifierLike
 	var cardinality CardinalityLike
@@ -766,7 +702,7 @@ func Predicate(arguments ...any) PredicateLike {
 			cardinality = actual
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the predicate constructor: %T\n",
+				"An unknown argument type passed into the reference constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -774,28 +710,28 @@ func Predicate(arguments ...any) PredicateLike {
 	}
 
 	// Call the constructor.
-	var predicate = ast.Predicate().Make(
+	var reference = ast.Reference().Make(
 		identifier,
 		cardinality,
 	)
-	return predicate
+	return reference
 }
 
-func Quantified(arguments ...any) QuantifiedLike {
+func Repetition(arguments ...any) RepetitionLike {
 	// Initialize the possible arguments.
-	var number string
-	var limit LimitLike
+	var element ElementLike
+	var cardinality CardinalityLike
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case string:
-			number = actual
-		case LimitLike:
-			limit = actual
+		case ElementLike:
+			element = actual
+		case CardinalityLike:
+			cardinality = actual
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the quantified constructor: %T\n",
+				"An unknown argument type passed into the repetition constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -803,15 +739,11 @@ func Quantified(arguments ...any) QuantifiedLike {
 	}
 
 	// Call the constructor.
-	var left = "{"
-	var right = "}"
-	var quantified = ast.Quantified().Make(
-		left,
-		number,
-		limit,
-		right,
+	var repetition = ast.Repetition().Make(
+		element,
+		cardinality,
 	)
-	return quantified
+	return repetition
 }
 
 func Rule(arguments ...any) RuleLike {
@@ -831,7 +763,7 @@ func Rule(arguments ...any) RuleLike {
 				uppercase = actual
 			default:
 				var message = fmt.Sprintf(
-					"An invalid string was passed into the rule constructor: %v\n",
+					"An invalid string was passed into the rule constructor: %q\n",
 					actual,
 				)
 				panic(message)
@@ -848,30 +780,28 @@ func Rule(arguments ...any) RuleLike {
 	}
 
 	// Call the constructor.
-	var colon = ":"
 	var newlines = col.List[string]([]string{"\n", "\n"})
 	var rule = ast.Rule().Make(
 		comment,
 		uppercase,
-		colon,
 		definition,
 		newlines,
 	)
 	return rule
 }
 
-func Selective(arguments ...any) SelectiveLike {
+func Specific(arguments ...any) SpecificLike {
 	// Initialize the possible arguments.
-	var alternatives abs.Sequential[AlternativeLike]
+	var runics = col.List[string]()
 
 	// Process the actual arguments.
 	for _, argument := range arguments {
 		switch actual := argument.(type) {
-		case abs.Sequential[AlternativeLike]:
-			alternatives = actual
+		case string:
+			runics.AppendValue(actual)
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the selective constructor: %T\n",
+				"An unknown argument type passed into the specific constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -879,65 +809,8 @@ func Selective(arguments ...any) SelectiveLike {
 	}
 
 	// Call the constructor.
-	var selective = ast.Selective().Make(alternatives)
-	return selective
-}
-
-func Sequential(arguments ...any) SequentialLike {
-	// Initialize the possible arguments.
-	var parts abs.Sequential[PartLike]
-
-	// Process the actual arguments.
-	for _, argument := range arguments {
-		switch actual := argument.(type) {
-		case abs.Sequential[PartLike]:
-			parts = actual
-		default:
-			var message = fmt.Sprintf(
-				"An unknown argument type passed into the sequential constructor: %T\n",
-				actual,
-			)
-			panic(message)
-		}
-	}
-
-	// Call the constructor.
-	var sequential = ast.Sequential().Make(parts)
-	return sequential
-}
-
-func Supplement(arguments ...any) SupplementLike {
-	// Initialize the possible arguments.
-	var sequential SequentialLike
-	var selective SelectiveLike
-
-	// Process the actual arguments.
-	for _, argument := range arguments {
-		switch actual := argument.(type) {
-		case SequentialLike:
-			sequential = actual
-		case SelectiveLike:
-			selective = actual
-		default:
-			var message = fmt.Sprintf(
-				"An unknown argument type passed into the supplement constructor: %T\n",
-				actual,
-			)
-			panic(message)
-		}
-	}
-
-	// Call the constructor.
-	var supplement SupplementLike
-	switch {
-	case col.IsDefined(sequential):
-		supplement = ast.Supplement().Make(sequential)
-	case col.IsDefined(selective):
-		supplement = ast.Supplement().Make(selective)
-	default:
-		panic("The constructor for a supplement requires an argument.")
-	}
-	return supplement
+	var specific = ast.Specific().Make(runics)
+	return specific
 }
 
 func Syntax(arguments ...any) SyntaxLike {
@@ -973,7 +846,7 @@ func Syntax(arguments ...any) SyntaxLike {
 	return syntax
 }
 
-func Textual(arguments ...any) TextualLike {
+func Text(arguments ...any) TextLike {
 	// Initialize the possible arguments.
 	var intrinsic string
 	var runic string
@@ -995,14 +868,14 @@ func Textual(arguments ...any) TextualLike {
 				lowercase = actual
 			default:
 				var message = fmt.Sprintf(
-					"An invalid string was passed into the string constructor: %v\n",
+					"An invalid string was passed into the text constructor: %q\n",
 					actual,
 				)
 				panic(message)
 			}
 		default:
 			var message = fmt.Sprintf(
-				"An unknown argument type passed into the string constructor: %T\n",
+				"An unknown argument type passed into the text constructor: %T\n",
 				actual,
 			)
 			panic(message)
@@ -1010,16 +883,16 @@ func Textual(arguments ...any) TextualLike {
 	}
 
 	// Call the constructor.
-	var text TextualLike
+	var text TextLike
 	switch {
 	case col.IsDefined(intrinsic):
-		text = Textual(intrinsic)
+		text = Text(intrinsic)
 	case col.IsDefined(runic):
-		text = Textual(runic)
+		text = Text(runic)
 	case col.IsDefined(literal):
-		text = Textual(literal)
+		text = Text(literal)
 	case col.IsDefined(lowercase):
-		text = Textual(lowercase)
+		text = Text(lowercase)
 	default:
 		panic("The constructor for an string requires an argument.")
 	}
@@ -1111,6 +984,18 @@ func ValidateSyntax(syntax SyntaxLike) {
 
 // Generator
 
+func GenerateAstModel(
+	module string,
+	wiki string,
+	syntax SyntaxLike,
+) (
+	implementation string,
+) {
+	var generator = gen.Ast().Make()
+	implementation = generator.GenerateAstModel(module, wiki, syntax)
+	return implementation
+}
+
 func GenerateFormatterClass(
 	module string,
 	syntax SyntaxLike,
@@ -1131,18 +1016,6 @@ func GenerateGrammarModel(
 ) {
 	var generator = gen.Grammar().Make()
 	implementation = generator.GenerateGrammarModel(module, wiki, syntax)
-	return implementation
-}
-
-func GenerateAstModel(
-	module string,
-	wiki string,
-	syntax SyntaxLike,
-) (
-	implementation string,
-) {
-	var generator = gen.Ast().Make()
-	implementation = generator.GenerateAstModel(module, wiki, syntax)
 	return implementation
 }
 

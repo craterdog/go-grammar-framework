@@ -14,46 +14,43 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var partClass = &partClass_{
+var specificClass = &specificClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Part() PartClassLike {
-	return partClass
+func Specific() SpecificClassLike {
+	return specificClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type partClass_ struct {
+type specificClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *partClass_) Make(
-	element ElementLike,
-	optionalCardinality CardinalityLike,
-) PartLike {
+func (c *specificClass_) Make(runics abs.Sequential[string]) SpecificLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(element):
-		panic("The element attribute is required by this class.")
+	case col.IsUndefined(runics):
+		panic("The runics attribute is required by this class.")
 	default:
-		return &part_{
+		return &specific_{
 			// Initialize instance attributes.
-			class_:               c,
-			element_:             element,
-			optionalCardinality_: optionalCardinality,
+			class_:  c,
+			runics_: runics,
 		}
 	}
 }
@@ -62,25 +59,20 @@ func (c *partClass_) Make(
 
 // Target
 
-type part_ struct {
+type specific_ struct {
 	// Define instance attributes.
-	class_               PartClassLike
-	element_             ElementLike
-	optionalCardinality_ CardinalityLike
+	class_  SpecificClassLike
+	runics_ abs.Sequential[string]
 }
 
 // Attributes
 
-func (v *part_) GetClass() PartClassLike {
+func (v *specific_) GetClass() SpecificClassLike {
 	return v.class_
 }
 
-func (v *part_) GetElement() ElementLike {
-	return v.element_
-}
-
-func (v *part_) GetOptionalCardinality() CardinalityLike {
-	return v.optionalCardinality_
+func (v *specific_) GetRunics() abs.Sequential[string] {
+	return v.runics_
 }
 
 // Private

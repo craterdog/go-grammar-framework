@@ -20,40 +20,36 @@ import (
 
 // Reference
 
-var limitClass = &limitClass_{
+var textClass = &textClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Limit() LimitClassLike {
-	return limitClass
+func Text() TextClassLike {
+	return textClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type limitClass_ struct {
+type textClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *limitClass_) Make(
-	delimiter string,
-	optionalNumber string,
-) LimitLike {
+func (c *textClass_) Make(any_ any) TextLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(delimiter):
-		panic("The delimiter attribute is required by this class.")
+	case col.IsUndefined(any_):
+		panic("The any attribute is required by this class.")
 	default:
-		return &limit_{
+		return &text_{
 			// Initialize instance attributes.
-			class_:          c,
-			delimiter_:      delimiter,
-			optionalNumber_: optionalNumber,
+			class_: c,
+			any_:   any_,
 		}
 	}
 }
@@ -62,25 +58,20 @@ func (c *limitClass_) Make(
 
 // Target
 
-type limit_ struct {
+type text_ struct {
 	// Define instance attributes.
-	class_          LimitClassLike
-	delimiter_      string
-	optionalNumber_ string
+	class_ TextClassLike
+	any_   any
 }
 
 // Attributes
 
-func (v *limit_) GetClass() LimitClassLike {
+func (v *text_) GetClass() TextClassLike {
 	return v.class_
 }
 
-func (v *limit_) GetDelimiter() string {
-	return v.delimiter_
-}
-
-func (v *limit_) GetOptionalNumber() string {
-	return v.optionalNumber_
+func (v *text_) GetAny() any {
+	return v.any_
 }
 
 // Private

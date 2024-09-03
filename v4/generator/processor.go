@@ -17,8 +17,6 @@ import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
-	sts "strings"
-	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -63,11 +61,12 @@ func (c *processorClass_) Make() ProcessorLike {
 
 type processor_ struct {
 	// Define the instance attributes.
-	class_   ProcessorClassLike
-	visitor_ gra.VisitorLike
-	tokens_  abs.SetLike[string]
-	rules_   abs.SetLike[string]
-	plurals_ abs.SetLike[string]
+	class_       ProcessorClassLike
+	visitor_     gra.VisitorLike
+	tokens_      abs.SetLike[string]
+	rules_       abs.SetLike[string]
+	plurals_     abs.SetLike[string]
+	cardinality_ ast.CardinalityLike
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -79,56 +78,15 @@ func (v *processor_) GetClass() ProcessorClassLike {
 	return v.class_
 }
 
-// Public
+// Methodical
 
-func (v *processor_) GenerateProcessorClass(
-	module string,
-	syntax ast.SyntaxLike,
-) (
-	implementation string,
-) {
-	v.visitor_.VisitSyntax(syntax)
-	implementation = processorTemplate_
-	var name = v.extractSyntaxName(syntax)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<module>",
-		module,
-	)
-	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<Notice>",
-		notice,
-	)
-	var tokenProcessors = v.extractProcessTokens()
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<TokenProcessors>",
-		tokenProcessors,
-	)
-	var ruleProcessors = v.extractProcessRules()
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<RuleProcessors>",
-		ruleProcessors,
-	)
-	var uppercase = v.makeUppercase(name)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<Name>",
-		uppercase,
-	)
-	var lowercase = v.makeLowercase(name)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<name>",
-		lowercase,
-	)
-	return implementation
+func (v *processor_) PreprocessBracket(bracket ast.BracketLike) {
+	v.cardinality_ = bracket.GetCardinality()
 }
 
-// Methodical
+func (v *processor_) PostprocessBracket(bracket ast.BracketLike) {
+	v.cardinality_ = nil
+}
 
 func (v *processor_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 	var name = identifier.GetAny().(string)
@@ -137,16 +95,18 @@ func (v *processor_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 	}
 }
 
-func (v *processor_) PreprocessPredicate(
-	predicate ast.PredicateLike,
-) {
-	var identifier = v.makeLowercase(predicate.GetIdentifier().GetAny().(string))
-	var cardinality = predicate.GetOptionalCardinality()
+func (v *processor_) PreprocessReference(reference ast.ReferenceLike) {
+	var identifier = makeLowerCase(reference.GetIdentifier().GetAny().(string))
+	var cardinality = reference.GetOptionalCardinality()
+	if col.IsDefined(v.cardinality_) {
+		// The cardinality of a bracket takes precedence.
+		cardinality = v.cardinality_
+	}
 	if col.IsDefined(cardinality) {
 		switch actual := cardinality.GetAny().(type) {
-		case ast.QuantifiedLike:
+		case ast.CountLike:
 			v.plurals_.AddValue(identifier)
-		case ast.ConstrainedLike:
+		case ast.ConstraintLike:
 			switch actual.GetAny().(string) {
 			case "*", "+":
 				v.plurals_.AddValue(identifier)
@@ -161,18 +121,40 @@ func (v *processor_) PreprocessRule(
 	size uint,
 ) {
 	var name = rule.GetUppercase()
-	v.rules_.AddValue(v.makeLowercase(name))
+	v.rules_.AddValue(makeLowerCase(name))
 }
 
 func (v *processor_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]([]string{"delimiter"})
+	v.tokens_ = col.Set[string]()
 	v.rules_ = col.Set[string]()
 	v.plurals_ = col.Set[string]()
 }
 
+// Public
+
+func (v *processor_) GenerateProcessorClass(
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	v.visitor_.VisitSyntax(syntax)
+	implementation = processorTemplate_
+	implementation = replaceAll(implementation, "module", module)
+	var notice = v.generateNotice(syntax)
+	implementation = replaceAll(implementation, "notice", notice)
+	var tokenProcessors = v.generateTokenProcessors()
+	implementation = replaceAll(implementation, "tokenProcessors", tokenProcessors)
+	var ruleProcessors = v.generateRuleProcessors()
+	implementation = replaceAll(implementation, "ruleProcessors", ruleProcessors)
+	var name = v.generateSyntaxName(syntax)
+	implementation = replaceAll(implementation, "name", name)
+	return implementation
+}
+
 // Private
 
-func (v *processor_) extractNotice(syntax ast.SyntaxLike) string {
+func (v *processor_) generateNotice(syntax ast.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetIterator().GetNext()
 	var comment = header.GetComment()
 
@@ -182,82 +164,69 @@ func (v *processor_) extractNotice(syntax ast.SyntaxLike) string {
 	return notice
 }
 
-func (v *processor_) extractProcessRules() string {
-	var processRules string
+func (v *processor_) generateRuleProcessors() string {
+	var ruleProcessors string
 	var iterator = v.rules_.GetIterator()
 	for iterator.HasNext() {
-		var lowercase = iterator.GetNext()
-		var isPlural = v.plurals_.ContainsValue(lowercase)
-		var uppercase = v.makeUppercase(lowercase)
+		var ruleName = iterator.GetNext()
+		var className = makeUpperCase(ruleName)
+		var isPlural = v.plurals_.ContainsValue(ruleName)
+		if col.IsDefined(v.cardinality_) {
+			// The cardinality of a bracket takes precedence.
+			isPlural = true
+		}
 		var parameters string
 		if isPlural {
 			parameters += "\n\t"
 		}
-		parameters += lowercase + " ast." + uppercase + "Like"
+		parameters += ruleName + " ast." + className + "Like"
 		if isPlural {
 			parameters += ",\n\tindex uint"
 			parameters += ",\n\tsize uint,\n"
 		}
-		var processRule = processRuleTemplate_
-		processRule = sts.ReplaceAll(processRule, "<RuleName>", uppercase)
-		processRule = sts.ReplaceAll(processRule, "<parameters>", parameters)
-		processRules += processRule
+		var ruleProcessor = ruleProcessorTemplate_
+		ruleProcessor = replaceAll(ruleProcessor, "ruleName", ruleName)
+		ruleProcessor = replaceAll(ruleProcessor, "parameters", parameters)
+		ruleProcessors += ruleProcessor
 	}
-	return processRules
+	return ruleProcessors
 }
 
-func (v *processor_) extractProcessTokens() string {
-	var processTokens string
-	var iterator = v.tokens_.GetIterator()
-	for iterator.HasNext() {
-		var lowercase = iterator.GetNext()
-		var uppercase = v.makeUppercase(lowercase)
-		var isPlural = v.plurals_.ContainsValue(lowercase)
-		var parameters string
-		if isPlural {
-			parameters += "\n\t"
-		}
-		parameters += lowercase + " string"
-		if isPlural {
-			parameters += ",\n\tindex uint"
-			parameters += ",\n\tsize uint,\n"
-		}
-		var processToken = processTokenTemplate_
-		processToken = sts.ReplaceAll(processToken, "<TokenName>", uppercase)
-		processToken = sts.ReplaceAll(processToken, "<parameters>", parameters)
-		processTokens += processToken
-	}
-	return processTokens
-}
-
-func (v *processor_) extractSyntaxName(syntax ast.SyntaxLike) string {
+func (v *processor_) generateSyntaxName(syntax ast.SyntaxLike) string {
 	var rule = syntax.GetRules().GetIterator().GetNext()
 	var name = rule.GetUppercase()
 	return name
 }
 
-func (v *processor_) makeLowercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToLower(runes[0])
-	name = string(runes)
-	if reserved_[name] {
-		name += "_"
+func (v *processor_) generateTokenProcessors() string {
+	var tokenProcessors string
+	var iterator = v.tokens_.GetIterator()
+	for iterator.HasNext() {
+		var tokenName = iterator.GetNext()
+		var isPlural = v.plurals_.ContainsValue(tokenName)
+		var parameters string
+		if isPlural {
+			parameters += "\n\t"
+		}
+		parameters += tokenName + " string"
+		if isPlural {
+			parameters += ",\n\tindex uint"
+			parameters += ",\n\tsize uint,\n"
+		}
+		var tokenProcessor = tokenProcessorTemplate_
+		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
+		tokenProcessor = replaceAll(tokenProcessor, "parameters", parameters)
+		tokenProcessors += tokenProcessor
 	}
-	return name
+	return tokenProcessors
 }
 
-func (v *processor_) makeUppercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
-}
-
-const processTokenTemplate_ = `
+const tokenProcessorTemplate_ = `
 func (v *processor_) Process<TokenName>(<parameters>) {
 }
 `
 
-const processRuleTemplate_ = `
+const ruleProcessorTemplate_ = `
 func (v *processor_) Preprocess<RuleName>(<parameters>) {
 }
 

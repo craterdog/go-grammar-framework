@@ -14,42 +14,43 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var textualClass = &textualClass_{
+var multilineClass = &multilineClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Textual() TextualClassLike {
-	return textualClass
+func Multiline() MultilineClassLike {
+	return multilineClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type textualClass_ struct {
+type multilineClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *textualClass_) Make(any_ any) TextualLike {
+func (c *multilineClass_) Make(lines abs.Sequential[LineLike]) MultilineLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(any_):
-		panic("The any attribute is required by this class.")
+	case col.IsUndefined(lines):
+		panic("The lines attribute is required by this class.")
 	default:
-		return &textual_{
+		return &multiline_{
 			// Initialize instance attributes.
 			class_: c,
-			any_:   any_,
+			lines_: lines,
 		}
 	}
 }
@@ -58,20 +59,20 @@ func (c *textualClass_) Make(any_ any) TextualLike {
 
 // Target
 
-type textual_ struct {
+type multiline_ struct {
 	// Define instance attributes.
-	class_ TextualClassLike
-	any_   any
+	class_ MultilineClassLike
+	lines_ abs.Sequential[LineLike]
 }
 
 // Attributes
 
-func (v *textual_) GetClass() TextualClassLike {
+func (v *multiline_) GetClass() MultilineClassLike {
 	return v.class_
 }
 
-func (v *textual_) GetAny() any {
-	return v.any_
+func (v *multiline_) GetLines() abs.Sequential[LineLike] {
+	return v.lines_
 }
 
 // Private

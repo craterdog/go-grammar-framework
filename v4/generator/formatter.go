@@ -17,8 +17,6 @@ import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
-	sts "strings"
-	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -77,49 +75,6 @@ func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
 }
 
-// Public
-
-func (v *formatter_) GenerateFormatterClass(
-	module string,
-	syntax ast.SyntaxLike,
-) (
-	implementation string,
-) {
-	v.visitor_.VisitSyntax(syntax)
-	implementation = formatterTemplate_
-	var name = v.extractSyntaxName(syntax)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<module>",
-		module,
-	)
-	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<Notice>",
-		notice,
-	)
-	var tokenProcessors = v.extractTokenProcessors()
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<TokenProcessors>",
-		tokenProcessors,
-	)
-	var uppercase = v.makeUppercase(name)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<Name>",
-		uppercase,
-	)
-	var lowercase = v.makeLowercase(name)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<name>",
-		lowercase,
-	)
-	return implementation
-}
-
 // Methodical
 
 func (v *formatter_) PreprocessIdentifier(identifier ast.IdentifierLike) {
@@ -130,12 +85,32 @@ func (v *formatter_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 }
 
 func (v *formatter_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]([]string{"delimiter"})
+	v.tokens_ = col.Set[string]()
+}
+
+// Public
+
+func (v *formatter_) GenerateFormatterClass(
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	v.visitor_.VisitSyntax(syntax)
+	implementation = formatterTemplate_
+	implementation = replaceAll(implementation, "module", module)
+	var notice = v.generateNotice(syntax)
+	implementation = replaceAll(implementation, "notice", notice)
+	var tokenProcessors = v.generateTokenProcessors()
+	implementation = replaceAll(implementation, "tokenProcessors", tokenProcessors)
+	var name = v.generateSyntaxName(syntax)
+	implementation = replaceAll(implementation, "name", name)
+	return implementation
 }
 
 // Private
 
-func (v *formatter_) extractNotice(syntax ast.SyntaxLike) string {
+func (v *formatter_) generateNotice(syntax ast.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetIterator().GetNext()
 	var comment = header.GetComment()
 
@@ -145,42 +120,24 @@ func (v *formatter_) extractNotice(syntax ast.SyntaxLike) string {
 	return notice
 }
 
-func (v *formatter_) extractSyntaxName(syntax ast.SyntaxLike) string {
+func (v *formatter_) generateSyntaxName(syntax ast.SyntaxLike) string {
 	var rule = syntax.GetRules().GetIterator().GetNext()
 	var name = rule.GetUppercase()
 	return name
 }
 
-func (v *formatter_) extractTokenProcessors() string {
+func (v *formatter_) generateTokenProcessors() string {
 	var tokenProcessors string
 	var iterator = v.tokens_.GetIterator()
 	for iterator.HasNext() {
 		var tokenProcessor = formatTemplate_
 		var tokenName = iterator.GetNext()
-		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<tokenName>", tokenName)
-		tokenName = v.makeUppercase(tokenName)
-		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<TokenName>", tokenName)
+		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
 		var tokenType = tokenName + "Token"
-		tokenProcessor = sts.ReplaceAll(tokenProcessor, "<TokenType>", tokenType)
+		tokenProcessor = replaceAll(tokenProcessor, "tokenType", tokenType)
 		tokenProcessors += tokenProcessor
 	}
 	return tokenProcessors
-}
-
-func (v *formatter_) makeLowercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToLower(runes[0])
-	name = string(runes)
-	if reserved_[name] {
-		name += "_"
-	}
-	return name
-}
-
-func (v *formatter_) makeUppercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
 }
 
 const formatTemplate_ = `
@@ -263,19 +220,19 @@ func (v *formatter_) GetDepth() uint {
 	return v.depth_
 }
 
-// Public
-
-func (v *formatter_) Format<Name>(<name> ast.<Name>Like) string {
-	v.visitor_.Visit<Name>(<name>)
-	return v.getResult()
-}
-
 // Methodical
 <TokenProcessors>
 func (v *formatter_) Preprocess<Name>(<name> ast.<Name>Like) {
 }
 
 func (v *formatter_) Postprocess<Name>(<name> ast.<Name>Like) {
+}
+
+// Public
+
+func (v *formatter_) Format<Name>(<name> ast.<Name>Like) string {
+	v.visitor_.Visit<Name>(<name>)
+	return v.getResult()
 }
 
 // Private

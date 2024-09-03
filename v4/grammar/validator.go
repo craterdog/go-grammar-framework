@@ -86,7 +86,7 @@ func (v *validator_) ValidateToken(
 ) {
 	if !Scanner().MatchesType(tokenValue, tokenType) {
 		var message = fmt.Sprintf(
-			"The following token value is not of type %v: %v",
+			"The following token value is not of type %v: %q",
 			Scanner().FormatType(tokenType),
 			tokenValue,
 		)
@@ -104,10 +104,6 @@ func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
 
 func (v *validator_) ProcessComment(comment string) {
 	v.ValidateToken(comment, CommentToken)
-}
-
-func (v *validator_) ProcessDelimiter(delimiter string) {
-	v.ValidateToken(delimiter, DelimiterToken)
 }
 
 func (v *validator_) ProcessExcluded(excluded string) {
@@ -130,7 +126,11 @@ func (v *validator_) ProcessNote(note string) {
 	v.ValidateToken(note, NoteToken)
 }
 
-func (v *validator_) ProcessNumber(number string) {
+func (v *validator_) ProcessNumber(
+	number string,
+	index uint,
+	size uint,
+) {
 	v.ValidateToken(number, NumberToken)
 }
 
@@ -142,7 +142,11 @@ func (v *validator_) ProcessRepeated(repeated string) {
 	v.ValidateToken(repeated, RepeatedToken)
 }
 
-func (v *validator_) ProcessRunic(runic string) {
+func (v *validator_) ProcessRunic(
+	runic string,
+	index uint,
+	size uint,
+) {
 	v.ValidateToken(runic, RunicToken)
 }
 
@@ -150,12 +154,15 @@ func (v *validator_) ProcessUppercase(uppercase string) {
 	v.ValidateToken(uppercase, UppercaseToken)
 }
 
-func (v *validator_) PreprocessBounded(bounded ast.BoundedLike) {
-	var runic = bounded.GetRunic()
-	var extent = bounded.GetOptionalExtent()
-	if col.IsDefined(extent) {
-		if runic > extent.GetRunic() {
-			var message = "The extent runic in a bounded character range cannot come before the initial runic."
+func (v *validator_) PreprocessCount(count ast.CountLike) {
+	var numbers = count.GetNumbers().GetIterator()
+	var number = numbers.GetNext()
+	if numbers.HasNext() {
+		var first, _ = stc.Atoi(number)
+		number = numbers.GetNext()
+		var second, _ = stc.Atoi(number)
+		if first > second {
+			var message = "The first number in a number range cannot be greater than the second number."
 			panic(message)
 		}
 	}
@@ -179,22 +186,6 @@ func (v *validator_) PreprocessExpression(
 	v.expressions_.SetValue(lowercase, pattern)
 }
 
-func (v *validator_) PreprocessQuantified(quantified ast.QuantifiedLike) {
-	var number = quantified.GetNumber()
-	var limit = quantified.GetOptionalLimit()
-	if col.IsDefined(limit) {
-		var optionalNumber = limit.GetOptionalNumber()
-		if col.IsDefined(optionalNumber) {
-			var minimum, _ = stc.Atoi(number)
-			var maximum, _ = stc.Atoi(optionalNumber)
-			if minimum > maximum {
-				var message = "The limit in a quantified cardinality cannot be less than the minimum."
-				panic(message)
-			}
-		}
-	}
-}
-
 func (v *validator_) PreprocessRule(
 	rule ast.RuleLike,
 	index uint,
@@ -211,6 +202,20 @@ func (v *validator_) PreprocessRule(
 	}
 	var definition = rule.GetDefinition()
 	v.rules_.SetValue(uppercase, definition)
+}
+
+func (v *validator_) PreprocessSpecific(specific ast.SpecificLike) {
+	var runics = specific.GetRunics().GetIterator()
+	var runic = runics.GetNext()
+	if runics.HasNext() {
+		var first, _ = stc.Atoi(runic)
+		runic = runics.GetNext()
+		var second, _ = stc.Atoi(runic)
+		if first > second {
+			var message = "The first runic in a character range cannot come after the second runic in lexical order."
+			panic(message)
+		}
+	}
 }
 
 func (v *validator_) PostprocessSyntax(syntax ast.SyntaxLike) {

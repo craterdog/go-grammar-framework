@@ -18,9 +18,6 @@ import (
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	mod "github.com/craterdog/go-model-framework/v4"
-	stc "strconv"
-	sts "strings"
-	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -65,12 +62,15 @@ func (c *astClass_) Make() AstLike {
 
 type ast_ struct {
 	// Define the instance attributes.
-	class_      AstClassLike
-	visitor_    gra.VisitorLike
-	modules_    abs.CatalogLike[string, mod.ModuleLike]
-	classes_    abs.CatalogLike[string, mod.ClassLike]
-	instances_  abs.CatalogLike[string, mod.InstanceLike]
-	attributes_ abs.ListLike[mod.AttributeLike]
+	class_       AstClassLike
+	visitor_     gra.VisitorLike
+	rules_       abs.SetLike[string]
+	plurals_     abs.SetLike[string]
+	references_  abs.ListLike[ast.ReferenceLike]
+	inline_      abs.CatalogLike[string, abs.ListLike[ast.ReferenceLike]]
+	multiline_   abs.SetLike[string]
+	cardinality_ ast.CardinalityLike
+	modules_     abs.CatalogLike[string, string]
 
 	// Define the inherited aspects.
 	gra.Methodical
@@ -84,77 +84,25 @@ func (v *ast_) GetClass() AstClassLike {
 
 // Methodical
 
-func (v *ast_) PreprocessFactor(
-	factor ast.FactorLike,
-	index uint,
-	size uint,
-) {
-	switch factor.GetAny().(type) {
-	case string:
-		var abstraction = mod.Abstraction("string")
-		var attribute = mod.Attribute(
-			"GetDelimiter",
-			abstraction,
-		)
-		v.attributes_.AppendValue(attribute)
-	}
+func (v *ast_) PreprocessBracket(bracket ast.BracketLike) {
+	v.cardinality_ = bracket.GetCardinality()
 }
 
-func (v *ast_) PostprocessInlined(inlined ast.InlinedLike) {
-	v.consolidateAttributes()
+func (v *ast_) PostprocessBracket(bracket ast.BracketLike) {
+	v.cardinality_ = nil
 }
 
-func (v *ast_) PostprocessMultilined(multilined ast.MultilinedLike) {
-	var abstraction = mod.Abstraction("any")
-	var attribute = mod.Attribute(
-		"GetAny",
-		abstraction,
-	)
-	v.attributes_ = col.List[mod.AttributeLike]()
-	v.attributes_.AppendValue(attribute)
+func (v *ast_) PreprocessInline(inline ast.InlineLike) {
+	v.references_ = col.List[ast.ReferenceLike]()
 }
 
-func (v *ast_) PreprocessPredicate(
-	predicate ast.PredicateLike,
-) {
-	var identifier = predicate.GetIdentifier().GetAny().(string)
-	var attributeName = v.makeUppercase(identifier)
-	var attributeType mod.AbstractionLike
-	switch {
-	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
-		attributeType = mod.Abstraction("string")
-	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
-		attributeType = mod.Abstraction(identifier + "Like")
-	}
-	var attribute = mod.Attribute(
-		"Get"+attributeName,
-		attributeType,
-	)
-	var cardinality = predicate.GetOptionalCardinality()
-	if col.IsDefined(cardinality) {
-		switch actual := cardinality.GetAny().(type) {
-		case ast.QuantifiedLike:
-			attribute = v.pluralizeAttribute(attribute)
-		case ast.ConstrainedLike:
-			switch actual.GetAny().(string) {
-			case "?":
-				// This attribute is optional.
-				attribute = v.optionalizeAttribute(attribute)
-			case "*", "+":
-				// Turn the attribute into a sequence of that type attribute.
-				attribute = v.pluralizeAttribute(attribute)
-			}
-		}
-	}
-	v.attributes_.AppendValue(attribute)
+func (v *ast_) PostprocessInline(inline ast.InlineLike) {
+	v.consolidateReferences()
 }
 
-func (v *ast_) PreprocessRule(
-	rule ast.RuleLike,
-	index uint,
-	size uint,
-) {
-	v.attributes_ = col.List[mod.AttributeLike]()
+func (v *ast_) PreprocessReference(reference ast.ReferenceLike) {
+	reference = v.augmentCardinality(reference)
+	v.references_.AppendValue(reference)
 }
 
 func (v *ast_) PostprocessRule(
@@ -162,31 +110,26 @@ func (v *ast_) PostprocessRule(
 	index uint,
 	size uint,
 ) {
-	var name = rule.GetUppercase()
-
-	// Generate the class constructor.
-	var constructor = v.generateConstructor(name)
-
-	// Generate the class interface.
-	var class = v.generateClass(name, constructor)
-	v.classes_.SetValue(name, class)
-
-	// Generate the instance interface.
-	var instance = v.generateInstance(name)
-	v.instances_.SetValue(name, instance)
+	var identifier = rule.GetUppercase()
+	v.rules_.AddValue(identifier)
+	var definition = rule.GetDefinition()
+	switch definition.GetAny().(type) {
+	case ast.MultilineLike:
+		v.multiline_.AddValue(identifier)
+	case ast.InlineLike:
+		v.inline_.SetValue(identifier, v.references_)
+	}
 }
 
 func (v *ast_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.modules_ = col.Catalog[string, mod.ModuleLike]()
-	v.classes_ = col.Catalog[string, mod.ClassLike]()
-	v.instances_ = col.Catalog[string, mod.InstanceLike]()
+	v.rules_ = col.Set[string]()
+	v.plurals_ = col.Set[string]()
+	v.multiline_ = col.Set[string]()
+	v.inline_ = col.Catalog[string, abs.ListLike[ast.ReferenceLike]]()
+	v.modules_ = col.Catalog[string, string]()
 }
 
-func (v *ast_) PostprocessSyntax(syntax ast.SyntaxLike) {
-	v.modules_.SortValues()
-	v.classes_.SortValues()
-	v.instances_.SortValues()
-}
+// Public
 
 func (v *ast_) GenerateAstModel(
 	module string,
@@ -196,243 +139,374 @@ func (v *ast_) GenerateAstModel(
 	implementation string,
 ) {
 	v.visitor_.VisitSyntax(syntax)
-	implementation = astTemplate_
-	implementation = sts.ReplaceAll(implementation, "<wiki>", wiki)
-	var name = v.extractSyntaxName(syntax)
-	implementation = sts.ReplaceAll(implementation, "<module>", module)
-	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Notice>", notice)
-	var uppercase = v.makeUppercase(name)
-	implementation = sts.ReplaceAll(implementation, "<Name>", uppercase)
-	var lowercase = v.makeLowercase(name)
-	implementation = sts.ReplaceAll(implementation, "<name>", lowercase)
-	implementation = v.augmentModel(implementation)
-	return implementation
-}
-
-// Private
-
-func (v *ast_) augmentModel(implementation string) string {
-	var model = mod.Parser().ParseSource(implementation)
-	var notice = model.GetNotice()
-	var header = model.GetHeader()
-	var keys = v.modules_.GetKeys()
-	var imports mod.ImportsLike
-	if keys.GetSize() > 0 {
-		var modules = mod.Modules(v.modules_.GetValues(keys))
-		imports = mod.Imports(modules)
-	}
-	var types = model.GetOptionalTypes()
-	var functionals = model.GetOptionalFunctionals()
-	keys = v.classes_.GetKeys()
-	var classes = mod.Classes(v.classes_.GetValues(keys))
-	var instances = mod.Instances(v.instances_.GetValues(keys))
-	var aspects = model.GetOptionalAspects()
-	model = mod.Model(
+	var notice = v.generateNotice(syntax)
+	var header = v.generateHeader(wiki)
+	var classes = v.generateClasses()
+	var instances = v.generateInstances()
+	var imports = v.generateImports(module) // This must be last.
+	var model = mod.Model(
 		notice,
 		header,
 		imports,
-		types,
-		functionals,
 		classes,
 		instances,
-		aspects,
 	)
 	implementation = mod.Formatter().FormatModel(model)
 	return implementation
 }
 
-func (v *ast_) consolidateAttributes() {
-	// Compare each attribute type and rename duplicates.
-	for i := 1; i <= v.attributes_.GetSize(); i++ {
-		var attribute = v.attributes_.GetValue(i)
-		var first = attribute.GetName()
-		for j := i + 1; j <= v.attributes_.GetSize(); j++ {
-			var count = 1
-			var second = v.attributes_.GetValue(j).GetName()
+// Private
+
+func (v *ast_) augmentCardinality(reference ast.ReferenceLike) ast.ReferenceLike {
+	var identifier = reference.GetIdentifier()
+	var cardinality = reference.GetOptionalCardinality()
+	if col.IsDefined(v.cardinality_) {
+		// The cardinality of a bracket takes precedence.
+		cardinality = v.cardinality_
+		reference = ast.Reference().Make(identifier, cardinality)
+	}
+	if col.IsDefined(cardinality) {
+		var name = identifier.GetAny().(string)
+		switch actual := cardinality.GetAny().(type) {
+		case ast.CountLike:
+			v.plurals_.AddValue(name)
+		case ast.ConstraintLike:
+			switch actual.GetAny().(string) {
+			case "*", "+":
+				v.plurals_.AddValue(name)
+			}
+		}
+	}
+	return reference
+}
+
+func (v *ast_) consolidateReferences() {
+	// Compare each reference type and rename duplicates.
+	for i := 1; i <= v.references_.GetSize(); i++ {
+		var reference = v.references_.GetValue(i)
+		var first = reference.GetIdentifier().GetAny().(string)
+		for j := i + 1; j <= v.references_.GetSize(); j++ {
+			var second = v.references_.GetValue(j).GetIdentifier().GetAny().(string)
 			if first == second {
-				count++
-				var attributeName = second + stc.Itoa(count)
-				var attributeType = attribute.GetOptionalAbstraction()
-				var newAttribute = mod.Attribute(attributeName, attributeType)
-				v.attributes_.SetValue(j, newAttribute)
+				var plural = v.pluralizeReference(reference)
+				v.references_.SetValue(i, plural)
+				v.references_.RemoveValue(j)
+				j--
 			}
 		}
 	}
 }
 
-func (v *ast_) extractNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
+func (v *ast_) generateAttribute(reference ast.ReferenceLike) mod.AttributeLike {
+	var identifier = reference.GetIdentifier().GetAny().(string)
 
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
-}
-
-func (v *ast_) extractParameters() abs.Sequential[mod.ParameterLike] {
-	var parameters = col.List[mod.ParameterLike]()
-	var iterator = v.attributes_.GetIterator()
-	for iterator.HasNext() {
-		var attribute = iterator.GetNext()
-		var name = sts.TrimPrefix(attribute.GetName(), "Get")
-		var abstraction = attribute.GetOptionalAbstraction()
-		if col.IsUndefined(abstraction) {
-			var parameter = attribute.GetOptionalParameter()
-			abstraction = parameter.GetAbstraction()
-		}
-		var parameter = mod.Parameter(
-			v.makeLowercase(name),
-			abstraction,
-		)
-		parameters.AppendValue(parameter)
+	// Determine the attribute type.
+	var attributeType mod.AbstractionLike
+	switch {
+	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
+		attributeType = mod.Abstraction("string")
+	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
+		attributeType = mod.Abstraction(makeUpperCase(identifier) + "Like")
 	}
-	return parameters
+
+	// Determine the attribute name.
+	var attributeName = makeLowerCase(identifier)
+	var cardinality = reference.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		switch actual := cardinality.GetAny().(type) {
+		case ast.ConstraintLike:
+			var constraint = actual.GetAny().(string)
+			switch constraint {
+			case "?":
+				attributeName = makeOptional(attributeName)
+			case "*", "+":
+				attributeName = makePlural(attributeName)
+				attributeType = v.pluralizeType(attributeType)
+			}
+		case ast.CountLike:
+			attributeName = makePlural(attributeName)
+			attributeType = v.pluralizeType(attributeType)
+		}
+	}
+	attributeName = "Get" + makeUpperCase(attributeName)
+
+	// Define the attribute.
+	var attribute = mod.Attribute(
+		attributeName,
+		attributeType,
+	)
+	return attribute
 }
 
-func (v *ast_) extractSyntaxName(syntax ast.SyntaxLike) string {
-	var rule = syntax.GetRules().GetIterator().GetNext()
-	var name = rule.GetUppercase()
-	return name
-}
-
-func (v *ast_) generateClass(
-	name string,
-	constructor mod.ConstructorLike,
-) mod.ClassLike {
-	var comment = sts.ReplaceAll(classCommentTemplate_, "<Class>", name)
-	comment = sts.ReplaceAll(comment, "<class>", sts.ToLower(name))
+func (v *ast_) generateClassDeclaration(name string) mod.DeclarationLike {
+	var comment = replaceAll(classCommentTemplate_, "class", name)
 	var declaration = mod.Declaration(
 		comment,
-		name+"ClassLike",
+		makeUpperCase(name)+"ClassLike",
 	)
-	var list = col.List[mod.ConstructorLike]()
-	list.AppendValue(constructor)
-	var constructors = mod.Constructors(list)
-	var class = mod.Class(
-		declaration,
-		constructors,
-	)
-	return class
+	return declaration
 }
 
-func (v *ast_) generateConstructor(name string) mod.ConstructorLike {
-	var abstraction = mod.Abstraction(name + "Like")
-	name = "Make"
-	var parameters mod.ParametersLike
-	var iterator = v.extractParameters().GetIterator()
-	if iterator.HasNext() {
-		var parameter = iterator.GetNext()
-		var additionalParameters = col.List[mod.AdditionalParameterLike]()
-		for iterator.HasNext() {
-			var parameter = iterator.GetNext()
-			var additionalParameter = mod.AdditionalParameter(parameter)
-			additionalParameters.AppendValue(additionalParameter)
+func (v *ast_) generateClasses() mod.ClassesLike {
+	var classes = col.List[mod.ClassLike]()
+	var rules = v.rules_.GetIterator()
+	for rules.HasNext() {
+		var rule = rules.GetNext()
+		var declaration = v.generateClassDeclaration(rule)
+		var constructor mod.ConstructorLike
+		if v.multiline_.ContainsValue(rule) {
+			constructor = v.generateMultilineConstructor(rule)
+		} else {
+			constructor = v.generateInlineConstructor(rule)
 		}
-		parameters = mod.Parameters(
-			parameter,
-			additionalParameters.(abs.Sequential[mod.AdditionalParameterLike]),
-		)
+		var list = col.List[mod.ConstructorLike]()
+		list.AppendValue(constructor)
+		var constructors = mod.Constructors(list)
+		var class = mod.Class(declaration, constructors)
+		classes.AppendValue(class)
 	}
+	return mod.Classes(classes)
+}
+
+func (v *ast_) generateHeader(wiki string) mod.HeaderLike {
+	var comment = replaceAll(headerTemplate_, "wiki", wiki)
+	var header = mod.Header(comment, "ast")
+	return header
+}
+
+func (v *ast_) generateImports(module string) mod.ImportsLike {
+	var imports mod.ImportsLike
+	if v.modules_.IsEmpty() {
+		// There are no modules that are imported.
+		return imports
+	}
+	v.modules_.SortValues() // Modules are sorted by path, not by alias.
+	var list = col.List[mod.ModuleLike]()
+	var iterator = v.modules_.GetIterator()
+	for iterator.HasNext() {
+		var association = iterator.GetNext()
+		var alias = association.GetValue()
+		var path = association.GetKey()
+		var module = mod.Module(alias, path)
+		list.AppendValue(module)
+	}
+	var modules = mod.Modules(list)
+	imports = mod.Imports(modules)
+	return imports
+}
+
+func (v *ast_) generateInlineAttributes(name string) mod.AttributesLike {
+	// Define the first attribute.
+	var uppercase = makeUpperCase(name)
+	var abstraction = mod.Abstraction(uppercase + "ClassLike")
+	var attribute = mod.Attribute(
+		"GetClass",
+		abstraction,
+	)
+	var attributes = col.List[mod.AttributeLike]()
+	attributes.AppendValue(attribute)
+
+	// Define any additional attributes.
+	var references = v.inline_.GetValue(name).GetIterator()
+	for references.HasNext() {
+		var reference = references.GetNext()
+		attribute = v.generateAttribute(reference)
+		attributes.AppendValue(attribute)
+	}
+
+	return mod.Attributes(attributes)
+}
+
+func (v *ast_) generateInlineConstructor(name string) mod.ConstructorLike {
+	// Define the parameters.
+	var parameters = v.generateInlineParameters(name)
+
+	// Define the return type.
+	var uppercase = makeUpperCase(name)
+	var abstraction = mod.Abstraction(uppercase + "Like")
+
 	var constructor = mod.Constructor(
-		name,
+		"Make",
 		parameters,
 		abstraction,
 	)
 	return constructor
 }
 
-func (v *ast_) generateInstance(
-	name string,
-) mod.InstanceLike {
-	var comment = sts.ReplaceAll(instanceCommentTemplate_, "<Class>", name)
-	comment = sts.ReplaceAll(comment, "<class>", sts.ToLower(name))
+func (v *ast_) generateInlineParameters(name string) mod.ParametersLike {
+	// Define the first parameter.
+	var references = v.inline_.GetValue(name).GetIterator()
+	var reference = references.GetNext()
+	var parameter = v.generateParameter(reference)
+
+	// Define any additional parameters.
+	var additionalParameters = col.List[mod.AdditionalParameterLike]()
+	for references.HasNext() {
+		var reference = references.GetNext()
+		var additional = v.generateParameter(reference)
+		additionalParameters.AppendValue(mod.AdditionalParameter(additional))
+	}
+	return mod.Parameters(parameter, additionalParameters)
+}
+
+func (v *ast_) generateInstanceDeclaration(name string) mod.DeclarationLike {
+	var comment = replaceAll(instanceCommentTemplate_, "class", name)
 	var declaration = mod.Declaration(
 		comment,
-		name+"Like",
+		makeUpperCase(name)+"Like",
 	)
-	var abstraction = mod.Abstraction(
-		name + "ClassLike",
-	)
+	return declaration
+}
+
+func (v *ast_) generateInstances() mod.InstancesLike {
+	var instances = col.List[mod.InstanceLike]()
+	var rules = v.rules_.GetIterator()
+	for rules.HasNext() {
+		var rule = rules.GetNext()
+		var declaration = v.generateInstanceDeclaration(rule)
+		var attributes mod.AttributesLike
+		if v.multiline_.ContainsValue(rule) {
+			attributes = v.generateMultilineAttributes(rule)
+		} else {
+			attributes = v.generateInlineAttributes(rule)
+		}
+		var instance = mod.Instance(declaration, attributes)
+		instances.AppendValue(instance)
+	}
+	return mod.Instances(instances)
+}
+
+func (v *ast_) generateNotice(syntax ast.SyntaxLike) mod.NoticeLike {
+	var header = syntax.GetHeaders().GetIterator().GetNext()
+	var comment = header.GetComment()
+
+	// Strip off the syntax style comment delimiters.
+	comment = comment[2 : len(comment)-3]
+
+	// Add in the go style comment delimiters.
+	comment = "/*" + comment + "*/\n"
+
+	var notice = mod.Notice(comment)
+	return notice
+}
+
+func (v *ast_) generateMultilineAttributes(name string) mod.AttributesLike {
+	// Define the first attribute.
+	var uppercase = makeUpperCase(name)
+	var abstraction = mod.Abstraction(uppercase + "ClassLike")
 	var attribute = mod.Attribute(
 		"GetClass",
 		abstraction,
 	)
-	v.attributes_.InsertValue(0, attribute)
-	var instance = mod.Instance(
-		declaration,
-		mod.Attributes(v.attributes_),
+	var attributes = col.List[mod.AttributeLike]()
+	attributes.AppendValue(attribute)
+
+	// Define the second attribute.
+	abstraction = mod.Abstraction("any")
+	attribute = mod.Attribute(
+		"GetAny",
+		abstraction,
 	)
-	return instance
+	attributes.AppendValue(attribute)
+
+	return mod.Attributes(attributes)
 }
 
-func (v *ast_) makeLowercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToLower(runes[0])
-	name = string(runes)
-	if reserved_[name] {
-		name += "_"
+func (v *ast_) generateMultilineConstructor(name string) mod.ConstructorLike {
+	// Create the parameter for the constructor.
+	var parameter = mod.Parameter(
+		"any_",
+		mod.Abstraction("any"),
+	)
+	var additionalParameters = col.List[mod.AdditionalParameterLike]()
+	var parameters = mod.Parameters(
+		parameter,
+		additionalParameters.(abs.Sequential[mod.AdditionalParameterLike]),
+	)
+
+	// Create the return type.
+	var uppercase = makeUpperCase(name)
+	var abstraction = mod.Abstraction(uppercase + "Like")
+
+	// Create the constructor.
+	var constructor = mod.Constructor(
+		"Make",
+		parameters,
+		abstraction,
+	)
+	return constructor
+}
+
+func (v *ast_) generateParameter(reference ast.ReferenceLike) mod.ParameterLike {
+	var identifier = reference.GetIdentifier().GetAny().(string)
+
+	// Determine the parameter type.
+	var parameterType mod.AbstractionLike
+	switch {
+	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
+		parameterType = mod.Abstraction("string")
+	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
+		parameterType = mod.Abstraction(makeUpperCase(identifier) + "Like")
 	}
-	return name
+
+	// Determine the parameter name.
+	var parameterName = makeLowerCase(identifier)
+	var cardinality = reference.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		switch actual := cardinality.GetAny().(type) {
+		case ast.ConstraintLike:
+			var constraint = actual.GetAny().(string)
+			switch constraint {
+			case "?":
+				parameterName = makeOptional(parameterName)
+			case "*", "+":
+				parameterName = makePlural(parameterName)
+				parameterType = v.pluralizeType(parameterType)
+			}
+		case ast.CountLike:
+			parameterName = makePlural(parameterName)
+			parameterType = v.pluralizeType(parameterType)
+		}
+	}
+
+	// Define the parameter.
+	var parameter = mod.Parameter(
+		parameterName,
+		parameterType,
+	)
+	return parameter
 }
 
-func (v *ast_) makeUppercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
+func (v *ast_) pluralizeReference(reference ast.ReferenceLike) ast.ReferenceLike {
+	var identifier = reference.GetIdentifier()
+	var constraint = ast.Constraint().Make("*")
+	var cardinality = ast.Cardinality().Make(constraint)
+	reference = ast.Reference().Make(identifier, cardinality)
+	return reference
 }
 
-func (v *ast_) optionalizeAttribute(
-	attribute mod.AttributeLike,
-) mod.AttributeLike {
-	var name = attribute.GetName()
-	name = "GetOptional" + sts.TrimPrefix(name, "Get")
-	var attributeType = attribute.GetOptionalAbstraction()
-	attribute = mod.Attribute(name, attributeType)
-	return attribute
-}
-
-func (v *ast_) pluralizeAttribute(
-	attribute mod.AttributeLike,
-) mod.AttributeLike {
+func (v *ast_) pluralizeType(abstraction mod.AbstractionLike) mod.AbstractionLike {
 	// Add the collections module to the catalog of imported modules.
 	var alias = "abs"
 	var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
-	var module = mod.Module(
-		alias,
-		path,
-	)
-	v.modules_.SetValue(path, module)
+	v.modules_.SetValue(path, alias) // Modules are sorted by path.
 
-	// Extract the name and attribute type from the attribute.
-	var name = attribute.GetName()
-	if sts.HasSuffix(name, "s") {
-		name += "es"
-	} else {
-		name += "s"
-	}
-	var attributeType = attribute.GetOptionalAbstraction() // Not optional here.
-
-	// Create the generic arguments list for the pluralized attribute.
-	var argument = mod.Argument(attributeType)
+	// Create the generic arguments list for the pluralized abstraction.
+	var argument = mod.Argument(abstraction)
 	var additionalArguments = col.List[mod.AdditionalArgumentLike]()
 	var arguments = mod.Arguments(argument, additionalArguments)
 	var genericArguments = mod.GenericArguments(arguments)
 
-	// Create the result type for the pluralized attribute.
-	attributeType = mod.Abstraction(
+	// Create the result type for the pluralized abstraction.
+	abstraction = mod.Abstraction(
 		mod.Alias(alias),
 		"Sequential",
 		genericArguments,
 	)
-	attribute = mod.Attribute(name, attributeType)
-	return attribute
+	return abstraction
 }
 
-const astTemplate_ = `/*<Notice>*/
-
-/*
+const headerTemplate_ = `/*
 Package "ast" provides the abstract syntax tree (AST) classes for this module.
 Each AST class manages the attributes associated with the rule definition found
 in the syntax grammar with the same rule name as the class.
@@ -449,31 +523,6 @@ be developed and used seamlessly since the interface definitions only depend on
 other interfaces and intrinsic types—and the class implementations only depend
 on interfaces, not on each other.
 */
-package ast
-
-import (
-	ast "github.com/craterdog/go-collection-framework/v4/collection"
-)
-
-// Classes
-
-/*
-This is a dummy class placeholder.
-*/
-type DummyClassLike interface {
-	// Constructors
-	Make() DummyLike
-}
-
-// Instances
-
-/*
-This is a dummy instance placeholder.
-*/
-type DummyLike interface {
-	// Attributes
-	GetClass() DummyClassLike
-}
 `
 
 const classCommentTemplate_ = `/*

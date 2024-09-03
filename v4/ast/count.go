@@ -14,46 +14,43 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var predicateClass = &predicateClass_{
+var countClass = &countClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Predicate() PredicateClassLike {
-	return predicateClass
+func Count() CountClassLike {
+	return countClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type predicateClass_ struct {
+type countClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *predicateClass_) Make(
-	identifier IdentifierLike,
-	optionalCardinality CardinalityLike,
-) PredicateLike {
+func (c *countClass_) Make(numbers abs.Sequential[string]) CountLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(identifier):
-		panic("The identifier attribute is required by this class.")
+	case col.IsUndefined(numbers):
+		panic("The numbers attribute is required by this class.")
 	default:
-		return &predicate_{
+		return &count_{
 			// Initialize instance attributes.
-			class_:               c,
-			identifier_:          identifier,
-			optionalCardinality_: optionalCardinality,
+			class_:   c,
+			numbers_: numbers,
 		}
 	}
 }
@@ -62,25 +59,20 @@ func (c *predicateClass_) Make(
 
 // Target
 
-type predicate_ struct {
+type count_ struct {
 	// Define instance attributes.
-	class_               PredicateClassLike
-	identifier_          IdentifierLike
-	optionalCardinality_ CardinalityLike
+	class_   CountClassLike
+	numbers_ abs.Sequential[string]
 }
 
 // Attributes
 
-func (v *predicate_) GetClass() PredicateClassLike {
+func (v *count_) GetClass() CountClassLike {
 	return v.class_
 }
 
-func (v *predicate_) GetIdentifier() IdentifierLike {
-	return v.identifier_
-}
-
-func (v *predicate_) GetOptionalCardinality() CardinalityLike {
-	return v.optionalCardinality_
+func (v *count_) GetNumbers() abs.Sequential[string] {
+	return v.numbers_
 }
 
 // Private

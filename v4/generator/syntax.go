@@ -73,21 +73,15 @@ func (v *syntax_) GenerateSyntaxNotation(
 ) (
 	implementation string,
 ) {
-	implementation = syntaxTemplate_
-	var allCaps = sts.ToUpper(syntax)
-	implementation = sts.ReplaceAll(implementation, "<SYNTAX>", allCaps)
-	var uppercase = v.makeUppercase(syntax)
-	implementation = sts.ReplaceAll(implementation, "<Syntax>", uppercase)
-	var lowercase = v.makeLowercase(syntax)
-	implementation = sts.ReplaceAll(implementation, "<syntax>", lowercase)
-	copyright = v.expandCopyright(copyright)
-	implementation = sts.ReplaceAll(implementation, "<Copyright>", copyright)
+	implementation = replaceAll(syntaxTemplate_, "syntax", syntax)
+	copyright = expandCopyright(copyright)
+	implementation = replaceAll(implementation, "copyright", copyright)
 	return implementation
 }
 
 // Private
 
-func (v *syntax_) expandCopyright(copyright string) string {
+func expandCopyright(copyright string) string {
 	var limit = 78
 	var length = len(copyright)
 	if length > limit {
@@ -115,20 +109,125 @@ func (v *syntax_) expandCopyright(copyright string) string {
 	return copyright
 }
 
-func (v *syntax_) makeLowercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToLower(runes[0])
-	name = string(runes)
-	if reserved_[name] {
-		name += "_"
+func makeAllCaps(mixedCase string) string {
+	var result sts.Builder
+	for _, r := range mixedCase {
+		switch {
+		case uni.IsLower(r):
+			result.WriteRune(uni.ToUpper(r))
+		case uni.IsUpper(r):
+			result.WriteString("_")
+			result.WriteRune(r)
+		default:
+			result.WriteRune(r)
+		}
 	}
-	return name
+	return result.String()
 }
 
-func (v *syntax_) makeUppercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
+func makeLowerCase(mixedCase string) string {
+	var result string
+	if len(mixedCase) > 0 {
+		runes := []rune(mixedCase)
+		runes[0] = uni.ToLower(runes[0])
+		result = string(runes)
+		if reserved_[result] {
+			result += "_"
+		}
+	}
+	return result
+}
+
+func makeOptional(mixedCase string) string {
+	var result string
+	if len(mixedCase) > 0 {
+		result = "optional" + makeUpperCase(mixedCase)
+	}
+	return result
+}
+
+func makePlural(mixedCase string) string {
+	var result string
+	if sts.HasSuffix(mixedCase, "s") {
+		result = mixedCase + "es"
+	} else {
+		result = mixedCase + "s"
+	}
+	return result
+}
+
+func makeSnakeCase(mixedCase string) string {
+	var result sts.Builder
+	for _, r := range mixedCase {
+		switch {
+		case uni.IsLower(r):
+			result.WriteRune(r)
+		case uni.IsUpper(r):
+			result.WriteString("-")
+			result.WriteRune(uni.ToLower(r))
+		default:
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
+}
+
+func makeUpperCase(mixedCase string) string {
+	var result string
+	if len(mixedCase) > 0 {
+		runes := []rune(mixedCase)
+		runes[0] = uni.ToUpper(runes[0])
+		result = string(runes)
+	}
+	return result
+}
+
+func replaceAll(template string, name string, value string) string {
+	// <lowerCaseName> -> lowerCaseValue
+	var lowerCaseName = makeLowerCase(name)
+	var lowerCaseValue = makeLowerCase(value)
+	template = sts.ReplaceAll(template, "<"+lowerCaseName+">", lowerCaseValue)
+
+	// <snake-case-name> -> snake-case-value
+	var snakeCaseName = makeSnakeCase(name)
+	var snakeCaseValue = makeSnakeCase(value)
+	template = sts.ReplaceAll(template, "<"+snakeCaseName+">", snakeCaseValue)
+
+	// <UpperCaseName> -> UpperCaseValue
+	var upperCaseName = makeUpperCase(name)
+	var upperCaseValue = makeUpperCase(value)
+	template = sts.ReplaceAll(template, "<"+upperCaseName+">", upperCaseValue)
+
+	// <ALL_CAPS_NAME> -> ALL_CAPS_VALUE
+	var allCapsName = makeAllCaps(name)
+	var allCapsValue = makeAllCaps(value)
+	template = sts.ReplaceAll(template, "<"+allCapsName+">", allCapsValue)
+
+	return template
+}
+
+var reserved_ = map[string]bool{
+	"any":       true,
+	"byte":      true,
+	"case":      true,
+	"complex":   true,
+	"copy":      true,
+	"default":   true,
+	"error":     true,
+	"false":     true,
+	"import":    true,
+	"interface": true,
+	"map":       true,
+	"nil":       true,
+	"package":   true,
+	"range":     true,
+	"real":      true,
+	"return":    true,
+	"rune":      true,
+	"string":    true,
+	"switch":    true,
+	"true":      true,
+	"type":      true,
 }
 
 const syntaxTemplate_ = `!>
@@ -152,14 +251,14 @@ using Crater Dog Syntax Notation™ (CDSN):
 A language syntax consists of a set of rule definitions and regular expression
 patterns.
 
-Each predicate within a rule definition may be constrained by one of the
-following cardinalities:
- * predicate{M} - Exactly M instances of the specified predicate.
- * predicate{M..N} - M to N instances of the specified predicate.
- * predicate{M..} - M or more instances of the specified predicate.
- * predicate? - Zero or one instances of the specified predicate.
- * predicate* - Zero or more instances of the specified predicate.
- * predicate+ - One or more instances of the specified predicate.
+Most terms within a rule definition can be constrained by one of the following
+cardinalities:
+ * term{M} - Exactly M instances of the specified term.
+ * term{M..N} - M to N instances of the specified term.
+ * term{M..} - M or more instances of the specified term.
+ * term* - Zero or more instances of the specified term.
+ * term+ - One or more instances of the specified term.
+ * term? - An optional term.
 
 The following intrinsic character types may be used within regular expression
 pattern declarations:
@@ -197,9 +296,7 @@ Intrinsic:
     rune
     text
 
-List: "[" Component Additional* "]"
-
-Additional: "," Component
+List: "[" Component ("," Component)* "]"
 
 !>
 EXPRESSION DEFINITIONS

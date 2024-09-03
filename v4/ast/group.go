@@ -14,43 +14,42 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var multilinedClass = &multilinedClass_{
+var groupClass = &groupClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Multilined() MultilinedClassLike {
-	return multilinedClass
+func Group() GroupClassLike {
+	return groupClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type multilinedClass_ struct {
+type groupClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *multilinedClass_) Make(lines abs.Sequential[LineLike]) MultilinedLike {
+func (c *groupClass_) Make(pattern PatternLike) GroupLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(lines):
-		panic("The lines attribute is required by this class.")
+	case col.IsUndefined(pattern):
+		panic("The pattern attribute is required by this class.")
 	default:
-		return &multilined_{
+		return &group_{
 			// Initialize instance attributes.
-			class_: c,
-			lines_: lines,
+			class_:   c,
+			pattern_: pattern,
 		}
 	}
 }
@@ -59,20 +58,20 @@ func (c *multilinedClass_) Make(lines abs.Sequential[LineLike]) MultilinedLike {
 
 // Target
 
-type multilined_ struct {
+type group_ struct {
 	// Define instance attributes.
-	class_ MultilinedClassLike
-	lines_ abs.Sequential[LineLike]
+	class_   GroupClassLike
+	pattern_ PatternLike
 }
 
 // Attributes
 
-func (v *multilined_) GetClass() MultilinedClassLike {
+func (v *group_) GetClass() GroupClassLike {
 	return v.class_
 }
 
-func (v *multilined_) GetLines() abs.Sequential[LineLike] {
-	return v.lines_
+func (v *group_) GetPattern() PatternLike {
+	return v.pattern_
 }
 
 // Private

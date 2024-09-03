@@ -14,47 +14,46 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var inlinedClass = &inlinedClass_{
+var referenceClass = &referenceClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Inlined() InlinedClassLike {
-	return inlinedClass
+func Reference() ReferenceClassLike {
+	return referenceClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type inlinedClass_ struct {
+type referenceClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *inlinedClass_) Make(
-	factors abs.Sequential[FactorLike],
-	optionalNote string,
-) InlinedLike {
+func (c *referenceClass_) Make(
+	identifier IdentifierLike,
+	optionalCardinality CardinalityLike,
+) ReferenceLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(factors):
-		panic("The factors attribute is required by this class.")
+	case col.IsUndefined(identifier):
+		panic("The identifier attribute is required by this class.")
 	default:
-		return &inlined_{
+		return &reference_{
 			// Initialize instance attributes.
-			class_:        c,
-			factors_:      factors,
-			optionalNote_: optionalNote,
+			class_:               c,
+			identifier_:          identifier,
+			optionalCardinality_: optionalCardinality,
 		}
 	}
 }
@@ -63,25 +62,25 @@ func (c *inlinedClass_) Make(
 
 // Target
 
-type inlined_ struct {
+type reference_ struct {
 	// Define instance attributes.
-	class_        InlinedClassLike
-	factors_      abs.Sequential[FactorLike]
-	optionalNote_ string
+	class_               ReferenceClassLike
+	identifier_          IdentifierLike
+	optionalCardinality_ CardinalityLike
 }
 
 // Attributes
 
-func (v *inlined_) GetClass() InlinedClassLike {
+func (v *reference_) GetClass() ReferenceClassLike {
 	return v.class_
 }
 
-func (v *inlined_) GetFactors() abs.Sequential[FactorLike] {
-	return v.factors_
+func (v *reference_) GetIdentifier() IdentifierLike {
+	return v.identifier_
 }
 
-func (v *inlined_) GetOptionalNote() string {
-	return v.optionalNote_
+func (v *reference_) GetOptionalCardinality() CardinalityLike {
+	return v.optionalCardinality_
 }
 
 // Private

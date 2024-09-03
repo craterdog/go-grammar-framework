@@ -14,43 +14,42 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var selectiveClass = &selectiveClass_{
+var termClass = &termClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Selective() SelectiveClassLike {
-	return selectiveClass
+func Term() TermClassLike {
+	return termClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type selectiveClass_ struct {
+type termClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *selectiveClass_) Make(alternatives abs.Sequential[AlternativeLike]) SelectiveLike {
+func (c *termClass_) Make(any_ any) TermLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(alternatives):
-		panic("The alternatives attribute is required by this class.")
+	case col.IsUndefined(any_):
+		panic("The any attribute is required by this class.")
 	default:
-		return &selective_{
+		return &term_{
 			// Initialize instance attributes.
-			class_:        c,
-			alternatives_: alternatives,
+			class_: c,
+			any_:   any_,
 		}
 	}
 }
@@ -59,20 +58,20 @@ func (c *selectiveClass_) Make(alternatives abs.Sequential[AlternativeLike]) Sel
 
 // Target
 
-type selective_ struct {
+type term_ struct {
 	// Define instance attributes.
-	class_        SelectiveClassLike
-	alternatives_ abs.Sequential[AlternativeLike]
+	class_ TermClassLike
+	any_   any
 }
 
 // Attributes
 
-func (v *selective_) GetClass() SelectiveClassLike {
+func (v *term_) GetClass() TermClassLike {
 	return v.class_
 }
 
-func (v *selective_) GetAlternatives() abs.Sequential[AlternativeLike] {
-	return v.alternatives_
+func (v *term_) GetAny() any {
+	return v.any_
 }
 
 // Private

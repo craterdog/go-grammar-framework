@@ -14,52 +14,47 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var groupedClass = &groupedClass_{
+var filterClass = &filterClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Grouped() GroupedClassLike {
-	return groupedClass
+func Filter() FilterClassLike {
+	return filterClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type groupedClass_ struct {
+type filterClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *groupedClass_) Make(
-	delimiter string,
-	pattern PatternLike,
-	delimiter2 string,
-) GroupedLike {
+func (c *filterClass_) Make(
+	optionalExcluded string,
+	characters abs.Sequential[CharacterLike],
+) FilterLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(delimiter):
-		panic("The delimiter attribute is required by this class.")
-	case col.IsUndefined(pattern):
-		panic("The pattern attribute is required by this class.")
-	case col.IsUndefined(delimiter2):
-		panic("The delimiter2 attribute is required by this class.")
+	case col.IsUndefined(characters):
+		panic("The characters attribute is required by this class.")
 	default:
-		return &grouped_{
+		return &filter_{
 			// Initialize instance attributes.
-			class_:      c,
-			delimiter_:  delimiter,
-			pattern_:    pattern,
-			delimiter2_: delimiter2,
+			class_:            c,
+			optionalExcluded_: optionalExcluded,
+			characters_:       characters,
 		}
 	}
 }
@@ -68,30 +63,25 @@ func (c *groupedClass_) Make(
 
 // Target
 
-type grouped_ struct {
+type filter_ struct {
 	// Define instance attributes.
-	class_      GroupedClassLike
-	delimiter_  string
-	pattern_    PatternLike
-	delimiter2_ string
+	class_            FilterClassLike
+	optionalExcluded_ string
+	characters_       abs.Sequential[CharacterLike]
 }
 
 // Attributes
 
-func (v *grouped_) GetClass() GroupedClassLike {
+func (v *filter_) GetClass() FilterClassLike {
 	return v.class_
 }
 
-func (v *grouped_) GetDelimiter() string {
-	return v.delimiter_
+func (v *filter_) GetOptionalExcluded() string {
+	return v.optionalExcluded_
 }
 
-func (v *grouped_) GetPattern() PatternLike {
-	return v.pattern_
-}
-
-func (v *grouped_) GetDelimiter2() string {
-	return v.delimiter2_
+func (v *filter_) GetCharacters() abs.Sequential[CharacterLike] {
+	return v.characters_
 }
 
 // Private

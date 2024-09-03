@@ -17,8 +17,6 @@ import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
-	sts "strings"
-	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -77,49 +75,6 @@ func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
 }
 
-// Public
-
-func (v *validator_) GenerateValidatorClass(
-	module string,
-	syntax ast.SyntaxLike,
-) (
-	implementation string,
-) {
-	v.visitor_.VisitSyntax(syntax)
-	implementation = validatorTemplate_
-	var name = v.extractSyntaxName(syntax)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<module>",
-		module,
-	)
-	var notice = v.extractNotice(syntax)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<Notice>",
-		notice,
-	)
-	var validateTokens = v.extractValidateTokens()
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<ProcessTokens>",
-		validateTokens,
-	)
-	var uppercase = v.makeUppercase(name)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<Name>",
-		uppercase,
-	)
-	var lowercase = v.makeLowercase(name)
-	implementation = sts.ReplaceAll(
-		implementation,
-		"<name>",
-		lowercase,
-	)
-	return implementation
-}
-
 // Methodical
 
 func (v *validator_) PreprocessIdentifier(identifier ast.IdentifierLike) {
@@ -130,12 +85,32 @@ func (v *validator_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 }
 
 func (v *validator_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]([]string{"delimiter"})
+	v.tokens_ = col.Set[string]()
+}
+
+// Public
+
+func (v *validator_) GenerateValidatorClass(
+	module string,
+	syntax ast.SyntaxLike,
+) (
+	implementation string,
+) {
+	v.visitor_.VisitSyntax(syntax)
+	implementation = validatorTemplate_
+	implementation = replaceAll(implementation, "module", module)
+	var notice = v.generateNotice(syntax)
+	implementation = replaceAll(implementation, "notice", notice)
+	var processTokens = v.generateProcessTokens()
+	implementation = replaceAll(implementation, "processTokens", processTokens)
+	var name = v.generateSyntaxName(syntax)
+	implementation = replaceAll(implementation, "name", name)
+	return implementation
 }
 
 // Private
 
-func (v *validator_) extractNotice(syntax ast.SyntaxLike) string {
+func (v *validator_) generateNotice(syntax ast.SyntaxLike) string {
 	var header = syntax.GetHeaders().GetIterator().GetNext()
 	var comment = header.GetComment()
 
@@ -145,45 +120,27 @@ func (v *validator_) extractNotice(syntax ast.SyntaxLike) string {
 	return notice
 }
 
-func (v *validator_) extractSyntaxName(syntax ast.SyntaxLike) string {
+func (v *validator_) generateProcessTokens() string {
+	var processTokens string
+	var iterator = v.tokens_.GetIterator()
+	for iterator.HasNext() {
+		var processToken = processTokenTemplate_
+		var tokenName = iterator.GetNext()
+		processToken = replaceAll(processToken, "tokenName", tokenName)
+		var tokenType = tokenName + "Token"
+		processToken = replaceAll(processToken, "tokenType", tokenType)
+		processTokens += processToken
+	}
+	return processTokens
+}
+
+func (v *validator_) generateSyntaxName(syntax ast.SyntaxLike) string {
 	var rule = syntax.GetRules().GetIterator().GetNext()
 	var name = rule.GetUppercase()
 	return name
 }
 
-func (v *validator_) extractValidateTokens() string {
-	var validateTokens string
-	var iterator = v.tokens_.GetIterator()
-	for iterator.HasNext() {
-		var validateToken = validateTokenTemplate_
-		var tokenName = iterator.GetNext()
-		validateToken = sts.ReplaceAll(validateToken, "<tokenName>", tokenName)
-		tokenName = v.makeUppercase(tokenName)
-		validateToken = sts.ReplaceAll(validateToken, "<TokenName>", tokenName)
-		var tokenType = tokenName + "Token"
-		validateToken = sts.ReplaceAll(validateToken, "<TokenType>", tokenType)
-		validateTokens += validateToken
-	}
-	return validateTokens
-}
-
-func (v *validator_) makeLowercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToLower(runes[0])
-	name = string(runes)
-	if reserved_[name] {
-		name += "_"
-	}
-	return name
-}
-
-func (v *validator_) makeUppercase(name string) string {
-	runes := []rune(name)
-	runes[0] = uni.ToUpper(runes[0])
-	return string(runes)
-}
-
-const validateTokenTemplate_ = `
+const processTokenTemplate_ = `
 func (v *validator_) Process<TokenName>(<tokenName> string) {
 	v.ValidateToken(<tokenName>, <TokenType>)
 }
@@ -256,6 +213,14 @@ func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
 }
 
+// Methodical
+<ProcessTokens>
+func (v *validator_) Preprocess<Name>(<name> ast.<Name>Like) {
+}
+
+func (v *validator_) Postprocess<Name>(<name> ast.<Name>Like) {
+}
+
 // Public
 
 func (v *validator_) ValidateToken(
@@ -274,13 +239,5 @@ func (v *validator_) ValidateToken(
 
 func (v *validator_) Validate<Name>(<name> ast.<Name>Like) {
 	v.visitor_.Visit<Name>(<name>)
-}
-
-// Methodical
-<ProcessTokens>
-func (v *validator_) Preprocess<Name>(<name> ast.<Name>Like) {
-}
-
-func (v *validator_) Postprocess<Name>(<name> ast.<Name>Like) {
 }
 `
