@@ -261,7 +261,11 @@ func (v *formatter_) ProcessInteger(integer string) {
 	v.appendString(integer)
 }
 
-func (v *formatter_) ProcessNewline(newline string) {
+func (v *formatter_) ProcessNewline(
+	newline string,
+	index uint,
+	size uint,
+) {
 	v.appendString(newline)
 }
 
@@ -966,7 +970,11 @@ func (v *validator_) ProcessInteger(integer string) {
 	v.ValidateToken(integer, IntegerToken)
 }
 
-func (v *validator_) ProcessNewline(newline string) {
+func (v *validator_) ProcessNewline(
+	newline string,
+	index uint,
+	size uint,
+) {
 	v.ValidateToken(newline, NewlineToken)
 }
 

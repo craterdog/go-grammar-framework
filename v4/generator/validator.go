@@ -102,14 +102,26 @@ func (v *validator_) generateProcessTokens() string {
 	var processTokens string
 	var iterator = v.analyzer_.GetTokens().GetIterator()
 	for iterator.HasNext() {
-		var processToken = processTokenTemplate_
 		var tokenName = iterator.GetNext()
 		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
 			continue
 		}
+		var tokenType = makeUpperCase(tokenName) + "Token"
+		var parameterName = makeLowerCase(tokenName)
+		var isPlural = v.analyzer_.IsPlural(tokenName)
+		var parameters string
+		if isPlural {
+			parameters += "\n\t"
+		}
+		parameters += parameterName + " string"
+		if isPlural {
+			parameters += ",\n\tindex uint"
+			parameters += ",\n\tsize uint,\n"
+		}
+		var processToken = processTokenTemplate_
 		processToken = replaceAll(processToken, "tokenName", tokenName)
-		var tokenType = tokenName + "Token"
 		processToken = replaceAll(processToken, "tokenType", tokenType)
+		processToken = replaceAll(processToken, "parameters", parameters)
 		processTokens += processToken
 	}
 	return processTokens
@@ -122,7 +134,7 @@ func (v *validator_) generateSyntaxName(syntax ast.SyntaxLike) string {
 }
 
 const processTokenTemplate_ = `
-func (v *validator_) Process<TokenName>(<tokenName> string) {
+func (v *validator_) Process<TokenName>(<parameters>) {
 	v.ValidateToken(<tokenName>, <TokenType>)
 }
 `

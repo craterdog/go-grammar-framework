@@ -108,21 +108,31 @@ func (v *formatter_) generateTokenProcessors() string {
 	var tokenProcessors string
 	var iterator = v.analyzer_.GetTokens().GetIterator()
 	for iterator.HasNext() {
-		var tokenProcessor = formatTemplate_
 		var tokenName = iterator.GetNext()
 		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
 			continue
 		}
+		var parameterName = makeLowerCase(tokenName)
+		var isPlural = v.analyzer_.IsPlural(tokenName)
+		var parameters string
+		if isPlural {
+			parameters += "\n\t"
+		}
+		parameters += parameterName + " string"
+		if isPlural {
+			parameters += ",\n\tindex uint"
+			parameters += ",\n\tsize uint,\n"
+		}
+		var tokenProcessor = formatTemplate_
 		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
-		var tokenType = tokenName + "Token"
-		tokenProcessor = replaceAll(tokenProcessor, "tokenType", tokenType)
+		tokenProcessor = replaceAll(tokenProcessor, "parameters", parameters)
 		tokenProcessors += tokenProcessor
 	}
 	return tokenProcessors
 }
 
 const formatTemplate_ = `
-func (v *formatter_) Process<TokenName>(<tokenName> string) {
+func (v *formatter_) Process<TokenName>(<parameters>) {
 	v.appendString(<tokenName>)
 }
 `
