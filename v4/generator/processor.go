@@ -58,9 +58,6 @@ type processor_ struct {
 	// Define the instance attributes.
 	class_    ProcessorClassLike
 	analyzer_ gra.AnalyzerLike
-
-	// Define the inherited aspects.
-	gra.Methodical
 }
 
 // Attributes

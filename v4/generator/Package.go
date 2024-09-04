@@ -32,7 +32,6 @@ package generator
 
 import (
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
-	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
 
 // Classes
@@ -206,9 +205,6 @@ all processor-like instances.
 type ProcessorLike interface {
 	// Attributes
 	GetClass() ProcessorClassLike
-
-	// Abstractions
-	gra.Methodical
 
 	// Methods
 	GenerateProcessorClass(
