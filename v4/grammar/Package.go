@@ -69,6 +69,15 @@ const (
 // Classes
 
 /*
+AnalyzerClassLike defines the set of class constants, constructors and
+functions that must be supported by all analyzer-class-like classes.
+*/
+type AnalyzerClassLike interface {
+	// Constructors
+	Make() AnalyzerLike
+}
+
+/*
 FormatterClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete formatter-like class.
@@ -161,6 +170,29 @@ type VisitorClassLike interface {
 }
 
 // Instances
+
+/*
+AnalyzerLike defines the set of aspects and methods that must be supported by
+all analyzer-like instances.
+*/
+type AnalyzerLike interface {
+	// Attributes
+	GetClass() AnalyzerClassLike
+
+	// Abstractions
+	Methodical
+
+	// Methods
+	AnalyzeSyntax(syntax ast.SyntaxLike)
+	GetTokens() abs.Sequential[string]
+	GetIgnored() abs.Sequential[string]
+	IsIgnored(token string) bool
+	GetRules() abs.Sequential[string]
+	IsPlural(rule string) bool
+	GetReferences(rule string) abs.Sequential[ast.ReferenceLike]
+	GetIdentifiers(rule string) abs.Sequential[ast.IdentifierLike]
+	GetExpressions() abs.Sequential[abs.AssociationLike[string, string]]
+}
 
 /*
 FormatterLike is an instance interface that defines the complete set of

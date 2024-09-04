@@ -13,8 +13,6 @@
 package generator
 
 import (
-	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -46,12 +44,9 @@ type grammarClass_ struct {
 func (c *grammarClass_) Make() GrammarLike {
 	var grammar = &grammar_{
 		// Initialize the instance attributes.
-		class_: c,
-
-		// Initialize the inherited aspects.
-		Methodical: gra.Processor().Make(),
+		class_:    c,
+		analyzer_: gra.Analyzer().Make(),
 	}
-	grammar.visitor_ = gra.Visitor().Make(grammar)
 	return grammar
 }
 
@@ -61,76 +56,14 @@ func (c *grammarClass_) Make() GrammarLike {
 
 type grammar_ struct {
 	// Define the instance attributes.
-	class_       GrammarClassLike
-	visitor_     gra.VisitorLike
-	tokens_      abs.SetLike[string]
-	rules_       abs.SetLike[string]
-	plurals_     abs.SetLike[string]
-	cardinality_ ast.CardinalityLike
-
-	// Define the inherited aspects.
-	gra.Methodical
+	class_    GrammarClassLike
+	analyzer_ gra.AnalyzerLike
 }
 
 // Attributes
 
 func (v *grammar_) GetClass() GrammarClassLike {
 	return v.class_
-}
-
-// Methodical
-
-func (v *grammar_) PreprocessBracket(bracket ast.BracketLike) {
-	v.cardinality_ = bracket.GetCardinality()
-}
-
-func (v *grammar_) PostprocessBracket(bracket ast.BracketLike) {
-	v.cardinality_ = nil
-}
-
-func (v *grammar_) PreprocessIdentifier(
-	identifier ast.IdentifierLike,
-) {
-	var name = identifier.GetAny().(string)
-	switch {
-	case gra.Scanner().MatchesType(name, gra.LowercaseToken):
-		v.tokens_.AddValue(name)
-	}
-}
-
-func (v *grammar_) PreprocessReference(reference ast.ReferenceLike) {
-	var identifier = makeLowerCase(reference.GetIdentifier().GetAny().(string))
-	var cardinality = reference.GetOptionalCardinality()
-	if col.IsDefined(v.cardinality_) {
-		// The cardinality of a bracket takes precedence.
-		cardinality = v.cardinality_
-	}
-	if col.IsDefined(cardinality) {
-		switch actual := cardinality.GetAny().(type) {
-		case ast.ConstraintLike:
-			switch actual.GetAny().(string) {
-			case "*", "+":
-				v.plurals_.AddValue(identifier)
-			}
-		case ast.CountLike:
-			v.plurals_.AddValue(identifier)
-		}
-	}
-}
-
-func (v *grammar_) PreprocessRule(
-	rule ast.RuleLike,
-	index uint,
-	size uint,
-) {
-	var name = rule.GetUppercase()
-	v.rules_.AddValue(makeLowerCase(name))
-}
-
-func (v *grammar_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]()
-	v.rules_ = col.Set[string]()
-	v.plurals_ = col.Set[string]()
 }
 
 // Public
@@ -142,7 +75,7 @@ func (v *grammar_) GenerateGrammarModel(
 ) (
 	implementation string,
 ) {
-	v.visitor_.VisitSyntax(syntax)
+	v.analyzer_.AnalyzeSyntax(syntax)
 	implementation = grammarTemplate_
 	implementation = replaceAll(implementation, "module", module)
 	implementation = replaceAll(implementation, "wiki", wiki)
@@ -174,27 +107,24 @@ func (v *grammar_) generateNotice(syntax ast.SyntaxLike) string {
 
 func (v *grammar_) generateProcessRules() string {
 	var processRules string
-	var iterator = v.rules_.GetIterator()
+	var iterator = v.analyzer_.GetRules().GetIterator()
 	for iterator.HasNext() {
-		var lowercase = iterator.GetNext()
-		var uppercase = makeUpperCase(lowercase)
-		var isPlural = v.plurals_.ContainsValue(lowercase)
-		if col.IsDefined(v.cardinality_) {
-			// The cardinality of a bracket takes precedence.
-			isPlural = true
-		}
+		var ruleName = iterator.GetNext()
+		var parameterName = makeLowerCase(ruleName)
+		var className = makeUpperCase(ruleName)
+		var isPlural = v.analyzer_.IsPlural(ruleName)
 		var parameters = "("
 		if isPlural {
 			parameters += "\n\t\t"
 		}
-		parameters += lowercase + " ast." + uppercase + "Like"
+		parameters += parameterName + " ast." + className + "Like"
 		if isPlural {
 			parameters += ",\n\t\tindex uint"
 			parameters += ",\n\t\tsize uint,\n\t"
 		}
 		parameters += ")"
-		processRules += "\n\tPreprocess" + uppercase + parameters
-		processRules += "\n\tPostprocess" + uppercase + parameters
+		processRules += "\n\tPreprocess" + className + parameters
+		processRules += "\n\tPostprocess" + className + parameters
 	}
 	processRules += "\n"
 	return processRules
@@ -202,10 +132,13 @@ func (v *grammar_) generateProcessRules() string {
 
 func (v *grammar_) generateProcessTokens() string {
 	var processTokens string
-	var iterator = v.tokens_.GetIterator()
+	var iterator = v.analyzer_.GetTokens().GetIterator()
 	for iterator.HasNext() {
 		var name = iterator.GetNext()
-		var isPlural = v.plurals_.ContainsValue(name)
+		if v.analyzer_.IsIgnored(name) || name == "delimiter" {
+			continue
+		}
+		var isPlural = v.analyzer_.IsPlural(name)
 		var parameters = "("
 		if isPlural {
 			parameters += "\n\t\t"
@@ -223,11 +156,7 @@ func (v *grammar_) generateProcessTokens() string {
 
 func (v *grammar_) generateTokenTypes() string {
 	var tokenTypes = "ErrorToken TokenType = iota"
-	var tokens = col.Set[string](v.tokens_)
-	tokens.AddValue("delimiter")
-	tokens.AddValue("space")
-	tokens.AddValue("newline")
-	var iterator = tokens.GetIterator()
+	var iterator = v.analyzer_.GetTokens().GetIterator()
 	for iterator.HasNext() {
 		var name = iterator.GetNext()
 		var tokenType = makeUpperCase(name) + "Token"

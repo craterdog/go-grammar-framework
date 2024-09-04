@@ -1082,7 +1082,7 @@ func (v *processor_) ProcessNewline(
 ) {
 }
 
-func (v *processor_) ProcessRune(rune string) {
+func (v *processor_) ProcessRune(rune_ string) {
 }
 
 func (v *processor_) ProcessText(text string) {
@@ -1196,7 +1196,7 @@ func (v *visitor_) GetProcessor() Methodical {
 // Public
 
 func (v *visitor_) VisitDocument(document ast.DocumentLike) {
-	// Visit the document.
+	// Visit the document syntax.
 	v.processor_.PreprocessDocument(document)
 	v.visitDocument(document)
 	v.processor_.PostprocessDocument(document)

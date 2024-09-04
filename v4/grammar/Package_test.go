@@ -37,6 +37,10 @@ func TestRoundTrips(t *tes.T) {
 	var validator = gra.Validator().Make()
 	validator.ValidateSyntax(syntax)
 
+	// Analyze the syntax.
+	var analyzer = gra.Analyzer().Make()
+	analyzer.AnalyzeSyntax(syntax)
+
 	// Format the syntax.
 	var formatter = gra.Formatter().Make()
 	var actual = formatter.FormatSyntax(syntax)

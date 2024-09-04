@@ -13,8 +13,6 @@
 package generator
 
 import (
-	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -46,12 +44,9 @@ type formatterClass_ struct {
 func (c *formatterClass_) Make() FormatterLike {
 	var formatter = &formatter_{
 		// Initialize the instance attributes.
-		class_: c,
-
-		// Initialize the inherited aspects.
-		Methodical: gra.Processor().Make(),
+		class_:    c,
+		analyzer_: gra.Analyzer().Make(),
 	}
-	formatter.visitor_ = gra.Visitor().Make(formatter)
 	return formatter
 }
 
@@ -61,31 +56,14 @@ func (c *formatterClass_) Make() FormatterLike {
 
 type formatter_ struct {
 	// Define the instance attributes.
-	class_   FormatterClassLike
-	visitor_ gra.VisitorLike
-	tokens_  abs.SetLike[string]
-
-	// Define the inherited aspects.
-	gra.Methodical
+	class_    FormatterClassLike
+	analyzer_ gra.AnalyzerLike
 }
 
 // Attributes
 
 func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
-}
-
-// Methodical
-
-func (v *formatter_) PreprocessIdentifier(identifier ast.IdentifierLike) {
-	var name = identifier.GetAny().(string)
-	if gra.Scanner().MatchesType(name, gra.LowercaseToken) {
-		v.tokens_.AddValue(name)
-	}
-}
-
-func (v *formatter_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]()
 }
 
 // Public
@@ -96,7 +74,7 @@ func (v *formatter_) GenerateFormatterClass(
 ) (
 	implementation string,
 ) {
-	v.visitor_.VisitSyntax(syntax)
+	v.analyzer_.AnalyzeSyntax(syntax)
 	implementation = formatterTemplate_
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.generateNotice(syntax)
@@ -128,10 +106,13 @@ func (v *formatter_) generateSyntaxName(syntax ast.SyntaxLike) string {
 
 func (v *formatter_) generateTokenProcessors() string {
 	var tokenProcessors string
-	var iterator = v.tokens_.GetIterator()
+	var iterator = v.analyzer_.GetTokens().GetIterator()
 	for iterator.HasNext() {
 		var tokenProcessor = formatTemplate_
 		var tokenName = iterator.GetNext()
+		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
+			continue
+		}
 		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
 		var tokenType = tokenName + "Token"
 		tokenProcessor = replaceAll(tokenProcessor, "tokenType", tokenType)

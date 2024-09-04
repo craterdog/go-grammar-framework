@@ -47,12 +47,9 @@ type astClass_ struct {
 func (c *astClass_) Make() AstLike {
 	var ast = &ast_{
 		// Initialize the instance attributes.
-		class_: c,
-
-		// Initialize the inherited aspects.
-		Methodical: gra.Processor().Make(),
+		class_:    c,
+		analyzer_: gra.Analyzer().Make(),
 	}
-	ast.visitor_ = gra.Visitor().Make(ast)
 	return ast
 }
 
@@ -62,71 +59,15 @@ func (c *astClass_) Make() AstLike {
 
 type ast_ struct {
 	// Define the instance attributes.
-	class_       AstClassLike
-	visitor_     gra.VisitorLike
-	rules_       abs.SetLike[string]
-	plurals_     abs.SetLike[string]
-	references_  abs.ListLike[ast.ReferenceLike]
-	inline_      abs.CatalogLike[string, abs.ListLike[ast.ReferenceLike]]
-	multiline_   abs.SetLike[string]
-	cardinality_ ast.CardinalityLike
-	modules_     abs.CatalogLike[string, string]
-
-	// Define the inherited aspects.
-	gra.Methodical
+	class_    AstClassLike
+	analyzer_ gra.AnalyzerLike
+	modules_  abs.CatalogLike[string, string]
 }
 
 // Attributes
 
 func (v *ast_) GetClass() AstClassLike {
 	return v.class_
-}
-
-// Methodical
-
-func (v *ast_) PreprocessBracket(bracket ast.BracketLike) {
-	v.cardinality_ = bracket.GetCardinality()
-}
-
-func (v *ast_) PostprocessBracket(bracket ast.BracketLike) {
-	v.cardinality_ = nil
-}
-
-func (v *ast_) PreprocessInline(inline ast.InlineLike) {
-	v.references_ = col.List[ast.ReferenceLike]()
-}
-
-func (v *ast_) PostprocessInline(inline ast.InlineLike) {
-	v.consolidateReferences()
-}
-
-func (v *ast_) PreprocessReference(reference ast.ReferenceLike) {
-	reference = v.augmentCardinality(reference)
-	v.references_.AppendValue(reference)
-}
-
-func (v *ast_) PostprocessRule(
-	rule ast.RuleLike,
-	index uint,
-	size uint,
-) {
-	var identifier = rule.GetUppercase()
-	v.rules_.AddValue(identifier)
-	var definition = rule.GetDefinition()
-	switch definition.GetAny().(type) {
-	case ast.MultilineLike:
-		v.multiline_.AddValue(identifier)
-	case ast.InlineLike:
-		v.inline_.SetValue(identifier, v.references_)
-	}
-}
-
-func (v *ast_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.rules_ = col.Set[string]()
-	v.plurals_ = col.Set[string]()
-	v.multiline_ = col.Set[string]()
-	v.inline_ = col.Catalog[string, abs.ListLike[ast.ReferenceLike]]()
-	v.modules_ = col.Catalog[string, string]()
 }
 
 // Public
@@ -138,7 +79,8 @@ func (v *ast_) GenerateAstModel(
 ) (
 	implementation string,
 ) {
-	v.visitor_.VisitSyntax(syntax)
+	v.analyzer_.AnalyzeSyntax(syntax)
+	v.modules_ = col.Catalog[string, string]()
 	var notice = v.generateNotice(syntax)
 	var header = v.generateHeader(wiki)
 	var classes = v.generateClasses()
@@ -156,46 +98,6 @@ func (v *ast_) GenerateAstModel(
 }
 
 // Private
-
-func (v *ast_) augmentCardinality(reference ast.ReferenceLike) ast.ReferenceLike {
-	var identifier = reference.GetIdentifier()
-	var cardinality = reference.GetOptionalCardinality()
-	if col.IsDefined(v.cardinality_) {
-		// The cardinality of a bracket takes precedence.
-		cardinality = v.cardinality_
-		reference = ast.Reference().Make(identifier, cardinality)
-	}
-	if col.IsDefined(cardinality) {
-		var name = identifier.GetAny().(string)
-		switch actual := cardinality.GetAny().(type) {
-		case ast.CountLike:
-			v.plurals_.AddValue(name)
-		case ast.ConstraintLike:
-			switch actual.GetAny().(string) {
-			case "*", "+":
-				v.plurals_.AddValue(name)
-			}
-		}
-	}
-	return reference
-}
-
-func (v *ast_) consolidateReferences() {
-	// Compare each reference type and rename duplicates.
-	for i := 1; i <= v.references_.GetSize(); i++ {
-		var reference = v.references_.GetValue(i)
-		var first = reference.GetIdentifier().GetAny().(string)
-		for j := i + 1; j <= v.references_.GetSize(); j++ {
-			var second = v.references_.GetValue(j).GetIdentifier().GetAny().(string)
-			if first == second {
-				var plural = v.pluralizeReference(reference)
-				v.references_.SetValue(i, plural)
-				v.references_.RemoveValue(j)
-				j--
-			}
-		}
-	}
-}
 
 func (v *ast_) generateAttribute(reference ast.ReferenceLike) mod.AttributeLike {
 	var identifier = reference.GetIdentifier().GetAny().(string)
@@ -249,12 +151,12 @@ func (v *ast_) generateClassDeclaration(name string) mod.DeclarationLike {
 
 func (v *ast_) generateClasses() mod.ClassesLike {
 	var classes = col.List[mod.ClassLike]()
-	var rules = v.rules_.GetIterator()
+	var rules = v.analyzer_.GetRules().GetIterator()
 	for rules.HasNext() {
 		var rule = rules.GetNext()
 		var declaration = v.generateClassDeclaration(rule)
 		var constructor mod.ConstructorLike
-		if v.multiline_.ContainsValue(rule) {
+		if col.IsDefined(v.analyzer_.GetIdentifiers(rule)) {
 			constructor = v.generateMultilineConstructor(rule)
 		} else {
 			constructor = v.generateInlineConstructor(rule)
@@ -307,7 +209,7 @@ func (v *ast_) generateInlineAttributes(name string) mod.AttributesLike {
 	attributes.AppendValue(attribute)
 
 	// Define any additional attributes.
-	var references = v.inline_.GetValue(name).GetIterator()
+	var references = v.analyzer_.GetReferences(name).GetIterator()
 	for references.HasNext() {
 		var reference = references.GetNext()
 		attribute = v.generateAttribute(reference)
@@ -335,7 +237,7 @@ func (v *ast_) generateInlineConstructor(name string) mod.ConstructorLike {
 
 func (v *ast_) generateInlineParameters(name string) mod.ParametersLike {
 	// Define the first parameter.
-	var references = v.inline_.GetValue(name).GetIterator()
+	var references = v.analyzer_.GetReferences(name).GetIterator()
 	var reference = references.GetNext()
 	var parameter = v.generateParameter(reference)
 
@@ -360,12 +262,12 @@ func (v *ast_) generateInstanceDeclaration(name string) mod.DeclarationLike {
 
 func (v *ast_) generateInstances() mod.InstancesLike {
 	var instances = col.List[mod.InstanceLike]()
-	var rules = v.rules_.GetIterator()
+	var rules = v.analyzer_.GetRules().GetIterator()
 	for rules.HasNext() {
 		var rule = rules.GetNext()
 		var declaration = v.generateInstanceDeclaration(rule)
 		var attributes mod.AttributesLike
-		if v.multiline_.ContainsValue(rule) {
+		if col.IsDefined(v.analyzer_.GetIdentifiers(rule)) {
 			attributes = v.generateMultilineAttributes(rule)
 		} else {
 			attributes = v.generateInlineAttributes(rule)
@@ -475,14 +377,6 @@ func (v *ast_) generateParameter(reference ast.ReferenceLike) mod.ParameterLike 
 		parameterType,
 	)
 	return parameter
-}
-
-func (v *ast_) pluralizeReference(reference ast.ReferenceLike) ast.ReferenceLike {
-	var identifier = reference.GetIdentifier()
-	var constraint = ast.Constraint().Make("*")
-	var cardinality = ast.Cardinality().Make(constraint)
-	reference = ast.Reference().Make(identifier, cardinality)
-	return reference
 }
 
 func (v *ast_) pluralizeType(abstraction mod.AbstractionLike) mod.AbstractionLike {

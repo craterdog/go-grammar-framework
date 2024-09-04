@@ -137,9 +137,6 @@ type FormatterLike interface {
 	// Attributes
 	GetClass() FormatterClassLike
 
-	// Abstractions
-	gra.Methodical
-
 	// Methods
 	GenerateFormatterClass(
 		module string,
@@ -156,9 +153,6 @@ all grammar-like instances.
 type GrammarLike interface {
 	// Attributes
 	GetClass() GrammarClassLike
-
-	// Abstractions
-	gra.Methodical
 
 	// Methods
 	GenerateGrammarModel(
@@ -178,9 +172,6 @@ type AstLike interface {
 	// Attributes
 	GetClass() AstClassLike
 
-	// Abstractions
-	gra.Methodical
-
 	// Methods
 	GenerateAstModel(
 		module string,
@@ -198,9 +189,6 @@ all parser-like instances.
 type ParserLike interface {
 	// Attributes
 	GetClass() ParserClassLike
-
-	// Abstractions
-	gra.Methodical
 
 	// Methods
 	GenerateParserClass(
@@ -238,9 +226,6 @@ all scanner-like instances.
 type ScannerLike interface {
 	// Attributes
 	GetClass() ScannerClassLike
-
-	// Abstractions
-	gra.Methodical
 
 	// Methods
 	GenerateScannerClass(
@@ -293,9 +278,6 @@ type ValidatorLike interface {
 	// Attributes
 	GetClass() ValidatorClassLike
 
-	// Abstractions
-	gra.Methodical
-
 	// Methods
 	GenerateValidatorClass(
 		module string,
@@ -312,9 +294,6 @@ all visitor-like instances.
 type VisitorLike interface {
 	// Attributes
 	GetClass() VisitorClassLike
-
-	// Abstractions
-	gra.Methodical
 
 	// Methods
 	GenerateVisitorClass(

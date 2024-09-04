@@ -13,8 +13,6 @@
 package generator
 
 import (
-	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -46,12 +44,9 @@ type validatorClass_ struct {
 func (c *validatorClass_) Make() ValidatorLike {
 	var validator = &validator_{
 		// Initialize the instance attributes.
-		class_: c,
-
-		// Initialize the inherited aspects.
-		Methodical: gra.Processor().Make(),
+		class_:    c,
+		analyzer_: gra.Analyzer().Make(),
 	}
-	validator.visitor_ = gra.Visitor().Make(validator)
 	return validator
 }
 
@@ -61,31 +56,14 @@ func (c *validatorClass_) Make() ValidatorLike {
 
 type validator_ struct {
 	// Define the instance attributes.
-	class_   ValidatorClassLike
-	visitor_ gra.VisitorLike
-	tokens_  abs.SetLike[string]
-
-	// Define the inherited aspects.
-	gra.Methodical
+	class_    ValidatorClassLike
+	analyzer_ gra.AnalyzerLike
 }
 
 // Attributes
 
 func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
-}
-
-// Methodical
-
-func (v *validator_) PreprocessIdentifier(identifier ast.IdentifierLike) {
-	var name = identifier.GetAny().(string)
-	if gra.Scanner().MatchesType(name, gra.LowercaseToken) {
-		v.tokens_.AddValue(name)
-	}
-}
-
-func (v *validator_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.tokens_ = col.Set[string]()
 }
 
 // Public
@@ -96,7 +74,7 @@ func (v *validator_) GenerateValidatorClass(
 ) (
 	implementation string,
 ) {
-	v.visitor_.VisitSyntax(syntax)
+	v.analyzer_.AnalyzeSyntax(syntax)
 	implementation = validatorTemplate_
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.generateNotice(syntax)
@@ -122,10 +100,13 @@ func (v *validator_) generateNotice(syntax ast.SyntaxLike) string {
 
 func (v *validator_) generateProcessTokens() string {
 	var processTokens string
-	var iterator = v.tokens_.GetIterator()
+	var iterator = v.analyzer_.GetTokens().GetIterator()
 	for iterator.HasNext() {
 		var processToken = processTokenTemplate_
 		var tokenName = iterator.GetNext()
+		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
+			continue
+		}
 		processToken = replaceAll(processToken, "tokenName", tokenName)
 		var tokenType = tokenName + "Token"
 		processToken = replaceAll(processToken, "tokenType", tokenType)

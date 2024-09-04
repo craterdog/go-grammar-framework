@@ -14,7 +14,6 @@ package generator
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -46,12 +45,9 @@ type visitorClass_ struct {
 func (c *visitorClass_) Make() VisitorLike {
 	var visitor = &visitor_{
 		// Initialize the instance attributes.
-		class_: c,
-
-		// Initialize the inherited aspects.
-		Methodical: gra.Processor().Make(),
+		class_:    c,
+		analyzer_: gra.Analyzer().Make(),
 	}
-	visitor.visitor_ = gra.Visitor().Make(visitor)
 	return visitor
 }
 
@@ -61,83 +57,15 @@ func (c *visitorClass_) Make() VisitorLike {
 
 type visitor_ struct {
 	// Define the instance attributes.
-	class_       VisitorClassLike
-	visitor_     gra.VisitorLike
-	rules_       abs.SetLike[string]
-	plurals_     abs.SetLike[string]
-	identifiers_ abs.ListLike[ast.IdentifierLike]
-	references_  abs.ListLike[ast.ReferenceLike]
-	inline_      abs.CatalogLike[string, abs.ListLike[ast.ReferenceLike]]
-	multiline_   abs.CatalogLike[string, abs.ListLike[ast.IdentifierLike]]
-	cardinality_ ast.CardinalityLike
-	result_      string
-
-	// Define the inherited aspects.
-	gra.Methodical
+	class_    VisitorClassLike
+	analyzer_ gra.AnalyzerLike
+	result_   string
 }
 
 // Attributes
 
 func (v *visitor_) GetClass() VisitorClassLike {
 	return v.class_
-}
-
-// Methodical
-
-func (v *visitor_) PreprocessBracket(bracket ast.BracketLike) {
-	v.cardinality_ = bracket.GetCardinality()
-}
-
-func (v *visitor_) PostprocessBracket(bracket ast.BracketLike) {
-	v.cardinality_ = nil
-}
-
-func (v *visitor_) PostprocessInline(inline ast.InlineLike) {
-	v.consolidateReferences()
-}
-
-func (v *visitor_) PreprocessLine(
-	line ast.LineLike,
-	index uint,
-	size uint,
-) {
-	var identifier = line.GetIdentifier()
-	v.identifiers_.AppendValue(identifier)
-}
-
-func (v *visitor_) PreprocessReference(reference ast.ReferenceLike) {
-	reference = v.augmentCardinality(reference)
-	v.references_.AppendValue(reference)
-}
-
-func (v *visitor_) PreprocessRule(
-	rule ast.RuleLike,
-	index uint,
-	size uint,
-) {
-	var identifier = rule.GetUppercase()
-	v.rules_.AddValue(identifier)
-	var definition = rule.GetDefinition()
-	switch definition.GetAny().(type) {
-	case ast.MultilineLike:
-		v.identifiers_ = col.List[ast.IdentifierLike]()
-		v.multiline_.SetValue(identifier, v.identifiers_)
-	case ast.InlineLike:
-		v.references_ = col.List[ast.ReferenceLike]()
-		v.inline_.SetValue(identifier, v.references_)
-	}
-}
-
-func (v *visitor_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.rules_ = col.Set[string]()
-	v.plurals_ = col.Set[string]()
-	v.multiline_ = col.Catalog[string, abs.ListLike[ast.IdentifierLike]]()
-	v.inline_ = col.Catalog[string, abs.ListLike[ast.ReferenceLike]]()
-}
-
-func (v *visitor_) PostprocessSyntax(syntax ast.SyntaxLike) {
-	var methods = v.generateMethods()
-	v.result_ = replaceAll(v.result_, "methods", methods)
 }
 
 // Public
@@ -152,55 +80,17 @@ func (v *visitor_) GenerateVisitorClass(
 	var notice = v.generateNotice(syntax)
 	v.result_ = replaceAll(v.result_, "notice", notice)
 	v.result_ = replaceAll(v.result_, "syntaxName", syntaxName)
-	v.visitor_.VisitSyntax(syntax)
+	v.analyzer_.AnalyzeSyntax(syntax)
+	var methods = v.generateMethods()
+	v.result_ = replaceAll(v.result_, "methods", methods)
 	return v.result_
 }
 
 // Private
 
-func (v *visitor_) augmentCardinality(reference ast.ReferenceLike) ast.ReferenceLike {
-	var identifier = reference.GetIdentifier()
-	var cardinality = reference.GetOptionalCardinality()
-	if col.IsDefined(v.cardinality_) {
-		// The cardinality of a bracket takes precedence.
-		cardinality = v.cardinality_
-		reference = ast.Reference().Make(identifier, cardinality)
-	}
-	if col.IsDefined(cardinality) {
-		var name = identifier.GetAny().(string)
-		switch actual := cardinality.GetAny().(type) {
-		case ast.CountLike:
-			v.plurals_.AddValue(name)
-		case ast.ConstraintLike:
-			switch actual.GetAny().(string) {
-			case "*", "+":
-				v.plurals_.AddValue(name)
-			}
-		}
-	}
-	return reference
-}
-
-func (v *visitor_) consolidateReferences() {
-	// Compare each reference type and rename duplicates.
-	for i := 1; i <= v.references_.GetSize(); i++ {
-		var reference = v.references_.GetValue(i)
-		var first = reference.GetIdentifier().GetAny().(string)
-		for j := i + 1; j <= v.references_.GetSize(); j++ {
-			var second = v.references_.GetValue(j).GetIdentifier().GetAny().(string)
-			if first == second {
-				var plural = v.pluralizeReference(reference)
-				v.references_.SetValue(i, plural)
-				v.references_.RemoveValue(j)
-				j--
-			}
-		}
-	}
-}
-
 func (v *visitor_) generateInlineMethod(name string) string {
 	var implementation string
-	var references = v.inline_.GetValue(name).GetIterator()
+	var references = v.analyzer_.GetReferences(name).GetIterator()
 	for references.HasNext() {
 		var reference = references.GetNext()
 		implementation += v.generateInlineReference(reference)
@@ -267,14 +157,14 @@ func (v *visitor_) generateInlineToken(
 
 func (v *visitor_) generateMethods() string {
 	var methods string
-	var rules = v.rules_.GetIterator()
+	var rules = v.analyzer_.GetRules().GetIterator()
 	for rules.HasNext() {
 		var method string
 		var rule = rules.GetNext()
 		switch {
-		case col.IsDefined(v.multiline_.GetValue(rule)):
+		case col.IsDefined(v.analyzer_.GetIdentifiers(rule)):
 			method = v.generateMultilineMethod(rule)
-		case col.IsDefined(v.inline_.GetValue(rule)):
+		case col.IsDefined(v.analyzer_.GetReferences(rule)):
 			method = v.generateInlineMethod(rule)
 		}
 		method = replaceAll(method, "rule", rule)
@@ -285,7 +175,8 @@ func (v *visitor_) generateMethods() string {
 
 func (v *visitor_) generateMultilineMethod(name string) string {
 	var tokenCases, ruleCases string
-	var identifiers = v.multiline_.GetValue(name).GetIterator()
+	var identifiers = v.analyzer_.GetIdentifiers(name).GetIterator()
+
 	for identifiers.HasNext() {
 		var identifier = identifiers.GetNext()
 		var name = identifier.GetAny().(string)
@@ -305,11 +196,19 @@ func (v *visitor_) generateMultilineMethod(name string) string {
 }
 
 func (v *visitor_) generateMultilineRule(ruleName string) string {
-	return replaceAll(visitRuleCaseTemplate_, "ruleName", ruleName)
+	var template = visitRuleCaseTemplate_
+	if v.analyzer_.IsPlural(ruleName) {
+		template = visitSingularRuleCaseTemplate_
+	}
+	return replaceAll(template, "ruleName", ruleName)
 }
 
 func (v *visitor_) generateMultilineToken(tokenName string) string {
-	return replaceAll(visitTokenCaseTemplate_, "tokenName", tokenName)
+	var template = visitTokenCaseTemplate_
+	if v.analyzer_.IsPlural(tokenName) {
+		template = visitSingularTokenCaseTemplate_
+	}
+	return replaceAll(template, "tokenName", tokenName)
 }
 
 func (v *visitor_) generateNotice(syntax ast.SyntaxLike) string {
@@ -328,7 +227,7 @@ func (v *visitor_) generatePlurality(
 ) string {
 	var plurality string
 	if col.IsUndefined(cardinality) {
-		if v.plurals_.ContainsValue(name) {
+		if v.analyzer_.IsPlural(name) {
 			plurality = "singular"
 		}
 		return plurality
@@ -352,22 +251,6 @@ func (v *visitor_) generateSyntaxName(syntax ast.SyntaxLike) string {
 	var rule = syntax.GetRules().GetIterator().GetNext()
 	var name = rule.GetUppercase()
 	return name
-}
-
-func (v *visitor_) pluralizeReference(
-	reference ast.ReferenceLike,
-) ast.ReferenceLike {
-	// Make the identifier plural.
-	var identifier = reference.GetIdentifier()
-	var name = identifier.GetAny().(string)
-	name = makePlural(name)
-	v.plurals_.AddValue(name)
-
-	// Add a plural cardinality to the reference.
-	var constraint = ast.Constraint().Make("*")
-	var cardinality = ast.Cardinality().Make(constraint)
-	reference = ast.Reference().Make(identifier, cardinality)
-	return reference
 }
 
 const methodTemplate_ = `
@@ -397,7 +280,7 @@ const visitTokenTemplate_ = `
 `
 
 const visitOptionalTokenTemplate_ = `
-	// Visit the optional <TokenName> token.
+	// Visit the optional <tokenName> token.
 	var <tokenName> = <rule>.GetOptional<TokenName>()
 	if col.IsDefined(<tokenName>) {
 		v.processor_.Process<TokenName>(<tokenName>)
@@ -430,8 +313,12 @@ const visitTokenCaseTemplate_ = `
 		case Scanner().MatchesType(actual, <TokenName>Token):
 			v.processor_.Process<TokenName>(actual)`
 
+const visitSingularTokenCaseTemplate_ = `
+		case Scanner().MatchesType(actual, <TokenName>Token):
+			v.processor_.Process<TokenName>(actual, 1, 1)`
+
 const visitRuleTemplate_ = `
-	// Visit the <ruleName>.
+	// Visit the <ruleName> rule.
 	var <ruleName> = <rule>.Get<RuleName>()
 	v.processor_.Preprocess<RuleName>(<ruleName>)
 	v.visit<RuleName>(<ruleName>)
@@ -439,7 +326,7 @@ const visitRuleTemplate_ = `
 `
 
 const visitOptionalRuleTemplate_ = `
-	// Visit the optional <RuleName>.
+	// Visit the optional <ruleName> rule.
 	var <ruleName> = <rule>.GetOptional<RuleName>()
 	if col.IsDefined(<ruleName>) {
 		v.processor_.Preprocess<RuleName>(<ruleName>)
@@ -449,7 +336,7 @@ const visitOptionalRuleTemplate_ = `
 `
 
 const visitSingularRuleTemplate_ = `
-	// Visit the <ruleName>.
+	// Visit the <ruleName> rule.
 	var <ruleName> = <rule>.Get<RuleName>()
 	v.processor_.Preprocess<RuleName>(<ruleName>, 1, 1)
 	v.visit<RuleName>(<ruleName>)
@@ -483,6 +370,12 @@ const visitRuleCaseTemplate_ = `
 		v.processor_.Preprocess<RuleName>(actual)
 		v.visit<RuleName>(actual)
 		v.processor_.Postprocess<RuleName>(actual)`
+
+const visitSingularRuleCaseTemplate_ = `
+	case ast.<RuleName>Like:
+		v.processor_.Preprocess<RuleName>(actual, 1, 1)
+		v.visit<RuleName>(actual)
+		v.processor_.Postprocess<RuleName>(actual, 1, 1)`
 
 const visitorTemplate_ = `/*<Notice>*/
 
@@ -549,7 +442,7 @@ func (v *visitor_) GetProcessor() Methodical {
 // Public
 
 func (v *visitor_) Visit<SyntaxName>(<syntaxName> ast.<SyntaxName>Like) {
-	// Visit the <syntaxName>.
+	// Visit the <syntaxName> syntax.
 	v.processor_.Preprocess<SyntaxName>(<syntaxName>)
 	v.visit<SyntaxName>(<syntaxName>)
 	v.processor_.Postprocess<SyntaxName>(<syntaxName>)

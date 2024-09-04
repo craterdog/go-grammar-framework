@@ -13,8 +13,6 @@
 package generator
 
 import (
-	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -46,12 +44,9 @@ type parserClass_ struct {
 func (c *parserClass_) Make() ParserLike {
 	var parser = &parser_{
 		// Initialize the instance attributes.
-		class_: c,
-
-		// Initialize the inherited aspects.
-		Methodical: gra.Processor().Make(),
+		class_:    c,
+		analyzer_: gra.Analyzer().Make(),
 	}
-	parser.visitor_ = gra.Visitor().Make(parser)
 	return parser
 }
 
@@ -61,33 +56,14 @@ func (c *parserClass_) Make() ParserLike {
 
 type parser_ struct {
 	// Define the instance attributes.
-	class_   ParserClassLike
-	visitor_ gra.VisitorLike
-	rules_   abs.SetLike[string]
-
-	// Define the inherited aspects.
-	gra.Methodical
+	class_    ParserClassLike
+	analyzer_ gra.AnalyzerLike
 }
 
 // Attributes
 
 func (v *parser_) GetClass() ParserClassLike {
 	return v.class_
-}
-
-// Methodical
-
-func (v *parser_) PreprocessRule(
-	rule ast.RuleLike,
-	index uint,
-	size uint,
-) {
-	var name = rule.GetUppercase()
-	v.rules_.AddValue(makeLowerCase(name))
-}
-
-func (v *parser_) PreprocessSyntax(syntax ast.SyntaxLike) {
-	v.rules_ = col.Set[string]()
 }
 
 // Public
@@ -98,7 +74,7 @@ func (v *parser_) GenerateParserClass(
 ) (
 	implementation string,
 ) {
-	v.visitor_.VisitSyntax(syntax)
+	v.analyzer_.AnalyzeSyntax(syntax)
 	implementation = parserTemplate_
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.generateNotice(syntax)
@@ -124,7 +100,7 @@ func (v *parser_) generateNotice(syntax ast.SyntaxLike) string {
 
 func (v *parser_) generateParseRules() string {
 	var parseRules string
-	var iterator = v.rules_.GetIterator()
+	var iterator = v.analyzer_.GetRules().GetIterator()
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
 		parseRules += replaceAll(parseTemplate_, "ruleName", ruleName)

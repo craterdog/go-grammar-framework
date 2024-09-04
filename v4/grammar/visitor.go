@@ -42,9 +42,7 @@ type visitorClass_ struct {
 
 // Constructors
 
-func (c *visitorClass_) Make(
-	processor Methodical,
-) VisitorLike {
+func (c *visitorClass_) Make(processor Methodical) VisitorLike {
 	return &visitor_{
 		// Initialize the instance attributes.
 		class_:     c,
@@ -75,7 +73,7 @@ func (v *visitor_) GetProcessor() Methodical {
 // Public
 
 func (v *visitor_) VisitSyntax(syntax ast.SyntaxLike) {
-	// Visit the syntax.
+	// Visit the syntax syntax.
 	v.processor_.PreprocessSyntax(syntax)
 	v.visitSyntax(syntax)
 	v.processor_.PostprocessSyntax(syntax)
@@ -84,33 +82,49 @@ func (v *visitor_) VisitSyntax(syntax ast.SyntaxLike) {
 // Private
 
 func (v *visitor_) visitAlternative(alternative ast.AlternativeLike) {
-	// Visit each repetition.
+	// Visit each repetition rule.
 	var repetitionIndex uint
 	var repetitions = alternative.GetRepetitions().GetIterator()
 	var repetitionsSize = uint(repetitions.GetSize())
 	for repetitions.HasNext() {
 		repetitionIndex++
 		var repetition = repetitions.GetNext()
-		v.processor_.PreprocessRepetition(repetition, repetitionIndex, repetitionsSize)
+		v.processor_.PreprocessRepetition(
+			repetition,
+			repetitionIndex,
+			repetitionsSize,
+		)
 		v.visitRepetition(repetition)
-		v.processor_.PostprocessRepetition(repetition, repetitionIndex, repetitionsSize)
+		v.processor_.PostprocessRepetition(
+			repetition,
+			repetitionIndex,
+			repetitionsSize,
+		)
 	}
 }
 
 func (v *visitor_) visitBracket(bracket ast.BracketLike) {
-	// Visit each factor.
+	// Visit each factor rule.
 	var factorIndex uint
 	var factors = bracket.GetFactors().GetIterator()
 	var factorsSize = uint(factors.GetSize())
 	for factors.HasNext() {
 		factorIndex++
 		var factor = factors.GetNext()
-		v.processor_.PreprocessFactor(factor, factorIndex, factorsSize)
+		v.processor_.PreprocessFactor(
+			factor,
+			factorIndex,
+			factorsSize,
+		)
 		v.visitFactor(factor)
-		v.processor_.PostprocessFactor(factor, factorIndex, factorsSize)
+		v.processor_.PostprocessFactor(
+			factor,
+			factorIndex,
+			factorsSize,
+		)
 	}
 
-	// Visit the cardinality.
+	// Visit the cardinality rule.
 	var cardinality = bracket.GetCardinality()
 	v.processor_.PreprocessCardinality(cardinality)
 	v.visitCardinality(cardinality)
@@ -179,21 +193,25 @@ func (v *visitor_) visitCount(count ast.CountLike) {
 	for numbers.HasNext() {
 		numberIndex++
 		var number = numbers.GetNext()
-		v.processor_.ProcessNumber(number, numberIndex, numbersSize)
+		v.processor_.ProcessNumber(
+			number,
+			numberIndex,
+			numbersSize,
+		)
 	}
 }
 
 func (v *visitor_) visitDefinition(definition ast.DefinitionLike) {
 	// Visit the possible definition types.
 	switch actual := definition.GetAny().(type) {
-	case ast.MultilineLike:
-		v.processor_.PreprocessMultiline(actual)
-		v.visitMultiline(actual)
-		v.processor_.PostprocessMultiline(actual)
 	case ast.InlineLike:
 		v.processor_.PreprocessInline(actual)
 		v.visitInline(actual)
 		v.processor_.PostprocessInline(actual)
+	case ast.MultilineLike:
+		v.processor_.PreprocessMultiline(actual)
+		v.visitMultiline(actual)
+		v.processor_.PostprocessMultiline(actual)
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -230,7 +248,7 @@ func (v *visitor_) visitExpression(expression ast.ExpressionLike) {
 	var lowercase = expression.GetLowercase()
 	v.processor_.ProcessLowercase(lowercase)
 
-	// Visit the pattern.
+	// Visit the pattern rule.
 	var pattern = expression.GetPattern()
 	v.processor_.PreprocessPattern(pattern)
 	v.visitPattern(pattern)
@@ -249,7 +267,11 @@ func (v *visitor_) visitExpression(expression ast.ExpressionLike) {
 	for newlines.HasNext() {
 		newlineIndex++
 		var newline = newlines.GetNext()
-		v.processor_.ProcessNewline(newline, newlineIndex, newlinesSize)
+		v.processor_.ProcessNewline(
+			newline,
+			newlineIndex,
+			newlinesSize,
+		)
 	}
 }
 
@@ -280,21 +302,29 @@ func (v *visitor_) visitFilter(filter ast.FilterLike) {
 		v.processor_.ProcessExcluded(excluded)
 	}
 
-	// Visit each character.
+	// Visit each character rule.
 	var characterIndex uint
 	var characters = filter.GetCharacters().GetIterator()
 	var charactersSize = uint(characters.GetSize())
 	for characters.HasNext() {
 		characterIndex++
 		var character = characters.GetNext()
-		v.processor_.PreprocessCharacter(character, characterIndex, charactersSize)
+		v.processor_.PreprocessCharacter(
+			character,
+			characterIndex,
+			charactersSize,
+		)
 		v.visitCharacter(character)
-		v.processor_.PostprocessCharacter(character, characterIndex, charactersSize)
+		v.processor_.PostprocessCharacter(
+			character,
+			characterIndex,
+			charactersSize,
+		)
 	}
 }
 
 func (v *visitor_) visitGroup(group ast.GroupLike) {
-	// Visit the pattern.
+	// Visit the pattern rule.
 	var pattern = group.GetPattern()
 	v.processor_.PreprocessPattern(pattern)
 	v.visitPattern(pattern)
@@ -330,16 +360,24 @@ func (v *visitor_) visitIdentifier(identifier ast.IdentifierLike) {
 }
 
 func (v *visitor_) visitInline(inline ast.InlineLike) {
-	// Visit each term.
+	// Visit each term rule.
 	var termIndex uint
 	var terms = inline.GetTerms().GetIterator()
 	var termsSize = uint(terms.GetSize())
 	for terms.HasNext() {
 		termIndex++
 		var term = terms.GetNext()
-		v.processor_.PreprocessTerm(term, termIndex, termsSize)
+		v.processor_.PreprocessTerm(
+			term,
+			termIndex,
+			termsSize,
+		)
 		v.visitTerm(term)
-		v.processor_.PostprocessTerm(term, termIndex, termsSize)
+		v.processor_.PostprocessTerm(
+			term,
+			termIndex,
+			termsSize,
+		)
 	}
 
 	// Visit the optional note token.
@@ -354,7 +392,7 @@ func (v *visitor_) visitLine(line ast.LineLike) {
 	var newline = line.GetNewline()
 	v.processor_.ProcessNewline(newline, 1, 1)
 
-	// Visit the identifier.
+	// Visit the identifier rule.
 	var identifier = line.GetIdentifier()
 	v.processor_.PreprocessIdentifier(identifier)
 	v.visitIdentifier(identifier)
@@ -368,41 +406,57 @@ func (v *visitor_) visitLine(line ast.LineLike) {
 }
 
 func (v *visitor_) visitMultiline(multiline ast.MultilineLike) {
-	// Visit each line.
+	// Visit each line rule.
 	var lineIndex uint
 	var lines = multiline.GetLines().GetIterator()
 	var linesSize = uint(lines.GetSize())
 	for lines.HasNext() {
 		lineIndex++
 		var line = lines.GetNext()
-		v.processor_.PreprocessLine(line, lineIndex, linesSize)
+		v.processor_.PreprocessLine(
+			line,
+			lineIndex,
+			linesSize,
+		)
 		v.visitLine(line)
-		v.processor_.PostprocessLine(line, lineIndex, linesSize)
+		v.processor_.PostprocessLine(
+			line,
+			lineIndex,
+			linesSize,
+		)
 	}
 }
 
 func (v *visitor_) visitPattern(pattern ast.PatternLike) {
-	// Visit each alternative.
+	// Visit each alternative rule.
 	var alternativeIndex uint
 	var alternatives = pattern.GetAlternatives().GetIterator()
 	var alternativesSize = uint(alternatives.GetSize())
 	for alternatives.HasNext() {
 		alternativeIndex++
 		var alternative = alternatives.GetNext()
-		v.processor_.PreprocessAlternative(alternative, alternativeIndex, alternativesSize)
+		v.processor_.PreprocessAlternative(
+			alternative,
+			alternativeIndex,
+			alternativesSize,
+		)
 		v.visitAlternative(alternative)
-		v.processor_.PostprocessAlternative(alternative, alternativeIndex, alternativesSize)
+		v.processor_.PostprocessAlternative(
+			alternative,
+			alternativeIndex,
+			alternativesSize,
+		)
 	}
 }
 
 func (v *visitor_) visitReference(reference ast.ReferenceLike) {
-	// Visit the identifier.
+	// Visit the identifier rule.
 	var identifier = reference.GetIdentifier()
 	v.processor_.PreprocessIdentifier(identifier)
 	v.visitIdentifier(identifier)
 	v.processor_.PostprocessIdentifier(identifier)
 
-	// Visit the optional cardinality.
+	// Visit the optional cardinality rule.
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		v.processor_.PreprocessCardinality(cardinality)
@@ -412,13 +466,13 @@ func (v *visitor_) visitReference(reference ast.ReferenceLike) {
 }
 
 func (v *visitor_) visitRepetition(repetition ast.RepetitionLike) {
-	// Visit the element.
+	// Visit the element rule.
 	var element = repetition.GetElement()
 	v.processor_.PreprocessElement(element)
 	v.visitElement(element)
 	v.processor_.PostprocessElement(element)
 
-	// Visit the optional cardinality.
+	// Visit the optional cardinality rule.
 	var cardinality = repetition.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		v.processor_.PreprocessCardinality(cardinality)
@@ -438,7 +492,7 @@ func (v *visitor_) visitRule(rule ast.RuleLike) {
 	var uppercase = rule.GetUppercase()
 	v.processor_.ProcessUppercase(uppercase)
 
-	// Visit the definition.
+	// Visit the definition rule.
 	var definition = rule.GetDefinition()
 	v.processor_.PreprocessDefinition(definition)
 	v.visitDefinition(definition)
@@ -451,7 +505,11 @@ func (v *visitor_) visitRule(rule ast.RuleLike) {
 	for newlines.HasNext() {
 		newlineIndex++
 		var newline = newlines.GetNext()
-		v.processor_.ProcessNewline(newline, newlineIndex, newlinesSize)
+		v.processor_.ProcessNewline(
+			newline,
+			newlineIndex,
+			newlinesSize,
+		)
 	}
 }
 
@@ -463,45 +521,73 @@ func (v *visitor_) visitSpecific(specific ast.SpecificLike) {
 	for runics.HasNext() {
 		runicIndex++
 		var runic = runics.GetNext()
-		v.processor_.ProcessRunic(runic, runicIndex, runicsSize)
+		v.processor_.ProcessRunic(
+			runic,
+			runicIndex,
+			runicsSize,
+		)
 	}
 }
 
 func (v *visitor_) visitSyntax(syntax ast.SyntaxLike) {
-	// Visit each header.
+	// Visit each header rule.
 	var headerIndex uint
 	var headers = syntax.GetHeaders().GetIterator()
 	var headersSize = uint(headers.GetSize())
 	for headers.HasNext() {
 		headerIndex++
 		var header = headers.GetNext()
-		v.processor_.PreprocessHeader(header, headerIndex, headersSize)
+		v.processor_.PreprocessHeader(
+			header,
+			headerIndex,
+			headersSize,
+		)
 		v.visitHeader(header)
-		v.processor_.PostprocessHeader(header, headerIndex, headersSize)
+		v.processor_.PostprocessHeader(
+			header,
+			headerIndex,
+			headersSize,
+		)
 	}
 
-	// Visit each rule.
+	// Visit each rule rule.
 	var ruleIndex uint
 	var rules = syntax.GetRules().GetIterator()
 	var rulesSize = uint(rules.GetSize())
 	for rules.HasNext() {
 		ruleIndex++
 		var rule = rules.GetNext()
-		v.processor_.PreprocessRule(rule, ruleIndex, rulesSize)
+		v.processor_.PreprocessRule(
+			rule,
+			ruleIndex,
+			rulesSize,
+		)
 		v.visitRule(rule)
-		v.processor_.PostprocessRule(rule, ruleIndex, rulesSize)
+		v.processor_.PostprocessRule(
+			rule,
+			ruleIndex,
+			rulesSize,
+		)
 	}
 
-	// Visit each expression.
+	// Visit each expression rule.
 	var expressionIndex uint
 	var expressions = syntax.GetExpressions().GetIterator()
 	var expressionsSize = uint(expressions.GetSize())
 	for expressions.HasNext() {
 		expressionIndex++
 		var expression = expressions.GetNext()
-		v.processor_.PreprocessExpression(expression, expressionIndex, expressionsSize)
+		v.processor_.PreprocessExpression(
+			expression,
+			expressionIndex,
+			expressionsSize,
+		)
 		v.visitExpression(expression)
-		v.processor_.PostprocessExpression(expression, expressionIndex, expressionsSize)
+		v.processor_.PostprocessExpression(
+			expression,
+			expressionIndex,
+			expressionsSize,
+		)
 	}
 }
 
