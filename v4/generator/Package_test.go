@@ -277,10 +277,12 @@ func (v *formatter_) ProcessText(text string) {
 	v.appendString(text)
 }
 
-func (v *formatter_) PreprocessDocument(document ast.DocumentLike) {
+func (v *formatter_) PreprocessList(list ast.ListLike) {
+	// TBD - Add formatting of the delimited rule.
 }
 
-func (v *formatter_) PostprocessDocument(document ast.DocumentLike) {
+func (v *formatter_) PostprocessList(list ast.ListLike) {
+	// TBD - Add formatting of the delimited rule.
 }
 
 // Public
@@ -1498,6 +1500,7 @@ type AnalyzerLike interface {
 	IsIgnored(token string) bool
 	GetRules() abs.Sequential[string]
 	IsPlural(rule string) bool
+	IsDelimited(rule string) bool
 	GetReferences(rule string) abs.Sequential[ast.ReferenceLike]
 	GetIdentifiers(rule string) abs.Sequential[ast.IdentifierLike]
 	GetExpressions() abs.Sequential[abs.AssociationLike[string, string]]

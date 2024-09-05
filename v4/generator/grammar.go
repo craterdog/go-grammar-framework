@@ -324,6 +324,7 @@ type AnalyzerLike interface {
 	IsIgnored(token string) bool
 	GetRules() abs.Sequential[string]
 	IsPlural(rule string) bool
+	IsDelimited(rule string) bool
 	GetReferences(rule string) abs.Sequential[ast.ReferenceLike]
 	GetIdentifiers(rule string) abs.Sequential[ast.IdentifierLike]
 	GetExpressions() abs.Sequential[abs.AssociationLike[string, string]]

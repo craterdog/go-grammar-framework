@@ -95,8 +95,8 @@ func (v *processor_) generateRuleProcessors() string {
 	var iterator = v.analyzer_.GetRules().GetIterator()
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
-		var parameterName = makeLowerCase(ruleName)
 		var className = makeUpperCase(ruleName)
+		var parameterName = makeLowerCase(ruleName)
 		var isPlural = v.analyzer_.IsPlural(ruleName)
 		var parameters string
 		if isPlural {

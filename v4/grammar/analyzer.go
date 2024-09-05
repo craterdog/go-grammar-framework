@@ -16,6 +16,7 @@ import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	stc "strconv"
 	sts "strings"
 )
 
@@ -68,12 +69,14 @@ type analyzer_ struct {
 	depth_        uint
 	name_         string
 	notice_       string
+	literal_      string
 	regexp_       string
 	rules_        abs.SetLike[string]
 	tokens_       abs.SetLike[string]
 	plurals_      abs.SetLike[string]
+	delimited_    abs.SetLike[string]
 	ignored_      abs.SetLike[string]
-	literals_     abs.SetLike[string]
+	delimiters_   abs.SetLike[string]
 	identifiers_  abs.ListLike[ast.IdentifierLike]
 	references_   abs.ListLike[ast.ReferenceLike]
 	regexps_      abs.CatalogLike[string, string]
@@ -106,12 +109,16 @@ func (v *analyzer_) ProcessIntrinsic(intrinsic string) {
 }
 
 func (v *analyzer_) ProcessLiteral(literal string) {
-	literal = literal[1 : len(literal)-1] // Remove the double quotes.
-	literal = v.escapeText(literal)
-	if v.inDefinition_ {
-		v.literals_.AddValue(literal)
+	v.literal_ = literal
+	var delimiter, err = stc.Unquote(literal) // Remove the double quotes.
+	if err != nil {
+		panic(err)
 	}
-	v.regexp_ += literal
+	delimiter = v.escapeText(delimiter)
+	if v.inDefinition_ {
+		v.delimiters_.AddValue(delimiter)
+	}
+	v.regexp_ += delimiter
 }
 
 func (v *analyzer_) ProcessLowercase(lowercase string) {
@@ -272,6 +279,7 @@ func (v *analyzer_) PreprocessRule(
 	index uint,
 	size uint,
 ) {
+	v.literal_ = ""
 	var identifier = rule.GetUppercase()
 	v.rules_.AddValue(identifier)
 	var definition = rule.GetDefinition()
@@ -285,6 +293,17 @@ func (v *analyzer_) PreprocessRule(
 	}
 }
 
+func (v *analyzer_) PostprocessRule(
+	rule ast.RuleLike,
+	index uint,
+	size uint,
+) {
+	if col.IsDefined(v.literal_) {
+		var ruleName = rule.GetUppercase()
+		v.delimited_.AddValue(ruleName)
+	}
+}
+
 func (v *analyzer_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.isGreedy_ = true // The default is "greedy" scanning.
 	v.name_ = v.extractName(syntax)
@@ -292,8 +311,9 @@ func (v *analyzer_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.rules_ = col.Set[string]()
 	v.tokens_ = col.Set[string]([]string{"delimiter"})
 	v.plurals_ = col.Set[string]()
+	v.delimited_ = col.Set[string]()
 	v.ignored_ = col.Set[string]([]string{"newline", "space"})
-	v.literals_ = col.Set[string]()
+	v.delimiters_ = col.Set[string]()
 	var implicit = map[string]string{"space": `"(?:[ \\t]+)"`}
 	v.regexps_ = col.Catalog[string, string](implicit)
 	v.inlines_ = col.Catalog[string, abs.ListLike[ast.ReferenceLike]]()
@@ -303,16 +323,16 @@ func (v *analyzer_) PreprocessSyntax(syntax ast.SyntaxLike) {
 func (v *analyzer_) PostprocessSyntax(syntax ast.SyntaxLike) {
 	v.ignored_ = v.ignored_.GetClass().Sans(v.ignored_, v.tokens_)
 	v.tokens_.AddValues(v.ignored_)
-	var literals = `"(?:`
-	if !v.literals_.IsEmpty() {
-		var iterator = v.literals_.GetIterator()
-		literals += iterator.GetNext()
+	var delimiters = `"(?:`
+	if !v.delimiters_.IsEmpty() {
+		var iterator = v.delimiters_.GetIterator()
+		delimiters += iterator.GetNext()
 		for iterator.HasNext() {
-			literals += "|" + iterator.GetNext()
+			delimiters += "|" + iterator.GetNext()
 		}
 	}
-	literals += `)"`
-	v.regexps_.SetValue("delimiter", literals)
+	delimiters += `)"`
+	v.regexps_.SetValue("delimiter", delimiters)
 	v.regexps_.SortValues()
 }
 
@@ -348,6 +368,10 @@ func (v *analyzer_) GetRules() abs.Sequential[string] {
 
 func (v *analyzer_) IsPlural(rule string) bool {
 	return v.plurals_.ContainsValue(rule)
+}
+
+func (v *analyzer_) IsDelimited(rule string) bool {
+	return v.delimited_.ContainsValue(rule)
 }
 
 func (v *analyzer_) GetReferences(rule string) abs.Sequential[ast.ReferenceLike] {
@@ -410,8 +434,7 @@ func (v *analyzer_) escapeText(text string) string {
 		switch character {
 		case '"':
 			escaped += `\`
-		case '.', '|', '^', '$', '+', '*', '?',
-			'(', ')', '[', ']', '{', '}':
+		case '.', '|', '^', '$', '+', '*', '?', '(', ')', '[', ']', '{', '}':
 			escaped += `\\`
 		case '\\':
 			escaped += `\\\`

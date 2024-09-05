@@ -79,8 +79,10 @@ func (v *formatter_) GenerateFormatterClass(
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
-	var tokenProcessors = v.generateTokenProcessors()
-	implementation = replaceAll(implementation, "tokenProcessors", tokenProcessors)
+	var tokenFormatters = v.generateTokenFormatters()
+	implementation = replaceAll(implementation, "tokenFormatters", tokenFormatters)
+	var ruleFormatters = v.generateRuleFormatters()
+	implementation = replaceAll(implementation, "ruleFormatters", ruleFormatters)
 	var name = v.analyzer_.GetName()
 	implementation = replaceAll(implementation, "name", name)
 	return implementation
@@ -88,8 +90,36 @@ func (v *formatter_) GenerateFormatterClass(
 
 // Private
 
-func (v *formatter_) generateTokenProcessors() string {
-	var tokenProcessors string
+func (v *formatter_) generateRuleFormatters() string {
+	var ruleFormatters string
+	var iterator = v.analyzer_.GetRules().GetIterator()
+	for iterator.HasNext() {
+		var ruleName = iterator.GetNext()
+		if !v.analyzer_.IsDelimited(ruleName) {
+			continue
+		}
+		var className = makeUpperCase(ruleName)
+		var parameterName = makeLowerCase(ruleName)
+		var isPlural = v.analyzer_.IsPlural(ruleName)
+		var parameters string
+		if isPlural {
+			parameters += "\n\t"
+		}
+		parameters += parameterName + " ast." + className + "Like"
+		if isPlural {
+			parameters += ",\n\tindex uint"
+			parameters += ",\n\tsize uint,\n"
+		}
+		var ruleFormatter = formatRuleTemplate_
+		ruleFormatter = replaceAll(ruleFormatter, "ruleName", ruleName)
+		ruleFormatter = replaceAll(ruleFormatter, "parameters", parameters)
+		ruleFormatters += ruleFormatter
+	}
+	return ruleFormatters
+}
+
+func (v *formatter_) generateTokenFormatters() string {
+	var tokenFormatters string
 	var iterator = v.analyzer_.GetTokens().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
@@ -110,10 +140,20 @@ func (v *formatter_) generateTokenProcessors() string {
 		var tokenProcessor = formatTokenTemplate_
 		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
 		tokenProcessor = replaceAll(tokenProcessor, "parameters", parameters)
-		tokenProcessors += tokenProcessor
+		tokenFormatters += tokenProcessor
 	}
-	return tokenProcessors
+	return tokenFormatters
 }
+
+const formatRuleTemplate_ = `
+func (v *formatter_) Preprocess<RuleName>(<parameters>) {
+	// TBD - Add formatting of the delimited rule.
+}
+
+func (v *formatter_) Postprocess<RuleName>(<parameters>) {
+	// TBD - Add formatting of the delimited rule.
+}
+`
 
 const formatTokenTemplate_ = `
 func (v *formatter_) Process<TokenName>(<parameters>) {
@@ -196,13 +236,7 @@ func (v *formatter_) GetDepth() uint {
 }
 
 // Methodical
-<TokenProcessors>
-func (v *formatter_) Preprocess<Name>(<name> ast.<Name>Like) {
-}
-
-func (v *formatter_) Postprocess<Name>(<name> ast.<Name>Like) {
-}
-
+<TokenFormatters><RuleFormatters>
 // Public
 
 func (v *formatter_) Format<Name>(<name> ast.<Name>Like) string {
