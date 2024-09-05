@@ -199,7 +199,10 @@ func (v *parser_) ParseSource(source string) ast.<Name>Like {
 
 // Private
 
-func (v *parser_) parseToken(expectedType TokenType, expectedValue string) (
+func (v *parser_) parseToken(
+	expectedType TokenType,
+	expectedValue string,
+) (
 	value string,
 	token TokenLike,
 	ok bool,
@@ -257,7 +260,10 @@ func (v *parser_) formatError(token TokenLike) string {
 	return message
 }
 
-func (v *parser_) generateSyntax(expected string, names ...string) string {
+func (v *parser_) generateSyntax(
+	expected string,
+	names ...string,
+) string {
 	var message = "Was expecting '" + expected + "' from:\n"
 	for _, name := range names {
 		message += fmt.Sprintf(
