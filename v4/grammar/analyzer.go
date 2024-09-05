@@ -63,9 +63,11 @@ type analyzer_ struct {
 	// Define the instance attributes.
 	class_        AnalyzerClassLike
 	visitor_      VisitorLike
-	inDefinition_ bool
 	isGreedy_     bool
+	inDefinition_ bool
 	depth_        uint
+	name_         string
+	notice_       string
 	regexp_       string
 	rules_        abs.SetLike[string]
 	tokens_       abs.SetLike[string]
@@ -285,6 +287,8 @@ func (v *analyzer_) PreprocessRule(
 
 func (v *analyzer_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.isGreedy_ = true // The default is "greedy" scanning.
+	v.name_ = v.extractName(syntax)
+	v.notice_ = v.extractNotice(syntax)
 	v.rules_ = col.Set[string]()
 	v.tokens_ = col.Set[string]([]string{"delimiter"})
 	v.plurals_ = col.Set[string]()
@@ -316,6 +320,14 @@ func (v *analyzer_) PostprocessSyntax(syntax ast.SyntaxLike) {
 
 func (v *analyzer_) AnalyzeSyntax(syntax ast.SyntaxLike) {
 	v.visitor_.VisitSyntax(syntax)
+}
+
+func (v *analyzer_) GetName() string {
+	return v.name_
+}
+
+func (v *analyzer_) GetNotice() string {
+	return v.notice_
 }
 
 func (v *analyzer_) GetTokens() abs.Sequential[string] {
@@ -407,6 +419,27 @@ func (v *analyzer_) escapeText(text string) string {
 		escaped += string(character)
 	}
 	return escaped
+}
+
+func (v *analyzer_) extractNotice(syntax ast.SyntaxLike) string {
+	var header = syntax.GetHeaders().GetIterator().GetNext()
+	var comment = header.GetComment()
+
+	// Strip off the syntax style comment delimiters.
+	comment = comment[2 : len(comment)-3]
+
+	// Add in the go style comment delimiters.
+	var notice = "/*" + comment + "*/"
+
+	return notice
+}
+
+func (v *analyzer_) extractName(syntax ast.SyntaxLike) string {
+	var rules = syntax.GetRules().GetIterator()
+	// The first rule name is the name of the syntax.
+	var rule = rules.GetNext()
+	var name = rule.GetUppercase()
+	return name
 }
 
 func (v *analyzer_) pluralizeReference(

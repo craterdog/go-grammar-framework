@@ -77,28 +77,18 @@ func (v *processor_) GenerateProcessorClass(
 	v.analyzer_.AnalyzeSyntax(syntax)
 	implementation = processorTemplate_
 	implementation = replaceAll(implementation, "module", module)
-	var notice = v.generateNotice(syntax)
+	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
 	var tokenProcessors = v.generateTokenProcessors()
 	implementation = replaceAll(implementation, "tokenProcessors", tokenProcessors)
 	var ruleProcessors = v.generateRuleProcessors()
 	implementation = replaceAll(implementation, "ruleProcessors", ruleProcessors)
-	var name = v.generateSyntaxName(syntax)
+	var name = v.analyzer_.GetName()
 	implementation = replaceAll(implementation, "name", name)
 	return implementation
 }
 
 // Private
-
-func (v *processor_) generateNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
-
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
-}
 
 func (v *processor_) generateRuleProcessors() string {
 	var ruleProcessors string
@@ -117,18 +107,12 @@ func (v *processor_) generateRuleProcessors() string {
 			parameters += ",\n\tindex uint"
 			parameters += ",\n\tsize uint,\n"
 		}
-		var ruleProcessor = ruleProcessorTemplate_
+		var ruleProcessor = processRuleTemplate_
 		ruleProcessor = replaceAll(ruleProcessor, "ruleName", ruleName)
 		ruleProcessor = replaceAll(ruleProcessor, "parameters", parameters)
 		ruleProcessors += ruleProcessor
 	}
 	return ruleProcessors
-}
-
-func (v *processor_) generateSyntaxName(syntax ast.SyntaxLike) string {
-	var rule = syntax.GetRules().GetIterator().GetNext()
-	var name = rule.GetUppercase()
-	return name
 }
 
 func (v *processor_) generateTokenProcessors() string {
@@ -150,7 +134,7 @@ func (v *processor_) generateTokenProcessors() string {
 			parameters += ",\n\tindex uint"
 			parameters += ",\n\tsize uint,\n"
 		}
-		var tokenProcessor = tokenProcessorTemplate_
+		var tokenProcessor = processTokenTemplate_
 		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
 		tokenProcessor = replaceAll(tokenProcessor, "parameters", parameters)
 		tokenProcessors += tokenProcessor
@@ -158,12 +142,7 @@ func (v *processor_) generateTokenProcessors() string {
 	return tokenProcessors
 }
 
-const tokenProcessorTemplate_ = `
-func (v *processor_) Process<TokenName>(<parameters>) {
-}
-`
-
-const ruleProcessorTemplate_ = `
+const processRuleTemplate_ = `
 func (v *processor_) Preprocess<RuleName>(<parameters>) {
 }
 
@@ -171,7 +150,12 @@ func (v *processor_) Postprocess<RuleName>(<parameters>) {
 }
 `
 
-const processorTemplate_ = `/*<Notice>*/
+const processTokenTemplate_ = `
+func (v *processor_) Process<TokenName>(<parameters>) {
+}
+`
+
+const processorTemplate_ = `<Notice>
 
 package grammar
 

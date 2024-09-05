@@ -76,7 +76,7 @@ func (v *scanner_) GenerateScannerClass(
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
 	implementation = scannerTemplate_
-	var notice = v.generateNotice(syntax)
+	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
 	var tokenNames = v.generateTokenNames()
 	implementation = replaceAll(implementation, "tokenNames", tokenNames)
@@ -127,16 +127,6 @@ func (v *scanner_) generateIgnoredCases() string {
 	return ignoreCases
 }
 
-func (v *scanner_) generateNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
-
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
-}
-
 func (v *scanner_) generateTokenMatchers() string {
 	var tokenMatchers = "// Define pattern matchers for each type of token."
 	var iterator = v.analyzer_.GetTokens().GetIterator()
@@ -160,7 +150,7 @@ func (v *scanner_) generateTokenNames() string {
 	return tokenNames
 }
 
-const scannerTemplate_ = `/*<Notice>*/
+const scannerTemplate_ = `<Notice>
 
 package grammar
 

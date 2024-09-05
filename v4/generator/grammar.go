@@ -79,9 +79,9 @@ func (v *grammar_) GenerateGrammarModel(
 	implementation = grammarTemplate_
 	implementation = replaceAll(implementation, "module", module)
 	implementation = replaceAll(implementation, "wiki", wiki)
-	var notice = v.generateNotice(syntax)
+	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
-	var name = v.generateSyntaxName(syntax)
+	var name = v.analyzer_.GetName()
 	implementation = replaceAll(implementation, "name", name)
 	implementation = replaceAll(implementation, "parameter", name)
 	var tokenTypes = v.generateTokenTypes()
@@ -94,16 +94,6 @@ func (v *grammar_) GenerateGrammarModel(
 }
 
 // Private
-
-func (v *grammar_) generateNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
-
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
-}
 
 func (v *grammar_) generateProcessRules() string {
 	var processRules string
@@ -165,13 +155,7 @@ func (v *grammar_) generateTokenTypes() string {
 	return tokenTypes
 }
 
-func (v *grammar_) generateSyntaxName(syntax ast.SyntaxLike) string {
-	var rule = syntax.GetRules().GetIterator().GetNext()
-	var name = rule.GetUppercase()
-	return name
-}
-
-const grammarTemplate_ = `/*<Notice>*/
+const grammarTemplate_ = `<Notice>
 
 /*
 Package "grammar" provides the following grammar classes that operate on the
@@ -333,6 +317,8 @@ type AnalyzerLike interface {
 
 	// Methods
 	AnalyzeSyntax(syntax ast.SyntaxLike)
+	GetName() string
+	GetNotice() string
 	GetTokens() abs.Sequential[string]
 	GetIgnored() abs.Sequential[string]
 	IsIgnored(token string) bool

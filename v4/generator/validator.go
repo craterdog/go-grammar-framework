@@ -77,26 +77,16 @@ func (v *validator_) GenerateValidatorClass(
 	v.analyzer_.AnalyzeSyntax(syntax)
 	implementation = validatorTemplate_
 	implementation = replaceAll(implementation, "module", module)
-	var notice = v.generateNotice(syntax)
+	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
 	var processTokens = v.generateProcessTokens()
 	implementation = replaceAll(implementation, "processTokens", processTokens)
-	var name = v.generateSyntaxName(syntax)
+	var name = v.analyzer_.GetName()
 	implementation = replaceAll(implementation, "name", name)
 	return implementation
 }
 
 // Private
-
-func (v *validator_) generateNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
-
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
-}
 
 func (v *validator_) generateProcessTokens() string {
 	var processTokens string
@@ -118,7 +108,7 @@ func (v *validator_) generateProcessTokens() string {
 			parameters += ",\n\tindex uint"
 			parameters += ",\n\tsize uint,\n"
 		}
-		var processToken = processTokenTemplate_
+		var processToken = validateTokenTemplate_
 		processToken = replaceAll(processToken, "tokenName", tokenName)
 		processToken = replaceAll(processToken, "tokenType", tokenType)
 		processToken = replaceAll(processToken, "parameters", parameters)
@@ -127,19 +117,13 @@ func (v *validator_) generateProcessTokens() string {
 	return processTokens
 }
 
-func (v *validator_) generateSyntaxName(syntax ast.SyntaxLike) string {
-	var rule = syntax.GetRules().GetIterator().GetNext()
-	var name = rule.GetUppercase()
-	return name
-}
-
-const processTokenTemplate_ = `
+const validateTokenTemplate_ = `
 func (v *validator_) Process<TokenName>(<parameters>) {
 	v.ValidateToken(<tokenName>, <TokenType>)
 }
 `
 
-const validatorTemplate_ = `/*<Notice>*/
+const validatorTemplate_ = `<Notice>
 
 package grammar
 

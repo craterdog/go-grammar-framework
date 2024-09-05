@@ -16,6 +16,7 @@ package generator
 
 import (
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
 
 // Reference
@@ -43,7 +44,8 @@ type tokenClass_ struct {
 func (c *tokenClass_) Make() TokenLike {
 	return &token_{
 		// Initialize the instance attributes.
-		class_: c,
+		class_:    c,
+		analyzer_: gra.Analyzer().Make(),
 	}
 }
 
@@ -53,7 +55,8 @@ func (c *tokenClass_) Make() TokenLike {
 
 type token_ struct {
 	// Define the instance attributes.
-	class_ TokenClassLike
+	class_    TokenClassLike
+	analyzer_ gra.AnalyzerLike
 }
 
 // Attributes
@@ -70,24 +73,15 @@ func (v *token_) GenerateTokenClass(
 ) (
 	implementation string,
 ) {
-	var notice = v.generateNotice(syntax)
+	v.analyzer_.AnalyzeSyntax(syntax)
+	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(tokenTemplate_, "notice", notice)
 	return implementation
 }
 
 // Private
 
-func (v *token_) generateNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
-
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
-}
-
-const tokenTemplate_ = `/*<Notice>*/
+const tokenTemplate_ = `<Notice>
 
 package grammar
 

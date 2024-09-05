@@ -45,13 +45,12 @@ type validatorClass_ struct {
 // Constructors
 
 func (c *validatorClass_) Make() ValidatorLike {
-	var processor = Processor().Make()
 	var validator = &validator_{
 		// Initialize the instance attributes.
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: processor,
+		Methodical: Processor().Make(),
 	}
 	validator.visitor_ = Visitor().Make(validator)
 	return validator

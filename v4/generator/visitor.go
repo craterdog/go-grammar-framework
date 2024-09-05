@@ -74,13 +74,13 @@ func (v *visitor_) GenerateVisitorClass(
 	module string,
 	syntax ast.SyntaxLike,
 ) string {
-	var syntaxName = v.generateSyntaxName(syntax)
-	v.result_ = visitorTemplate_
-	v.result_ = replaceAll(v.result_, "module", module)
-	var notice = v.generateNotice(syntax)
-	v.result_ = replaceAll(v.result_, "notice", notice)
-	v.result_ = replaceAll(v.result_, "syntaxName", syntaxName)
 	v.analyzer_.AnalyzeSyntax(syntax)
+	v.result_ = visitorTemplate_
+	var notice = v.analyzer_.GetNotice()
+	v.result_ = replaceAll(v.result_, "notice", notice)
+	v.result_ = replaceAll(v.result_, "module", module)
+	var syntaxName = v.analyzer_.GetName()
+	v.result_ = replaceAll(v.result_, "syntaxName", syntaxName)
 	var methods = v.generateMethods()
 	v.result_ = replaceAll(v.result_, "methods", methods)
 	return v.result_
@@ -95,7 +95,7 @@ func (v *visitor_) generateInlineMethod(name string) string {
 		var reference = references.GetNext()
 		implementation += v.generateInlineReference(reference)
 	}
-	var method = methodTemplate_
+	var method = visitRuleMethodTemplate_
 	method = replaceAll(method, "implementation", implementation)
 	return method
 }
@@ -192,7 +192,7 @@ func (v *visitor_) generateMultilineMethod(name string) string {
 		tokenCases = replaceAll(visitMatchesTemplate_, "tokenCases", tokenCases)
 	}
 	implementation = replaceAll(implementation, "tokenCases", tokenCases)
-	return replaceAll(methodTemplate_, "implementation", implementation)
+	return replaceAll(visitRuleMethodTemplate_, "implementation", implementation)
 }
 
 func (v *visitor_) generateMultilineRule(ruleName string) string {
@@ -209,16 +209,6 @@ func (v *visitor_) generateMultilineToken(tokenName string) string {
 		template = visitSingularTokenCaseTemplate_
 	}
 	return replaceAll(template, "tokenName", tokenName)
-}
-
-func (v *visitor_) generateNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
-
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
 }
 
 func (v *visitor_) generatePlurality(
@@ -247,16 +237,6 @@ func (v *visitor_) generatePlurality(
 	return plurality
 }
 
-func (v *visitor_) generateSyntaxName(syntax ast.SyntaxLike) string {
-	var rule = syntax.GetRules().GetIterator().GetNext()
-	var name = rule.GetUppercase()
-	return name
-}
-
-const methodTemplate_ = `
-func (v *visitor_) visit<Rule>(<rule> ast.<Rule>Like) {<Implementation>}
-`
-
 const visitAnyTemplate_ = `
 	// Visit the possible <rule> types.
 	switch actual := <rule>.GetAny().(type) {<RuleCases><TokenCases>
@@ -273,58 +253,6 @@ const visitMatchesTemplate_ = `
 		}
 `
 
-const visitTokenTemplate_ = `
-	// Visit the <tokenName> token.
-	var <tokenName> = <rule>.Get<TokenName>()
-	v.processor_.Process<TokenName>(<tokenName>)
-`
-
-const visitOptionalTokenTemplate_ = `
-	// Visit the optional <tokenName> token.
-	var <tokenName> = <rule>.GetOptional<TokenName>()
-	if col.IsDefined(<tokenName>) {
-		v.processor_.Process<TokenName>(<tokenName>)
-	}
-`
-
-const visitSingularTokenTemplate_ = `
-	// Visit the <tokenName> token.
-	var <tokenName> = <rule>.Get<TokenName>()
-	v.processor_.Process<TokenName>(<tokenName>, 1, 1)
-`
-
-const visitRepeatedTokenTemplate_ = `
-	// Visit each <tokenName> token.
-	var <tokenName>Index uint
-	var <pluralName> = <rule>.Get<PluralName>().GetIterator()
-	var <pluralName>Size = uint(<pluralName>.GetSize())
-	for <pluralName>.HasNext() {
-		<tokenName>Index++
-		var <tokenName> = <pluralName>.GetNext()
-		v.processor_.Process<TokenName>(
-			<tokenName>,
-			<tokenName>Index,
-			<pluralName>Size,
-		)
-	}
-`
-
-const visitTokenCaseTemplate_ = `
-		case Scanner().MatchesType(actual, <TokenName>Token):
-			v.processor_.Process<TokenName>(actual)`
-
-const visitSingularTokenCaseTemplate_ = `
-		case Scanner().MatchesType(actual, <TokenName>Token):
-			v.processor_.Process<TokenName>(actual, 1, 1)`
-
-const visitRuleTemplate_ = `
-	// Visit the <ruleName> rule.
-	var <ruleName> = <rule>.Get<RuleName>()
-	v.processor_.Preprocess<RuleName>(<ruleName>)
-	v.visit<RuleName>(<ruleName>)
-	v.processor_.Postprocess<RuleName>(<ruleName>)
-`
-
 const visitOptionalRuleTemplate_ = `
 	// Visit the optional <ruleName> rule.
 	var <ruleName> = <rule>.GetOptional<RuleName>()
@@ -335,12 +263,12 @@ const visitOptionalRuleTemplate_ = `
 	}
 `
 
-const visitSingularRuleTemplate_ = `
-	// Visit the <ruleName> rule.
-	var <ruleName> = <rule>.Get<RuleName>()
-	v.processor_.Preprocess<RuleName>(<ruleName>, 1, 1)
-	v.visit<RuleName>(<ruleName>)
-	v.processor_.Postprocess<RuleName>(<ruleName>, 1, 1)
+const visitOptionalTokenTemplate_ = `
+	// Visit the optional <tokenName> token.
+	var <tokenName> = <rule>.GetOptional<TokenName>()
+	if col.IsDefined(<tokenName>) {
+		v.processor_.Process<TokenName>(<tokenName>)
+	}
 `
 
 const visitRepeatedRuleTemplate_ = `
@@ -365,11 +293,39 @@ const visitRepeatedRuleTemplate_ = `
 	}
 `
 
+const visitRepeatedTokenTemplate_ = `
+	// Visit each <tokenName> token.
+	var <tokenName>Index uint
+	var <pluralName> = <rule>.Get<PluralName>().GetIterator()
+	var <pluralName>Size = uint(<pluralName>.GetSize())
+	for <pluralName>.HasNext() {
+		<tokenName>Index++
+		var <tokenName> = <pluralName>.GetNext()
+		v.processor_.Process<TokenName>(
+			<tokenName>,
+			<tokenName>Index,
+			<pluralName>Size,
+		)
+	}
+`
+
 const visitRuleCaseTemplate_ = `
 	case ast.<RuleName>Like:
 		v.processor_.Preprocess<RuleName>(actual)
 		v.visit<RuleName>(actual)
 		v.processor_.Postprocess<RuleName>(actual)`
+
+const visitRuleMethodTemplate_ = `
+func (v *visitor_) visit<Rule>(<rule> ast.<Rule>Like) {<Implementation>}
+`
+
+const visitRuleTemplate_ = `
+	// Visit the <ruleName> rule.
+	var <ruleName> = <rule>.Get<RuleName>()
+	v.processor_.Preprocess<RuleName>(<ruleName>)
+	v.visit<RuleName>(<ruleName>)
+	v.processor_.Postprocess<RuleName>(<ruleName>)
+`
 
 const visitSingularRuleCaseTemplate_ = `
 	case ast.<RuleName>Like:
@@ -377,7 +333,35 @@ const visitSingularRuleCaseTemplate_ = `
 		v.visit<RuleName>(actual)
 		v.processor_.Postprocess<RuleName>(actual, 1, 1)`
 
-const visitorTemplate_ = `/*<Notice>*/
+const visitSingularRuleTemplate_ = `
+	// Visit the <ruleName> rule.
+	var <ruleName> = <rule>.Get<RuleName>()
+	v.processor_.Preprocess<RuleName>(<ruleName>, 1, 1)
+	v.visit<RuleName>(<ruleName>)
+	v.processor_.Postprocess<RuleName>(<ruleName>, 1, 1)
+`
+
+const visitSingularTokenCaseTemplate_ = `
+		case Scanner().MatchesType(actual, <TokenName>Token):
+			v.processor_.Process<TokenName>(actual, 1, 1)`
+
+const visitSingularTokenTemplate_ = `
+	// Visit the <tokenName> token.
+	var <tokenName> = <rule>.Get<TokenName>()
+	v.processor_.Process<TokenName>(<tokenName>, 1, 1)
+`
+
+const visitTokenCaseTemplate_ = `
+		case Scanner().MatchesType(actual, <TokenName>Token):
+			v.processor_.Process<TokenName>(actual)`
+
+const visitTokenTemplate_ = `
+	// Visit the <tokenName> token.
+	var <tokenName> = <rule>.Get<TokenName>()
+	v.processor_.Process<TokenName>(<tokenName>)
+`
+
+const visitorTemplate_ = `<Notice>
 
 package grammar
 

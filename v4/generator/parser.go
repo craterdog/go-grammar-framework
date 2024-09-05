@@ -77,9 +77,9 @@ func (v *parser_) GenerateParserClass(
 	v.analyzer_.AnalyzeSyntax(syntax)
 	implementation = parserTemplate_
 	implementation = replaceAll(implementation, "module", module)
-	var notice = v.generateNotice(syntax)
+	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
-	var name = v.generateSyntaxName(syntax)
+	var name = v.analyzer_.GetName()
 	implementation = replaceAll(implementation, "name", name)
 	var parseRules = v.generateParseRules()
 	implementation = replaceAll(implementation, "parseRules", parseRules)
@@ -88,33 +88,17 @@ func (v *parser_) GenerateParserClass(
 
 // Private
 
-func (v *parser_) generateNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
-
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
-}
-
 func (v *parser_) generateParseRules() string {
 	var parseRules string
 	var iterator = v.analyzer_.GetRules().GetIterator()
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
-		parseRules += replaceAll(parseTemplate_, "ruleName", ruleName)
+		parseRules += replaceAll(parseRuleTemplate_, "ruleName", ruleName)
 	}
 	return parseRules
 }
 
-func (v *parser_) generateSyntaxName(syntax ast.SyntaxLike) string {
-	var rule = syntax.GetRules().GetIterator().GetNext()
-	var name = rule.GetUppercase()
-	return name
-}
-
-const parseTemplate_ = `
+const parseRuleTemplate_ = `
 func (v *parser_) parse<RuleName>() (
 	<ruleName> ast.<RuleName>Like,
 	token TokenLike,
@@ -124,7 +108,7 @@ func (v *parser_) parse<RuleName>() (
 }
 `
 
-const parserTemplate_ = `/*<Notice>*/
+const parserTemplate_ = `<Notice>
 
 package grammar
 

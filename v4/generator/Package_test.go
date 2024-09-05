@@ -1485,6 +1485,8 @@ type AnalyzerLike interface {
 
 	// Methods
 	AnalyzeSyntax(syntax ast.SyntaxLike)
+	GetName() string
+	GetNotice() string
 	GetTokens() abs.Sequential[string]
 	GetIgnored() abs.Sequential[string]
 	IsIgnored(token string) bool

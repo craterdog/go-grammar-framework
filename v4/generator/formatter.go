@@ -77,32 +77,16 @@ func (v *formatter_) GenerateFormatterClass(
 	v.analyzer_.AnalyzeSyntax(syntax)
 	implementation = formatterTemplate_
 	implementation = replaceAll(implementation, "module", module)
-	var notice = v.generateNotice(syntax)
+	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
 	var tokenProcessors = v.generateTokenProcessors()
 	implementation = replaceAll(implementation, "tokenProcessors", tokenProcessors)
-	var name = v.generateSyntaxName(syntax)
+	var name = v.analyzer_.GetName()
 	implementation = replaceAll(implementation, "name", name)
 	return implementation
 }
 
 // Private
-
-func (v *formatter_) generateNotice(syntax ast.SyntaxLike) string {
-	var header = syntax.GetHeaders().GetIterator().GetNext()
-	var comment = header.GetComment()
-
-	// Strip off the syntax style comment delimiters.
-	var notice = comment[2 : len(comment)-3]
-
-	return notice
-}
-
-func (v *formatter_) generateSyntaxName(syntax ast.SyntaxLike) string {
-	var rule = syntax.GetRules().GetIterator().GetNext()
-	var name = rule.GetUppercase()
-	return name
-}
 
 func (v *formatter_) generateTokenProcessors() string {
 	var tokenProcessors string
@@ -123,7 +107,7 @@ func (v *formatter_) generateTokenProcessors() string {
 			parameters += ",\n\tindex uint"
 			parameters += ",\n\tsize uint,\n"
 		}
-		var tokenProcessor = formatTemplate_
+		var tokenProcessor = formatTokenTemplate_
 		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
 		tokenProcessor = replaceAll(tokenProcessor, "parameters", parameters)
 		tokenProcessors += tokenProcessor
@@ -131,13 +115,13 @@ func (v *formatter_) generateTokenProcessors() string {
 	return tokenProcessors
 }
 
-const formatTemplate_ = `
+const formatTokenTemplate_ = `
 func (v *formatter_) Process<TokenName>(<parameters>) {
 	v.appendString(<tokenName>)
 }
 `
 
-const formatterTemplate_ = `/*<Notice>*/
+const formatterTemplate_ = `<Notice>
 
 package grammar
 
