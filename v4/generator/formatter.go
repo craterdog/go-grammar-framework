@@ -95,24 +95,14 @@ func (v *formatter_) generateRuleFormatters() string {
 	var iterator = v.analyzer_.GetRules().GetIterator()
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
-		if !v.analyzer_.IsDelimited(ruleName) {
-			continue
-		}
-		var className = makeUpperCase(ruleName)
-		var parameterName = makeLowerCase(ruleName)
 		var isPlural = v.analyzer_.IsPlural(ruleName)
-		var parameters string
+		var parameters = formatRuleParameterTemplate_
 		if isPlural {
-			parameters += "\n\t"
-		}
-		parameters += parameterName + " ast." + className + "Like"
-		if isPlural {
-			parameters += ",\n\tindex uint"
-			parameters += ",\n\tsize uint,\n"
+			parameters = formatRuleParametersTemplate_
 		}
 		var ruleFormatter = formatRuleTemplate_
-		ruleFormatter = replaceAll(ruleFormatter, "ruleName", ruleName)
 		ruleFormatter = replaceAll(ruleFormatter, "parameters", parameters)
+		ruleFormatter = replaceAll(ruleFormatter, "ruleName", ruleName)
 		ruleFormatters += ruleFormatter
 	}
 	return ruleFormatters
@@ -126,21 +116,15 @@ func (v *formatter_) generateTokenFormatters() string {
 		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
 			continue
 		}
-		var parameterName = makeLowerCase(tokenName)
 		var isPlural = v.analyzer_.IsPlural(tokenName)
-		var parameters string
+		var parameters = formatTokenParameterTemplate_
 		if isPlural {
-			parameters += "\n\t"
+			parameters = formatTokenParametersTemplate_
 		}
-		parameters += parameterName + " string"
-		if isPlural {
-			parameters += ",\n\tindex uint"
-			parameters += ",\n\tsize uint,\n"
-		}
-		var tokenProcessor = formatTokenTemplate_
-		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
-		tokenProcessor = replaceAll(tokenProcessor, "parameters", parameters)
-		tokenFormatters += tokenProcessor
+		var tokenFormatter = formatTokenTemplate_
+		tokenFormatter = replaceAll(tokenFormatter, "parameters", parameters)
+		tokenFormatter = replaceAll(tokenFormatter, "tokenName", tokenName)
+		tokenFormatters += tokenFormatter
 	}
 	return tokenFormatters
 }
@@ -155,10 +139,26 @@ func (v *formatter_) Postprocess<RuleName>(<parameters>) {
 }
 `
 
+const formatRuleParameterTemplate_ = `<ruleName_> ast.<RuleName>Like`
+
+const formatRuleParametersTemplate_ = `
+	<ruleName_> ast.<RuleName>Like,
+	index uint,
+	size uint,
+`
+
 const formatTokenTemplate_ = `
 func (v *formatter_) Process<TokenName>(<parameters>) {
-	v.appendString(<tokenName>)
+	v.appendString(<tokenName_>)
 }
+`
+
+const formatTokenParameterTemplate_ = `<tokenName_> string`
+
+const formatTokenParametersTemplate_ = `
+	<tokenName_> string,
+	index uint,
+	size uint,
 `
 
 const formatterTemplate_ = `<Notice>

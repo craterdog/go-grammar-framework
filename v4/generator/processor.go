@@ -95,21 +95,14 @@ func (v *processor_) generateRuleProcessors() string {
 	var iterator = v.analyzer_.GetRules().GetIterator()
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
-		var className = makeUpperCase(ruleName)
-		var parameterName = makeLowerCase(ruleName)
 		var isPlural = v.analyzer_.IsPlural(ruleName)
-		var parameters string
+		var parameters = processRuleParameterTemplate_
 		if isPlural {
-			parameters += "\n\t"
-		}
-		parameters += parameterName + " ast." + className + "Like"
-		if isPlural {
-			parameters += ",\n\tindex uint"
-			parameters += ",\n\tsize uint,\n"
+			parameters = processRuleParametersTemplate_
 		}
 		var ruleProcessor = processRuleTemplate_
-		ruleProcessor = replaceAll(ruleProcessor, "ruleName", ruleName)
 		ruleProcessor = replaceAll(ruleProcessor, "parameters", parameters)
+		ruleProcessor = replaceAll(ruleProcessor, "ruleName", ruleName)
 		ruleProcessors += ruleProcessor
 	}
 	return ruleProcessors
@@ -123,20 +116,14 @@ func (v *processor_) generateTokenProcessors() string {
 		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
 			continue
 		}
-		var parameterName = makeLowerCase(tokenName)
 		var isPlural = v.analyzer_.IsPlural(tokenName)
-		var parameters string
+		var parameters = processTokenParameterTemplate_
 		if isPlural {
-			parameters += "\n\t"
-		}
-		parameters += parameterName + " string"
-		if isPlural {
-			parameters += ",\n\tindex uint"
-			parameters += ",\n\tsize uint,\n"
+			parameters = processTokenParametersTemplate_
 		}
 		var tokenProcessor = processTokenTemplate_
-		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
 		tokenProcessor = replaceAll(tokenProcessor, "parameters", parameters)
+		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
 		tokenProcessors += tokenProcessor
 	}
 	return tokenProcessors
@@ -150,9 +137,25 @@ func (v *processor_) Postprocess<RuleName>(<parameters>) {
 }
 `
 
+const processRuleParameterTemplate_ = `<ruleName_> ast.<RuleName>Like`
+
+const processRuleParametersTemplate_ = `
+	<ruleName_> ast.<RuleName>Like,
+	index uint,
+	size uint,
+`
+
 const processTokenTemplate_ = `
 func (v *processor_) Process<TokenName>(<parameters>) {
 }
+`
+
+const processTokenParameterTemplate_ = `<tokenName_> string`
+
+const processTokenParametersTemplate_ = `
+	<tokenName_> string,
+	index uint,
+	size uint,
 `
 
 const processorTemplate_ = `<Notice>

@@ -79,8 +79,8 @@ func (v *validator_) GenerateValidatorClass(
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
-	var processTokens = v.generateProcessTokens()
-	implementation = replaceAll(implementation, "processTokens", processTokens)
+	var tokenValidators = v.generateTokenValidators()
+	implementation = replaceAll(implementation, "tokenValidators", tokenValidators)
 	var name = v.analyzer_.GetName()
 	implementation = replaceAll(implementation, "name", name)
 	return implementation
@@ -88,39 +88,39 @@ func (v *validator_) GenerateValidatorClass(
 
 // Private
 
-func (v *validator_) generateProcessTokens() string {
-	var processTokens string
+func (v *validator_) generateTokenValidators() string {
+	var tokenValidators string
 	var iterator = v.analyzer_.GetTokens().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
 		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
 			continue
 		}
-		var tokenType = makeUpperCase(tokenName) + "Token"
-		var parameterName = makeLowerCase(tokenName)
 		var isPlural = v.analyzer_.IsPlural(tokenName)
-		var parameters string
+		var parameters = validateTokenParameterTemplate_
 		if isPlural {
-			parameters += "\n\t"
+			parameters = validateTokenParametersTemplate_
 		}
-		parameters += parameterName + " string"
-		if isPlural {
-			parameters += ",\n\tindex uint"
-			parameters += ",\n\tsize uint,\n"
-		}
-		var processToken = validateTokenTemplate_
-		processToken = replaceAll(processToken, "tokenName", tokenName)
-		processToken = replaceAll(processToken, "tokenType", tokenType)
-		processToken = replaceAll(processToken, "parameters", parameters)
-		processTokens += processToken
+		var tokenValidator = validateTokenTemplate_
+		tokenValidator = replaceAll(tokenValidator, "parameters", parameters)
+		tokenValidator = replaceAll(tokenValidator, "tokenName", tokenName)
+		tokenValidators += tokenValidator
 	}
-	return processTokens
+	return tokenValidators
 }
 
 const validateTokenTemplate_ = `
 func (v *validator_) Process<TokenName>(<parameters>) {
-	v.ValidateToken(<tokenName>, <TokenType>)
+	v.ValidateToken(<tokenName_>, <TokenName>Token)
 }
+`
+
+const validateTokenParameterTemplate_ = `<tokenName_> string`
+
+const validateTokenParametersTemplate_ = `
+	<tokenName_> string,
+	index uint,
+	size uint,
 `
 
 const validatorTemplate_ = `<Notice>
@@ -191,7 +191,7 @@ func (v *validator_) GetClass() ValidatorClassLike {
 }
 
 // Methodical
-<ProcessTokens>
+<TokenValidators>
 func (v *validator_) Preprocess<Name>(<name> ast.<Name>Like) {
 }
 

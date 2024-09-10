@@ -131,9 +131,6 @@ func makeLowerCase(mixedCase string) string {
 		runes := []rune(mixedCase)
 		runes[0] = uni.ToLower(runes[0])
 		result = string(runes)
-		if reserved_[result] {
-			result += "_"
-		}
 	}
 	return result
 }
@@ -183,6 +180,14 @@ func makeUpperCase(mixedCase string) string {
 }
 
 func replaceAll(template string, name string, value string) string {
+	// <variableName> -> variableValue[_]
+	var variableName = makeLowerCase(name) + "_"
+	var variableValue = makeLowerCase(value)
+	if reserved_[variableValue] {
+		variableValue += "_"
+	}
+	template = sts.ReplaceAll(template, "<"+variableName+">", variableValue)
+
 	// <lowerCaseName> -> lowerCaseValue
 	var lowerCaseName = makeLowerCase(name)
 	var lowerCaseValue = makeLowerCase(value)

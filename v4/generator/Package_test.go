@@ -277,6 +277,38 @@ func (v *formatter_) ProcessText(text string) {
 	v.appendString(text)
 }
 
+func (v *formatter_) PreprocessComponent(
+	component ast.ComponentLike,
+	index uint,
+	size uint,
+) {
+	// TBD - Add formatting of the delimited rule.
+}
+
+func (v *formatter_) PostprocessComponent(
+	component ast.ComponentLike,
+	index uint,
+	size uint,
+) {
+	// TBD - Add formatting of the delimited rule.
+}
+
+func (v *formatter_) PreprocessDocument(document ast.DocumentLike) {
+	// TBD - Add formatting of the delimited rule.
+}
+
+func (v *formatter_) PostprocessDocument(document ast.DocumentLike) {
+	// TBD - Add formatting of the delimited rule.
+}
+
+func (v *formatter_) PreprocessIntrinsic(intrinsic ast.IntrinsicLike) {
+	// TBD - Add formatting of the delimited rule.
+}
+
+func (v *formatter_) PostprocessIntrinsic(intrinsic ast.IntrinsicLike) {
+	// TBD - Add formatting of the delimited rule.
+}
+
 func (v *formatter_) PreprocessList(list ast.ListLike) {
 	// TBD - Add formatting of the delimited rule.
 }
@@ -404,9 +436,7 @@ func (v *parser_) ParseSource(source string) ast.DocumentLike {
 	var document, token, ok = v.parseDocument()
 	if !ok {
 		var message = v.formatError(token)
-		message += v.generateSyntax("Document",
-			"Document",
-		)
+		message += v.generateSyntax("Document")
 		panic(message)
 	}
 
@@ -416,10 +446,134 @@ func (v *parser_) ParseSource(source string) ast.DocumentLike {
 
 // Private
 
-func (v *parser_) parseToken(
-	expectedType TokenType,
-	expectedValue string,
-) (
+func (v *parser_) parseComponent(
+	component ast.ComponentLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse a intrinsic rule.
+	var intrinsic ast.IntrinsicLike
+	intrinsic, token, ok = v.parseIntrinsic()
+	if ok {
+		// Found a intrinsic component.
+		component = ast.Component().Make(intrinsic)
+		return component, token, true
+	}
+
+	// Attempt to parse a list rule.
+	var list ast.ListLike
+	list, token, ok = v.parseList()
+	if ok {
+		// Found a list component.
+		component = ast.Component().Make(list)
+		return component, token, true
+	}
+
+	// This is not a component rule.
+	return component, token, false
+}
+
+func (v *parser_) parseDocument(
+	document ast.DocumentLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse multiple components.
+	var component ast.ComponentLike
+	var components = col.List[ast.ComponentLike]()
+	for ok {
+		components.AppendValue(component)
+		component, token, ok = v.parseComponent()
+	}
+
+	// Attempt to parse multiple newlines.
+	var newline string
+	var newlines = col.List[string]()
+	for ok {
+		newlines.AppendValue(newline)
+		newline, token, ok = v.parseNewline()
+	}
+
+	// Found a document rule.
+	document = ast.Document().Make(
+		component,
+		newline,
+	)
+	return document, token, true
+}
+
+func (v *parser_) parseIntrinsic(
+	intrinsic ast.IntrinsicLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse a integer token.
+	var integer string
+	integer, token, ok = v.parseInteger()
+	if ok {
+		// Found a integer intrinsic.
+		intrinsic = ast.Intrinsic().Make(integer)
+		return intrinsic, token, true
+	}
+
+	// Attempt to parse a rune token.
+	var rune_ string
+	rune_, token, ok = v.parseRune()
+	if ok {
+		// Found a rune intrinsic.
+		intrinsic = ast.Intrinsic().Make(rune_)
+		return intrinsic, token, true
+	}
+
+	// Attempt to parse a text token.
+	var text string
+	text, token, ok = v.parseText()
+	if ok {
+		// Found a text intrinsic.
+		intrinsic = ast.Intrinsic().Make(text)
+		return intrinsic, token, true
+	}
+
+	// This is not a intrinsic rule.
+	return intrinsic, token, false
+}
+
+func (v *parser_) parseList(
+	list ast.ListLike,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse multiple components.
+	var component ast.ComponentLike
+	var components = col.List[ast.ComponentLike]()
+	for ok {
+		components.AppendValue(component)
+		component, token, ok = v.parseComponent()
+	}
+
+	// Found a list rule.
+	list = ast.List().Make(component)
+	return list, token, true
+}
+
+func (v *parser_) parseDelimiter(expectedValue string) (
+	value string,
+	token TokenLike,
+	ok bool,
+) {
+	// Attempt to parse a delimiter.
+	value, token, ok = v.parseToken(DelimiterToken)
+	if ok && value == expectedValue {
+		// Found the right delimiter.
+		return value, token, true
+	}
+
+	// This is not the right delimiter.
+	v.putBack(token)
+	return value, token, false
+}
+
+func (v *parser_) parseToken(tokenType TokenType) (
 	value string,
 	token TokenLike,
 	ok bool,
@@ -430,49 +584,15 @@ func (v *parser_) parseToken(
 		// We are at the end-of-file marker.
 		return value, token, false
 	}
-	if token.GetType() == expectedType {
+	if token.GetType() == tokenType {
+		// Found the right token type.
 		value = token.GetValue()
-		if col.IsUndefined(expectedValue) || value == expectedValue {
-			// Found the right token.
-			return value, token, true
-		}
+		return value, token, true
 	}
 
-	// This is not the right token.
+	// This is not the right token type.
 	v.putBack(token)
 	return value, token, false
-}
-
-func (v *parser_) parseComponent() (
-	component ast.ComponentLike,
-	token TokenLike,
-	ok bool,
-) {
-	panic("The parseComponent() method has not yet been implemented.")
-}
-
-func (v *parser_) parseDocument() (
-	document ast.DocumentLike,
-	token TokenLike,
-	ok bool,
-) {
-	panic("The parseDocument() method has not yet been implemented.")
-}
-
-func (v *parser_) parseIntrinsic() (
-	intrinsic ast.IntrinsicLike,
-	token TokenLike,
-	ok bool,
-) {
-	panic("The parseIntrinsic() method has not yet been implemented.")
-}
-
-func (v *parser_) parseList() (
-	list ast.ListLike,
-	token TokenLike,
-	ok bool,
-) {
-	panic("The parseList() method has not yet been implemented.")
 }
 
 func (v *parser_) formatError(token TokenLike) string {
@@ -509,18 +629,13 @@ func (v *parser_) formatError(token TokenLike) string {
 	return message
 }
 
-func (v *parser_) generateSyntax(
-	expected string,
-	names ...string,
-) string {
-	var message = "Was expecting '" + expected + "' from:\n"
-	for _, name := range names {
-		message += fmt.Sprintf(
-			"  \033[32m%v: \033[33m%v\033[0m\n\n",
-			name,
-			syntax_[name],
-		)
-	}
+func (v *parser_) generateSyntax(rule string) string {
+	var message = "Was expecting:\n"
+	message += fmt.Sprintf(
+		"  \033[32m%v: \033[33m%v\033[0m\n\n",
+		name,
+		syntax_[name],
+	)
 	return message
 }
 
@@ -1231,6 +1346,11 @@ func (v *visitor_) visitComponent(component ast.ComponentLike) {
 		v.processor_.PreprocessList(actual)
 		v.visitList(actual)
 		v.processor_.PostprocessList(actual)
+	case string:
+		switch {
+		default:
+			panic(fmt.Sprintf("Invalid token: %v", actual))
+		}
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -1286,7 +1406,6 @@ func (v *visitor_) visitIntrinsic(intrinsic ast.IntrinsicLike) {
 		default:
 			panic(fmt.Sprintf("Invalid token: %v", actual))
 		}
-
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}

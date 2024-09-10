@@ -59,7 +59,6 @@ type visitor_ struct {
 	// Define the instance attributes.
 	class_    VisitorClassLike
 	analyzer_ gra.AnalyzerLike
-	result_   string
 }
 
 // Attributes
@@ -73,17 +72,19 @@ func (v *visitor_) GetClass() VisitorClassLike {
 func (v *visitor_) GenerateVisitorClass(
 	module string,
 	syntax ast.SyntaxLike,
-) string {
+) (
+	implementation string,
+) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	v.result_ = visitorTemplate_
+	implementation = visitorTemplate_
+	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
-	v.result_ = replaceAll(v.result_, "notice", notice)
-	v.result_ = replaceAll(v.result_, "module", module)
+	implementation = replaceAll(implementation, "notice", notice)
 	var syntaxName = v.analyzer_.GetName()
-	v.result_ = replaceAll(v.result_, "syntaxName", syntaxName)
+	implementation = replaceAll(implementation, "syntaxName", syntaxName)
 	var methods = v.generateMethods()
-	v.result_ = replaceAll(v.result_, "methods", methods)
-	return v.result_
+	implementation = replaceAll(implementation, "methods", methods)
+	return implementation
 }
 
 // Private
@@ -187,10 +188,8 @@ func (v *visitor_) generateMultilineMethod(name string) string {
 			ruleCases += v.generateMultilineRule(name)
 		}
 	}
-	var implementation = replaceAll(visitAnyTemplate_, "ruleCases", ruleCases)
-	if len(tokenCases) > 0 {
-		tokenCases = replaceAll(visitMatchesTemplate_, "tokenCases", tokenCases)
-	}
+	var implementation = visitAnyTemplate_
+	implementation = replaceAll(implementation, "ruleCases", ruleCases)
 	implementation = replaceAll(implementation, "tokenCases", tokenCases)
 	return replaceAll(visitRuleMethodTemplate_, "implementation", implementation)
 }
@@ -239,35 +238,32 @@ func (v *visitor_) generatePlurality(
 
 const visitAnyTemplate_ = `
 	// Visit the possible <rule> types.
-	switch actual := <rule>.GetAny().(type) {<RuleCases><TokenCases>
-	default:
-		panic(fmt.Sprintf("Invalid rule type: %T", actual))
-	}
-`
-
-const visitMatchesTemplate_ = `
+	switch actual := <rule>.GetAny().(type) {<RuleCases>
 	case string:
 		switch {<TokenCases>
 		default:
 			panic(fmt.Sprintf("Invalid token: %v", actual))
 		}
+	default:
+		panic(fmt.Sprintf("Invalid rule type: %T", actual))
+	}
 `
 
 const visitOptionalRuleTemplate_ = `
 	// Visit the optional <ruleName> rule.
 	var <ruleName> = <rule>.GetOptional<RuleName>()
-	if col.IsDefined(<ruleName>) {
-		v.processor_.Preprocess<RuleName>(<ruleName>)
-		v.visit<RuleName>(<ruleName>)
-		v.processor_.Postprocess<RuleName>(<ruleName>)
+	if col.IsDefined(<ruleName_>) {
+		v.processor_.Preprocess<RuleName>(<ruleName_>)
+		v.visit<RuleName>(<ruleName_>)
+		v.processor_.Postprocess<RuleName>(<ruleName_>)
 	}
 `
 
 const visitOptionalTokenTemplate_ = `
 	// Visit the optional <tokenName> token.
 	var <tokenName> = <rule>.GetOptional<TokenName>()
-	if col.IsDefined(<tokenName>) {
-		v.processor_.Process<TokenName>(<tokenName>)
+	if col.IsDefined(<tokenName_>) {
+		v.processor_.Process<TokenName>(<tokenName_>)
 	}
 `
 
@@ -284,7 +280,7 @@ const visitRepeatedRuleTemplate_ = `
 			<ruleName>Index,
 			<pluralName>Size,
 		)
-		v.visit<RuleName>(<ruleName>)
+		v.visit<RuleName>(<ruleName_>)
 		v.processor_.Postprocess<RuleName>(
 			<ruleName>,
 			<ruleName>Index,
@@ -322,9 +318,9 @@ func (v *visitor_) visit<Rule>(<rule> ast.<Rule>Like) {<Implementation>}
 const visitRuleTemplate_ = `
 	// Visit the <ruleName> rule.
 	var <ruleName> = <rule>.Get<RuleName>()
-	v.processor_.Preprocess<RuleName>(<ruleName>)
-	v.visit<RuleName>(<ruleName>)
-	v.processor_.Postprocess<RuleName>(<ruleName>)
+	v.processor_.Preprocess<RuleName>(<ruleName_>)
+	v.visit<RuleName>(<ruleName_>)
+	v.processor_.Postprocess<RuleName>(<ruleName_>)
 `
 
 const visitSingularRuleCaseTemplate_ = `
@@ -336,9 +332,9 @@ const visitSingularRuleCaseTemplate_ = `
 const visitSingularRuleTemplate_ = `
 	// Visit the <ruleName> rule.
 	var <ruleName> = <rule>.Get<RuleName>()
-	v.processor_.Preprocess<RuleName>(<ruleName>, 1, 1)
-	v.visit<RuleName>(<ruleName>)
-	v.processor_.Postprocess<RuleName>(<ruleName>, 1, 1)
+	v.processor_.Preprocess<RuleName>(<ruleName_>, 1, 1)
+	v.visit<RuleName>(<ruleName_>)
+	v.processor_.Postprocess<RuleName>(<ruleName_>, 1, 1)
 `
 
 const visitSingularTokenCaseTemplate_ = `
@@ -348,7 +344,7 @@ const visitSingularTokenCaseTemplate_ = `
 const visitSingularTokenTemplate_ = `
 	// Visit the <tokenName> token.
 	var <tokenName> = <rule>.Get<TokenName>()
-	v.processor_.Process<TokenName>(<tokenName>, 1, 1)
+	v.processor_.Process<TokenName>(<tokenName_>, 1, 1)
 `
 
 const visitTokenCaseTemplate_ = `
@@ -358,7 +354,7 @@ const visitTokenCaseTemplate_ = `
 const visitTokenTemplate_ = `
 	// Visit the <tokenName> token.
 	var <tokenName> = <rule>.Get<TokenName>()
-	v.processor_.Process<TokenName>(<tokenName>)
+	v.processor_.Process<TokenName>(<tokenName_>)
 `
 
 const visitorTemplate_ = `<Notice>
