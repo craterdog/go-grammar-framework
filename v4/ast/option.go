@@ -21,42 +21,36 @@ import (
 
 // Reference
 
-var patternClass = &patternClass_{
+var optionClass = &optionClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Pattern() PatternClassLike {
-	return patternClass
+func Option() OptionClassLike {
+	return optionClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type patternClass_ struct {
+type optionClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *patternClass_) Make(
-	option OptionLike,
-	alternatives abs.Sequential[AlternativeLike],
-) PatternLike {
+func (c *optionClass_) Make(repetitions abs.Sequential[RepetitionLike]) OptionLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(option):
-		panic("The option attribute is required by this class.")
-	case col.IsUndefined(alternatives):
-		panic("The alternatives attribute is required by this class.")
+	case col.IsUndefined(repetitions):
+		panic("The repetitions attribute is required by this class.")
 	default:
-		return &pattern_{
+		return &option_{
 			// Initialize instance attributes.
-			class_:        c,
-			option_:       option,
-			alternatives_: alternatives,
+			class_:       c,
+			repetitions_: repetitions,
 		}
 	}
 }
@@ -65,25 +59,20 @@ func (c *patternClass_) Make(
 
 // Target
 
-type pattern_ struct {
+type option_ struct {
 	// Define instance attributes.
-	class_        PatternClassLike
-	option_       OptionLike
-	alternatives_ abs.Sequential[AlternativeLike]
+	class_       OptionClassLike
+	repetitions_ abs.Sequential[RepetitionLike]
 }
 
 // Attributes
 
-func (v *pattern_) GetClass() PatternClassLike {
+func (v *option_) GetClass() OptionClassLike {
 	return v.class_
 }
 
-func (v *pattern_) GetOption() OptionLike {
-	return v.option_
-}
-
-func (v *pattern_) GetAlternatives() abs.Sequential[AlternativeLike] {
-	return v.alternatives_
+func (v *option_) GetRepetitions() abs.Sequential[RepetitionLike] {
+	return v.repetitions_
 }
 
 // Private

@@ -41,16 +41,22 @@ type multilineClass_ struct {
 
 // Constructors
 
-func (c *multilineClass_) Make(lines abs.Sequential[LineLike]) MultilineLike {
+func (c *multilineClass_) Make(
+	newline string,
+	lines abs.Sequential[LineLike],
+) MultilineLike {
 	// Validate the arguments.
 	switch {
+	case col.IsUndefined(newline):
+		panic("The newline attribute is required by this class.")
 	case col.IsUndefined(lines):
 		panic("The lines attribute is required by this class.")
 	default:
 		return &multiline_{
 			// Initialize instance attributes.
-			class_: c,
-			lines_: lines,
+			class_:   c,
+			newline_: newline,
+			lines_:   lines,
 		}
 	}
 }
@@ -61,14 +67,19 @@ func (c *multilineClass_) Make(lines abs.Sequential[LineLike]) MultilineLike {
 
 type multiline_ struct {
 	// Define instance attributes.
-	class_ MultilineClassLike
-	lines_ abs.Sequential[LineLike]
+	class_   MultilineClassLike
+	newline_ string
+	lines_   abs.Sequential[LineLike]
 }
 
 // Attributes
 
 func (v *multiline_) GetClass() MultilineClassLike {
 	return v.class_
+}
+
+func (v *multiline_) GetNewline() string {
+	return v.newline_
 }
 
 func (v *multiline_) GetLines() abs.Sequential[LineLike] {

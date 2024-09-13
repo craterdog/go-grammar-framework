@@ -14,43 +14,46 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var specificClass = &specificClass_{
+var quantifiedClass = &quantifiedClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Specific() SpecificClassLike {
-	return specificClass
+func Quantified() QuantifiedClassLike {
+	return quantifiedClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type specificClass_ struct {
+type quantifiedClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *specificClass_) Make(runics abs.Sequential[string]) SpecificLike {
+func (c *quantifiedClass_) Make(
+	number string,
+	optionalLimit LimitLike,
+) QuantifiedLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(runics):
-		panic("The runics attribute is required by this class.")
+	case col.IsUndefined(number):
+		panic("The number attribute is required by this class.")
 	default:
-		return &specific_{
+		return &quantified_{
 			// Initialize instance attributes.
-			class_:  c,
-			runics_: runics,
+			class_:         c,
+			number_:        number,
+			optionalLimit_: optionalLimit,
 		}
 	}
 }
@@ -59,20 +62,25 @@ func (c *specificClass_) Make(runics abs.Sequential[string]) SpecificLike {
 
 // Target
 
-type specific_ struct {
+type quantified_ struct {
 	// Define instance attributes.
-	class_  SpecificClassLike
-	runics_ abs.Sequential[string]
+	class_         QuantifiedClassLike
+	number_        string
+	optionalLimit_ LimitLike
 }
 
 // Attributes
 
-func (v *specific_) GetClass() SpecificClassLike {
+func (v *quantified_) GetClass() QuantifiedClassLike {
 	return v.class_
 }
 
-func (v *specific_) GetRunics() abs.Sequential[string] {
-	return v.runics_
+func (v *quantified_) GetNumber() string {
+	return v.number_
+}
+
+func (v *quantified_) GetOptionalLimit() LimitLike {
+	return v.optionalLimit_
 }
 
 // Private

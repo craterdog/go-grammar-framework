@@ -14,43 +14,42 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var countClass = &countClass_{
+var constrainedClass = &constrainedClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Count() CountClassLike {
-	return countClass
+func Constrained() ConstrainedClassLike {
+	return constrainedClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type countClass_ struct {
+type constrainedClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *countClass_) Make(numbers abs.Sequential[string]) CountLike {
+func (c *constrainedClass_) Make(any_ any) ConstrainedLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(numbers):
-		panic("The numbers attribute is required by this class.")
+	case col.IsUndefined(any_):
+		panic("The any attribute is required by this class.")
 	default:
-		return &count_{
+		return &constrained_{
 			// Initialize instance attributes.
-			class_:   c,
-			numbers_: numbers,
+			class_: c,
+			any_:   any_,
 		}
 	}
 }
@@ -59,20 +58,20 @@ func (c *countClass_) Make(numbers abs.Sequential[string]) CountLike {
 
 // Target
 
-type count_ struct {
+type constrained_ struct {
 	// Define instance attributes.
-	class_   CountClassLike
-	numbers_ abs.Sequential[string]
+	class_ ConstrainedClassLike
+	any_   any
 }
 
 // Attributes
 
-func (v *count_) GetClass() CountClassLike {
+func (v *constrained_) GetClass() ConstrainedClassLike {
 	return v.class_
 }
 
-func (v *count_) GetNumbers() abs.Sequential[string] {
-	return v.numbers_
+func (v *constrained_) GetAny() any {
+	return v.any_
 }
 
 // Private

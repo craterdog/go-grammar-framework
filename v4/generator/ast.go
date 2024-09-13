@@ -116,16 +116,16 @@ func (v *ast_) generateAttribute(reference ast.ReferenceLike) mod.AttributeLike 
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		switch actual := cardinality.GetAny().(type) {
-		case ast.ConstraintLike:
-			var constraint = actual.GetAny().(string)
-			switch constraint {
+		case ast.ConstrainedLike:
+			var constrained = actual.GetAny().(string)
+			switch constrained {
 			case "?":
 				attributeName = makeOptional(attributeName)
 			case "*", "+":
 				attributeName = makePlural(attributeName)
 				attributeType = v.pluralizeType(attributeType)
 			}
-		case ast.CountLike:
+		case ast.QuantifiedLike:
 			attributeName = makePlural(attributeName)
 			attributeType = v.pluralizeType(attributeType)
 		}
@@ -141,7 +141,7 @@ func (v *ast_) generateAttribute(reference ast.ReferenceLike) mod.AttributeLike 
 }
 
 func (v *ast_) generateClassDeclaration(name string) mod.DeclarationLike {
-	var comment = replaceAll(classCommentTemplate_, "class", name)
+	var comment = replaceAll(classCommentTemplate_, "className", name)
 	var declaration = mod.Declaration(
 		comment,
 		makeUpperCase(name)+"ClassLike",
@@ -151,7 +151,7 @@ func (v *ast_) generateClassDeclaration(name string) mod.DeclarationLike {
 
 func (v *ast_) generateClasses() mod.ClassesLike {
 	var classes = col.List[mod.ClassLike]()
-	var rules = v.analyzer_.GetRules().GetIterator()
+	var rules = v.analyzer_.GetRuleNames().GetIterator()
 	for rules.HasNext() {
 		var rule = rules.GetNext()
 		var declaration = v.generateClassDeclaration(rule)
@@ -252,7 +252,7 @@ func (v *ast_) generateInlineParameters(name string) mod.ParametersLike {
 }
 
 func (v *ast_) generateInstanceDeclaration(name string) mod.DeclarationLike {
-	var comment = replaceAll(instanceCommentTemplate_, "class", name)
+	var comment = replaceAll(instanceCommentTemplate_, "className", name)
 	var declaration = mod.Declaration(
 		comment,
 		makeUpperCase(name)+"Like",
@@ -262,7 +262,7 @@ func (v *ast_) generateInstanceDeclaration(name string) mod.DeclarationLike {
 
 func (v *ast_) generateInstances() mod.InstancesLike {
 	var instances = col.List[mod.InstanceLike]()
-	var rules = v.analyzer_.GetRules().GetIterator()
+	var rules = v.analyzer_.GetRuleNames().GetIterator()
 	for rules.HasNext() {
 		var rule = rules.GetNext()
 		var declaration = v.generateInstanceDeclaration(rule)
@@ -342,16 +342,16 @@ func (v *ast_) generateParameter(reference ast.ReferenceLike) mod.ParameterLike 
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		switch actual := cardinality.GetAny().(type) {
-		case ast.ConstraintLike:
-			var constraint = actual.GetAny().(string)
-			switch constraint {
+		case ast.ConstrainedLike:
+			var constrained = actual.GetAny().(string)
+			switch constrained {
 			case "?":
 				parameterName = makeOptional(parameterName)
 			case "*", "+":
 				parameterName = makePlural(parameterName)
 				parameterType = v.pluralizeType(parameterType)
 			}
-		case ast.CountLike:
+		case ast.QuantifiedLike:
 			parameterName = makePlural(parameterName)
 			parameterType = v.pluralizeType(parameterType)
 		}
@@ -387,16 +387,16 @@ func (v *ast_) pluralizeType(abstraction mod.AbstractionLike) mod.AbstractionLik
 }
 
 const classCommentTemplate_ = `/*
-<Class>ClassLike is a class interface that defines the complete set of
+<ClassName>ClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
-concrete <class>-like class.
+concrete <class-name>-like class.
 */
 `
 
 const instanceCommentTemplate_ = `/*
-<Class>Like is an instance interface that defines the complete set of
+<ClassName>Like is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
-instance of a concrete <class>-like class.
+instance of a concrete <class-name>-like class.
 */
 `
 

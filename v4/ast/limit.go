@@ -12,44 +12,38 @@
 
 package ast
 
-import (
-	col "github.com/craterdog/go-collection-framework/v4"
-)
-
 // CLASS ACCESS
 
 // Reference
 
-var constraintClass = &constraintClass_{
+var limitClass = &limitClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Constraint() ConstraintClassLike {
-	return constraintClass
+func Limit() LimitClassLike {
+	return limitClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type constraintClass_ struct {
+type limitClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *constraintClass_) Make(any_ any) ConstraintLike {
+func (c *limitClass_) Make(optionalNumber string) LimitLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(any_):
-		panic("The any attribute is required by this class.")
 	default:
-		return &constraint_{
+		return &limit_{
 			// Initialize instance attributes.
-			class_: c,
-			any_:   any_,
+			class_:          c,
+			optionalNumber_: optionalNumber,
 		}
 	}
 }
@@ -58,20 +52,20 @@ func (c *constraintClass_) Make(any_ any) ConstraintLike {
 
 // Target
 
-type constraint_ struct {
+type limit_ struct {
 	// Define instance attributes.
-	class_ ConstraintClassLike
-	any_   any
+	class_          LimitClassLike
+	optionalNumber_ string
 }
 
 // Attributes
 
-func (v *constraint_) GetClass() ConstraintClassLike {
+func (v *limit_) GetClass() LimitClassLike {
 	return v.class_
 }
 
-func (v *constraint_) GetAny() any {
-	return v.any_
+func (v *limit_) GetOptionalNumber() string {
+	return v.optionalNumber_
 }
 
 // Private

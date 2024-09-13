@@ -53,6 +53,7 @@ const (
 	CommentToken
 	DelimiterToken
 	ExcludedToken
+	GlyphToken
 	IntrinsicToken
 	LiteralToken
 	LowercaseToken
@@ -61,7 +62,6 @@ const (
 	NumberToken
 	OptionalToken
 	RepeatedToken
-	RunicToken
 	SpaceToken
 	UppercaseToken
 )
@@ -184,17 +184,18 @@ type AnalyzerLike interface {
 
 	// Methods
 	AnalyzeSyntax(syntax ast.SyntaxLike)
-	GetName() string
-	GetNotice() string
-	GetTokens() abs.Sequential[string]
-	GetIgnored() abs.Sequential[string]
-	IsIgnored(token string) bool
-	GetRules() abs.Sequential[string]
-	IsPlural(rule string) bool
-	IsDelimited(rule string) bool
-	GetReferences(rule string) abs.Sequential[ast.ReferenceLike]
-	GetIdentifiers(rule string) abs.Sequential[ast.IdentifierLike]
 	GetExpressions() abs.Sequential[abs.AssociationLike[string, string]]
+	GetIdentifiers(ruleName string) abs.Sequential[ast.IdentifierLike]
+	GetIgnored() abs.Sequential[string]
+	GetNotice() string
+	GetReferences(ruleName string) abs.Sequential[ast.ReferenceLike]
+	GetRuleNames() abs.Sequential[string]
+	GetSyntaxName() string
+	GetTerms(ruleName string) abs.Sequential[ast.TermLike]
+	GetTokenNames() abs.Sequential[string]
+	IsDelimited(ruleName string) bool
+	IsIgnored(tokenName string) bool
+	IsPlural(name string) bool
 }
 
 /*
@@ -205,7 +206,6 @@ instance of a concrete formatter-like class.
 type FormatterLike interface {
 	// Attributes
 	GetClass() FormatterClassLike
-	GetDepth() uint
 
 	// Abstractions
 	Methodical
@@ -302,6 +302,7 @@ by all methodical processors.
 type Methodical interface {
 	ProcessComment(comment string)
 	ProcessExcluded(excluded string)
+	ProcessGlyph(glyph string)
 	ProcessIntrinsic(intrinsic string)
 	ProcessLiteral(literal string)
 	ProcessLowercase(lowercase string)
@@ -311,18 +312,9 @@ type Methodical interface {
 		size uint,
 	)
 	ProcessNote(note string)
-	ProcessNumber(
-		number string,
-		index uint,
-		size uint,
-	)
+	ProcessNumber(number string)
 	ProcessOptional(optional string)
 	ProcessRepeated(repeated string)
-	ProcessRunic(
-		runic string,
-		index uint,
-		size uint,
-	)
 	ProcessUppercase(uppercase string)
 	PreprocessAlternative(
 		alternative ast.AlternativeLike,
@@ -334,8 +326,6 @@ type Methodical interface {
 		index uint,
 		size uint,
 	)
-	PreprocessBracket(bracket ast.BracketLike)
-	PostprocessBracket(bracket ast.BracketLike)
 	PreprocessCardinality(cardinality ast.CardinalityLike)
 	PostprocessCardinality(cardinality ast.CardinalityLike)
 	PreprocessCharacter(
@@ -348,14 +338,14 @@ type Methodical interface {
 		index uint,
 		size uint,
 	)
-	PreprocessConstraint(constraint ast.ConstraintLike)
-	PostprocessConstraint(constraint ast.ConstraintLike)
-	PreprocessCount(count ast.CountLike)
-	PostprocessCount(count ast.CountLike)
+	PreprocessConstrained(constrained ast.ConstrainedLike)
+	PostprocessConstrained(constrained ast.ConstrainedLike)
 	PreprocessDefinition(definition ast.DefinitionLike)
 	PostprocessDefinition(definition ast.DefinitionLike)
 	PreprocessElement(element ast.ElementLike)
 	PostprocessElement(element ast.ElementLike)
+	PreprocessExplicit(explicit ast.ExplicitLike)
+	PostprocessExplicit(explicit ast.ExplicitLike)
 	PreprocessExpression(
 		expression ast.ExpressionLike,
 		index uint,
@@ -366,34 +356,18 @@ type Methodical interface {
 		index uint,
 		size uint,
 	)
-	PreprocessFactor(
-		factor ast.FactorLike,
-		index uint,
-		size uint,
-	)
-	PostprocessFactor(
-		factor ast.FactorLike,
-		index uint,
-		size uint,
-	)
+	PreprocessExtent(extent ast.ExtentLike)
+	PostprocessExtent(extent ast.ExtentLike)
 	PreprocessFilter(filter ast.FilterLike)
 	PostprocessFilter(filter ast.FilterLike)
 	PreprocessGroup(group ast.GroupLike)
 	PostprocessGroup(group ast.GroupLike)
-	PreprocessHeader(
-		header ast.HeaderLike,
-		index uint,
-		size uint,
-	)
-	PostprocessHeader(
-		header ast.HeaderLike,
-		index uint,
-		size uint,
-	)
 	PreprocessIdentifier(identifier ast.IdentifierLike)
 	PostprocessIdentifier(identifier ast.IdentifierLike)
 	PreprocessInline(inline ast.InlineLike)
 	PostprocessInline(inline ast.InlineLike)
+	PreprocessLimit(limit ast.LimitLike)
+	PostprocessLimit(limit ast.LimitLike)
 	PreprocessLine(
 		line ast.LineLike,
 		index uint,
@@ -406,8 +380,14 @@ type Methodical interface {
 	)
 	PreprocessMultiline(multiline ast.MultilineLike)
 	PostprocessMultiline(multiline ast.MultilineLike)
+	PreprocessNotice(notice ast.NoticeLike)
+	PostprocessNotice(notice ast.NoticeLike)
+	PreprocessOption(option ast.OptionLike)
+	PostprocessOption(option ast.OptionLike)
 	PreprocessPattern(pattern ast.PatternLike)
 	PostprocessPattern(pattern ast.PatternLike)
+	PreprocessQuantified(quantified ast.QuantifiedLike)
+	PostprocessQuantified(quantified ast.QuantifiedLike)
 	PreprocessReference(reference ast.ReferenceLike)
 	PostprocessReference(reference ast.ReferenceLike)
 	PreprocessRepetition(
@@ -430,8 +410,6 @@ type Methodical interface {
 		index uint,
 		size uint,
 	)
-	PreprocessSpecific(specific ast.SpecificLike)
-	PostprocessSpecific(specific ast.SpecificLike)
 	PreprocessSyntax(syntax ast.SyntaxLike)
 	PostprocessSyntax(syntax ast.SyntaxLike)
 	PreprocessTerm(

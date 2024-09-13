@@ -42,7 +42,6 @@ type expressionClass_ struct {
 // Constructors
 
 func (c *expressionClass_) Make(
-	optionalComment string,
 	lowercase string,
 	pattern PatternLike,
 	optionalNote string,
@@ -59,12 +58,11 @@ func (c *expressionClass_) Make(
 	default:
 		return &expression_{
 			// Initialize instance attributes.
-			class_:           c,
-			optionalComment_: optionalComment,
-			lowercase_:       lowercase,
-			pattern_:         pattern,
-			optionalNote_:    optionalNote,
-			newlines_:        newlines,
+			class_:        c,
+			lowercase_:    lowercase,
+			pattern_:      pattern,
+			optionalNote_: optionalNote,
+			newlines_:     newlines,
 		}
 	}
 }
@@ -75,22 +73,17 @@ func (c *expressionClass_) Make(
 
 type expression_ struct {
 	// Define instance attributes.
-	class_           ExpressionClassLike
-	optionalComment_ string
-	lowercase_       string
-	pattern_         PatternLike
-	optionalNote_    string
-	newlines_        abs.Sequential[string]
+	class_        ExpressionClassLike
+	lowercase_    string
+	pattern_      PatternLike
+	optionalNote_ string
+	newlines_     abs.Sequential[string]
 }
 
 // Attributes
 
 func (v *expression_) GetClass() ExpressionClassLike {
 	return v.class_
-}
-
-func (v *expression_) GetOptionalComment() string {
-	return v.optionalComment_
 }
 
 func (v *expression_) GetLowercase() string {

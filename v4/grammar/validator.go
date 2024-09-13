@@ -109,6 +109,10 @@ func (v *validator_) ProcessExcluded(excluded string) {
 	v.ValidateToken(excluded, ExcludedToken)
 }
 
+func (v *validator_) ProcessGlyph(glyph string) {
+	v.ValidateToken(glyph, GlyphToken)
+}
+
 func (v *validator_) ProcessIntrinsic(intrinsic string) {
 	v.ValidateToken(intrinsic, IntrinsicToken)
 }
@@ -125,11 +129,7 @@ func (v *validator_) ProcessNote(note string) {
 	v.ValidateToken(note, NoteToken)
 }
 
-func (v *validator_) ProcessNumber(
-	number string,
-	index uint,
-	size uint,
-) {
+func (v *validator_) ProcessNumber(number string) {
 	v.ValidateToken(number, NumberToken)
 }
 
@@ -141,30 +141,23 @@ func (v *validator_) ProcessRepeated(repeated string) {
 	v.ValidateToken(repeated, RepeatedToken)
 }
 
-func (v *validator_) ProcessRunic(
-	runic string,
-	index uint,
-	size uint,
-) {
-	v.ValidateToken(runic, RunicToken)
-}
-
 func (v *validator_) ProcessUppercase(uppercase string) {
 	v.ValidateToken(uppercase, UppercaseToken)
 }
 
-func (v *validator_) PreprocessCount(count ast.CountLike) {
-	var numbers = count.GetNumbers().GetIterator()
-	var number = numbers.GetNext()
-	if numbers.HasNext() {
-		var first, _ = stc.Atoi(number)
-		number = numbers.GetNext()
-		var second, _ = stc.Atoi(number)
-		if first > second {
-			var message = "The first number in a number range cannot be greater than the second number."
+func (v *validator_) PreprocessExplicit(explicit ast.ExplicitLike) {
+	var glyph = explicit.GetGlyph()
+	var first, _ = stc.Atoi(glyph)
+	var extent = explicit.GetOptionalExtent()
+	if col.IsDefined(extent) {
+		glyph = extent.GetGlyph()
+		var last, _ = stc.Atoi(glyph)
+		if first > last {
+			var message = "The first glyph in a character range cannot come after the second glyph in lexical order."
 			panic(message)
 		}
 	}
+
 }
 
 func (v *validator_) PreprocessExpression(
@@ -185,6 +178,22 @@ func (v *validator_) PreprocessExpression(
 	v.expressions_.SetValue(lowercase, pattern)
 }
 
+func (v *validator_) PreprocessQuantified(quantified ast.QuantifiedLike) {
+	var number = quantified.GetNumber()
+	var first, _ = stc.Atoi(number)
+	var limit = quantified.GetOptionalLimit()
+	if col.IsDefined(limit) {
+		number = limit.GetOptionalNumber()
+		if col.IsDefined(number) {
+			var last, _ = stc.Atoi(number)
+			if first > last {
+				var message = "The first number in a number range cannot be greater than the last number."
+				panic(message)
+			}
+		}
+	}
+}
+
 func (v *validator_) PreprocessRule(
 	rule ast.RuleLike,
 	index uint,
@@ -201,20 +210,6 @@ func (v *validator_) PreprocessRule(
 	}
 	var definition = rule.GetDefinition()
 	v.rules_.SetValue(uppercase, definition)
-}
-
-func (v *validator_) PreprocessSpecific(specific ast.SpecificLike) {
-	var runics = specific.GetRunics().GetIterator()
-	var runic = runics.GetNext()
-	if runics.HasNext() {
-		var first, _ = stc.Atoi(runic)
-		runic = runics.GetNext()
-		var second, _ = stc.Atoi(runic)
-		if first > second {
-			var message = "The first runic in a character range cannot come after the second runic in lexical order."
-			panic(message)
-		}
-	}
 }
 
 func (v *validator_) PostprocessSyntax(syntax ast.SyntaxLike) {

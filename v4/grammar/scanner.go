@@ -30,6 +30,7 @@ var scannerClass = &scannerClass_{
 		CommentToken:   "comment",
 		DelimiterToken: "delimiter",
 		ExcludedToken:  "excluded",
+		GlyphToken:     "glyph",
 		IntrinsicToken: "intrinsic",
 		LiteralToken:   "literal",
 		LowercaseToken: "lowercase",
@@ -38,7 +39,6 @@ var scannerClass = &scannerClass_{
 		NumberToken:    "number",
 		OptionalToken:  "optional",
 		RepeatedToken:  "repeated",
-		RunicToken:     "runic",
 		SpaceToken:     "space",
 		UppercaseToken: "uppercase",
 	},
@@ -47,6 +47,7 @@ var scannerClass = &scannerClass_{
 		CommentToken:   reg.MustCompile("^" + comment_),
 		DelimiterToken: reg.MustCompile("^" + delimiter_),
 		ExcludedToken:  reg.MustCompile("^" + excluded_),
+		GlyphToken:     reg.MustCompile("^" + glyph_),
 		IntrinsicToken: reg.MustCompile("^" + intrinsic_),
 		LiteralToken:   reg.MustCompile("^" + literal_),
 		LowercaseToken: reg.MustCompile("^" + lowercase_),
@@ -55,7 +56,6 @@ var scannerClass = &scannerClass_{
 		NumberToken:    reg.MustCompile("^" + number_),
 		OptionalToken:  reg.MustCompile("^" + optional_),
 		RepeatedToken:  reg.MustCompile("^" + repeated_),
-		RunicToken:     reg.MustCompile("^" + runic_),
 		SpaceToken:     reg.MustCompile("^" + space_),
 		UppercaseToken: reg.MustCompile("^" + uppercase_),
 	},
@@ -168,9 +168,10 @@ const (
 	// Define the regular expression patterns for each token type.
 	base16_    = "(?:[0-9a-f])"
 	comment_   = "(?:!>" + eol_ + "(" + any_ + "|" + eol_ + ")*?" + eol_ + "<!" + eol_ + ")"
-	delimiter_ = "(?::|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
+	delimiter_ = "(?::|-|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
 	escape_    = "(?:\\\\((?:" + unicode_ + ")|[abfnrtv\"\\\\]))"
 	excluded_  = "(?:~)"
+	glyph_     = "(?:'[^" + control_ + "]')"
 	intrinsic_ = "(?:ANY|CONTROL|DIGIT|EOL|LOWER|UPPER)"
 	literal_   = "(?:\"((?:" + escape_ + ")|[^\"" + control_ + "])+\")"
 	lowercase_ = "(?:" + lower_ + "(" + digit_ + "|" + lower_ + "|" + upper_ + ")*)"
@@ -179,7 +180,6 @@ const (
 	number_    = "(?:" + digit_ + "+)"
 	optional_  = "(?:\\?)"
 	repeated_  = "(?:\\*|\\+)"
-	runic_     = "(?:'[^" + control_ + "]')"
 	space_     = "(?:[ \\t]+)"
 	unicode_   = "(?:(x(?:" + base16_ + "){2})|(u(?:" + base16_ + "){4})|(U(?:" + base16_ + "){8}))"
 	uppercase_ = "(?:" + upper_ + "(" + digit_ + "|" + lower_ + "|" + upper_ + ")*)"
@@ -264,6 +264,7 @@ loop:
 		case v.foundToken(CommentToken):
 		case v.foundToken(DelimiterToken):
 		case v.foundToken(ExcludedToken):
+		case v.foundToken(GlyphToken):
 		case v.foundToken(IntrinsicToken):
 		case v.foundToken(LiteralToken):
 		case v.foundToken(LowercaseToken):
@@ -272,7 +273,6 @@ loop:
 		case v.foundToken(NumberToken):
 		case v.foundToken(OptionalToken):
 		case v.foundToken(RepeatedToken):
-		case v.foundToken(RunicToken):
 		case v.foundToken(SpaceToken):
 		case v.foundToken(UppercaseToken):
 		default:

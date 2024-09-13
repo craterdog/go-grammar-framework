@@ -20,42 +20,36 @@ import (
 
 // Reference
 
-var headerClass = &headerClass_{
+var extentClass = &extentClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Header() HeaderClassLike {
-	return headerClass
+func Extent() ExtentClassLike {
+	return extentClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type headerClass_ struct {
+type extentClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *headerClass_) Make(
-	comment string,
-	newline string,
-) HeaderLike {
+func (c *extentClass_) Make(glyph string) ExtentLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(comment):
-		panic("The comment attribute is required by this class.")
-	case col.IsUndefined(newline):
-		panic("The newline attribute is required by this class.")
+	case col.IsUndefined(glyph):
+		panic("The glyph attribute is required by this class.")
 	default:
-		return &header_{
+		return &extent_{
 			// Initialize instance attributes.
-			class_:   c,
-			comment_: comment,
-			newline_: newline,
+			class_: c,
+			glyph_: glyph,
 		}
 	}
 }
@@ -64,25 +58,20 @@ func (c *headerClass_) Make(
 
 // Target
 
-type header_ struct {
+type extent_ struct {
 	// Define instance attributes.
-	class_   HeaderClassLike
-	comment_ string
-	newline_ string
+	class_ ExtentClassLike
+	glyph_ string
 }
 
 // Attributes
 
-func (v *header_) GetClass() HeaderClassLike {
+func (v *extent_) GetClass() ExtentClassLike {
 	return v.class_
 }
 
-func (v *header_) GetComment() string {
-	return v.comment_
-}
-
-func (v *header_) GetNewline() string {
-	return v.newline_
+func (v *extent_) GetGlyph() string {
+	return v.glyph_
 }
 
 // Private

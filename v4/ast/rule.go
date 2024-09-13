@@ -42,7 +42,6 @@ type ruleClass_ struct {
 // Constructors
 
 func (c *ruleClass_) Make(
-	optionalComment string,
 	uppercase string,
 	definition DefinitionLike,
 	newlines abs.Sequential[string],
@@ -58,11 +57,10 @@ func (c *ruleClass_) Make(
 	default:
 		return &rule_{
 			// Initialize instance attributes.
-			class_:           c,
-			optionalComment_: optionalComment,
-			uppercase_:       uppercase,
-			definition_:      definition,
-			newlines_:        newlines,
+			class_:      c,
+			uppercase_:  uppercase,
+			definition_: definition,
+			newlines_:   newlines,
 		}
 	}
 }
@@ -73,21 +71,16 @@ func (c *ruleClass_) Make(
 
 type rule_ struct {
 	// Define instance attributes.
-	class_           RuleClassLike
-	optionalComment_ string
-	uppercase_       string
-	definition_      DefinitionLike
-	newlines_        abs.Sequential[string]
+	class_      RuleClassLike
+	uppercase_  string
+	definition_ DefinitionLike
+	newlines_   abs.Sequential[string]
 }
 
 // Attributes
 
 func (v *rule_) GetClass() RuleClassLike {
 	return v.class_
-}
-
-func (v *rule_) GetOptionalComment() string {
-	return v.optionalComment_
 }
 
 func (v *rule_) GetUppercase() string {

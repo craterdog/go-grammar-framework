@@ -14,7 +14,6 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
@@ -41,16 +40,16 @@ type alternativeClass_ struct {
 
 // Constructors
 
-func (c *alternativeClass_) Make(repetitions abs.Sequential[RepetitionLike]) AlternativeLike {
+func (c *alternativeClass_) Make(option OptionLike) AlternativeLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(repetitions):
-		panic("The repetitions attribute is required by this class.")
+	case col.IsUndefined(option):
+		panic("The option attribute is required by this class.")
 	default:
 		return &alternative_{
 			// Initialize instance attributes.
-			class_:       c,
-			repetitions_: repetitions,
+			class_:  c,
+			option_: option,
 		}
 	}
 }
@@ -61,8 +60,8 @@ func (c *alternativeClass_) Make(repetitions abs.Sequential[RepetitionLike]) Alt
 
 type alternative_ struct {
 	// Define instance attributes.
-	class_       AlternativeClassLike
-	repetitions_ abs.Sequential[RepetitionLike]
+	class_  AlternativeClassLike
+	option_ OptionLike
 }
 
 // Attributes
@@ -71,8 +70,8 @@ func (v *alternative_) GetClass() AlternativeClassLike {
 	return v.class_
 }
 
-func (v *alternative_) GetRepetitions() abs.Sequential[RepetitionLike] {
-	return v.repetitions_
+func (v *alternative_) GetOption() OptionLike {
+	return v.option_
 }
 
 // Private

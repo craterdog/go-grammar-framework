@@ -81,7 +81,7 @@ func (v *grammar_) GenerateGrammarModel(
 	implementation = replaceAll(implementation, "wiki", wiki)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
-	var name = v.analyzer_.GetName()
+	var name = v.analyzer_.GetSyntaxName()
 	implementation = replaceAll(implementation, "name", name)
 	implementation = replaceAll(implementation, "parameter", name)
 	var tokenTypes = v.generateTokenTypes()
@@ -97,7 +97,7 @@ func (v *grammar_) GenerateGrammarModel(
 
 func (v *grammar_) generateProcessRules() string {
 	var processRules string
-	var iterator = v.analyzer_.GetRules().GetIterator()
+	var iterator = v.analyzer_.GetRuleNames().GetIterator()
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
 		var parameterName = makeLowerCase(ruleName)
@@ -122,7 +122,7 @@ func (v *grammar_) generateProcessRules() string {
 
 func (v *grammar_) generateProcessTokens() string {
 	var processTokens string
-	var iterator = v.analyzer_.GetTokens().GetIterator()
+	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var name = iterator.GetNext()
 		if v.analyzer_.IsIgnored(name) || name == "delimiter" {
@@ -146,7 +146,7 @@ func (v *grammar_) generateProcessTokens() string {
 
 func (v *grammar_) generateTokenTypes() string {
 	var tokenTypes = "ErrorToken TokenType = iota"
-	var iterator = v.analyzer_.GetTokens().GetIterator()
+	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var name = iterator.GetNext()
 		var tokenType = makeUpperCase(name) + "Token"
@@ -317,17 +317,18 @@ type AnalyzerLike interface {
 
 	// Methods
 	AnalyzeSyntax(syntax ast.SyntaxLike)
-	GetName() string
-	GetNotice() string
-	GetTokens() abs.Sequential[string]
-	GetIgnored() abs.Sequential[string]
-	IsIgnored(token string) bool
-	GetRules() abs.Sequential[string]
-	IsPlural(rule string) bool
-	IsDelimited(rule string) bool
-	GetReferences(rule string) abs.Sequential[ast.ReferenceLike]
-	GetIdentifiers(rule string) abs.Sequential[ast.IdentifierLike]
 	GetExpressions() abs.Sequential[abs.AssociationLike[string, string]]
+	GetIdentifiers(ruleName string) abs.Sequential[ast.IdentifierLike]
+	GetIgnored() abs.Sequential[string]
+	GetNotice() string
+	GetReferences(ruleName string) abs.Sequential[ast.ReferenceLike]
+	GetRuleNames() abs.Sequential[string]
+	GetSyntaxName() string
+	GetTerms(ruleName string) abs.Sequential[ast.TermLike]
+	GetTokenNames() abs.Sequential[string]
+	IsDelimited(ruleName string) bool
+	IsIgnored(tokenName string) bool
+	IsPlural(name string) bool
 }
 
 /*

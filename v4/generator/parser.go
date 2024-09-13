@@ -16,6 +16,7 @@ import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
+	stc "strconv"
 )
 
 // CLASS ACCESS
@@ -80,7 +81,7 @@ func (v *parser_) GenerateParserClass(
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
-	var syntaxName = v.analyzer_.GetName()
+	var syntaxName = v.analyzer_.GetSyntaxName()
 	implementation = replaceAll(implementation, "syntaxName", syntaxName)
 	var methods = v.generateMethods()
 	implementation = replaceAll(implementation, "methods", methods)
@@ -89,31 +90,7 @@ func (v *parser_) GenerateParserClass(
 
 // Private
 
-func (v *parser_) generateInlineMethod(rule string) string {
-	var implementation string
-	var references = v.analyzer_.GetReferences(rule).GetIterator()
-	var handler string
-	for references.HasNext() {
-		var reference = references.GetNext()
-		implementation += v.generateInlineReference(reference)
-		if col.IsUndefined(handler) {
-			handler = replaceAll(parseReturnFalseTemplate_, "rule", rule)
-		} else {
-			handler = replaceAll(parseReturnPanicTemplate_, "rule", rule)
-		}
-		implementation = replaceAll(implementation, "handler", handler)
-
-	}
-	implementation += parseRuleFoundTemplate_
-	var method = parseRuleMethodTemplate_
-	method = replaceAll(method, "implementation", implementation)
-	var arguments = v.generateInlineArguments(rule)
-	method = replaceAll(method, "rule", rule)
-	method = replaceAll(method, "arguments", arguments)
-	return method
-}
-
-func (v *parser_) generateInlineArguments(rule string) string {
+func (v *parser_) generateArguments(rule string) string {
 	var arguments string
 	var references = v.analyzer_.GetReferences(rule).GetIterator()
 
@@ -141,64 +118,99 @@ func (v *parser_) generateInlineArguments(rule string) string {
 	return arguments
 }
 
-func (v *parser_) generateInlineReference(reference ast.ReferenceLike) string {
-	var identifier = reference.GetIdentifier().GetAny().(string)
-	var cardinality = reference.GetOptionalCardinality()
+func (v *parser_) generateCardinality(cardinality ast.CardinalityLike) string {
 	var implementation string
+	switch actual := cardinality.GetAny().(type) {
+	case ast.ConstrainedLike:
+		implementation = v.generateConstrained(actual)
+	case ast.QuantifiedLike:
+		implementation = v.generateQuantified(actual)
+	}
+	return implementation
+}
+
+func (v *parser_) generateConstrained(constrained ast.ConstrainedLike) string {
+	var implementation string
+	switch constrained.GetAny().(string) {
+	case "?":
+		implementation = parseZeroOrOneTemplate_
+	case "*":
+		implementation = parseZeroOrMoreTemplate_
+	case "+":
+		implementation = parseOneOrMoreTemplate_
+	}
+	return implementation
+}
+
+func (v *parser_) generateQuantified(quantified ast.QuantifiedLike) string {
+	var implementation = parseQuantifiedTemplate_
+	var first = quantified.GetNumber()
+	var last = first // Assume a single quantity.
+	var limit = quantified.GetOptionalLimit()
+	if col.IsDefined(limit) {
+		last = limit.GetOptionalNumber()
+		if col.IsUndefined(last) {
+			last = unlimited
+		}
+	}
+	implementation = replaceAll(implementation, "first", first)
+	implementation = replaceAll(implementation, "last", last)
+	return implementation
+}
+
+func (v *parser_) generateIdentifier(identifier ast.IdentifierLike) string {
+	var implementation string
+	var name = identifier.GetAny().(string)
 	switch {
-	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
-		implementation = v.generateInlineToken(identifier, cardinality)
-	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
-		implementation = v.generateInlineRule(identifier, cardinality)
+	case gra.Scanner().MatchesType(name, gra.LowercaseToken):
+		implementation = replaceAll(parseTokenTemplate_, "tokenName", name)
+	case gra.Scanner().MatchesType(name, gra.UppercaseToken):
+		implementation = replaceAll(parseRuleTemplate_, "ruleName", name)
 	}
 	return implementation
 }
 
-func (v *parser_) generateInlineRule(
-	ruleName string,
-	cardinality ast.CardinalityLike,
-) string {
+func (v *parser_) generateInlineMethod(rule string) string {
 	var implementation string
-	switch v.generatePlurality(ruleName, cardinality) {
-	case "singular":
-		implementation = parseSingularRuleTemplate_
-	case "optional":
-		implementation = parseOptionalRuleTemplate_
-	case "repeated":
-		implementation = parseRepeatedRuleTemplate_
-	default:
-		implementation = parseRuleTemplate_
+	var terms = v.analyzer_.GetTerms(rule).GetIterator()
+	var handler string
+	for terms.HasNext() {
+		var term = terms.GetNext()
+		switch actual := term.GetAny().(type) {
+		case ast.ReferenceLike:
+			implementation += v.generateReference(actual)
+		case string:
+			implementation += v.generateLiteral(actual)
+		}
+		if col.IsUndefined(handler) {
+			handler = replaceAll(parseReturnFalseTemplate_, "rule", rule)
+		} else {
+			handler = replaceAll(parseReturnPanicTemplate_, "rule", rule)
+		}
+		implementation = replaceAll(implementation, "handler", handler)
+
 	}
-	implementation = replaceAll(implementation, "ruleName", ruleName)
-	var pluralName = makePlural(ruleName)
-	implementation = replaceAll(implementation, "pluralName", pluralName)
-	return implementation
+	implementation += parseRuleFoundTemplate_
+	var method = parseRuleMethodTemplate_
+	method = replaceAll(method, "implementation", implementation)
+	var arguments = v.generateArguments(rule)
+	method = replaceAll(method, "rule", rule)
+	method = replaceAll(method, "arguments", arguments)
+	return method
 }
 
-func (v *parser_) generateInlineToken(
-	tokenName string,
-	cardinality ast.CardinalityLike,
-) string {
-	var implementation string
-	switch v.generatePlurality(tokenName, cardinality) {
-	case "singular":
-		implementation = parseSingularTokenTemplate_
-	case "optional":
-		implementation = parseOptionalTokenTemplate_
-	case "repeated":
-		implementation = parseRepeatedTokenTemplate_
-	default:
-		implementation = parseTokenTemplate_
+func (v *parser_) generateLiteral(literal string) string {
+	var delimiter, err = stc.Unquote(literal) // Remove the double quotes.
+	if err != nil {
+		panic(err)
 	}
-	implementation = replaceAll(implementation, "tokenName", tokenName)
-	var pluralName = makePlural(tokenName)
-	implementation = replaceAll(implementation, "pluralName", pluralName)
+	var implementation = replaceAll(parseDelimiterTemplate_, "delimiter", delimiter)
 	return implementation
 }
 
 func (v *parser_) generateMethods() string {
 	var methods string
-	var rules = v.analyzer_.GetRules().GetIterator()
+	var rules = v.analyzer_.GetRuleNames().GetIterator()
 	for rules.HasNext() {
 		var method string
 		var rule = rules.GetNext()
@@ -253,31 +265,32 @@ func (v *parser_) generateMultilineToken(tokenName string) string {
 	return replaceAll(template, "tokenName", tokenName)
 }
 
-func (v *parser_) generatePlurality(
-	identifier string,
-	cardinality ast.CardinalityLike,
-) string {
-	var plurality string
-	if col.IsUndefined(cardinality) {
-		if v.analyzer_.IsPlural(identifier) {
-			plurality = "singular"
-		}
-		return plurality
+func (v *parser_) generateReference(reference ast.ReferenceLike) string {
+	var identifier = reference.GetIdentifier()
+	var implementation = v.generateIdentifier(identifier)
+	var cardinality = reference.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		var block = v.generateCardinality(cardinality)
+		implementation = replaceAll(block, "implementation", implementation)
 	}
-	switch actual := cardinality.GetAny().(type) {
-	case ast.ConstraintLike:
-		var token = actual.GetAny().(string)
-		switch {
-		case gra.Scanner().MatchesType(token, gra.OptionalToken):
-			plurality = "optional"
-		case gra.Scanner().MatchesType(token, gra.RepeatedToken):
-			plurality = "repeated"
-		}
-	case ast.CountLike:
-		plurality = "repeated"
-	}
-	return plurality
+	return implementation
 }
+
+// Templates
+
+const unlimited = "4294967295" // Default to a reasonable "unlimited" value.
+
+const parseZeroOrOneTemplate_ = `
+`
+
+const parseZeroOrMoreTemplate_ = `
+`
+
+const parseOneOrMoreTemplate_ = `
+`
+
+const parseQuantifiedTemplate_ = `
+`
 
 const parseAnyTemplate_ = `<RuleCases><TokenCases><DefaultCase>`
 
@@ -314,7 +327,6 @@ func (v *parser_) parse<Rule>(
 ) {<Implementation>}
 `
 
-/*
 const parseDelimiterTemplate_ = `
 	// Attempt to parse a <delimiter> delimiter.
 	_, token, ok = v.parseDelimiter(<delimiter>)
@@ -322,7 +334,6 @@ const parseDelimiterTemplate_ = `
 		<Handler>
 	}
 `
-*/
 
 const parseRuleCaseTemplate_ = `
 	// Attempt to parse a <ruleName> rule.
@@ -381,11 +392,9 @@ const parseTokenTemplate_ = `
 	// Attempt to parse a <tokenName> token.
 	var <tokenName_> string
 	<tokenName_>, token, _ = v.parseToken(<TokenName>Token)
-	if !ok {
-		<Handler>
-	}
 `
 
+/*
 const parseSingularRuleTemplate_ = `
 	// Attempt to parse a <ruleName> rule.
 	var <ruleName_> ast.<RuleName>Like
@@ -433,6 +442,7 @@ const parseRepeatedTokenTemplate_ = `
 		<tokenName_>, token, ok = v.parse<TokenName>()
 	}
 `
+*/
 
 const parserTemplate_ = `<Notice>
 

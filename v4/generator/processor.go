@@ -83,7 +83,7 @@ func (v *processor_) GenerateProcessorClass(
 	implementation = replaceAll(implementation, "tokenProcessors", tokenProcessors)
 	var ruleProcessors = v.generateRuleProcessors()
 	implementation = replaceAll(implementation, "ruleProcessors", ruleProcessors)
-	var name = v.analyzer_.GetName()
+	var name = v.analyzer_.GetSyntaxName()
 	implementation = replaceAll(implementation, "name", name)
 	return implementation
 }
@@ -92,7 +92,7 @@ func (v *processor_) GenerateProcessorClass(
 
 func (v *processor_) generateRuleProcessors() string {
 	var ruleProcessors string
-	var iterator = v.analyzer_.GetRules().GetIterator()
+	var iterator = v.analyzer_.GetRuleNames().GetIterator()
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
 		var isPlural = v.analyzer_.IsPlural(ruleName)
@@ -110,7 +110,7 @@ func (v *processor_) generateRuleProcessors() string {
 
 func (v *processor_) generateTokenProcessors() string {
 	var tokenProcessors string
-	var iterator = v.analyzer_.GetTokens().GetIterator()
+	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
 		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {

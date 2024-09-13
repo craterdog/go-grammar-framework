@@ -107,7 +107,7 @@ func (v *scanner_) generateExpressions() string {
 
 func (v *scanner_) generateFoundCases() string {
 	var foundCases = "// Find the next token type."
-	var iterator = v.analyzer_.GetTokens().GetIterator()
+	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
 		var tokenType = makeUpperCase(tokenName) + "Token"
@@ -129,7 +129,7 @@ func (v *scanner_) generateIgnoredCases() string {
 
 func (v *scanner_) generateTokenMatchers() string {
 	var tokenMatchers = "// Define pattern matchers for each type of token."
-	var iterator = v.analyzer_.GetTokens().GetIterator()
+	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
 		var tokenType = makeUpperCase(tokenName) + "Token"
@@ -141,7 +141,7 @@ func (v *scanner_) generateTokenMatchers() string {
 
 func (v *scanner_) generateTokenNames() string {
 	var tokenNames = `ErrorToken: "error",`
-	var iterator = v.analyzer_.GetTokens().GetIterator()
+	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
 		var tokenType = makeUpperCase(tokenName) + "Token"

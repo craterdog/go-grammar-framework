@@ -83,7 +83,7 @@ func (v *formatter_) GenerateFormatterClass(
 	implementation = replaceAll(implementation, "tokenFormatters", tokenFormatters)
 	var ruleFormatters = v.generateRuleFormatters()
 	implementation = replaceAll(implementation, "ruleFormatters", ruleFormatters)
-	var name = v.analyzer_.GetName()
+	var name = v.analyzer_.GetSyntaxName()
 	implementation = replaceAll(implementation, "name", name)
 	return implementation
 }
@@ -92,7 +92,7 @@ func (v *formatter_) GenerateFormatterClass(
 
 func (v *formatter_) generateRuleFormatters() string {
 	var ruleFormatters string
-	var iterator = v.analyzer_.GetRules().GetIterator()
+	var iterator = v.analyzer_.GetRuleNames().GetIterator()
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
 		var isPlural = v.analyzer_.IsPlural(ruleName)
@@ -110,7 +110,7 @@ func (v *formatter_) generateRuleFormatters() string {
 
 func (v *formatter_) generateTokenFormatters() string {
 	var tokenFormatters string
-	var iterator = v.analyzer_.GetTokens().GetIterator()
+	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
 		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {

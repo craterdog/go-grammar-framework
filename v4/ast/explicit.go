@@ -14,49 +14,46 @@ package ast
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 )
 
 // CLASS ACCESS
 
 // Reference
 
-var bracketClass = &bracketClass_{
+var explicitClass = &explicitClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Bracket() BracketClassLike {
-	return bracketClass
+func Explicit() ExplicitClassLike {
+	return explicitClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type bracketClass_ struct {
+type explicitClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *bracketClass_) Make(
-	factors abs.Sequential[FactorLike],
-	cardinality CardinalityLike,
-) BracketLike {
+func (c *explicitClass_) Make(
+	glyph string,
+	optionalExtent ExtentLike,
+) ExplicitLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(factors):
-		panic("The factors attribute is required by this class.")
-	case col.IsUndefined(cardinality):
-		panic("The cardinality attribute is required by this class.")
+	case col.IsUndefined(glyph):
+		panic("The glyph attribute is required by this class.")
 	default:
-		return &bracket_{
+		return &explicit_{
 			// Initialize instance attributes.
-			class_:       c,
-			factors_:     factors,
-			cardinality_: cardinality,
+			class_:          c,
+			glyph_:          glyph,
+			optionalExtent_: optionalExtent,
 		}
 	}
 }
@@ -65,25 +62,25 @@ func (c *bracketClass_) Make(
 
 // Target
 
-type bracket_ struct {
+type explicit_ struct {
 	// Define instance attributes.
-	class_       BracketClassLike
-	factors_     abs.Sequential[FactorLike]
-	cardinality_ CardinalityLike
+	class_          ExplicitClassLike
+	glyph_          string
+	optionalExtent_ ExtentLike
 }
 
 // Attributes
 
-func (v *bracket_) GetClass() BracketClassLike {
+func (v *explicit_) GetClass() ExplicitClassLike {
 	return v.class_
 }
 
-func (v *bracket_) GetFactors() abs.Sequential[FactorLike] {
-	return v.factors_
+func (v *explicit_) GetGlyph() string {
+	return v.glyph_
 }
 
-func (v *bracket_) GetCardinality() CardinalityLike {
-	return v.cardinality_
+func (v *explicit_) GetOptionalExtent() ExtentLike {
+	return v.optionalExtent_
 }
 
 // Private

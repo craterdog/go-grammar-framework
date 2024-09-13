@@ -20,36 +20,42 @@ import (
 
 // Reference
 
-var factorClass = &factorClass_{
+var noticeClass = &noticeClass_{
 	// Initialize class constants.
 }
 
 // Function
 
-func Factor() FactorClassLike {
-	return factorClass
+func Notice() NoticeClassLike {
+	return noticeClass
 }
 
 // CLASS METHODS
 
 // Target
 
-type factorClass_ struct {
+type noticeClass_ struct {
 	// Define class constants.
 }
 
 // Constructors
 
-func (c *factorClass_) Make(any_ any) FactorLike {
+func (c *noticeClass_) Make(
+	comment string,
+	newline string,
+) NoticeLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(any_):
-		panic("The any attribute is required by this class.")
+	case col.IsUndefined(comment):
+		panic("The comment attribute is required by this class.")
+	case col.IsUndefined(newline):
+		panic("The newline attribute is required by this class.")
 	default:
-		return &factor_{
+		return &notice_{
 			// Initialize instance attributes.
-			class_: c,
-			any_:   any_,
+			class_:   c,
+			comment_: comment,
+			newline_: newline,
 		}
 	}
 }
@@ -58,20 +64,25 @@ func (c *factorClass_) Make(any_ any) FactorLike {
 
 // Target
 
-type factor_ struct {
+type notice_ struct {
 	// Define instance attributes.
-	class_ FactorClassLike
-	any_   any
+	class_   NoticeClassLike
+	comment_ string
+	newline_ string
 }
 
 // Attributes
 
-func (v *factor_) GetClass() FactorClassLike {
+func (v *notice_) GetClass() NoticeClassLike {
 	return v.class_
 }
 
-func (v *factor_) GetAny() any {
-	return v.any_
+func (v *notice_) GetComment() string {
+	return v.comment_
+}
+
+func (v *notice_) GetNewline() string {
+	return v.newline_
 }
 
 // Private

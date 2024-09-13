@@ -80,7 +80,7 @@ func (v *visitor_) GenerateVisitorClass(
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
-	var syntaxName = v.analyzer_.GetName()
+	var syntaxName = v.analyzer_.GetSyntaxName()
 	implementation = replaceAll(implementation, "syntaxName", syntaxName)
 	var methods = v.generateMethods()
 	implementation = replaceAll(implementation, "methods", methods)
@@ -158,7 +158,7 @@ func (v *visitor_) generateInlineToken(
 
 func (v *visitor_) generateMethods() string {
 	var methods string
-	var rules = v.analyzer_.GetRules().GetIterator()
+	var rules = v.analyzer_.GetRuleNames().GetIterator()
 	for rules.HasNext() {
 		var method string
 		var rule = rules.GetNext()
@@ -222,7 +222,7 @@ func (v *visitor_) generatePlurality(
 		return plurality
 	}
 	switch actual := cardinality.GetAny().(type) {
-	case ast.ConstraintLike:
+	case ast.ConstrainedLike:
 		var token = actual.GetAny().(string)
 		switch {
 		case gra.Scanner().MatchesType(token, gra.OptionalToken):
@@ -230,7 +230,7 @@ func (v *visitor_) generatePlurality(
 		case gra.Scanner().MatchesType(token, gra.RepeatedToken):
 			plurality = "repeated"
 		}
-	case ast.CountLike:
+	case ast.QuantifiedLike:
 		plurality = "repeated"
 	}
 	return plurality

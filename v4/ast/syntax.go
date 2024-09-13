@@ -42,24 +42,32 @@ type syntaxClass_ struct {
 // Constructors
 
 func (c *syntaxClass_) Make(
-	headers abs.Sequential[HeaderLike],
+	notice NoticeLike,
+	comment1 string,
 	rules abs.Sequential[RuleLike],
+	comment2 string,
 	expressions abs.Sequential[ExpressionLike],
 ) SyntaxLike {
 	// Validate the arguments.
 	switch {
-	case col.IsUndefined(headers):
-		panic("The headers attribute is required by this class.")
+	case col.IsUndefined(notice):
+		panic("The notice attribute is required by this class.")
+	case col.IsUndefined(comment1):
+		panic("The comment1 attribute is required by this class.")
 	case col.IsUndefined(rules):
 		panic("The rules attribute is required by this class.")
+	case col.IsUndefined(comment2):
+		panic("The comment2 attribute is required by this class.")
 	case col.IsUndefined(expressions):
 		panic("The expressions attribute is required by this class.")
 	default:
 		return &syntax_{
 			// Initialize instance attributes.
 			class_:       c,
-			headers_:     headers,
+			notice_:      notice,
+			comment1_:    comment1,
 			rules_:       rules,
+			comment2_:    comment2,
 			expressions_: expressions,
 		}
 	}
@@ -72,8 +80,10 @@ func (c *syntaxClass_) Make(
 type syntax_ struct {
 	// Define instance attributes.
 	class_       SyntaxClassLike
-	headers_     abs.Sequential[HeaderLike]
+	notice_      NoticeLike
+	comment1_    string
 	rules_       abs.Sequential[RuleLike]
+	comment2_    string
 	expressions_ abs.Sequential[ExpressionLike]
 }
 
@@ -83,12 +93,20 @@ func (v *syntax_) GetClass() SyntaxClassLike {
 	return v.class_
 }
 
-func (v *syntax_) GetHeaders() abs.Sequential[HeaderLike] {
-	return v.headers_
+func (v *syntax_) GetNotice() NoticeLike {
+	return v.notice_
+}
+
+func (v *syntax_) GetComment1() string {
+	return v.comment1_
 }
 
 func (v *syntax_) GetRules() abs.Sequential[RuleLike] {
 	return v.rules_
+}
+
+func (v *syntax_) GetComment2() string {
+	return v.comment2_
 }
 
 func (v *syntax_) GetExpressions() abs.Sequential[ExpressionLike] {

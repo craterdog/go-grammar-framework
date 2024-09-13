@@ -81,7 +81,7 @@ func (v *validator_) GenerateValidatorClass(
 	implementation = replaceAll(implementation, "notice", notice)
 	var tokenValidators = v.generateTokenValidators()
 	implementation = replaceAll(implementation, "tokenValidators", tokenValidators)
-	var name = v.analyzer_.GetName()
+	var name = v.analyzer_.GetSyntaxName()
 	implementation = replaceAll(implementation, "name", name)
 	return implementation
 }
@@ -90,7 +90,7 @@ func (v *validator_) GenerateValidatorClass(
 
 func (v *validator_) generateTokenValidators() string {
 	var tokenValidators string
-	var iterator = v.analyzer_.GetTokens().GetIterator()
+	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
 		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
