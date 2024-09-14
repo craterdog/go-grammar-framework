@@ -99,6 +99,12 @@ func (v *analyzer_) ProcessExcluded(excluded string) {
 	v.regexp_ += "^"
 }
 
+func (v *analyzer_) ProcessGlyph(glyph string) {
+	var character = glyph[1:2] //Remove the single quotes.
+	character = v.escapeText(character)
+	v.regexp_ += character
+}
+
 func (v *analyzer_) ProcessIntrinsic(intrinsic string) {
 	intrinsic = sts.ToLower(intrinsic)
 	if intrinsic == "any" {
@@ -139,12 +145,6 @@ func (v *analyzer_) ProcessOptional(optional string) {
 
 func (v *analyzer_) ProcessRepeated(repeated string) {
 	v.regexp_ += repeated
-}
-
-func (v *analyzer_) ProcessGlyph(glyph string) {
-	var character = glyph[1:2] //Remove the single quotes.
-	character = v.escapeText(character)
-	v.regexp_ += character
 }
 
 func (v *analyzer_) PreprocessAlternative(
@@ -413,14 +413,6 @@ func (v *analyzer_) escapeText(text string) string {
 	return escaped
 }
 
-func (v *analyzer_) extractSyntaxName(syntax ast.SyntaxLike) string {
-	var rules = syntax.GetRules().GetIterator()
-	// The first rule name is the name of the syntax.
-	var rule = rules.GetNext()
-	var name = rule.GetUppercase()
-	return name
-}
-
 func (v *analyzer_) extractNotice(syntax ast.SyntaxLike) string {
 	var comment = syntax.GetNotice().GetComment()
 
@@ -431,4 +423,12 @@ func (v *analyzer_) extractNotice(syntax ast.SyntaxLike) string {
 	var notice = "/*" + comment + "*/"
 
 	return notice
+}
+
+func (v *analyzer_) extractSyntaxName(syntax ast.SyntaxLike) string {
+	var rules = syntax.GetRules().GetIterator()
+	// The first rule name is the name of the syntax.
+	var rule = rules.GetNext()
+	var name = rule.GetUppercase()
+	return name
 }

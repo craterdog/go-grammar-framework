@@ -81,6 +81,10 @@ func (v *formatter_) ProcessComment(comment string) {
 	v.appendString(comment)
 }
 
+func (v *formatter_) ProcessGlyph(glyph string) {
+	v.appendString(glyph)
+}
+
 func (v *formatter_) ProcessIntrinsic(intrinsic string) {
 	v.appendString(intrinsic)
 }
@@ -110,10 +114,6 @@ func (v *formatter_) ProcessRepeated(repeated string) {
 	v.appendString(repeated)
 }
 
-func (v *formatter_) ProcessGlyph(glyph string) {
-	v.appendString(glyph)
-}
-
 func (v *formatter_) ProcessUppercase(uppercase string) {
 	v.appendString(uppercase)
 }
@@ -124,18 +124,6 @@ func (v *formatter_) PreprocessAlternative(
 	size uint,
 ) {
 	v.appendString(" | ")
-}
-
-func (v *formatter_) PreprocessFilter(filter ast.FilterLike) {
-	var excluded = filter.GetOptionalExcluded()
-	if col.IsDefined(excluded) {
-		v.appendString(excluded)
-	}
-	v.appendString("[")
-}
-
-func (v *formatter_) PostprocessFilter(filter ast.FilterLike) {
-	v.appendString("]")
 }
 
 func (v *formatter_) PreprocessCharacter(
@@ -163,6 +151,18 @@ func (v *formatter_) PostprocessExpression(
 
 func (v *formatter_) PreprocessExtent(extent ast.ExtentLike) {
 	v.appendString("..")
+}
+
+func (v *formatter_) PreprocessFilter(filter ast.FilterLike) {
+	var excluded = filter.GetOptionalExcluded()
+	if col.IsDefined(excluded) {
+		v.appendString(excluded)
+	}
+	v.appendString("[")
+}
+
+func (v *formatter_) PostprocessFilter(filter ast.FilterLike) {
+	v.appendString("]")
 }
 
 func (v *formatter_) PreprocessGroup(group ast.GroupLike) {

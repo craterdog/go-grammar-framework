@@ -77,28 +77,6 @@ func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
 }
 
-// Public
-
-func (v *validator_) ValidateToken(
-	tokenValue string,
-	tokenType TokenType,
-) {
-	if !Scanner().MatchesType(tokenValue, tokenType) {
-		var message = fmt.Sprintf(
-			"The following token value is not of type %v: %q",
-			Scanner().FormatType(tokenType),
-			tokenValue,
-		)
-		panic(message)
-	}
-}
-
-func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
-	v.rules_ = col.Catalog[string, ast.DefinitionLike]()
-	v.expressions_ = col.Catalog[string, ast.PatternLike]()
-	v.visitor_.VisitSyntax(syntax)
-}
-
 // Methodical
 
 func (v *validator_) ProcessComment(comment string) {
@@ -252,4 +230,26 @@ expressionLoop:
 		)
 		panic(message)
 	}
+}
+
+// Public
+
+func (v *validator_) ValidateToken(
+	tokenValue string,
+	tokenType TokenType,
+) {
+	if !Scanner().MatchesType(tokenValue, tokenType) {
+		var message = fmt.Sprintf(
+			"The following token value is not of type %v: %q",
+			Scanner().FormatType(tokenType),
+			tokenValue,
+		)
+		panic(message)
+	}
+}
+
+func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
+	v.rules_ = col.Catalog[string, ast.DefinitionLike]()
+	v.expressions_ = col.Catalog[string, ast.PatternLike]()
+	v.visitor_.VisitSyntax(syntax)
 }
