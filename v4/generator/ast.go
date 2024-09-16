@@ -99,47 +99,6 @@ func (v *ast_) GenerateAstModel(
 
 // Private
 
-func (v *ast_) generateAttribute(reference ast.ReferenceLike) mod.AttributeLike {
-	var identifier = reference.GetIdentifier().GetAny().(string)
-
-	// Determine the attribute type.
-	var attributeType mod.AbstractionLike
-	switch {
-	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
-		attributeType = mod.Abstraction("string")
-	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
-		attributeType = mod.Abstraction(makeUpperCase(identifier) + "Like")
-	}
-
-	// Determine the attribute name.
-	var attributeName = makeLowerCase(identifier)
-	var cardinality = reference.GetOptionalCardinality()
-	if col.IsDefined(cardinality) {
-		switch actual := cardinality.GetAny().(type) {
-		case ast.ConstrainedLike:
-			var constrained = actual.GetAny().(string)
-			switch constrained {
-			case "?":
-				attributeName = makeOptional(attributeName)
-			case "*", "+":
-				attributeName = makePlural(attributeName)
-				attributeType = v.pluralizeType(attributeType)
-			}
-		case ast.QuantifiedLike:
-			attributeName = makePlural(attributeName)
-			attributeType = v.pluralizeType(attributeType)
-		}
-	}
-	attributeName = "Get" + makeUpperCase(attributeName)
-
-	// Define the attribute.
-	var attribute = mod.Attribute(
-		attributeName,
-		attributeType,
-	)
-	return attribute
-}
-
 func (v *ast_) generateClassDeclaration(name string) mod.DeclarationLike {
 	var comment = replaceAll(classCommentTemplate_, "className", name)
 	var declaration = mod.Declaration(
@@ -209,10 +168,17 @@ func (v *ast_) generateInlineAttributes(name string) mod.AttributesLike {
 	attributes.AppendValue(attribute)
 
 	// Define any additional attributes.
-	var references = v.analyzer_.GetReferences(name).GetIterator()
-	for references.HasNext() {
-		var reference = references.GetNext()
-		attribute = v.generateAttribute(reference)
+	var references = v.analyzer_.GetReferences(name)
+	var variableNames = generateVariableNames(references).GetIterator()
+	var variableTypes = v.generateVariableTypes(references).GetIterator()
+	for variableNames.HasNext() && variableTypes.HasNext() {
+		var variableName = variableNames.GetNext()
+		var attributeName = "Get" + makeUpperCase(variableName)
+		var attributeType = variableTypes.GetNext()
+		var attribute = mod.Attribute(
+			attributeName,
+			attributeType,
+		)
 		attributes.AppendValue(attribute)
 	}
 
@@ -236,18 +202,31 @@ func (v *ast_) generateInlineConstructor(name string) mod.ConstructorLike {
 }
 
 func (v *ast_) generateInlineParameters(name string) mod.ParametersLike {
+	var references = v.analyzer_.GetReferences(name)
+	var variableNames = generateVariableNames(references).GetIterator()
+	var variableTypes = v.generateVariableTypes(references).GetIterator()
+
 	// Define the first parameter.
-	var references = v.analyzer_.GetReferences(name).GetIterator()
-	var reference = references.GetNext()
-	var parameter = v.generateParameter(reference)
+	var variableName = variableNames.GetNext()
+	var variableType = variableTypes.GetNext()
+	var parameter = mod.Parameter(
+		variableName,
+		variableType,
+	)
 
 	// Define any additional parameters.
 	var additionalParameters = col.List[mod.AdditionalParameterLike]()
-	for references.HasNext() {
-		var reference = references.GetNext()
-		var additional = v.generateParameter(reference)
-		additionalParameters.AppendValue(mod.AdditionalParameter(additional))
+	for variableNames.HasNext() && variableTypes.HasNext() {
+		variableName = variableNames.GetNext()
+		variableType = variableTypes.GetNext()
+		var parameter = mod.Parameter(
+			variableName,
+			variableType,
+		)
+		var additionalParameter = mod.AdditionalParameter(parameter)
+		additionalParameters.AppendValue(additionalParameter)
 	}
+
 	return mod.Parameters(parameter, additionalParameters)
 }
 
@@ -325,66 +304,70 @@ func (v *ast_) generateMultilineConstructor(name string) mod.ConstructorLike {
 	return constructor
 }
 
-func (v *ast_) generateParameter(reference ast.ReferenceLike) mod.ParameterLike {
+func (v *ast_) generateVariableType(
+	reference ast.ReferenceLike,
+) (
+	variableType mod.AbstractionLike,
+) {
 	var identifier = reference.GetIdentifier().GetAny().(string)
-
-	// Determine the parameter type.
-	var parameterType mod.AbstractionLike
 	switch {
 	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
-		parameterType = mod.Abstraction("string")
+		variableType = mod.Abstraction("string")
 	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
-		parameterType = mod.Abstraction(makeUpperCase(identifier) + "Like")
+		variableType = mod.Abstraction(makeUpperCase(identifier) + "Like")
 	}
-
-	// Determine the parameter name.
-	var parameterName = makeLowerCase(identifier)
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		switch actual := cardinality.GetAny().(type) {
 		case ast.ConstrainedLike:
 			var constrained = actual.GetAny().(string)
 			switch constrained {
-			case "?":
-				parameterName = makeOptional(parameterName)
 			case "*", "+":
-				parameterName = makePlural(parameterName)
-				parameterType = v.pluralizeType(parameterType)
+				variableType = v.pluralizeType(variableType)
 			}
 		case ast.QuantifiedLike:
-			parameterName = makePlural(parameterName)
-			parameterType = v.pluralizeType(parameterType)
+			variableType = v.pluralizeType(variableType)
 		}
 	}
+	return variableType
+}
 
-	// Define the parameter.
-	var parameter = mod.Parameter(
-		parameterName,
-		parameterType,
-	)
-	return parameter
+func (v *ast_) generateVariableTypes(
+	references abs.Sequential[ast.ReferenceLike],
+) abs.Sequential[mod.AbstractionLike] {
+	var variableTypes = col.List[mod.AbstractionLike]()
+	var iterator = references.GetIterator()
+	for iterator.HasNext() {
+		var reference = iterator.GetNext()
+		var variableType = v.generateVariableType(reference)
+		variableTypes.AppendValue(variableType)
+	}
+	return variableTypes
 }
 
 func (v *ast_) pluralizeType(abstraction mod.AbstractionLike) mod.AbstractionLike {
-	// Add the collections module to the catalog of imported modules.
-	var alias = "abs"
+	// Add the collections module to the imports list.
 	var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
+	var alias = "abs"
 	v.modules_.SetValue(path, alias) // Modules are sorted by path.
 
 	// Create the generic arguments list for the pluralized abstraction.
 	var argument = mod.Argument(abstraction)
 	var additionalArguments = col.List[mod.AdditionalArgumentLike]()
 	var arguments = mod.Arguments(argument, additionalArguments)
+	var name = "Sequential"
 	var genericArguments = mod.GenericArguments(arguments)
 
 	// Create the result type for the pluralized abstraction.
 	abstraction = mod.Abstraction(
 		mod.Alias(alias),
-		"Sequential",
+		name,
 		genericArguments,
 	)
 	return abstraction
 }
+
+// Templates
 
 const classCommentTemplate_ = `/*
 <ClassName>ClassLike is a class interface that defines the complete set of

@@ -92,25 +92,24 @@ func (v *parser_) GenerateParserClass(
 
 func (v *parser_) generateArguments(rule string) string {
 	var arguments string
-	var references = v.analyzer_.GetReferences(rule).GetIterator()
+	var references = v.analyzer_.GetReferences(rule)
+	var variableNames = generateVariableNames(references).GetIterator()
 
 	// Define the first argument.
-	if references.GetSize() > 1 {
+	if variableNames.GetSize() > 1 {
 		// Use the multiline argument style.
 		arguments += "\n\t\t"
 	}
-	var reference = references.GetNext()
-	var argument = reference.GetIdentifier().GetAny().(string)
+	var argument = variableNames.GetNext()
 	arguments += replaceAll(parseArgumentTemplate_, "argument", argument)
 
 	// Define any additional arguments.
-	for references.HasNext() {
+	for variableNames.HasNext() {
 		arguments += ",\n\t\t"
-		var reference = references.GetNext()
-		var argument = reference.GetIdentifier().GetAny().(string)
+		argument = variableNames.GetNext()
 		arguments += replaceAll(parseArgumentTemplate_, "argument", argument)
 	}
-	if references.GetSize() > 1 {
+	if variableNames.GetSize() > 1 {
 		// Use the multiline argument style.
 		arguments += ",\n\t"
 	}

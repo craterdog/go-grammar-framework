@@ -67,10 +67,10 @@ type analyzer_ struct {
 	isGreedy_     bool
 	inDefinition_ bool
 	inPattern_    bool
+	hasLiteral_   bool
 	syntaxName_   string
 	notice_       string
 	ruleName_     string
-	literal_      string
 	regexp_       string
 	ruleNames_    abs.SetLike[string]
 	tokenNames_   abs.SetLike[string]
@@ -114,7 +114,7 @@ func (v *analyzer_) ProcessIntrinsic(intrinsic string) {
 }
 
 func (v *analyzer_) ProcessLiteral(literal string) {
-	v.literal_ = literal
+	v.hasLiteral_ = true
 	var delimiter, err = stc.Unquote(literal) // Remove the double quotes.
 	if err != nil {
 		panic(err)
@@ -265,7 +265,7 @@ func (v *analyzer_) PreprocessRule(
 	index uint,
 	size uint,
 ) {
-	v.literal_ = ""
+	v.hasLiteral_ = false
 	var ruleName = rule.GetUppercase()
 	v.ruleName_ = ruleName
 	v.ruleNames_.AddValue(ruleName)
@@ -287,8 +287,10 @@ func (v *analyzer_) PostprocessRule(
 	index uint,
 	size uint,
 ) {
-	if col.IsDefined(v.literal_) {
-		var ruleName = rule.GetUppercase()
+	var ruleName = rule.GetUppercase()
+	v.ruleName_ = ruleName
+	v.ruleNames_.AddValue(ruleName)
+	if v.hasLiteral_ {
 		v.delimited_.AddValue(ruleName)
 	}
 }

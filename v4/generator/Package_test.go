@@ -150,7 +150,7 @@ Intrinsic:
 
 List: "[" Component AdditionalComponent* "]"
 
-AdditionalComponent: "," Component
+AdditionalComponent: "," Component Component
 
 !>
 EXPRESSION DEFINITIONS
@@ -460,7 +460,10 @@ func (v *parser_) parseAdditionalComponent(
 	ok bool,
 ) {
 	// Found a additionalComponent rule.
-	additionalComponent = ast.AdditionalComponent().Make(component)
+	additionalComponent = ast.AdditionalComponent().Make(
+		component1,
+		component2,
+	)
 	return additionalComponent, token, true
 }
 
@@ -499,7 +502,7 @@ func (v *parser_) parseDocument(
 	// Found a document rule.
 	document = ast.Document().Make(
 		component,
-		newline,
+		newlines,
 	)
 	return document, token, true
 }
@@ -548,7 +551,7 @@ func (v *parser_) parseList(
 	// Found a list rule.
 	list = ast.List().Make(
 		component,
-		additionalComponent,
+		additionalComponents,
 	)
 	return list, token, true
 }
@@ -1339,11 +1342,17 @@ func (v *visitor_) VisitDocument(document ast.DocumentLike) {
 // Private
 
 func (v *visitor_) visitAdditionalComponent(additionalComponent ast.AdditionalComponentLike) {
-	// Visit the component rule.
-	var component = additionalComponent.GetComponent()
-	v.processor_.PreprocessComponent(component)
-	v.visitComponent(component)
-	v.processor_.PostprocessComponent(component)
+	// Visit the component1 rule.
+	var component1 = additionalComponent.GetComponent1()
+	v.processor_.PreprocessComponent(component1)
+	v.visitComponent(component1)
+	v.processor_.PostprocessComponent(component1)
+
+	// Visit the component2 rule.
+	var component2 = additionalComponent.GetComponent2()
+	v.processor_.PreprocessComponent(component2)
+	v.visitComponent(component2)
+	v.processor_.PostprocessComponent(component2)
 }
 
 func (v *visitor_) visitComponent(component ast.ComponentLike) {
@@ -1805,7 +1814,10 @@ concrete additional-component-like class.
 */
 type AdditionalComponentClassLike interface {
 	// Constructors
-	Make(component ComponentLike) AdditionalComponentLike
+	Make(
+		component1 ComponentLike,
+		component2 ComponentLike,
+	) AdditionalComponentLike
 }
 
 /*
@@ -1864,7 +1876,8 @@ instance of a concrete additional-component-like class.
 type AdditionalComponentLike interface {
 	// Attributes
 	GetClass() AdditionalComponentClassLike
-	GetComponent() ComponentLike
+	GetComponent1() ComponentLike
+	GetComponent2() ComponentLike
 }
 
 /*

@@ -16,6 +16,10 @@ package generator
 
 import (
 	fmt "fmt"
+	col "github.com/craterdog/go-collection-framework/v4"
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
+	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	stc "strconv"
 	sts "strings"
 	tim "time"
 	uni "unicode"
@@ -109,75 +113,130 @@ func expandCopyright(copyright string) string {
 	return copyright
 }
 
+func generateVariableName(reference ast.ReferenceLike) string {
+	var mixedCase = reference.GetIdentifier().GetAny().(string)
+	var variableName = makeLowerCase(mixedCase)
+	var cardinality = reference.GetOptionalCardinality()
+	if col.IsDefined(cardinality) {
+		switch actual := cardinality.GetAny().(type) {
+		case ast.ConstrainedLike:
+			var constrained = actual.GetAny().(string)
+			switch constrained {
+			case "?":
+				variableName = makeOptional(variableName)
+			case "*", "+":
+				variableName = makePlural(variableName)
+			}
+		case ast.QuantifiedLike:
+			variableName = makePlural(variableName)
+		}
+	}
+	return variableName
+}
+
+func generateVariableNames(
+	references abs.Sequential[ast.ReferenceLike],
+) abs.Sequential[string] {
+	var variableNames = col.List[string]()
+
+	// Extract the reference identifiers as attribute names.
+	var iterator = references.GetIterator()
+	for iterator.HasNext() {
+		var reference = iterator.GetNext()
+		var variableName = generateVariableName(reference)
+		variableNames.AppendValue(variableName)
+	}
+
+	// Normalize any duplicate names.
+	for i := 1; i <= variableNames.GetSize(); i++ {
+		var count = 1
+		var firstName = variableNames.GetValue(i)
+		for j := i + 1; j <= variableNames.GetSize(); j++ {
+			var secondName = variableNames.GetValue(j)
+			if firstName == secondName {
+				count++
+				secondName += stc.Itoa(count)
+				variableNames.SetValue(j, secondName)
+			}
+		}
+		if count > 1 {
+			firstName += "1"
+			variableNames.SetValue(i, firstName)
+		}
+	}
+
+	return variableNames
+}
+
 func makeAllCaps(mixedCase string) string {
-	var result sts.Builder
+	var allCaps sts.Builder
 	for _, r := range mixedCase {
 		switch {
 		case uni.IsLower(r):
-			result.WriteRune(uni.ToUpper(r))
+			allCaps.WriteRune(uni.ToUpper(r))
 		case uni.IsUpper(r):
-			result.WriteString("_")
-			result.WriteRune(r)
+			allCaps.WriteString("_")
+			allCaps.WriteRune(r)
 		default:
-			result.WriteRune(r)
+			allCaps.WriteRune(r)
 		}
 	}
-	return result.String()
+	return allCaps.String()
 }
 
 func makeLowerCase(mixedCase string) string {
-	var result string
+	var lowerCase string
 	if len(mixedCase) > 0 {
 		runes := []rune(mixedCase)
 		runes[0] = uni.ToLower(runes[0])
-		result = string(runes)
+		lowerCase = string(runes)
 	}
-	return result
+	return lowerCase
 }
 
 func makeOptional(mixedCase string) string {
-	var result string
+	var optional string
 	if len(mixedCase) > 0 {
-		result = "optional" + makeUpperCase(mixedCase)
+		optional = "optional" + makeUpperCase(mixedCase)
 	}
-	return result
+	return optional
 }
 
 func makePlural(mixedCase string) string {
-	var result string
+	var plural string
 	if sts.HasSuffix(mixedCase, "s") {
-		result = mixedCase + "es"
+		plural = mixedCase + "es"
 	} else {
-		result = mixedCase + "s"
+		plural = mixedCase + "s"
 	}
-	return result
+	return plural
 }
 
 func makeSnakeCase(mixedCase string) string {
 	mixedCase = makeLowerCase(mixedCase)
-	var result sts.Builder
+	var snakeCase sts.Builder
 	for _, r := range mixedCase {
 		switch {
 		case uni.IsLower(r):
-			result.WriteRune(r)
+			snakeCase.WriteRune(r)
 		case uni.IsUpper(r):
-			result.WriteString("-")
-			result.WriteRune(uni.ToLower(r))
+			snakeCase.WriteString("-")
+			snakeCase.WriteRune(uni.ToLower(r))
 		default:
-			result.WriteRune(r)
+			snakeCase.WriteRune(r)
 		}
 	}
-	return result.String()
+	return snakeCase.String()
 }
 
 func makeUpperCase(mixedCase string) string {
-	var result string
+	var upperCase string
 	if len(mixedCase) > 0 {
 		runes := []rune(mixedCase)
 		runes[0] = uni.ToUpper(runes[0])
-		result = string(runes)
+		upperCase = string(runes)
 	}
-	return result
+	return upperCase
 }
 
 func replaceAll(template string, name string, value string) string {
@@ -302,7 +361,7 @@ Intrinsic:
 
 List: "[" Component AdditionalComponent* "]"
 
-AdditionalComponent: "," Component
+AdditionalComponent: "," Component Component
 
 !>
 EXPRESSION DEFINITIONS

@@ -91,35 +91,42 @@ func (v *visitor_) GenerateVisitorClass(
 
 func (v *visitor_) generateInlineMethod(name string) string {
 	var implementation string
-	var references = v.analyzer_.GetReferences(name).GetIterator()
-	for references.HasNext() {
+	var sequence = v.analyzer_.GetReferences(name)
+	var variableNames = generateVariableNames(sequence).GetIterator()
+	var references = sequence.GetIterator()
+	for references.HasNext() && variableNames.HasNext() {
+		var variableName = variableNames.GetNext()
 		var reference = references.GetNext()
-		implementation += v.generateInlineReference(reference)
+		implementation += v.generateInlineReference(variableName, reference)
 	}
 	var method = visitRuleMethodTemplate_
 	method = replaceAll(method, "implementation", implementation)
 	return method
 }
 
-func (v *visitor_) generateInlineReference(reference ast.ReferenceLike) string {
-	var name = reference.GetIdentifier().GetAny().(string)
-	var cardinality = reference.GetOptionalCardinality()
-	var implementation string
+func (v *visitor_) generateInlineReference(
+	variableName string,
+	reference ast.ReferenceLike,
+) (
+	implementation string,
+) {
+	var identifier = reference.GetIdentifier().GetAny().(string)
 	switch {
-	case gra.Scanner().MatchesType(name, gra.LowercaseToken):
-		implementation = v.generateInlineToken(name, cardinality)
-	case gra.Scanner().MatchesType(name, gra.UppercaseToken):
-		implementation = v.generateInlineRule(name, cardinality)
+	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
+		implementation = v.generateInlineToken(variableName, reference)
+	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
+		implementation = v.generateInlineRule(variableName, reference)
 	}
 	return implementation
 }
 
 func (v *visitor_) generateInlineRule(
-	ruleName string,
-	cardinality ast.CardinalityLike,
-) string {
-	var implementation string
-	switch v.generatePlurality(ruleName, cardinality) {
+	variableName string,
+	reference ast.ReferenceLike,
+) (
+	implementation string,
+) {
+	switch v.generatePlurality(reference) {
 	case "singular":
 		implementation = visitSingularRuleTemplate_
 	case "optional":
@@ -129,18 +136,19 @@ func (v *visitor_) generateInlineRule(
 	default:
 		implementation = visitRuleTemplate_
 	}
+	implementation = replaceAll(implementation, "variableName", variableName)
+	var ruleName = reference.GetIdentifier().GetAny().(string)
 	implementation = replaceAll(implementation, "ruleName", ruleName)
-	var pluralName = makePlural(ruleName)
-	implementation = replaceAll(implementation, "pluralName", pluralName)
 	return implementation
 }
 
 func (v *visitor_) generateInlineToken(
-	tokenName string,
-	cardinality ast.CardinalityLike,
-) string {
-	var implementation string
-	switch v.generatePlurality(tokenName, cardinality) {
+	variableName string,
+	reference ast.ReferenceLike,
+) (
+	implementation string,
+) {
+	switch v.generatePlurality(reference) {
 	case "singular":
 		implementation = visitSingularTokenTemplate_
 	case "optional":
@@ -150,9 +158,9 @@ func (v *visitor_) generateInlineToken(
 	default:
 		implementation = visitTokenTemplate_
 	}
+	implementation = replaceAll(implementation, "variableName", variableName)
+	var tokenName = reference.GetIdentifier().GetAny().(string)
 	implementation = replaceAll(implementation, "tokenName", tokenName)
-	var pluralName = makePlural(tokenName)
-	implementation = replaceAll(implementation, "pluralName", pluralName)
 	return implementation
 }
 
@@ -210,11 +218,9 @@ func (v *visitor_) generateMultilineToken(tokenName string) string {
 	return replaceAll(template, "tokenName", tokenName)
 }
 
-func (v *visitor_) generatePlurality(
-	name string,
-	cardinality ast.CardinalityLike,
-) string {
-	var plurality string
+func (v *visitor_) generatePlurality(reference ast.ReferenceLike) (plurality string) {
+	var name = reference.GetIdentifier().GetAny().(string)
+	var cardinality = reference.GetOptionalCardinality()
 	if col.IsUndefined(cardinality) {
 		if v.analyzer_.IsPlural(name) {
 			plurality = "singular"
@@ -238,7 +244,7 @@ func (v *visitor_) generatePlurality(
 
 const visitAnyTemplate_ = `
 	// Visit the possible <rule> types.
-	switch actual := <rule>.GetAny().(type) {<RuleCases>
+	switch actual := <rule_>.GetAny().(type) {<RuleCases>
 	case string:
 		switch {<TokenCases>
 		default:
@@ -250,41 +256,41 @@ const visitAnyTemplate_ = `
 `
 
 const visitOptionalRuleTemplate_ = `
-	// Visit the optional <ruleName> rule.
-	var <ruleName> = <rule>.GetOptional<RuleName>()
-	if col.IsDefined(<ruleName_>) {
-		v.processor_.Preprocess<RuleName>(<ruleName_>)
-		v.visit<RuleName>(<ruleName_>)
-		v.processor_.Postprocess<RuleName>(<ruleName_>)
+	// Visit the optional <variableName> rule.
+	var <variableName_> = <rule_>.GetOptional<VariableName>()
+	if col.IsDefined(<variableName_>) {
+		v.processor_.Preprocess<RuleName>(<variableName_>)
+		v.visit<RuleName>(<variableName_>)
+		v.processor_.Postprocess<RuleName>(<variableName_>)
 	}
 `
 
 const visitOptionalTokenTemplate_ = `
-	// Visit the optional <tokenName> token.
-	var <tokenName> = <rule>.GetOptional<TokenName>()
-	if col.IsDefined(<tokenName_>) {
-		v.processor_.Process<TokenName>(<tokenName_>)
+	// Visit the optional <variableName> token.
+	var <variableName_> = <rule_>.GetOptional<TokenName>()
+	if col.IsDefined(<variableName_>) {
+		v.processor_.Process<TokenName>(<variableName_>)
 	}
 `
 
 const visitRepeatedRuleTemplate_ = `
 	// Visit each <ruleName> rule.
 	var <ruleName>Index uint
-	var <pluralName> = <rule>.Get<PluralName>().GetIterator()
-	var <pluralName>Size = uint(<pluralName>.GetSize())
-	for <pluralName>.HasNext() {
+	var <variableName_> = <rule_>.Get<VariableName>().GetIterator()
+	var <variableName>Size = uint(<variableName_>.GetSize())
+	for <variableName_>.HasNext() {
 		<ruleName>Index++
-		var <ruleName> = <pluralName>.GetNext()
+		var <ruleName_> = <variableName_>.GetNext()
 		v.processor_.Preprocess<RuleName>(
-			<ruleName>,
+			<ruleName_>,
 			<ruleName>Index,
-			<pluralName>Size,
+			<variableName>Size,
 		)
 		v.visit<RuleName>(<ruleName_>)
 		v.processor_.Postprocess<RuleName>(
-			<ruleName>,
+			<ruleName_>,
 			<ruleName>Index,
-			<pluralName>Size,
+			<variableName>Size,
 		)
 	}
 `
@@ -292,15 +298,15 @@ const visitRepeatedRuleTemplate_ = `
 const visitRepeatedTokenTemplate_ = `
 	// Visit each <tokenName> token.
 	var <tokenName>Index uint
-	var <pluralName> = <rule>.Get<PluralName>().GetIterator()
-	var <pluralName>Size = uint(<pluralName>.GetSize())
-	for <pluralName>.HasNext() {
+	var <variableName_> = <rule_>.Get<VariableName>().GetIterator()
+	var <variableName>Size = uint(<variableName_>.GetSize())
+	for <variableName_>.HasNext() {
 		<tokenName>Index++
-		var <tokenName> = <pluralName>.GetNext()
+		var <tokenName_> = <variableName_>.GetNext()
 		v.processor_.Process<TokenName>(
-			<tokenName>,
+			<tokenName_>,
 			<tokenName>Index,
-			<pluralName>Size,
+			<variableName>Size,
 		)
 	}
 `
@@ -312,15 +318,15 @@ const visitRuleCaseTemplate_ = `
 		v.processor_.Postprocess<RuleName>(actual)`
 
 const visitRuleMethodTemplate_ = `
-func (v *visitor_) visit<Rule>(<rule> ast.<Rule>Like) {<Implementation>}
+func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 `
 
 const visitRuleTemplate_ = `
-	// Visit the <ruleName> rule.
-	var <ruleName> = <rule>.Get<RuleName>()
-	v.processor_.Preprocess<RuleName>(<ruleName_>)
-	v.visit<RuleName>(<ruleName_>)
-	v.processor_.Postprocess<RuleName>(<ruleName_>)
+	// Visit the <variableName> rule.
+	var <variableName_> = <rule_>.Get<VariableName>()
+	v.processor_.Preprocess<RuleName>(<variableName_>)
+	v.visit<RuleName>(<variableName_>)
+	v.processor_.Postprocess<RuleName>(<variableName_>)
 `
 
 const visitSingularRuleCaseTemplate_ = `
@@ -330,11 +336,11 @@ const visitSingularRuleCaseTemplate_ = `
 		v.processor_.Postprocess<RuleName>(actual, 1, 1)`
 
 const visitSingularRuleTemplate_ = `
-	// Visit the <ruleName> rule.
-	var <ruleName> = <rule>.Get<RuleName>()
-	v.processor_.Preprocess<RuleName>(<ruleName_>, 1, 1)
-	v.visit<RuleName>(<ruleName_>)
-	v.processor_.Postprocess<RuleName>(<ruleName_>, 1, 1)
+	// Visit the <variableName> rule.
+	var <variableName_> = <rule_>.Get<VariableName>()
+	v.processor_.Preprocess<RuleName>(<variableName_>, 1, 1)
+	v.visit<RuleName>(<variableName_>)
+	v.processor_.Postprocess<RuleName>(<variableName_>, 1, 1)
 `
 
 const visitSingularTokenCaseTemplate_ = `
@@ -342,9 +348,9 @@ const visitSingularTokenCaseTemplate_ = `
 			v.processor_.Process<TokenName>(actual, 1, 1)`
 
 const visitSingularTokenTemplate_ = `
-	// Visit the <tokenName> token.
-	var <tokenName> = <rule>.Get<TokenName>()
-	v.processor_.Process<TokenName>(<tokenName_>, 1, 1)
+	// Visit the <variableName> token.
+	var <variableName_> = <rule_>.Get<VariableName>()
+	v.processor_.Process<TokenName>(<variableName_>, 1, 1)
 `
 
 const visitTokenCaseTemplate_ = `
@@ -352,9 +358,9 @@ const visitTokenCaseTemplate_ = `
 			v.processor_.Process<TokenName>(actual)`
 
 const visitTokenTemplate_ = `
-	// Visit the <tokenName> token.
-	var <tokenName> = <rule>.Get<TokenName>()
-	v.processor_.Process<TokenName>(<tokenName_>)
+	// Visit the <variableName> token.
+	var <variableName_> = <rule_>.Get<VariableName>()
+	v.processor_.Process<TokenName>(<variableName_>)
 `
 
 const visitorTemplate_ = `<Notice>
