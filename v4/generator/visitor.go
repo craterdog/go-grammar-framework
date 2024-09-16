@@ -256,8 +256,8 @@ const visitAnyTemplate_ = `
 `
 
 const visitOptionalRuleTemplate_ = `
-	// Visit the optional <variableName> rule.
-	var <variableName_> = <rule_>.GetOptional<VariableName>()
+	// Visit the optional <ruleName> rule.
+	var <variableName_> = <rule_>.Get<VariableName>()
 	if col.IsDefined(<variableName_>) {
 		v.processor_.Preprocess<RuleName>(<variableName_>)
 		v.visit<RuleName>(<variableName_>)
@@ -266,8 +266,8 @@ const visitOptionalRuleTemplate_ = `
 `
 
 const visitOptionalTokenTemplate_ = `
-	// Visit the optional <variableName> token.
-	var <variableName_> = <rule_>.GetOptional<TokenName>()
+	// Visit the optional <tokenName> token.
+	var <variableName_> = <rule_>.Get<VariableName>()
 	if col.IsDefined(<variableName_>) {
 		v.processor_.Process<TokenName>(<variableName_>)
 	}
@@ -322,7 +322,7 @@ func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 `
 
 const visitRuleTemplate_ = `
-	// Visit the <variableName> rule.
+	// Visit the <ruleName> rule.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	v.processor_.Preprocess<RuleName>(<variableName_>)
 	v.visit<RuleName>(<variableName_>)
@@ -336,7 +336,7 @@ const visitSingularRuleCaseTemplate_ = `
 		v.processor_.Postprocess<RuleName>(actual, 1, 1)`
 
 const visitSingularRuleTemplate_ = `
-	// Visit the <variableName> rule.
+	// Visit the <ruleName> rule.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	v.processor_.Preprocess<RuleName>(<variableName_>, 1, 1)
 	v.visit<RuleName>(<variableName_>)
@@ -348,7 +348,7 @@ const visitSingularTokenCaseTemplate_ = `
 			v.processor_.Process<TokenName>(actual, 1, 1)`
 
 const visitSingularTokenTemplate_ = `
-	// Visit the <variableName> token.
+	// Visit the <tokenName> token.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	v.processor_.Process<TokenName>(<variableName_>, 1, 1)
 `
@@ -358,7 +358,7 @@ const visitTokenCaseTemplate_ = `
 			v.processor_.Process<TokenName>(actual)`
 
 const visitTokenTemplate_ = `
-	// Visit the <variableName> token.
+	// Visit the <tokenName> token.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	v.processor_.Process<TokenName>(<variableName_>)
 `

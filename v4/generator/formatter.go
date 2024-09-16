@@ -231,10 +231,6 @@ func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
 }
 
-func (v *formatter_) GetDepth() uint {
-	return v.depth_
-}
-
 // Methodical
 <TokenFormatters><RuleFormatters>
 // Public

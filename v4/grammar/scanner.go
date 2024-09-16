@@ -168,7 +168,7 @@ const (
 	// Define the regular expression patterns for each token type.
 	base16_    = "(?:[0-9a-f])"
 	comment_   = "(?:!>" + eol_ + "(" + any_ + "|" + eol_ + ")*?" + eol_ + "<!" + eol_ + ")"
-	delimiter_ = "(?::|-|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
+	delimiter_ = "(?:-|:|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
 	escape_    = "(?:\\\\((?:" + unicode_ + ")|[abfnrtv\"\\\\]))"
 	excluded_  = "(?:~)"
 	glyph_     = "(?:'[^" + control_ + "]')"

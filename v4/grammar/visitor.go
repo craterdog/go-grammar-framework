@@ -100,6 +100,11 @@ func (v *visitor_) visitCardinality(cardinality ast.CardinalityLike) {
 		v.processor_.PreprocessQuantified(actual)
 		v.visitQuantified(actual)
 		v.processor_.PostprocessQuantified(actual)
+	case string:
+		switch {
+		default:
+			panic(fmt.Sprintf("Invalid token: %v", actual))
+		}
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -119,15 +124,14 @@ func (v *visitor_) visitCharacter(character ast.CharacterLike) {
 		default:
 			panic(fmt.Sprintf("Invalid token: %v", actual))
 		}
-
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
 }
 
-func (v *visitor_) visitConstrained(contrained ast.ConstrainedLike) {
-	// Visit the possible contrained types.
-	switch actual := contrained.GetAny().(type) {
+func (v *visitor_) visitConstrained(constrained ast.ConstrainedLike) {
+	// Visit the possible constrained types.
+	switch actual := constrained.GetAny().(type) {
 	case string:
 		switch {
 		case Scanner().MatchesType(actual, OptionalToken):
@@ -137,7 +141,6 @@ func (v *visitor_) visitConstrained(contrained ast.ConstrainedLike) {
 		default:
 			panic(fmt.Sprintf("Invalid token: %v", actual))
 		}
-
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -154,6 +157,11 @@ func (v *visitor_) visitDefinition(definition ast.DefinitionLike) {
 		v.processor_.PreprocessMultiline(actual)
 		v.visitMultiline(actual)
 		v.processor_.PostprocessMultiline(actual)
+	case string:
+		switch {
+		default:
+			panic(fmt.Sprintf("Invalid token: %v", actual))
+		}
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -174,6 +182,11 @@ func (v *visitor_) visitElement(element ast.ElementLike) {
 		v.processor_.PreprocessText(actual)
 		v.visitText(actual)
 		v.processor_.PostprocessText(actual)
+	case string:
+		switch {
+		default:
+			panic(fmt.Sprintf("Invalid token: %v", actual))
+		}
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -185,11 +198,11 @@ func (v *visitor_) visitExplicit(explicit ast.ExplicitLike) {
 	v.processor_.ProcessGlyph(glyph)
 
 	// Visit the optional extent rule.
-	var extent = explicit.GetOptionalExtent()
-	if col.IsDefined(extent) {
-		v.processor_.PreprocessExtent(extent)
-		v.visitExtent(extent)
-		v.processor_.PostprocessExtent(extent)
+	var optionalExtent = explicit.GetOptionalExtent()
+	if col.IsDefined(optionalExtent) {
+		v.processor_.PreprocessExtent(optionalExtent)
+		v.visitExtent(optionalExtent)
+		v.processor_.PostprocessExtent(optionalExtent)
 	}
 }
 
@@ -205,9 +218,9 @@ func (v *visitor_) visitExpression(expression ast.ExpressionLike) {
 	v.processor_.PostprocessPattern(pattern)
 
 	// Visit the optional note token.
-	var note = expression.GetOptionalNote()
-	if col.IsDefined(note) {
-		v.processor_.ProcessNote(note)
+	var optionalNote = expression.GetOptionalNote()
+	if col.IsDefined(optionalNote) {
+		v.processor_.ProcessNote(optionalNote)
 	}
 
 	// Visit each newline token.
@@ -233,9 +246,9 @@ func (v *visitor_) visitExtent(extent ast.ExtentLike) {
 
 func (v *visitor_) visitFilter(filter ast.FilterLike) {
 	// Visit the optional excluded token.
-	var excluded = filter.GetOptionalExcluded()
-	if col.IsDefined(excluded) {
-		v.processor_.ProcessExcluded(excluded)
+	var optionalExcluded = filter.GetOptionalExcluded()
+	if col.IsDefined(optionalExcluded) {
+		v.processor_.ProcessExcluded(optionalExcluded)
 	}
 
 	// Visit each character rule.
@@ -279,7 +292,6 @@ func (v *visitor_) visitIdentifier(identifier ast.IdentifierLike) {
 		default:
 			panic(fmt.Sprintf("Invalid token: %v", actual))
 		}
-
 	default:
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
@@ -307,17 +319,17 @@ func (v *visitor_) visitInline(inline ast.InlineLike) {
 	}
 
 	// Visit the optional note token.
-	var note = inline.GetOptionalNote()
-	if col.IsDefined(note) {
-		v.processor_.ProcessNote(note)
+	var optionalNote = inline.GetOptionalNote()
+	if col.IsDefined(optionalNote) {
+		v.processor_.ProcessNote(optionalNote)
 	}
 }
 
 func (v *visitor_) visitLimit(limit ast.LimitLike) {
 	// Visit the optional number token.
-	var number = limit.GetOptionalNumber()
-	if col.IsDefined(number) {
-		v.processor_.ProcessNumber(number)
+	var optionalNumber = limit.GetOptionalNumber()
+	if col.IsDefined(optionalNumber) {
+		v.processor_.ProcessNumber(optionalNumber)
 	}
 }
 
@@ -329,9 +341,9 @@ func (v *visitor_) visitLine(line ast.LineLike) {
 	v.processor_.PostprocessIdentifier(identifier)
 
 	// Visit the optional note token.
-	var note = line.GetOptionalNote()
-	if col.IsDefined(note) {
-		v.processor_.ProcessNote(note)
+	var optionalNote = line.GetOptionalNote()
+	if col.IsDefined(optionalNote) {
+		v.processor_.ProcessNote(optionalNote)
 	}
 
 	// Visit the newline token.
@@ -431,11 +443,11 @@ func (v *visitor_) visitQuantified(quantified ast.QuantifiedLike) {
 	v.processor_.ProcessNumber(number)
 
 	// Visit the optional limit rule.
-	var limit = quantified.GetOptionalLimit()
-	if col.IsDefined(limit) {
-		v.processor_.PreprocessLimit(limit)
-		v.visitLimit(limit)
-		v.processor_.PostprocessLimit(limit)
+	var optionalLimit = quantified.GetOptionalLimit()
+	if col.IsDefined(optionalLimit) {
+		v.processor_.PreprocessLimit(optionalLimit)
+		v.visitLimit(optionalLimit)
+		v.processor_.PostprocessLimit(optionalLimit)
 	}
 }
 
@@ -447,11 +459,11 @@ func (v *visitor_) visitReference(reference ast.ReferenceLike) {
 	v.processor_.PostprocessIdentifier(identifier)
 
 	// Visit the optional cardinality rule.
-	var cardinality = reference.GetOptionalCardinality()
-	if col.IsDefined(cardinality) {
-		v.processor_.PreprocessCardinality(cardinality)
-		v.visitCardinality(cardinality)
-		v.processor_.PostprocessCardinality(cardinality)
+	var optionalCardinality = reference.GetOptionalCardinality()
+	if col.IsDefined(optionalCardinality) {
+		v.processor_.PreprocessCardinality(optionalCardinality)
+		v.visitCardinality(optionalCardinality)
+		v.processor_.PostprocessCardinality(optionalCardinality)
 	}
 }
 
@@ -463,11 +475,11 @@ func (v *visitor_) visitRepetition(repetition ast.RepetitionLike) {
 	v.processor_.PostprocessElement(element)
 
 	// Visit the optional cardinality rule.
-	var cardinality = repetition.GetOptionalCardinality()
-	if col.IsDefined(cardinality) {
-		v.processor_.PreprocessCardinality(cardinality)
-		v.visitCardinality(cardinality)
-		v.processor_.PostprocessCardinality(cardinality)
+	var optionalCardinality = repetition.GetOptionalCardinality()
+	if col.IsDefined(optionalCardinality) {
+		v.processor_.PreprocessCardinality(optionalCardinality)
+		v.visitCardinality(optionalCardinality)
+		v.processor_.PostprocessCardinality(optionalCardinality)
 	}
 }
 

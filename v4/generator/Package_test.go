@@ -251,10 +251,6 @@ func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
 }
 
-func (v *formatter_) GetDepth() uint {
-	return v.depth_
-}
-
 // Methodical
 
 func (v *formatter_) ProcessInteger(integer string) {
@@ -1342,13 +1338,13 @@ func (v *visitor_) VisitDocument(document ast.DocumentLike) {
 // Private
 
 func (v *visitor_) visitAdditionalComponent(additionalComponent ast.AdditionalComponentLike) {
-	// Visit the component1 rule.
+	// Visit the component rule.
 	var component1 = additionalComponent.GetComponent1()
 	v.processor_.PreprocessComponent(component1)
 	v.visitComponent(component1)
 	v.processor_.PostprocessComponent(component1)
 
-	// Visit the component2 rule.
+	// Visit the component rule.
 	var component2 = additionalComponent.GetComponent2()
 	v.processor_.PreprocessComponent(component2)
 	v.visitComponent(component2)
@@ -1646,7 +1642,6 @@ instance of a concrete formatter-like class.
 type FormatterLike interface {
 	// Attributes
 	GetClass() FormatterClassLike
-	GetDepth() uint
 
 	// Abstractions
 	Methodical

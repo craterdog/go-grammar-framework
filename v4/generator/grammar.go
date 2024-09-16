@@ -339,7 +339,6 @@ instance of a concrete formatter-like class.
 type FormatterLike interface {
 	// Attributes
 	GetClass() FormatterClassLike
-	GetDepth() uint
 
 	// Abstractions
 	Methodical
