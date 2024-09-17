@@ -89,9 +89,12 @@ func (v *visitor_) GenerateVisitorClass(
 
 // Private
 
-func (v *visitor_) generateInlineMethod(name string) string {
-	var implementation string
-	var sequence = v.analyzer_.GetReferences(name)
+func (v *visitor_) generateInlineMethod(
+	rule string,
+) (
+	implementation string,
+) {
+	var sequence = v.analyzer_.GetReferences(rule)
 	var variableNames = generateVariableNames(sequence).GetIterator()
 	var references = sequence.GetIterator()
 	for references.HasNext() && variableNames.HasNext() {
@@ -164,7 +167,9 @@ func (v *visitor_) generateInlineToken(
 	return implementation
 }
 
-func (v *visitor_) generateMethods() string {
+func (v *visitor_) generateMethods() (
+	implementation string,
+) {
 	var methods string
 	var rules = v.analyzer_.GetRuleNames().GetIterator()
 	for rules.HasNext() {
@@ -182,10 +187,13 @@ func (v *visitor_) generateMethods() string {
 	return methods
 }
 
-func (v *visitor_) generateMultilineMethod(name string) string {
+func (v *visitor_) generateMultilineMethod(
+	rule string,
+) (
+	implementation string,
+) {
 	var tokenCases, ruleCases string
-	var identifiers = v.analyzer_.GetIdentifiers(name).GetIterator()
-
+	var identifiers = v.analyzer_.GetIdentifiers(rule).GetIterator()
 	for identifiers.HasNext() {
 		var identifier = identifiers.GetNext()
 		var name = identifier.GetAny().(string)
@@ -196,13 +204,17 @@ func (v *visitor_) generateMultilineMethod(name string) string {
 			ruleCases += v.generateMultilineRule(name)
 		}
 	}
-	var implementation = visitAnyTemplate_
+	implementation = visitAnyTemplate_
 	implementation = replaceAll(implementation, "ruleCases", ruleCases)
 	implementation = replaceAll(implementation, "tokenCases", tokenCases)
 	return replaceAll(visitRuleMethodTemplate_, "implementation", implementation)
 }
 
-func (v *visitor_) generateMultilineRule(ruleName string) string {
+func (v *visitor_) generateMultilineRule(
+	ruleName string,
+) (
+	implementation string,
+) {
 	var template = visitRuleCaseTemplate_
 	if v.analyzer_.IsPlural(ruleName) {
 		template = visitSingularRuleCaseTemplate_
@@ -210,7 +222,11 @@ func (v *visitor_) generateMultilineRule(ruleName string) string {
 	return replaceAll(template, "ruleName", ruleName)
 }
 
-func (v *visitor_) generateMultilineToken(tokenName string) string {
+func (v *visitor_) generateMultilineToken(
+	tokenName string,
+) (
+	implementation string,
+) {
 	var template = visitTokenCaseTemplate_
 	if v.analyzer_.IsPlural(tokenName) {
 		template = visitSingularTokenCaseTemplate_
@@ -218,7 +234,11 @@ func (v *visitor_) generateMultilineToken(tokenName string) string {
 	return replaceAll(template, "tokenName", tokenName)
 }
 
-func (v *visitor_) generatePlurality(reference ast.ReferenceLike) (plurality string) {
+func (v *visitor_) generatePlurality(
+	reference ast.ReferenceLike,
+) (
+	plurality string,
+) {
 	var name = reference.GetIdentifier().GetAny().(string)
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsUndefined(cardinality) {
