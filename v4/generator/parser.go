@@ -418,14 +418,12 @@ const parseCardinalityTokenTemplate_ = `
 
 const parseReturnFalseTemplate_ = `
 		// This is not a <rule> rule.
-		return <rule_>, token, false
-`
+		return <rule_>, token, false`
 
 const parseReturnPanicTemplate_ = `
 		// Found a syntax error.
 		var message = v.formatError(token,"<Rule>")
-		panic(message)
-`
+		panic(message)`
 
 const parseRuleFoundTemplate_ = `
 	// Found a <rule> rule.
@@ -449,8 +447,7 @@ func (v *parser_) parse<Rule>() (
 const parseDelimiterTemplate_ = `
 	// Attempt to parse a <delimiter> delimiter.
 	_, token, ok = v.parseDelimiter(<delimiter>)
-	if !ok {
-		<Handler>
+	if !ok {<Handler>
 	}
 `
 
@@ -502,8 +499,7 @@ const parseRuleTemplate_ = `
 	// Attempt to parse a <ruleName> rule.
 	var <ruleName_> ast.<RuleName>Like
 	<ruleName_>, token, _ = v.parse<RuleName>()
-	if !ok {
-		<Handler>
+	if !ok {<Handler>
 	}
 `
 

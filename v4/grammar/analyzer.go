@@ -328,6 +328,15 @@ func (v *analyzer_) PostprocessSyntax(syntax ast.SyntaxLike) {
 	v.regexps_.SortValues()
 }
 
+func (v *analyzer_) PreprocessTerm(
+	term ast.TermLike,
+	index uint,
+	size uint,
+) {
+	var terms = v.terms_.GetValue(v.ruleName_)
+	terms.AppendValue(term)
+}
+
 // Public
 
 func (v *analyzer_) AnalyzeSyntax(syntax ast.SyntaxLike) {

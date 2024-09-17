@@ -454,6 +454,31 @@ func (v *parser_) parseAdditionalComponent() (
 	token TokenLike,
 	ok bool,
 ) {
+	// Attempt to parse a , delimiter.
+	_, token, ok = v.parseDelimiter(,)
+	if !ok {
+		// This is not a additionalComponent rule.
+		return additionalComponent, token, false
+	}
+
+	// Attempt to parse a component rule.
+	var component ast.ComponentLike
+	component, token, _ = v.parseComponent()
+	if !ok {
+		// Found a syntax error.
+		var message = v.formatError(token,"AdditionalComponent")
+		panic(message)
+	}
+
+	// Attempt to parse a component rule.
+	var component ast.ComponentLike
+	component, token, _ = v.parseComponent()
+	if !ok {
+		// Found a syntax error.
+		var message = v.formatError(token,"AdditionalComponent")
+		panic(message)
+	}
+
 	// Found a additionalComponent rule.
 	additionalComponent = ast.AdditionalComponent().Make(
 		component1,
@@ -494,6 +519,35 @@ func (v *parser_) parseDocument() (
 	token TokenLike,
 	ok bool,
 ) {
+	// Attempt to parse a component rule.
+	var component ast.ComponentLike
+	component, token, _ = v.parseComponent()
+	if !ok {
+		// This is not a document rule.
+		return document, token, false
+	}
+
+	// Attempt to parse 1 to 4294967295 newline tokens.
+	var newlineses = col.List[ast.NewlineLike]()
+	for i := 0; i < 4294967295; i++ {
+		newlines, token, ok = v.parseToken(NewlineToken)
+		if !ok {
+			switch {
+			case i < 1:
+				var message = v.formatError(token, "Newline")
+				message += "Too few newlineses tokens found."
+				panic(message)
+			case i > 4294967295:
+				var message = v.formatError(token, "Newline")
+				message += "Too many newlineses tokens found."
+				panic(message)
+			default:
+				break;
+			}
+		}
+		newlineses.AppendValue(newlines)
+	}
+
 	// Found a document rule.
 	document = ast.Document().Make(
 		component,
@@ -543,6 +597,51 @@ func (v *parser_) parseList() (
 	token TokenLike,
 	ok bool,
 ) {
+	// Attempt to parse a [ delimiter.
+	_, token, ok = v.parseDelimiter([)
+	if !ok {
+		// This is not a list rule.
+		return list, token, false
+	}
+
+	// Attempt to parse a component rule.
+	var component ast.ComponentLike
+	component, token, _ = v.parseComponent()
+	if !ok {
+		// Found a syntax error.
+		var message = v.formatError(token,"List")
+		panic(message)
+	}
+
+	// Attempt to parse 0 to 4294967295 additionalComponent rules.
+	var additionalComponentses = col.List[ast.AdditionalComponentLike]()
+	for i := 0; i < 4294967295; i++ {
+		additionalComponents, token, ok = v.parseAdditionalComponent()
+		if !ok {
+			switch {
+			case i < 0:
+				var message = v.formatError(token, "AdditionalComponent")
+				message += "Too few additionalComponentses rules found."
+				panic(message)
+			case i > 4294967295:
+				var message = v.formatError(token, "AdditionalComponent")
+				message += "Too many additionalComponentses rules found."
+				panic(message)
+			default:
+				break;
+			}
+		}
+		additionalComponentses.AppendValue(additionalComponents)
+	}
+
+	// Attempt to parse a ] delimiter.
+	_, token, ok = v.parseDelimiter(])
+	if !ok {
+		// Found a syntax error.
+		var message = v.formatError(token,"List")
+		panic(message)
+	}
+
 	// Found a list rule.
 	list = ast.List().Make(
 		component,
