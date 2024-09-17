@@ -439,8 +439,7 @@ func (v *parser_) ParseSource(source string) ast.DocumentLike {
 	// Attempt to parse the document.
 	var document, token, ok = v.parseDocument()
 	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("Document")
+		var message = v.formatError(token, "Document")
 		panic(message)
 	}
 
@@ -450,7 +449,7 @@ func (v *parser_) ParseSource(source string) ast.DocumentLike {
 
 // Private
 
-func (v *parser_) parseAdditionalComponent(
+func (v *parser_) parseAdditionalComponent() (
 	additionalComponent ast.AdditionalComponentLike,
 	token TokenLike,
 	ok bool,
@@ -463,7 +462,7 @@ func (v *parser_) parseAdditionalComponent(
 	return additionalComponent, token, true
 }
 
-func (v *parser_) parseComponent(
+func (v *parser_) parseComponent() (
 	component ast.ComponentLike,
 	token TokenLike,
 	ok bool,
@@ -490,7 +489,7 @@ func (v *parser_) parseComponent(
 	return component, token, false
 }
 
-func (v *parser_) parseDocument(
+func (v *parser_) parseDocument() (
 	document ast.DocumentLike,
 	token TokenLike,
 	ok bool,
@@ -503,7 +502,7 @@ func (v *parser_) parseDocument(
 	return document, token, true
 }
 
-func (v *parser_) parseIntrinsic(
+func (v *parser_) parseIntrinsic() (
 	intrinsic ast.IntrinsicLike,
 	token TokenLike,
 	ok bool,
@@ -539,7 +538,7 @@ func (v *parser_) parseIntrinsic(
 	return intrinsic, token, false
 }
 
-func (v *parser_) parseList(
+func (v *parser_) parseList() (
 	list ast.ListLike,
 	token TokenLike,
 	ok bool,
@@ -559,13 +558,15 @@ func (v *parser_) parseDelimiter(expectedValue string) (
 ) {
 	// Attempt to parse a delimiter.
 	value, token, ok = v.parseToken(DelimiterToken)
-	if ok && value == expectedValue {
-		// Found the right delimiter.
-		return value, token, true
+	if ok {
+		if value == expectedValue {
+			// Found the right delimiter.
+			return value, token, true
+		}
+		v.putBack(token)
 	}
 
 	// This is not the right delimiter.
-	v.putBack(token)
 	return value, token, false
 }
 
@@ -591,7 +592,7 @@ func (v *parser_) parseToken(tokenType TokenType) (
 	return value, token, false
 }
 
-func (v *parser_) formatError(token TokenLike) string {
+func (v *parser_) formatError(token TokenLike, ruleName string) string {
 	// Format the error message.
 	var message = fmt.Sprintf(
 		"An unexpected token was received by the parser: %v\n",
@@ -621,17 +622,14 @@ func (v *parser_) formatError(token TokenLike) string {
 		message += fmt.Sprintf("%04d: ", line+1) + string(lines[line]) + "\n"
 	}
 	message += "\033[0m\n"
-
-	return message
-}
-
-func (v *parser_) generateSyntax(rule string) string {
-	var message = "Was expecting:\n"
-	message += fmt.Sprintf(
-		"  \033[32m%v: \033[33m%v\033[0m\n\n",
-		name,
-		syntax_[name],
-	)
+	if col.IsDefined(ruleName) {
+		message += "Was expecting:\n"
+		message += fmt.Sprintf(
+			"  \033[32m%v: \033[33m%v\033[0m\n\n",
+			ruleName,
+			syntax_[ruleName],
+		)
+	}
 	return message
 }
 
@@ -650,7 +648,7 @@ func (v *parser_) getNextToken() TokenLike {
 
 	// Check for an error token.
 	if token.GetType() == ErrorToken {
-		var message = v.formatError(token)
+		var message = v.formatError(token, "")
 		panic(message)
 	}
 

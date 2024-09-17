@@ -302,8 +302,7 @@ const parseReturnFalseTemplate_ = `
 
 const parseReturnPanicTemplate_ = `
 		// Found a syntax error.
-		var message = v.formatError(token)
-		message += v.generateSyntax("<Rule>")
+		var message = v.formatError(token,"<Rule>")
 		panic(message)
 `
 
@@ -319,7 +318,7 @@ const parseRuleDefaultCaseTemplate_ = `
 `
 
 const parseRuleMethodTemplate_ = `
-func (v *parser_) parse<Rule>(
+func (v *parser_) parse<Rule>() (
 	<rule_> ast.<Rule>Like,
 	token TokenLike,
 	ok bool,
@@ -521,8 +520,7 @@ func (v *parser_) ParseSource(source string) ast.<SyntaxName>Like {
 	// Attempt to parse the <syntaxName>.
 	var <syntaxName>, token, ok = v.parse<SyntaxName>()
 	if !ok {
-		var message = v.formatError(token)
-		message += v.generateSyntax("<SyntaxName>")
+		var message = v.formatError(token, "<SyntaxName>")
 		panic(message)
 	}
 
@@ -539,13 +537,15 @@ func (v *parser_) parseDelimiter(expectedValue string) (
 ) {
 	// Attempt to parse a delimiter.
 	value, token, ok = v.parseToken(DelimiterToken)
-	if ok && value == expectedValue {
-		// Found the right delimiter.
-		return value, token, true
+	if ok {
+		if value == expectedValue {
+			// Found the right delimiter.
+			return value, token, true
+		}
+		v.putBack(token)
 	}
 
 	// This is not the right delimiter.
-	v.putBack(token)
 	return value, token, false
 }
 
@@ -571,7 +571,7 @@ func (v *parser_) parseToken(tokenType TokenType) (
 	return value, token, false
 }
 
-func (v *parser_) formatError(token TokenLike) string {
+func (v *parser_) formatError(token TokenLike, ruleName string) string {
 	// Format the error message.
 	var message = fmt.Sprintf(
 		"An unexpected token was received by the parser: %v\n",
@@ -601,17 +601,14 @@ func (v *parser_) formatError(token TokenLike) string {
 		message += fmt.Sprintf("%04d: ", line+1) + string(lines[line]) + "\n"
 	}
 	message += "\033[0m\n"
-
-	return message
-}
-
-func (v *parser_) generateSyntax(rule string) string {
-	var message = "Was expecting:\n"
-	message += fmt.Sprintf(
-		"  \033[32m%v: \033[33m%v\033[0m\n\n",
-		name,
-		syntax_[name],
-	)
+	if col.IsDefined(ruleName) {
+		message += "Was expecting:\n"
+		message += fmt.Sprintf(
+			"  \033[32m%v: \033[33m%v\033[0m\n\n",
+			ruleName,
+			syntax_[ruleName],
+		)
+	}
 	return message
 }
 
@@ -630,7 +627,7 @@ func (v *parser_) getNextToken() TokenLike {
 
 	// Check for an error token.
 	if token.GetType() == ErrorToken {
-		var message = v.formatError(token)
+		var message = v.formatError(token, "")
 		panic(message)
 	}
 
