@@ -129,41 +129,11 @@ func (v *parser_) generateInlineRule(
 	implementation = parseRuleTemplate_
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
-		var first string
-		var last string
-		switch actual := cardinality.GetAny().(type) {
-		case ast.ConstrainedLike:
-			switch actual.GetAny().(string) {
-			case "?":
-				// This is the "{0..1}" case.
-				first = "0"
-				last = "1"
-			case "*":
-				// This is the "{0..}" case.
-				first = "0"
-				last = unlimited
-			case "+":
-				// This is the "{1..}" case.
-				first = "1"
-				last = unlimited
-			}
-		case ast.QuantifiedLike:
-			// Assume the "{m}" case.
-			first = actual.GetNumber()
-			last = first
-			var limit = actual.GetOptionalLimit()
-			if col.IsDefined(limit) {
-				// Assume the "{m..n}" case.
-				last = limit.GetOptionalNumber()
-				if col.IsUndefined(last) {
-					// This is the "{m..}" case.
-					last = unlimited
-				}
-			}
-		}
-		implementation = parseCardinalityRuleTemplate_
-		implementation = replaceAll(implementation, "first", first)
-		implementation = replaceAll(implementation, "last", last)
+		implementation = v.generateInlineCardinality(
+			cardinality,
+			parseOptionalRuleTemplate_,
+			parseRepeatedRuleTemplate_,
+		)
 	}
 	implementation = replaceAll(implementation, "variableName", variableName)
 	var pluralName = makePlural(variableName)
@@ -182,47 +152,62 @@ func (v *parser_) generateInlineToken(
 	implementation = parseTokenTemplate_
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
-		var first string
-		var last string
-		switch actual := cardinality.GetAny().(type) {
-		case ast.ConstrainedLike:
-			switch actual.GetAny().(string) {
-			case "?":
-				// This is the "{0..1}" case.
-				first = "0"
-				last = "1"
-			case "*":
-				// This is the "{0..}" case.
-				first = "0"
-				last = unlimited
-			case "+":
-				// This is the "{1..}" case.
-				first = "1"
-				last = unlimited
-			}
-		case ast.QuantifiedLike:
-			// Assume the "{m}" case.
-			first = actual.GetNumber()
-			last = first
-			var limit = actual.GetOptionalLimit()
-			if col.IsDefined(limit) {
-				// Assume the "{m..n}" case.
-				last = limit.GetOptionalNumber()
-				if col.IsUndefined(last) {
-					// This is the "{m..}" case.
-					last = unlimited
-				}
-			}
-		}
-		implementation = parseCardinalityTokenTemplate_
-		implementation = replaceAll(implementation, "first", first)
-		implementation = replaceAll(implementation, "last", last)
+		implementation = v.generateInlineCardinality(
+			cardinality,
+			parseOptionalTokenTemplate_,
+			parseRepeatedTokenTemplate_,
+		)
 	}
 	implementation = replaceAll(implementation, "variableName", variableName)
 	var pluralName = makePlural(variableName)
 	implementation = replaceAll(implementation, "pluralName", pluralName)
 	var tokenName = reference.GetIdentifier().GetAny().(string)
 	implementation = replaceAll(implementation, "tokenName", tokenName)
+	return implementation
+}
+
+func (v *parser_) generateInlineCardinality(
+	cardinality ast.CardinalityLike,
+	optionalTemplate string,
+	repeatedTemplate string,
+) (
+	implementation string,
+) {
+	var first string
+	var last = "unlimited"
+	switch actual := cardinality.GetAny().(type) {
+	case ast.ConstrainedLike:
+		implementation = repeatedTemplate
+		switch actual.GetAny().(string) {
+		case "?":
+			// This is the "{0..1}" case.
+			first = "0"
+			last = "1"
+			implementation = optionalTemplate
+		case "*":
+			// This is the "{0..}" case.
+			first = "0"
+		case "+":
+			// This is the "{1..}" case.
+			first = "1"
+		}
+	case ast.QuantifiedLike:
+		first = actual.GetNumber()
+		var limit = actual.GetOptionalLimit()
+		if col.IsUndefined(limit) {
+			// This is the "{m}" case.
+			last = first
+		} else {
+			last = limit.GetOptionalNumber()
+			if col.IsUndefined(last) {
+				// This is the "{m..}" case.
+				last = "unlimited"
+			}
+			// This is the "{m..n}" case.
+		}
+	}
+	implementation = replaceAll(implementation, "first", first)
+	implementation = replaceAll(implementation, "last", last)
 	return implementation
 }
 
@@ -364,13 +349,17 @@ func (v *parser_) generateInlineReference(
 
 // Templates
 
-const unlimited = "4294967295" // Default to a reasonable "unlimited" value.
-
 const parseAnyTemplate_ = `<RuleCases><TokenCases><DefaultCase>`
 
 const parseArgumentTemplate_ = `<argument_>`
 
-const parseCardinalityRuleTemplate_ = `
+const parseOptionalRuleTemplate_ = `
+	// Attempt to parse an optional <ruleName> rule.
+	var <variableName_> ast.<RuleName>Like
+	<variableName_>, token, _ = v.parse<RuleName>()
+`
+
+const parseRepeatedRuleTemplate_ = `
 	// Attempt to parse <first> to <last> <ruleName> rules.
 	var <pluralName> = col.List[ast.<RuleName>Like]()
 	for i := 0; i < <last>; i++ {
@@ -393,7 +382,13 @@ const parseCardinalityRuleTemplate_ = `
 	}
 `
 
-const parseCardinalityTokenTemplate_ = `
+const parseOptionalTokenTemplate_ = `
+	// Attempt to parse an optional <ruleName> rule.
+	var <variableName_> ast.<TokenName>Like
+	<variableName_>, token, _ = v.parseToken(<TokenName>Token)
+`
+
+const parseRepeatedTokenTemplate_ = `
 	// Attempt to parse <first> to <last> <tokenName> tokens.
 	var <pluralName> = col.List[ast.<TokenName>Like]()
 	for i := 0; i < <last>; i++ {
@@ -598,6 +593,8 @@ func (v *parser_) ParseSource(source string) ast.<SyntaxName>Like {
 }
 
 // Private
+
+const unlimited = "4294967295" // Default to a reasonable value.
 <Methods>
 func (v *parser_) parseDelimiter(expectedValue string) (
 	value string,

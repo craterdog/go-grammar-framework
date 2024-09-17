@@ -449,6 +449,8 @@ func (v *parser_) ParseSource(source string) ast.DocumentLike {
 
 // Private
 
+const unlimited = "4294967295" // Default to a reasonable value.
+
 func (v *parser_) parseAdditionalComponent() (
 	additionalComponent ast.AdditionalComponentLike,
 	token TokenLike,
@@ -527,9 +529,9 @@ func (v *parser_) parseDocument() (
 		return document, token, false
 	}
 
-	// Attempt to parse 1 to 4294967295 newline tokens.
+	// Attempt to parse 1 to unlimited newline tokens.
 	var newlineses = col.List[ast.NewlineLike]()
-	for i := 0; i < 4294967295; i++ {
+	for i := 0; i < unlimited; i++ {
 		newlines, token, ok = v.parseToken(NewlineToken)
 		if !ok {
 			switch {
@@ -537,7 +539,7 @@ func (v *parser_) parseDocument() (
 				var message = v.formatError(token, "Newline")
 				message += "Too few newlineses tokens found."
 				panic(message)
-			case i > 4294967295:
+			case i > unlimited:
 				var message = v.formatError(token, "Newline")
 				message += "Too many newlineses tokens found."
 				panic(message)
@@ -613,9 +615,9 @@ func (v *parser_) parseList() (
 		panic(message)
 	}
 
-	// Attempt to parse 0 to 4294967295 additionalComponent rules.
+	// Attempt to parse 0 to unlimited additionalComponent rules.
 	var additionalComponentses = col.List[ast.AdditionalComponentLike]()
-	for i := 0; i < 4294967295; i++ {
+	for i := 0; i < unlimited; i++ {
 		additionalComponents, token, ok = v.parseAdditionalComponent()
 		if !ok {
 			switch {
@@ -623,7 +625,7 @@ func (v *parser_) parseList() (
 				var message = v.formatError(token, "AdditionalComponent")
 				message += "Too few additionalComponentses rules found."
 				panic(message)
-			case i > 4294967295:
+			case i > unlimited:
 				var message = v.formatError(token, "AdditionalComponent")
 				message += "Too many additionalComponentses rules found."
 				panic(message)
