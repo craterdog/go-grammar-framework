@@ -445,8 +445,8 @@ func (v *parser_) parse<Rule>() (
 `
 
 const parseDelimiterTemplate_ = `
-	// Attempt to parse a <delimiter> delimiter.
-	_, token, ok = v.parseDelimiter(<delimiter>)
+	// Attempt to parse a "<delimiter>" delimiter.
+	_, token, ok = v.parseDelimiter("<delimiter>")
 	if !ok {<Handler>
 	}
 `
@@ -498,7 +498,7 @@ const parseSingularTokenCaseTemplate_ = `
 const parseRuleTemplate_ = `
 	// Attempt to parse a <ruleName> rule.
 	var <ruleName_> ast.<RuleName>Like
-	<ruleName_>, token, _ = v.parse<RuleName>()
+	<ruleName_>, token, ok = v.parse<RuleName>()
 	if !ok {<Handler>
 	}
 `
@@ -506,7 +506,9 @@ const parseRuleTemplate_ = `
 const parseTokenTemplate_ = `
 	// Attempt to parse a <tokenName> token.
 	var <tokenName_> string
-	<tokenName_>, token, _ = v.parseToken(<TokenName>Token)
+	<tokenName_>, token, ok = v.parseToken(<TokenName>Token)
+	if !ok {<Handler>
+	}
 `
 
 const parserTemplate_ = `<Notice>

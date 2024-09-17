@@ -454,8 +454,8 @@ func (v *parser_) parseAdditionalComponent() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a , delimiter.
-	_, token, ok = v.parseDelimiter(,)
+	// Attempt to parse a "," delimiter.
+	_, token, ok = v.parseDelimiter(",")
 	if !ok {
 		// This is not a additionalComponent rule.
 		return additionalComponent, token, false
@@ -463,7 +463,7 @@ func (v *parser_) parseAdditionalComponent() (
 
 	// Attempt to parse a component rule.
 	var component ast.ComponentLike
-	component, token, _ = v.parseComponent()
+	component, token, ok = v.parseComponent()
 	if !ok {
 		// Found a syntax error.
 		var message = v.formatError(token,"AdditionalComponent")
@@ -472,7 +472,7 @@ func (v *parser_) parseAdditionalComponent() (
 
 	// Attempt to parse a component rule.
 	var component ast.ComponentLike
-	component, token, _ = v.parseComponent()
+	component, token, ok = v.parseComponent()
 	if !ok {
 		// Found a syntax error.
 		var message = v.formatError(token,"AdditionalComponent")
@@ -521,7 +521,7 @@ func (v *parser_) parseDocument() (
 ) {
 	// Attempt to parse a component rule.
 	var component ast.ComponentLike
-	component, token, _ = v.parseComponent()
+	component, token, ok = v.parseComponent()
 	if !ok {
 		// This is not a document rule.
 		return document, token, false
@@ -597,8 +597,8 @@ func (v *parser_) parseList() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a [ delimiter.
-	_, token, ok = v.parseDelimiter([)
+	// Attempt to parse a "[" delimiter.
+	_, token, ok = v.parseDelimiter("[")
 	if !ok {
 		// This is not a list rule.
 		return list, token, false
@@ -606,7 +606,7 @@ func (v *parser_) parseList() (
 
 	// Attempt to parse a component rule.
 	var component ast.ComponentLike
-	component, token, _ = v.parseComponent()
+	component, token, ok = v.parseComponent()
 	if !ok {
 		// Found a syntax error.
 		var message = v.formatError(token,"List")
@@ -634,8 +634,8 @@ func (v *parser_) parseList() (
 		additionalComponentses.AppendValue(additionalComponents)
 	}
 
-	// Attempt to parse a ] delimiter.
-	_, token, ok = v.parseDelimiter(])
+	// Attempt to parse a "]" delimiter.
+	_, token, ok = v.parseDelimiter("]")
 	if !ok {
 		// Found a syntax error.
 		var message = v.formatError(token,"List")
