@@ -449,7 +449,7 @@ func (v *parser_) ParseSource(source string) ast.DocumentLike {
 
 // Private
 
-const unlimited = "4294967295" // Default to a reasonable value.
+const unlimited = 4294967295 // Default to a reasonable value.
 
 func (v *parser_) parseAdditionalComponent() (
 	additionalComponent ast.AdditionalComponentLike,
@@ -531,20 +531,22 @@ func (v *parser_) parseDocument() (
 
 	// Attempt to parse 1 to unlimited newline tokens.
 	var newlines = col.List[string]()
+loop:
 	for i := 0; i < unlimited; i++ {
+		var newline string
 		newline, token, ok = v.parseToken(NewlineToken)
 		if !ok {
 			switch {
 			case i < 1:
 				var message = v.formatError(token, "")
-				message += "Too many <pluralName> tokens found."
+				message += "Too few references found."
 				panic(message)
 			case i > unlimited:
 				var message = v.formatError(token, "")
-				message += "Too many <pluralName> tokens found."
+				message += "Too few references found."
 				panic(message)
 			default:
-				break;
+				break loop
 			}
 		}
 		newlines.AppendValue(newline)
@@ -617,20 +619,22 @@ func (v *parser_) parseList() (
 
 	// Attempt to parse 0 to unlimited additionalComponent rules.
 	var additionalComponents = col.List[ast.AdditionalComponentLike]()
+loop:
 	for i := 0; i < unlimited; i++ {
+		var additionalComponent ast.AdditionalComponentLike
 		additionalComponent, token, ok = v.parseAdditionalComponent()
 		if !ok {
 			switch {
 			case i < 0:
 				var message = v.formatError(token, "")
-				message += "Too many <pluralName> tokens found."
+				message += "Too few references found."
 				panic(message)
 			case i > unlimited:
 				var message = v.formatError(token, "")
-				message += "Too many <pluralName> tokens found."
+				message += "Too few references found."
 				panic(message)
 			default:
-				break;
+				break loop
 			}
 		}
 		additionalComponents.AppendValue(additionalComponent)

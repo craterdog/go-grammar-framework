@@ -149,14 +149,14 @@ func (v *visitor_) visitConstrained(constrained ast.ConstrainedLike) {
 func (v *visitor_) visitDefinition(definition ast.DefinitionLike) {
 	// Visit the possible definition types.
 	switch actual := definition.GetAny().(type) {
-	case ast.InlineLike:
-		v.processor_.PreprocessInline(actual)
-		v.visitInline(actual)
-		v.processor_.PostprocessInline(actual)
 	case ast.MultilineLike:
 		v.processor_.PreprocessMultiline(actual)
 		v.visitMultiline(actual)
 		v.processor_.PostprocessMultiline(actual)
+	case ast.InlineLike:
+		v.processor_.PreprocessInline(actual)
+		v.visitInline(actual)
+		v.processor_.PostprocessInline(actual)
 	case string:
 		switch {
 		default:

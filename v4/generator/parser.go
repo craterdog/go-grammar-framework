@@ -232,10 +232,9 @@ func (v *parser_) generateInlineMethod(
 		}
 		if col.IsUndefined(handler) {
 			handler = parseReturnFalseTemplate_
-			caseHandler = parseTooFewTemplate_
 		} else {
 			handler = parseReturnPanicTemplate_
-			caseHandler = parseTooManyTemplate_
+			caseHandler = parseTooFewTemplate_
 		}
 		implementation = replaceAll(implementation, "handler", handler)
 		implementation = replaceAll(implementation, "caseHandler", caseHandler)
@@ -367,14 +366,16 @@ const parseOptionalRuleTemplate_ = `
 const parseRepeatedRuleTemplate_ = `
 	// Attempt to parse <first> to <last> <ruleName> rules.
 	var <variableName> = col.List[ast.<RuleName>Like]()
+loop:
 	for i := 0; i < <last>; i++ {
+		var <ruleName_> ast.<RuleName>Like
 		<ruleName_>, token, ok = v.parse<RuleName>()
 		if !ok {
 			switch {
 			case i < <first>:<CaseHandler>
 			case i > <last>:<CaseHandler>
 			default:
-				break;
+				break loop
 			}
 		}
 		<variableName_>.AppendValue(<ruleName_>)
@@ -382,7 +383,7 @@ const parseRepeatedRuleTemplate_ = `
 `
 
 const parseOptionalTokenTemplate_ = `
-	// Attempt to parse an optional <ruleName> rule.
+	// Attempt to parse an optional <tokenName> token.
 	var <variableName_> string
 	<variableName_>, _, _ = v.parseToken(<TokenName>Token)
 `
@@ -390,14 +391,16 @@ const parseOptionalTokenTemplate_ = `
 const parseRepeatedTokenTemplate_ = `
 	// Attempt to parse <first> to <last> <tokenName> tokens.
 	var <variableName_> = col.List[string]()
+loop:
 	for i := 0; i < <last>; i++ {
+		var <tokenName_> string
 		<tokenName_>, token, ok = v.parseToken(<TokenName>Token)
 		if !ok {
 			switch {
 			case i < <first>:<CaseHandler>
 			case i > <last>:<CaseHandler>
 			default:
-				break;
+				break loop
 			}
 		}
 		<variableName_>.AppendValue(<tokenName_>)
@@ -415,12 +418,7 @@ const parseReturnPanicTemplate_ = `
 
 const parseTooFewTemplate_ = `
 				var message = v.formatError(token, "")
-				message += "Too few <pluralName> tokens found."
-				panic(message)`
-
-const parseTooManyTemplate_ = `
-				var message = v.formatError(token, "")
-				message += "Too many <pluralName> tokens found."
+				message += "Too few references found."
 				panic(message)`
 
 const parseRuleFoundTemplate_ = `
@@ -503,8 +501,8 @@ const parseRuleTemplate_ = `
 
 const parseTokenTemplate_ = `
 	// Attempt to parse a <tokenName> token.
-	var <tokenName_> string
-	<tokenName_>, token, ok = v.parseToken(<TokenName>Token)
+	var <variableName_> string
+	<variableName_>, token, ok = v.parseToken(<TokenName>Token)
 	if !ok {<Handler>
 	}
 `
@@ -597,7 +595,7 @@ func (v *parser_) ParseSource(source string) ast.<SyntaxName>Like {
 
 // Private
 
-const unlimited = "4294967295" // Default to a reasonable value.
+const unlimited = 4294967295 // Default to a reasonable value.
 <Methods>
 func (v *parser_) parseDelimiter(expectedValue string) (
 	value string,
