@@ -220,6 +220,7 @@ func (v *parser_) generateInlineMethod(
 	var references = v.analyzer_.GetReferences(rule)
 	var variableNames = generateVariableNames(references).GetIterator()
 	var handler string
+	var caseHandler string
 	for terms.HasNext() {
 		var term = terms.GetNext()
 		switch actual := term.GetAny().(type) {
@@ -231,10 +232,13 @@ func (v *parser_) generateInlineMethod(
 		}
 		if col.IsUndefined(handler) {
 			handler = parseReturnFalseTemplate_
+			caseHandler = parseTooFewTemplate_
 		} else {
 			handler = parseReturnPanicTemplate_
+			caseHandler = parseTooManyTemplate_
 		}
 		implementation = replaceAll(implementation, "handler", handler)
+		implementation = replaceAll(implementation, "caseHandler", caseHandler)
 
 	}
 	implementation += parseRuleFoundTemplate_
@@ -254,7 +258,8 @@ func (v *parser_) generateInlineLiteral(
 	if err != nil {
 		panic(err)
 	}
-	implementation = replaceAll(parseDelimiterTemplate_, "delimiter", delimiter)
+	implementation = parseDelimiterTemplate_
+	implementation = replaceAll(implementation, "delimiter", delimiter)
 	return implementation
 }
 
@@ -356,58 +361,46 @@ const parseArgumentTemplate_ = `<argument_>`
 const parseOptionalRuleTemplate_ = `
 	// Attempt to parse an optional <ruleName> rule.
 	var <variableName_> ast.<RuleName>Like
-	<variableName_>, token, _ = v.parse<RuleName>()
+	<variableName_>, _, _ = v.parse<RuleName>()
 `
 
 const parseRepeatedRuleTemplate_ = `
 	// Attempt to parse <first> to <last> <ruleName> rules.
-	var <pluralName> = col.List[ast.<RuleName>Like]()
+	var <variableName> = col.List[ast.<RuleName>Like]()
 	for i := 0; i < <last>; i++ {
-		<variableName_>, token, ok = v.parse<RuleName>()
+		<ruleName_>, token, ok = v.parse<RuleName>()
 		if !ok {
 			switch {
-			case i < <first>:
-				var message = v.formatError(token, "<RuleName>")
-				message += "Too few <pluralName> rules found."
-				panic(message)
-			case i > <last>:
-				var message = v.formatError(token, "<RuleName>")
-				message += "Too many <pluralName> rules found."
-				panic(message)
+			case i < <first>:<CaseHandler>
+			case i > <last>:<CaseHandler>
 			default:
 				break;
 			}
 		}
-		<pluralName>.AppendValue(<variableName_>)
+		<variableName_>.AppendValue(<ruleName_>)
 	}
 `
 
 const parseOptionalTokenTemplate_ = `
 	// Attempt to parse an optional <ruleName> rule.
-	var <variableName_> ast.<TokenName>Like
-	<variableName_>, token, _ = v.parseToken(<TokenName>Token)
+	var <variableName_> string
+	<variableName_>, _, _ = v.parseToken(<TokenName>Token)
 `
 
 const parseRepeatedTokenTemplate_ = `
 	// Attempt to parse <first> to <last> <tokenName> tokens.
-	var <pluralName> = col.List[ast.<TokenName>Like]()
+	var <variableName_> = col.List[string]()
 	for i := 0; i < <last>; i++ {
-		<variableName_>, token, ok = v.parseToken(<TokenName>Token)
+		<tokenName_>, token, ok = v.parseToken(<TokenName>Token)
 		if !ok {
 			switch {
-			case i < <first>:
-				var message = v.formatError(token, "<TokenName>")
-				message += "Too few <pluralName> tokens found."
-				panic(message)
-			case i > <last>:
-				var message = v.formatError(token, "<TokenName>")
-				message += "Too many <pluralName> tokens found."
-				panic(message)
+			case i < <first>:<CaseHandler>
+			case i > <last>:<CaseHandler>
 			default:
 				break;
 			}
 		}
-		<pluralName>.AppendValue(<variableName_>)
+		<variableName_>.AppendValue(<tokenName_>)
 	}
 `
 
@@ -419,6 +412,16 @@ const parseReturnPanicTemplate_ = `
 		// Found a syntax error.
 		var message = v.formatError(token,"<Rule>")
 		panic(message)`
+
+const parseTooFewTemplate_ = `
+				var message = v.formatError(token, "")
+				message += "Too few <pluralName> tokens found."
+				panic(message)`
+
+const parseTooManyTemplate_ = `
+				var message = v.formatError(token, "")
+				message += "Too many <pluralName> tokens found."
+				panic(message)`
 
 const parseRuleFoundTemplate_ = `
 	// Found a <rule> rule.
@@ -460,7 +463,7 @@ const parseRuleCaseTemplate_ = `
 const parseTokenCaseTemplate_ = `
 	// Attempt to parse a <tokenName> token.
 	var <tokenName_> string
-	<tokenName_>, token, ok = v.parse<TokenName>()
+	<tokenName_>, token, ok = v.parseToken(<TokenName>Token)
 	if ok {
 		// Found a <tokenName> <rule>.
 		<rule_> = ast.<Rule>().Make(<tokenName_>)
@@ -492,8 +495,8 @@ const parseSingularTokenCaseTemplate_ = `
 
 const parseRuleTemplate_ = `
 	// Attempt to parse a <ruleName> rule.
-	var <ruleName_> ast.<RuleName>Like
-	<ruleName_>, token, ok = v.parse<RuleName>()
+	var <variableName_> ast.<RuleName>Like
+	<variableName_>, token, ok = v.parse<RuleName>()
 	if !ok {<Handler>
 	}
 `

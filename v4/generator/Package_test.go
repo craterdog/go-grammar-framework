@@ -464,8 +464,8 @@ func (v *parser_) parseAdditionalComponent() (
 	}
 
 	// Attempt to parse a component rule.
-	var component ast.ComponentLike
-	component, token, ok = v.parseComponent()
+	var component1 ast.ComponentLike
+	component1, token, ok = v.parseComponent()
 	if !ok {
 		// Found a syntax error.
 		var message = v.formatError(token,"AdditionalComponent")
@@ -473,8 +473,8 @@ func (v *parser_) parseAdditionalComponent() (
 	}
 
 	// Attempt to parse a component rule.
-	var component ast.ComponentLike
-	component, token, ok = v.parseComponent()
+	var component2 ast.ComponentLike
+	component2, token, ok = v.parseComponent()
 	if !ok {
 		// Found a syntax error.
 		var message = v.formatError(token,"AdditionalComponent")
@@ -530,24 +530,24 @@ func (v *parser_) parseDocument() (
 	}
 
 	// Attempt to parse 1 to unlimited newline tokens.
-	var newlineses = col.List[ast.NewlineLike]()
+	var newlines = col.List[string]()
 	for i := 0; i < unlimited; i++ {
-		newlines, token, ok = v.parseToken(NewlineToken)
+		newline, token, ok = v.parseToken(NewlineToken)
 		if !ok {
 			switch {
 			case i < 1:
-				var message = v.formatError(token, "Newline")
-				message += "Too few newlineses tokens found."
+				var message = v.formatError(token, "")
+				message += "Too many <pluralName> tokens found."
 				panic(message)
 			case i > unlimited:
-				var message = v.formatError(token, "Newline")
-				message += "Too many newlineses tokens found."
+				var message = v.formatError(token, "")
+				message += "Too many <pluralName> tokens found."
 				panic(message)
 			default:
 				break;
 			}
 		}
-		newlineses.AppendValue(newlines)
+		newlines.AppendValue(newline)
 	}
 
 	// Found a document rule.
@@ -565,7 +565,7 @@ func (v *parser_) parseIntrinsic() (
 ) {
 	// Attempt to parse a integer token.
 	var integer string
-	integer, token, ok = v.parseInteger()
+	integer, token, ok = v.parseToken(IntegerToken)
 	if ok {
 		// Found a integer intrinsic.
 		intrinsic = ast.Intrinsic().Make(integer)
@@ -574,7 +574,7 @@ func (v *parser_) parseIntrinsic() (
 
 	// Attempt to parse a rune token.
 	var rune_ string
-	rune_, token, ok = v.parseRune()
+	rune_, token, ok = v.parseToken(RuneToken)
 	if ok {
 		// Found a rune intrinsic.
 		intrinsic = ast.Intrinsic().Make(rune_)
@@ -583,7 +583,7 @@ func (v *parser_) parseIntrinsic() (
 
 	// Attempt to parse a text token.
 	var text string
-	text, token, ok = v.parseText()
+	text, token, ok = v.parseToken(TextToken)
 	if ok {
 		// Found a text intrinsic.
 		intrinsic = ast.Intrinsic().Make(text)
@@ -616,24 +616,24 @@ func (v *parser_) parseList() (
 	}
 
 	// Attempt to parse 0 to unlimited additionalComponent rules.
-	var additionalComponentses = col.List[ast.AdditionalComponentLike]()
+	var additionalComponents = col.List[ast.AdditionalComponentLike]()
 	for i := 0; i < unlimited; i++ {
-		additionalComponents, token, ok = v.parseAdditionalComponent()
+		additionalComponent, token, ok = v.parseAdditionalComponent()
 		if !ok {
 			switch {
 			case i < 0:
-				var message = v.formatError(token, "AdditionalComponent")
-				message += "Too few additionalComponentses rules found."
+				var message = v.formatError(token, "")
+				message += "Too many <pluralName> tokens found."
 				panic(message)
 			case i > unlimited:
-				var message = v.formatError(token, "AdditionalComponent")
-				message += "Too many additionalComponentses rules found."
+				var message = v.formatError(token, "")
+				message += "Too many <pluralName> tokens found."
 				panic(message)
 			default:
 				break;
 			}
 		}
-		additionalComponentses.AppendValue(additionalComponents)
+		additionalComponents.AppendValue(additionalComponent)
 	}
 
 	// Attempt to parse a "]" delimiter.

@@ -58,8 +58,16 @@ Notice: comment newline
 Rule: uppercase ":" Definition newline+
 
 Definition:
-  - Inline
   - Multiline
+  - Inline
+
+Multiline: newline Line+
+
+Line: "-" Identifier note? newline
+
+Identifier:
+  - lowercase
+  - uppercase
 
 Inline: Term+ note?
 
@@ -68,10 +76,6 @@ Term:
   - literal
 
 Reference: Identifier Cardinality?  ! The default cardinality is one.
-
-Identifier:
-  - lowercase
-  - uppercase
 
 Cardinality:
   - Constrained
@@ -84,10 +88,6 @@ Constrained:
 Quantified: "{" number Limit? "}"
 
 Limit: ".." number?  ! The limit of a range of numbers is inclusive.
-
-Multiline: newline Line+
-
-Line: "-" Identifier note? newline
 
 Expression: lowercase ":" Pattern note? newline+
 
