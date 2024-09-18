@@ -68,6 +68,7 @@ type analyzer_ struct {
 	inDefinition_ bool
 	inPattern_    bool
 	hasLiteral_   bool
+	syntaxMap_    string
 	syntaxName_   string
 	notice_       string
 	ruleName_     string
@@ -208,6 +209,13 @@ func (v *analyzer_) PostprocessGroup(group ast.GroupLike) {
 	v.regexp_ += ")"
 }
 
+func (v *analyzer_) PostprocessInline(inline ast.InlineLike) {
+	var note = inline.GetOptionalNote()
+	if col.IsDefined(note) {
+		v.syntaxMap_ += "  " + note
+	}
+}
+
 func (v *analyzer_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 	var name = identifier.GetAny().(string)
 	if Scanner().MatchesType(name, LowercaseToken) {
@@ -227,6 +235,11 @@ func (v *analyzer_) PreprocessLine(
 	var identifier = line.GetIdentifier()
 	var identifiers = v.identifiers_.GetValue(v.ruleName_)
 	identifiers.AppendValue(identifier)
+	v.syntaxMap_ += "\n  - " + identifier.GetAny().(string)
+	var note = line.GetOptionalNote()
+	if col.IsDefined(note) {
+		v.syntaxMap_ += "  " + note
+	}
 }
 
 func (v *analyzer_) PreprocessPattern(definition ast.PatternLike) {
@@ -250,14 +263,34 @@ func (v *analyzer_) PostprocessQuantified(quantified ast.QuantifiedLike) {
 }
 
 func (v *analyzer_) PreprocessReference(reference ast.ReferenceLike) {
+	var references = v.references_.GetValue(v.ruleName_)
+	references.AppendValue(reference)
+
+	// Process the identifier.
 	var identifier = reference.GetIdentifier()
+	v.syntaxMap_ += identifier.GetAny().(string)
+
+	// Process the cardinality.
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		var name = identifier.GetAny().(string)
 		v.checkPlurality(name, cardinality)
+		switch actual := cardinality.GetAny().(type) {
+		case ast.ConstrainedLike:
+			v.syntaxMap_ += actual.GetAny().(string)
+		case ast.QuantifiedLike:
+			var first = actual.GetNumber()
+			v.syntaxMap_ += "{" + first
+			var limit = actual.GetOptionalLimit()
+			if col.IsDefined(limit) {
+				v.syntaxMap_ += ".."
+				var last = limit.GetOptionalNumber()
+				if col.IsDefined(last) {
+					v.syntaxMap_ += last + "}"
+				}
+			}
+		}
 	}
-	var references = v.references_.GetValue(v.ruleName_)
-	references.AppendValue(reference)
 }
 
 func (v *analyzer_) PreprocessRule(
@@ -280,6 +313,7 @@ func (v *analyzer_) PreprocessRule(
 		var identifiers = col.List[ast.IdentifierLike]()
 		v.identifiers_.SetValue(ruleName, identifiers)
 	}
+	v.syntaxMap_ += "\t\"" + ruleName + "\": `"
 }
 
 func (v *analyzer_) PostprocessRule(
@@ -293,10 +327,12 @@ func (v *analyzer_) PostprocessRule(
 	if v.hasLiteral_ {
 		v.delimited_.AddValue(ruleName)
 	}
+	v.syntaxMap_ += "`,\n"
 }
 
 func (v *analyzer_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.isGreedy_ = true // The default is "greedy" scanning.
+	v.syntaxMap_ = "\n"
 	v.syntaxName_ = v.extractSyntaxName(syntax)
 	v.notice_ = v.extractNotice(syntax)
 	v.ruleNames_ = col.Set[string]()
@@ -333,6 +369,13 @@ func (v *analyzer_) PreprocessTerm(
 	index uint,
 	size uint,
 ) {
+	if index > 1 {
+		v.syntaxMap_ += " "
+	}
+	switch actual := term.GetAny().(type) {
+	case string:
+		v.syntaxMap_ += actual
+	}
 	var terms = v.terms_.GetValue(v.ruleName_)
 	terms.AppendValue(term)
 }
@@ -365,6 +408,10 @@ func (v *analyzer_) GetReferences(ruleName string) abs.Sequential[ast.ReferenceL
 
 func (v *analyzer_) GetRuleNames() abs.Sequential[string] {
 	return v.ruleNames_
+}
+
+func (v *analyzer_) GetSyntaxMap() string {
+	return v.syntaxMap_
 }
 
 func (v *analyzer_) GetSyntaxName() string {

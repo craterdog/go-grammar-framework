@@ -1504,5 +1504,49 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var syntax_ = map[string]string{
-	"Syntax": "Component newline*",
+	"Syntax": `Notice comment Rule+ comment Expression+`,
+	"Notice": `comment newline`,
+	"Rule":   `uppercase ":" Definition newline+`,
+	"Definition": `
+  - Multiline
+  - Inline`,
+	"Multiline": `newline Line+`,
+	"Line":      `"-" Identifier note? newline`,
+	"Identifier": `
+  - lowercase
+  - uppercase`,
+	"Inline": `Term+ note?`,
+	"Term": `
+  - Reference
+  - literal`,
+	"Reference": `Identifier Cardinality?  ! The default cardinality is one.`,
+	"Cardinality": `
+  - Constrained
+  - Quantified`,
+	"Constrained": `
+  - optional
+  - repeated`,
+	"Quantified":  `"{" number Limit? "}"`,
+	"Limit":       `".." number?  ! The limit of a range of numbers is inclusive.`,
+	"Expression":  `lowercase ":" Pattern note? newline+`,
+	"Pattern":     `Option Alternative*`,
+	"Alternative": `"|" Option`,
+	"Option":      `Repetition+`,
+	"Repetition":  `Element Cardinality?  ! The default cardinality is one.`,
+	"Element": `
+  - Group
+  - Filter
+  - Text`,
+	"Group":  `"(" Pattern ")"`,
+	"Filter": `excluded? "[" Character+ "]"`,
+	"Character": `
+  - Explicit
+  - intrinsic`,
+	"Explicit": `glyph Extent?`,
+	"Extent":   `".." glyph  ! The extent of a range of glyphs is inclusive.`,
+	"Text": `
+  - intrinsic
+  - glyph
+  - literal
+  - lowercase`,
 }

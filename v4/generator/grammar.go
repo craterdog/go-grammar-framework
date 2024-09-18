@@ -323,6 +323,7 @@ type AnalyzerLike interface {
 	GetNotice() string
 	GetReferences(ruleName string) abs.Sequential[ast.ReferenceLike]
 	GetRuleNames() abs.Sequential[string]
+	GetSyntaxMap() string
 	GetSyntaxName() string
 	GetTerms(ruleName string) abs.Sequential[ast.TermLike]
 	GetTokenNames() abs.Sequential[string]

@@ -83,6 +83,8 @@ func (v *parser_) GenerateParserClass(
 	implementation = replaceAll(implementation, "notice", notice)
 	var syntaxName = v.analyzer_.GetSyntaxName()
 	implementation = replaceAll(implementation, "syntaxName", syntaxName)
+	var syntaxMap = v.analyzer_.GetSyntaxMap()
+	implementation = replaceAll(implementation, "syntaxMap", syntaxMap)
 	var methods = v.generateMethods()
 	implementation = replaceAll(implementation, "methods", methods)
 	return implementation
@@ -750,7 +752,5 @@ func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var syntax_ = map[string]string{
-	"<SyntaxName>": "Component newline*",
-}
+var syntax_ = map[string]string{<SyntaxMap>}
 `

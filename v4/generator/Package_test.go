@@ -833,7 +833,16 @@ func (v *parser_) putBack(token TokenLike) {
 }
 
 var syntax_ = map[string]string{
-	"Document": "Component newline*",
+	"Document": ` + "`" + `Component newline+` + "`" + `,
+	"Component": ` + "`" + `
+  - Intrinsic
+  - List` + "`" + `,
+	"Intrinsic": ` + "`" + `
+  - integer
+  - rune
+  - text` + "`" + `,
+	"List": ` + "`" + `"[" Component AdditionalComponent* "]"` + "`" + `,
+	"AdditionalComponent": ` + "`" + `"," Component Component` + "`" + `,
 }
 `
 
@@ -1797,6 +1806,7 @@ type AnalyzerLike interface {
 	GetNotice() string
 	GetReferences(ruleName string) abs.Sequential[ast.ReferenceLike]
 	GetRuleNames() abs.Sequential[string]
+	GetSyntaxMap() string
 	GetSyntaxName() string
 	GetTerms(ruleName string) abs.Sequential[ast.TermLike]
 	GetTokenNames() abs.Sequential[string]
