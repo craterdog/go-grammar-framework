@@ -61,10 +61,11 @@ func (c *parserClass_) Make() ParserLike {
 
 type parser_ struct {
 	// Define the instance attributes.
-	class_  ParserClassLike
-	source_ string                   // The original source code.
-	tokens_ abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
-	next_   abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
+	class_     ParserClassLike
+	ruleFound_ bool
+	source_    string                   // The original source code.
+	tokens_    abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
+	next_      abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
 }
 
 // Attributes
@@ -103,12 +104,12 @@ func (v *parser_) parseAlternative() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single "|" delimiter.
 	_, token, ok = v.parseDelimiter("|")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Alternative")
 			panic(message)
@@ -117,13 +118,13 @@ func (v *parser_) parseAlternative() (
 			return alternative, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single option rule.
 	var option ast.OptionLike
 	option, token, ok = v.parseOption()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Alternative")
 			panic(message)
@@ -132,6 +133,7 @@ func (v *parser_) parseAlternative() (
 			return alternative, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Found a single alternative rule.
 	alternative = ast.Alternative().Make(option)
@@ -293,13 +295,13 @@ func (v *parser_) parseExplicit() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single glyph token.
 	var glyph string
 	glyph, token, ok = v.parseToken(GlyphToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Explicit")
 			panic(message)
@@ -308,10 +310,14 @@ func (v *parser_) parseExplicit() (
 			return explicit, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Attempt to parse an optional extent rule.
 	var optionalExtent ast.ExtentLike
-	optionalExtent, _, _ = v.parseExtent()
+	optionalExtent, _, ok = v.parseExtent()
+	if ok {
+		v.ruleFound_ = true
+	}
 
 	// Found a single explicit rule.
 	explicit = ast.Explicit().Make(
@@ -327,13 +333,13 @@ func (v *parser_) parseExpression() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single lowercase token.
 	var lowercase string
 	lowercase, token, ok = v.parseToken(LowercaseToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Expression")
 			panic(message)
@@ -342,12 +348,12 @@ func (v *parser_) parseExpression() (
 			return expression, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single ":" delimiter.
 	_, token, ok = v.parseDelimiter(":")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Expression")
 			panic(message)
@@ -356,13 +362,13 @@ func (v *parser_) parseExpression() (
 			return expression, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single pattern rule.
 	var pattern ast.PatternLike
 	pattern, token, ok = v.parsePattern()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Expression")
 			panic(message)
@@ -371,13 +377,13 @@ func (v *parser_) parseExpression() (
 			return expression, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse an optional note token.
 	var optionalNote string
 	optionalNote, _, ok = v.parseToken(NoteToken)
 	if ok {
-		ruleFound = true
+		v.ruleFound_ = true
 	}
 
 	// Attempt to parse 1 to unlimited newline tokens.
@@ -389,7 +395,7 @@ newlinesLoop:
 		if !ok {
 			switch {
 			case i < 1:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single expression rule.
 					return expression, token, false
 				}
@@ -425,12 +431,12 @@ func (v *parser_) parseExtent() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single ".." delimiter.
 	_, token, ok = v.parseDelimiter("..")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Extent")
 			panic(message)
@@ -439,13 +445,13 @@ func (v *parser_) parseExtent() (
 			return extent, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single glyph token.
 	var glyph string
 	glyph, token, ok = v.parseToken(GlyphToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Extent")
 			panic(message)
@@ -454,6 +460,7 @@ func (v *parser_) parseExtent() (
 			return extent, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Found a single extent rule.
 	extent = ast.Extent().Make(glyph)
@@ -466,19 +473,19 @@ func (v *parser_) parseFilter() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse an optional excluded token.
 	var optionalExcluded string
 	optionalExcluded, _, ok = v.parseToken(ExcludedToken)
 	if ok {
-		ruleFound = true
+		v.ruleFound_ = true
 	}
 
 	// Attempt to parse a single "[" delimiter.
 	_, token, ok = v.parseDelimiter("[")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Filter")
 			panic(message)
@@ -487,7 +494,7 @@ func (v *parser_) parseFilter() (
 			return filter, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse 1 to unlimited character rules.
 	var characters = col.List[ast.CharacterLike]()
@@ -498,7 +505,7 @@ charactersLoop:
 		if !ok {
 			switch {
 			case i < 1:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single filter rule.
 					return filter, token, false
 				}
@@ -521,7 +528,7 @@ charactersLoop:
 	// Attempt to parse a single "]" delimiter.
 	_, token, ok = v.parseDelimiter("]")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Filter")
 			panic(message)
@@ -530,6 +537,7 @@ charactersLoop:
 			return filter, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Found a single filter rule.
 	filter = ast.Filter().Make(
@@ -545,12 +553,12 @@ func (v *parser_) parseGroup() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single "(" delimiter.
 	_, token, ok = v.parseDelimiter("(")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Group")
 			panic(message)
@@ -559,13 +567,13 @@ func (v *parser_) parseGroup() (
 			return group, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single pattern rule.
 	var pattern ast.PatternLike
 	pattern, token, ok = v.parsePattern()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Group")
 			panic(message)
@@ -574,12 +582,12 @@ func (v *parser_) parseGroup() (
 			return group, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single ")" delimiter.
 	_, token, ok = v.parseDelimiter(")")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Group")
 			panic(message)
@@ -588,6 +596,7 @@ func (v *parser_) parseGroup() (
 			return group, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Found a single group rule.
 	group = ast.Group().Make(pattern)
@@ -628,7 +637,7 @@ func (v *parser_) parseInline() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse 1 to unlimited term rules.
 	var terms = col.List[ast.TermLike]()
@@ -639,7 +648,7 @@ termsLoop:
 		if !ok {
 			switch {
 			case i < 1:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single inline rule.
 					return inline, token, false
 				}
@@ -661,7 +670,10 @@ termsLoop:
 
 	// Attempt to parse an optional note token.
 	var optionalNote string
-	optionalNote, _, _ = v.parseToken(NoteToken)
+	optionalNote, _, ok = v.parseToken(NoteToken)
+	if ok {
+		v.ruleFound_ = true
+	}
 
 	// Found a single inline rule.
 	inline = ast.Inline().Make(
@@ -677,12 +689,12 @@ func (v *parser_) parseLimit() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single ".." delimiter.
 	_, token, ok = v.parseDelimiter("..")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Limit")
 			panic(message)
@@ -691,10 +703,14 @@ func (v *parser_) parseLimit() (
 			return limit, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Attempt to parse an optional number token.
 	var optionalNumber string
-	optionalNumber, _, _ = v.parseToken(NumberToken)
+	optionalNumber, _, ok = v.parseToken(NumberToken)
+	if ok {
+		v.ruleFound_ = true
+	}
 
 	// Found a single limit rule.
 	limit = ast.Limit().Make(optionalNumber)
@@ -707,12 +723,12 @@ func (v *parser_) parseLine() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single "-" delimiter.
 	_, token, ok = v.parseDelimiter("-")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Line")
 			panic(message)
@@ -721,13 +737,13 @@ func (v *parser_) parseLine() (
 			return line, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single identifier rule.
 	var identifier ast.IdentifierLike
 	identifier, token, ok = v.parseIdentifier()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Line")
 			panic(message)
@@ -736,20 +752,20 @@ func (v *parser_) parseLine() (
 			return line, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse an optional note token.
 	var optionalNote string
 	optionalNote, _, ok = v.parseToken(NoteToken)
 	if ok {
-		ruleFound = true
+		v.ruleFound_ = true
 	}
 
 	// Attempt to parse a single newline token.
 	var newline string
 	newline, token, ok = v.parseToken(NewlineToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Line")
 			panic(message)
@@ -758,6 +774,7 @@ func (v *parser_) parseLine() (
 			return line, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Found a single line rule.
 	line = ast.Line().Make(
@@ -774,13 +791,13 @@ func (v *parser_) parseMultiline() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single newline token.
 	var newline string
 	newline, token, ok = v.parseToken(NewlineToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Multiline")
 			panic(message)
@@ -789,7 +806,7 @@ func (v *parser_) parseMultiline() (
 			return multiline, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse 1 to unlimited line rules.
 	var lines = col.List[ast.LineLike]()
@@ -800,7 +817,7 @@ linesLoop:
 		if !ok {
 			switch {
 			case i < 1:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single multiline rule.
 					return multiline, token, false
 				}
@@ -834,13 +851,13 @@ func (v *parser_) parseNotice() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single comment token.
 	var comment string
 	comment, token, ok = v.parseToken(CommentToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Notice")
 			panic(message)
@@ -849,13 +866,13 @@ func (v *parser_) parseNotice() (
 			return notice, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single newline token.
 	var newline string
 	newline, token, ok = v.parseToken(NewlineToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Notice")
 			panic(message)
@@ -864,6 +881,7 @@ func (v *parser_) parseNotice() (
 			return notice, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Found a single notice rule.
 	notice = ast.Notice().Make(
@@ -879,7 +897,7 @@ func (v *parser_) parseOption() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse 1 to unlimited repetition rules.
 	var repetitions = col.List[ast.RepetitionLike]()
@@ -890,7 +908,7 @@ repetitionsLoop:
 		if !ok {
 			switch {
 			case i < 1:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single option rule.
 					return option, token, false
 				}
@@ -921,13 +939,13 @@ func (v *parser_) parsePattern() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single option rule.
 	var option ast.OptionLike
 	option, token, ok = v.parseOption()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Pattern")
 			panic(message)
@@ -936,7 +954,7 @@ func (v *parser_) parsePattern() (
 			return pattern, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse 0 to unlimited alternative rules.
 	var alternatives = col.List[ast.AlternativeLike]()
@@ -947,7 +965,7 @@ alternativesLoop:
 		if !ok {
 			switch {
 			case i < 0:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single pattern rule.
 					return pattern, token, false
 				}
@@ -981,12 +999,12 @@ func (v *parser_) parseQuantified() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single "{" delimiter.
 	_, token, ok = v.parseDelimiter("{")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Quantified")
 			panic(message)
@@ -995,13 +1013,13 @@ func (v *parser_) parseQuantified() (
 			return quantified, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single number token.
 	var number string
 	number, token, ok = v.parseToken(NumberToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Quantified")
 			panic(message)
@@ -1010,19 +1028,19 @@ func (v *parser_) parseQuantified() (
 			return quantified, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse an optional limit rule.
 	var optionalLimit ast.LimitLike
 	optionalLimit, _, ok = v.parseLimit()
 	if ok {
-		ruleFound = true
+		v.ruleFound_ = true
 	}
 
 	// Attempt to parse a single "}" delimiter.
 	_, token, ok = v.parseDelimiter("}")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Quantified")
 			panic(message)
@@ -1031,6 +1049,7 @@ func (v *parser_) parseQuantified() (
 			return quantified, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Found a single quantified rule.
 	quantified = ast.Quantified().Make(
@@ -1046,13 +1065,13 @@ func (v *parser_) parseReference() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single identifier rule.
 	var identifier ast.IdentifierLike
 	identifier, token, ok = v.parseIdentifier()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Reference")
 			panic(message)
@@ -1061,10 +1080,14 @@ func (v *parser_) parseReference() (
 			return reference, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Attempt to parse an optional cardinality rule.
 	var optionalCardinality ast.CardinalityLike
-	optionalCardinality, _, _ = v.parseCardinality()
+	optionalCardinality, _, ok = v.parseCardinality()
+	if ok {
+		v.ruleFound_ = true
+	}
 
 	// Found a single reference rule.
 	reference = ast.Reference().Make(
@@ -1080,13 +1103,13 @@ func (v *parser_) parseRepetition() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single element rule.
 	var element ast.ElementLike
 	element, token, ok = v.parseElement()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Repetition")
 			panic(message)
@@ -1095,10 +1118,14 @@ func (v *parser_) parseRepetition() (
 			return repetition, token, false
 		}
 	}
+	v.ruleFound_ = true
 
 	// Attempt to parse an optional cardinality rule.
 	var optionalCardinality ast.CardinalityLike
-	optionalCardinality, _, _ = v.parseCardinality()
+	optionalCardinality, _, ok = v.parseCardinality()
+	if ok {
+		v.ruleFound_ = true
+	}
 
 	// Found a single repetition rule.
 	repetition = ast.Repetition().Make(
@@ -1114,13 +1141,13 @@ func (v *parser_) parseRule() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single uppercase token.
 	var uppercase string
 	uppercase, token, ok = v.parseToken(UppercaseToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Rule")
 			panic(message)
@@ -1129,12 +1156,12 @@ func (v *parser_) parseRule() (
 			return rule, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single ":" delimiter.
 	_, token, ok = v.parseDelimiter(":")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Rule")
 			panic(message)
@@ -1143,13 +1170,13 @@ func (v *parser_) parseRule() (
 			return rule, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single definition rule.
 	var definition ast.DefinitionLike
 	definition, token, ok = v.parseDefinition()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Rule")
 			panic(message)
@@ -1158,7 +1185,7 @@ func (v *parser_) parseRule() (
 			return rule, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse 1 to unlimited newline tokens.
 	var newlines = col.List[string]()
@@ -1169,7 +1196,7 @@ newlinesLoop:
 		if !ok {
 			switch {
 			case i < 1:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single rule rule.
 					return rule, token, false
 				}
@@ -1204,13 +1231,13 @@ func (v *parser_) parseSyntax() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single notice rule.
 	var notice ast.NoticeLike
 	notice, token, ok = v.parseNotice()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Syntax")
 			panic(message)
@@ -1219,13 +1246,13 @@ func (v *parser_) parseSyntax() (
 			return syntax, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single comment token.
 	var comment1 string
 	comment1, token, ok = v.parseToken(CommentToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Syntax")
 			panic(message)
@@ -1234,7 +1261,7 @@ func (v *parser_) parseSyntax() (
 			return syntax, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse 1 to unlimited rule rules.
 	var rules = col.List[ast.RuleLike]()
@@ -1245,7 +1272,7 @@ rulesLoop:
 		if !ok {
 			switch {
 			case i < 1:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single syntax rule.
 					return syntax, token, false
 				}
@@ -1269,7 +1296,7 @@ rulesLoop:
 	var comment2 string
 	comment2, token, ok = v.parseToken(CommentToken)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token, "Syntax")
 			panic(message)
@@ -1278,7 +1305,7 @@ rulesLoop:
 			return syntax, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse 1 to unlimited expression rules.
 	var expressions = col.List[ast.ExpressionLike]()
@@ -1289,7 +1316,7 @@ expressionsLoop:
 		if !ok {
 			switch {
 			case i < 1:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single syntax rule.
 					return syntax, token, false
 				}

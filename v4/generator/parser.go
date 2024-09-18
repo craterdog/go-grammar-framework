@@ -354,7 +354,7 @@ const parseOptionalRuleTemplate_ = `
 	var <variableName_> ast.<RuleName>Like
 	<variableName_>, _, ok = v.parse<RuleName>()
 	if ok {
-		ruleFound = true
+		v.ruleFound_ = true
 	}
 `
 
@@ -368,7 +368,7 @@ const parseRepeatedRuleTemplate_ = `
 		if !ok {
 			switch {
 			case i < <first>:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single <rule> rule.
 					return <rule_>, token, false
 				}
@@ -394,7 +394,7 @@ const parseOptionalTokenTemplate_ = `
 	var <variableName_> string
 	<variableName_>, _, ok = v.parseToken(<TokenName>Token)
 	if ok {
-		ruleFound = true
+		v.ruleFound_ = true
 	}
 `
 
@@ -408,7 +408,7 @@ const parseRepeatedTokenTemplate_ = `
 		if !ok {
 			switch {
 			case i < <first>:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single <rule> rule.
 					return <rule_>, token, false
 				}
@@ -446,7 +446,7 @@ func (v *parser_) parse<Rule>() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 <Implementation>
 }
 `
@@ -464,7 +464,7 @@ const parseDelimiterTemplate_ = `
 	// Attempt to parse a single "<delimiter>" delimiter.
 	_, token, ok = v.parseDelimiter("<delimiter>")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"<Rule>")
 			panic(message)
@@ -473,7 +473,7 @@ const parseDelimiterTemplate_ = `
 			return <rule_>, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 `
 
 const parseRuleCaseTemplate_ = `
@@ -525,7 +525,7 @@ const parseRuleTemplate_ = `
 	var <variableName_> ast.<RuleName>Like
 	<variableName_>, token, ok = v.parse<RuleName>()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"<Rule>")
 			panic(message)
@@ -534,7 +534,7 @@ const parseRuleTemplate_ = `
 			return <rule_>, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 `
 
 const parseTokenTemplate_ = `
@@ -542,7 +542,7 @@ const parseTokenTemplate_ = `
 	var <variableName_> string
 	<variableName_>, token, ok = v.parseToken(<TokenName>Token)
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"<Rule>")
 			panic(message)
@@ -551,7 +551,7 @@ const parseTokenTemplate_ = `
 			return <rule_>, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 `
 
 const parserTemplate_ = `<Notice>
@@ -607,10 +607,11 @@ func (c *parserClass_) Make() ParserLike {
 
 type parser_ struct {
 	// Define the instance attributes.
-	class_  ParserClassLike
-	source_ string                   // The original source code.
-	tokens_ abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
-	next_   abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
+	class_     ParserClassLike
+	ruleFound_ bool
+	source_    string                   // The original source code.
+	tokens_    abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
+	next_      abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
 }
 
 // Attributes

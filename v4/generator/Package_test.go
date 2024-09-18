@@ -414,10 +414,11 @@ func (c *parserClass_) Make() ParserLike {
 
 type parser_ struct {
 	// Define the instance attributes.
-	class_  ParserClassLike
-	source_ string                   // The original source code.
-	tokens_ abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
-	next_   abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
+	class_     ParserClassLike
+	ruleFound_ bool
+	source_    string                   // The original source code.
+	tokens_    abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
+	next_      abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
 }
 
 // Attributes
@@ -456,12 +457,12 @@ func (v *parser_) parseAdditionalComponent() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single "," delimiter.
 	_, token, ok = v.parseDelimiter(",")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"AdditionalComponent")
 			panic(message)
@@ -470,13 +471,13 @@ func (v *parser_) parseAdditionalComponent() (
 			return additionalComponent, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single component rule.
 	var component1 ast.ComponentLike
 	component1, token, ok = v.parseComponent()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"AdditionalComponent")
 			panic(message)
@@ -485,13 +486,13 @@ func (v *parser_) parseAdditionalComponent() (
 			return additionalComponent, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single component rule.
 	var component2 ast.ComponentLike
 	component2, token, ok = v.parseComponent()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"AdditionalComponent")
 			panic(message)
@@ -500,7 +501,7 @@ func (v *parser_) parseAdditionalComponent() (
 			return additionalComponent, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Found a single additionalComponent rule.
 	additionalComponent = ast.AdditionalComponent().Make(
@@ -544,13 +545,13 @@ func (v *parser_) parseDocument() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single component rule.
 	var component ast.ComponentLike
 	component, token, ok = v.parseComponent()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"Document")
 			panic(message)
@@ -559,7 +560,7 @@ func (v *parser_) parseDocument() (
 			return document, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse 1 to unlimited newline tokens.
 	var newlines = col.List[string]()
@@ -570,7 +571,7 @@ newlinesLoop:
 		if !ok {
 			switch {
 			case i < 1:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single document rule.
 					return document, token, false
 				}
@@ -641,12 +642,12 @@ func (v *parser_) parseList() (
 	token TokenLike,
 	ok bool,
 ) {
-	var ruleFound bool
+	v.ruleFound_ = false
 
 	// Attempt to parse a single "[" delimiter.
 	_, token, ok = v.parseDelimiter("[")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"List")
 			panic(message)
@@ -655,13 +656,13 @@ func (v *parser_) parseList() (
 			return list, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse a single component rule.
 	var component ast.ComponentLike
 	component, token, ok = v.parseComponent()
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"List")
 			panic(message)
@@ -670,7 +671,7 @@ func (v *parser_) parseList() (
 			return list, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Attempt to parse 0 to unlimited additionalComponent rules.
 	var additionalComponents = col.List[ast.AdditionalComponentLike]()
@@ -681,7 +682,7 @@ additionalComponentsLoop:
 		if !ok {
 			switch {
 			case i < 0:
-				if !ruleFound {
+				if !v.ruleFound_ {
 					// This is not a single list rule.
 					return list, token, false
 				}
@@ -704,7 +705,7 @@ additionalComponentsLoop:
 	// Attempt to parse a single "]" delimiter.
 	_, token, ok = v.parseDelimiter("]")
 	if !ok {
-		if ruleFound {
+		if v.ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"List")
 			panic(message)
@@ -713,7 +714,7 @@ additionalComponentsLoop:
 			return list, token, false
 		}
 	}
-	ruleFound = true
+	v.ruleFound_ = true
 
 	// Found a single list rule.
 	list = ast.List().Make(
