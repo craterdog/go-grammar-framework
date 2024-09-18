@@ -456,37 +456,59 @@ func (v *parser_) parseAdditionalComponent() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a "," delimiter.
+	var ruleFound bool
+
+	// Attempt to parse a single "," delimiter.
 	_, token, ok = v.parseDelimiter(",")
 	if !ok {
-		// This is not a additionalComponent rule.
-		return additionalComponent, token, false
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"AdditionalComponent")
+			panic(message)
+		} else {
+			// This is not a single additionalComponent rule.
+			return additionalComponent, token, false
+		}
 	}
+	ruleFound = true
 
-	// Attempt to parse a component rule.
+	// Attempt to parse a single component rule.
 	var component1 ast.ComponentLike
 	component1, token, ok = v.parseComponent()
 	if !ok {
-		// Found a syntax error.
-		var message = v.formatError(token,"AdditionalComponent")
-		panic(message)
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"AdditionalComponent")
+			panic(message)
+		} else {
+			// This is not a single additionalComponent rule.
+			return additionalComponent, token, false
+		}
 	}
+	ruleFound = true
 
-	// Attempt to parse a component rule.
+	// Attempt to parse a single component rule.
 	var component2 ast.ComponentLike
 	component2, token, ok = v.parseComponent()
 	if !ok {
-		// Found a syntax error.
-		var message = v.formatError(token,"AdditionalComponent")
-		panic(message)
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"AdditionalComponent")
+			panic(message)
+		} else {
+			// This is not a single additionalComponent rule.
+			return additionalComponent, token, false
+		}
 	}
+	ruleFound = true
 
-	// Found a additionalComponent rule.
+	// Found a single additionalComponent rule.
 	additionalComponent = ast.AdditionalComponent().Make(
 		component1,
 		component2,
 	)
 	return additionalComponent, token, true
+
 }
 
 func (v *parser_) parseComponent() (
@@ -494,26 +516,27 @@ func (v *parser_) parseComponent() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a intrinsic rule.
+	// Attempt to parse a single intrinsic rule.
 	var intrinsic ast.IntrinsicLike
 	intrinsic, token, ok = v.parseIntrinsic()
 	if ok {
-		// Found a intrinsic component.
+		// Found a single intrinsic component.
 		component = ast.Component().Make(intrinsic)
 		return component, token, true
 	}
 
-	// Attempt to parse a list rule.
+	// Attempt to parse a single list rule.
 	var list ast.ListLike
 	list, token, ok = v.parseList()
 	if ok {
-		// Found a list component.
+		// Found a single list component.
 		component = ast.Component().Make(list)
 		return component, token, true
 	}
 
-	// This is not a component rule.
+	// This is not a single component rule.
 	return component, token, false
+
 }
 
 func (v *parser_) parseDocument() (
@@ -521,43 +544,59 @@ func (v *parser_) parseDocument() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a component rule.
+	var ruleFound bool
+
+	// Attempt to parse a single component rule.
 	var component ast.ComponentLike
 	component, token, ok = v.parseComponent()
 	if !ok {
-		// This is not a document rule.
-		return document, token, false
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"Document")
+			panic(message)
+		} else {
+			// This is not a single document rule.
+			return document, token, false
+		}
 	}
+	ruleFound = true
 
 	// Attempt to parse 1 to unlimited newline tokens.
 	var newlines = col.List[string]()
-loop:
+newlinesLoop:
 	for i := 0; i < unlimited; i++ {
 		var newline string
 		newline, token, ok = v.parseToken(NewlineToken)
 		if !ok {
 			switch {
 			case i < 1:
-				var message = v.formatError(token, "")
-				message += "Too few references found."
+				if !ruleFound {
+					// This is not a single document rule.
+					return document, token, false
+				}
+				// Found a syntax error.
+				var message = v.formatError(token, "Document")
+				message += "Too few newline tokens found."
 				panic(message)
 			case i > unlimited:
-				var message = v.formatError(token, "")
-				message += "Too few references found."
+				// Found a syntax error.
+				var message = v.formatError(token, "Document")
+				message += "Too many newline tokens found."
 				panic(message)
 			default:
-				break loop
+				break newlinesLoop
 			}
 		}
 		newlines.AppendValue(newline)
 	}
 
-	// Found a document rule.
+	// Found a single document rule.
 	document = ast.Document().Make(
 		component,
 		newlines,
 	)
 	return document, token, true
+
 }
 
 func (v *parser_) parseIntrinsic() (
@@ -565,35 +604,36 @@ func (v *parser_) parseIntrinsic() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a integer token.
+	// Attempt to parse a single integer token.
 	var integer string
 	integer, token, ok = v.parseToken(IntegerToken)
 	if ok {
-		// Found a integer intrinsic.
+		// Found a single integer intrinsic.
 		intrinsic = ast.Intrinsic().Make(integer)
 		return intrinsic, token, true
 	}
 
-	// Attempt to parse a rune token.
+	// Attempt to parse a single rune token.
 	var rune_ string
 	rune_, token, ok = v.parseToken(RuneToken)
 	if ok {
-		// Found a rune intrinsic.
+		// Found a single rune intrinsic.
 		intrinsic = ast.Intrinsic().Make(rune_)
 		return intrinsic, token, true
 	}
 
-	// Attempt to parse a text token.
+	// Attempt to parse a single text token.
 	var text string
 	text, token, ok = v.parseToken(TextToken)
 	if ok {
-		// Found a text intrinsic.
+		// Found a single text intrinsic.
 		intrinsic = ast.Intrinsic().Make(text)
 		return intrinsic, token, true
 	}
 
-	// This is not a intrinsic rule.
+	// This is not a single intrinsic rule.
 	return intrinsic, token, false
+
 }
 
 func (v *parser_) parseList() (
@@ -601,59 +641,87 @@ func (v *parser_) parseList() (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a "[" delimiter.
+	var ruleFound bool
+
+	// Attempt to parse a single "[" delimiter.
 	_, token, ok = v.parseDelimiter("[")
 	if !ok {
-		// This is not a list rule.
-		return list, token, false
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"List")
+			panic(message)
+		} else {
+			// This is not a single list rule.
+			return list, token, false
+		}
 	}
+	ruleFound = true
 
-	// Attempt to parse a component rule.
+	// Attempt to parse a single component rule.
 	var component ast.ComponentLike
 	component, token, ok = v.parseComponent()
 	if !ok {
-		// Found a syntax error.
-		var message = v.formatError(token,"List")
-		panic(message)
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"List")
+			panic(message)
+		} else {
+			// This is not a single list rule.
+			return list, token, false
+		}
 	}
+	ruleFound = true
 
 	// Attempt to parse 0 to unlimited additionalComponent rules.
 	var additionalComponents = col.List[ast.AdditionalComponentLike]()
-loop:
+additionalComponentsLoop:
 	for i := 0; i < unlimited; i++ {
 		var additionalComponent ast.AdditionalComponentLike
 		additionalComponent, token, ok = v.parseAdditionalComponent()
 		if !ok {
 			switch {
 			case i < 0:
-				var message = v.formatError(token, "")
-				message += "Too few references found."
+				if !ruleFound {
+					// This is not a single list rule.
+					return list, token, false
+				}
+				// Found a syntax error.
+				var message = v.formatError(token, "List")
+				message += "Too few additionalComponent rules found."
 				panic(message)
 			case i > unlimited:
-				var message = v.formatError(token, "")
-				message += "Too few references found."
+				// Found a syntax error.
+				var message = v.formatError(token, "List")
+				message += "Too many additionalComponent rules found."
 				panic(message)
 			default:
-				break loop
+				break additionalComponentsLoop
 			}
 		}
 		additionalComponents.AppendValue(additionalComponent)
 	}
 
-	// Attempt to parse a "]" delimiter.
+	// Attempt to parse a single "]" delimiter.
 	_, token, ok = v.parseDelimiter("]")
 	if !ok {
-		// Found a syntax error.
-		var message = v.formatError(token,"List")
-		panic(message)
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"List")
+			panic(message)
+		} else {
+			// This is not a single list rule.
+			return list, token, false
+		}
 	}
+	ruleFound = true
 
-	// Found a list rule.
+	// Found a single list rule.
 	list = ast.List().Make(
 		component,
 		additionalComponents,
 	)
 	return list, token, true
+
 }
 
 func (v *parser_) parseDelimiter(expectedValue string) (
@@ -661,7 +729,7 @@ func (v *parser_) parseDelimiter(expectedValue string) (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a delimiter.
+	// Attempt to parse a single delimiter.
 	value, token, ok = v.parseToken(DelimiterToken)
 	if ok {
 		if value == expectedValue {
@@ -680,7 +748,7 @@ func (v *parser_) parseToken(tokenType TokenType) (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the specific token.
+	// Attempt to parse a specific token.
 	token = v.getNextToken()
 	if token == nil {
 		// We are at the end-of-file marker.

@@ -219,8 +219,6 @@ func (v *parser_) generateInlineMethod(
 	var terms = v.analyzer_.GetTerms(rule).GetIterator()
 	var references = v.analyzer_.GetReferences(rule)
 	var variableNames = generateVariableNames(references).GetIterator()
-	var handler string
-	var caseHandler string
 	for terms.HasNext() {
 		var term = terms.GetNext()
 		switch actual := term.GetAny().(type) {
@@ -230,21 +228,13 @@ func (v *parser_) generateInlineMethod(
 		case string:
 			implementation += v.generateInlineLiteral(actual)
 		}
-		if col.IsUndefined(handler) {
-			handler = parseReturnFalseTemplate_
-		} else {
-			handler = parseReturnPanicTemplate_
-			caseHandler = parseTooFewTemplate_
-		}
-		implementation = replaceAll(implementation, "handler", handler)
-		implementation = replaceAll(implementation, "caseHandler", caseHandler)
 
 	}
 	implementation += parseRuleFoundTemplate_
-	implementation = replaceAll(implementation, "rule", rule)
 	var arguments = v.generateArguments(rule)
 	implementation = replaceAll(implementation, "arguments", arguments)
-	implementation = replaceAll(parseRuleMethodTemplate_, "implementation", implementation)
+	implementation = replaceAll(parseInlineRuleMethodTemplate_, "implementation", implementation)
+	implementation = replaceAll(implementation, "rule", rule)
 	return implementation
 }
 
@@ -306,7 +296,7 @@ func (v *parser_) generateMultilineMethod(
 	implementation = replaceAll(implementation, "tokenCases", tokenCases)
 	implementation = replaceAll(implementation, "defaultCase", defaultCase)
 	implementation = replaceAll(implementation, "rule", rule)
-	return replaceAll(parseRuleMethodTemplate_, "implementation", implementation)
+	return replaceAll(parseMultilineRuleMethodTemplate_, "implementation", implementation)
 }
 
 func (v *parser_) generateMultilineRule(
@@ -360,22 +350,37 @@ const parseArgumentTemplate_ = `<argument_>`
 const parseOptionalRuleTemplate_ = `
 	// Attempt to parse an optional <ruleName> rule.
 	var <variableName_> ast.<RuleName>Like
-	<variableName_>, _, _ = v.parse<RuleName>()
+	<variableName_>, _, ok = v.parse<RuleName>()
+	if ok {
+		ruleFound = true
+	}
 `
 
 const parseRepeatedRuleTemplate_ = `
 	// Attempt to parse <first> to <last> <ruleName> rules.
 	var <variableName> = col.List[ast.<RuleName>Like]()
-loop:
+<variableName>Loop:
 	for i := 0; i < <last>; i++ {
 		var <ruleName_> ast.<RuleName>Like
 		<ruleName_>, token, ok = v.parse<RuleName>()
 		if !ok {
 			switch {
-			case i < <first>:<CaseHandler>
-			case i > <last>:<CaseHandler>
+			case i < <first>:
+				if !ruleFound {
+					// This is not a single <rule> rule.
+					return <rule_>, token, false
+				}
+				// Found a syntax error.
+				var message = v.formatError(token, "<Rule>")
+				message += "Too few <ruleName> rules found."
+				panic(message)
+			case i > <last>:
+				// Found a syntax error.
+				var message = v.formatError(token, "<Rule>")
+				message += "Too many <ruleName> rules found."
+				panic(message)
 			default:
-				break loop
+				break <variableName>Loop
 			}
 		}
 		<variableName_>.AppendValue(<ruleName_>)
@@ -385,126 +390,166 @@ loop:
 const parseOptionalTokenTemplate_ = `
 	// Attempt to parse an optional <tokenName> token.
 	var <variableName_> string
-	<variableName_>, _, _ = v.parseToken(<TokenName>Token)
+	<variableName_>, _, ok = v.parseToken(<TokenName>Token)
+	if ok {
+		ruleFound = true
+	}
 `
 
 const parseRepeatedTokenTemplate_ = `
 	// Attempt to parse <first> to <last> <tokenName> tokens.
 	var <variableName_> = col.List[string]()
-loop:
+<variableName>Loop:
 	for i := 0; i < <last>; i++ {
 		var <tokenName_> string
 		<tokenName_>, token, ok = v.parseToken(<TokenName>Token)
 		if !ok {
 			switch {
-			case i < <first>:<CaseHandler>
-			case i > <last>:<CaseHandler>
+			case i < <first>:
+				if !ruleFound {
+					// This is not a single <rule> rule.
+					return <rule_>, token, false
+				}
+				// Found a syntax error.
+				var message = v.formatError(token, "<Rule>")
+				message += "Too few <tokenName> tokens found."
+				panic(message)
+			case i > <last>:
+				// Found a syntax error.
+				var message = v.formatError(token, "<Rule>")
+				message += "Too many <tokenName> tokens found."
+				panic(message)
 			default:
-				break loop
+				break <variableName>Loop
 			}
 		}
 		<variableName_>.AppendValue(<tokenName_>)
 	}
 `
 
-const parseReturnFalseTemplate_ = `
-		// This is not a <rule> rule.
-		return <rule_>, token, false`
-
-const parseReturnPanicTemplate_ = `
-		// Found a syntax error.
-		var message = v.formatError(token,"<Rule>")
-		panic(message)`
-
-const parseTooFewTemplate_ = `
-				var message = v.formatError(token, "")
-				message += "Too few references found."
-				panic(message)`
-
 const parseRuleFoundTemplate_ = `
-	// Found a <rule> rule.
+	// Found a single <rule> rule.
 	<rule_> = ast.<Rule>().Make(<arguments>)
 	return <rule_>, token, true
 `
 
 const parseRuleDefaultCaseTemplate_ = `
-	// This is not a <rule> rule.
+	// This is not a single <rule> rule.
 	return <rule_>, token, false
 `
 
-const parseRuleMethodTemplate_ = `
+const parseInlineRuleMethodTemplate_ = `
 func (v *parser_) parse<Rule>() (
 	<rule_> ast.<Rule>Like,
 	token TokenLike,
 	ok bool,
-) {<Implementation>}
+) {
+	var ruleFound bool
+<Implementation>
+}
+`
+
+const parseMultilineRuleMethodTemplate_ = `
+func (v *parser_) parse<Rule>() (
+	<rule_> ast.<Rule>Like,
+	token TokenLike,
+	ok bool,
+) {<Implementation>
+}
 `
 
 const parseDelimiterTemplate_ = `
-	// Attempt to parse a "<delimiter>" delimiter.
+	// Attempt to parse a single "<delimiter>" delimiter.
 	_, token, ok = v.parseDelimiter("<delimiter>")
-	if !ok {<Handler>
+	if !ok {
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"<Rule>")
+			panic(message)
+		} else {
+			// This is not a single <rule> rule.
+			return <rule_>, token, false
+		}
 	}
+	ruleFound = true
 `
 
 const parseRuleCaseTemplate_ = `
-	// Attempt to parse a <ruleName> rule.
+	// Attempt to parse a single <ruleName> rule.
 	var <ruleName_> ast.<RuleName>Like
 	<ruleName_>, token, ok = v.parse<RuleName>()
 	if ok {
-		// Found a <ruleName> <rule>.
+		// Found a single <ruleName> <rule>.
 		<rule_> = ast.<Rule>().Make(<ruleName_>)
 		return <rule_>, token, true
 	}
 `
 
 const parseTokenCaseTemplate_ = `
-	// Attempt to parse a <tokenName> token.
+	// Attempt to parse a single <tokenName> token.
 	var <tokenName_> string
 	<tokenName_>, token, ok = v.parseToken(<TokenName>Token)
 	if ok {
-		// Found a <tokenName> <rule>.
+		// Found a single <tokenName> <rule>.
 		<rule_> = ast.<Rule>().Make(<tokenName_>)
 		return <rule_>, token, true
 	}
 `
 
 const parseSingularRuleCaseTemplate_ = `
-	// Attempt to parse a <ruleName> rule.
+	// Attempt to parse a single <ruleName> rule.
 	var <ruleName_> ast.<RuleName>Like
 	<ruleName_>, token, ok = v.parse<RuleName>()
 	if ok {
-		// Found a <ruleName> <rule>.
+		// Found a single <ruleName> <rule>.
 		<rule_> = ast.<Rule>().Make(<ruleName_>)
 		return <rule_>, token, true
 	}
 `
 
 const parseSingularTokenCaseTemplate_ = `
-	// Attempt to parse a <tokenName> token.
+	// Attempt to parse a single <tokenName> token.
 	var <tokenName_> string
 	<tokenName_>, token, ok = v.parse<TokenName>()
 	if ok {
-		// Found a <tokenName> <rule>.
+		// Found a single <tokenName> <rule>.
 		<rule_> = ast.<Rule>().Make(<tokenName_>)
 		return <rule_>, token, true
 	}
 `
 
 const parseRuleTemplate_ = `
-	// Attempt to parse a <ruleName> rule.
+	// Attempt to parse a single <ruleName> rule.
 	var <variableName_> ast.<RuleName>Like
 	<variableName_>, token, ok = v.parse<RuleName>()
-	if !ok {<Handler>
+	if !ok {
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"<Rule>")
+			panic(message)
+		} else {
+			// This is not a single <rule> rule.
+			return <rule_>, token, false
+		}
 	}
+	ruleFound = true
 `
 
 const parseTokenTemplate_ = `
-	// Attempt to parse a <tokenName> token.
+	// Attempt to parse a single <tokenName> token.
 	var <variableName_> string
 	<variableName_>, token, ok = v.parseToken(<TokenName>Token)
-	if !ok {<Handler>
+	if !ok {
+		if ruleFound {
+			// Found a syntax error.
+			var message = v.formatError(token,"<Rule>")
+			panic(message)
+		} else {
+			// This is not a single <rule> rule.
+			return <rule_>, token, false
+		}
 	}
+	ruleFound = true
 `
 
 const parserTemplate_ = `<Notice>
@@ -602,7 +647,7 @@ func (v *parser_) parseDelimiter(expectedValue string) (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a delimiter.
+	// Attempt to parse a single delimiter.
 	value, token, ok = v.parseToken(DelimiterToken)
 	if ok {
 		if value == expectedValue {
@@ -621,7 +666,7 @@ func (v *parser_) parseToken(tokenType TokenType) (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse the specific token.
+	// Attempt to parse a specific token.
 	token = v.getNextToken()
 	if token == nil {
 		// We are at the end-of-file marker.
