@@ -13,6 +13,7 @@
 package generator
 
 import (
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -75,7 +76,7 @@ func (v *formatter_) GenerateFormatterClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = formatterTemplate_
+	implementation = v.getTemplate("formatterClass")
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
@@ -96,11 +97,11 @@ func (v *formatter_) generateRuleFormatters() string {
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
 		var isPlural = v.analyzer_.IsPlural(ruleName)
-		var parameters = formatRuleParameterTemplate_
+		var parameters = v.getTemplate("ruleParameter")
 		if isPlural {
-			parameters = formatRuleParametersTemplate_
+			parameters = v.getTemplate("ruleParameters")
 		}
-		var ruleFormatter = formatRuleTemplate_
+		var ruleFormatter = v.getTemplate("formatRule")
 		ruleFormatter = replaceAll(ruleFormatter, "parameters", parameters)
 		ruleFormatter = replaceAll(ruleFormatter, "ruleName", ruleName)
 		ruleFormatters += ruleFormatter
@@ -117,11 +118,11 @@ func (v *formatter_) generateTokenFormatters() string {
 			continue
 		}
 		var isPlural = v.analyzer_.IsPlural(tokenName)
-		var parameters = formatTokenParameterTemplate_
+		var parameters = v.getTemplate("tokenParameter")
 		if isPlural {
-			parameters = formatTokenParametersTemplate_
+			parameters = v.getTemplate("tokenParameters")
 		}
-		var tokenFormatter = formatTokenTemplate_
+		var tokenFormatter = v.getTemplate("formatToken")
 		tokenFormatter = replaceAll(tokenFormatter, "parameters", parameters)
 		tokenFormatter = replaceAll(tokenFormatter, "tokenName", tokenName)
 		tokenFormatters += tokenFormatter
@@ -129,7 +130,18 @@ func (v *formatter_) generateTokenFormatters() string {
 	return tokenFormatters
 }
 
-const formatRuleTemplate_ = `
+func (v *formatter_) getTemplate(name string) string {
+	var template = formatterTemplates_.GetValue(name)
+	return template
+}
+
+// PRIVATE GLOBALS
+
+// Constants
+
+var formatterTemplates_ = col.Catalog[string, string](
+	map[string]string{
+		"formatRule": `
 func (v *formatter_) Preprocess<RuleName>(<parameters>) {
 	// TBD - Add formatting of the delimited rule.
 }
@@ -137,31 +149,25 @@ func (v *formatter_) Preprocess<RuleName>(<parameters>) {
 func (v *formatter_) Postprocess<RuleName>(<parameters>) {
 	// TBD - Add formatting of the delimited rule.
 }
-`
-
-const formatRuleParameterTemplate_ = `<ruleName_> ast.<RuleName>Like`
-
-const formatRuleParametersTemplate_ = `
+`,
+		"ruleParameter": `<ruleName_> ast.<RuleName>Like`,
+		"ruleParameters": `
 	<ruleName_> ast.<RuleName>Like,
 	index uint,
 	size uint,
-`
-
-const formatTokenTemplate_ = `
+`,
+		"formatToken": `
 func (v *formatter_) Process<TokenName>(<parameters>) {
 	v.appendString(<tokenName_>)
 }
-`
-
-const formatTokenParameterTemplate_ = `<tokenName_> string`
-
-const formatTokenParametersTemplate_ = `
+`,
+		"tokenParameter": `<tokenName_> string`,
+		"tokenParameters": `
 	<tokenName_> string,
 	index uint,
 	size uint,
-`
-
-const formatterTemplate_ = `<Notice>
+`,
+		"formatterClass": `<Notice>
 
 package grammar
 
@@ -261,4 +267,6 @@ func (v *formatter_) getResult() string {
 	v.result_.Reset()
 	return result
 }
-`
+`,
+	},
+)

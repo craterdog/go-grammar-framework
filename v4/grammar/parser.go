@@ -97,8 +97,6 @@ func (v *parser_) ParseSource(source string) ast.SyntaxLike {
 
 // Private
 
-const unlimited = 4294967295 // Default to a reasonable value.
-
 func (v *parser_) parseAlternative() (
 	alternative ast.AlternativeLike,
 	token TokenLike,
@@ -1498,10 +1496,14 @@ func (v *parser_) formatError(token TokenLike, ruleName string) string {
 		message += fmt.Sprintf(
 			"  \033[32m%v: \033[33m%v\033[0m\n\n",
 			ruleName,
-			syntax_[ruleName],
+			v.getDefinition(ruleName),
 		)
 	}
 	return message
+}
+
+func (v *parser_) getDefinition(ruleName string) string {
+	return syntax_.GetValue(ruleName)
 }
 
 func (v *parser_) getNextToken() TokenLike {
@@ -1530,50 +1532,58 @@ func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var syntax_ = map[string]string{
-	"Syntax": `Notice comment Rule+ comment Expression+`,
-	"Notice": `comment newline`,
-	"Rule":   `uppercase ":" Definition newline+`,
-	"Definition": `
+// PRIVATE GLOBALS
+
+// Constants
+
+const unlimited = 4294967295 // Default to a reasonable value.
+
+var syntax_ = col.Catalog[string, string](
+	map[string]string{
+		"Syntax": `Notice comment Rule+ comment Expression+`,
+		"Notice": `comment newline`,
+		"Rule":   `uppercase ":" Definition newline+`,
+		"Definition": `
   - Multiline
   - Inline`,
-	"Multiline": `newline Line+`,
-	"Line":      `"-" Identifier note? newline`,
-	"Identifier": `
+		"Multiline": `newline Line+`,
+		"Line":      `"-" Identifier note? newline`,
+		"Identifier": `
   - lowercase
   - uppercase`,
-	"Inline": `Term+ note?`,
-	"Term": `
+		"Inline": `Term+ note?`,
+		"Term": `
   - Reference
   - literal`,
-	"Reference": `Identifier Cardinality?  ! The default cardinality is one.`,
-	"Cardinality": `
+		"Reference": `Identifier Cardinality?  ! The default cardinality is one.`,
+		"Cardinality": `
   - Constrained
   - Quantified`,
-	"Constrained": `
+		"Constrained": `
   - optional
   - repeated`,
-	"Quantified":  `"{" number Limit? "}"`,
-	"Limit":       `".." number?  ! The limit of a range of numbers is inclusive.`,
-	"Expression":  `lowercase ":" Pattern note? newline+`,
-	"Pattern":     `Option Alternative*`,
-	"Alternative": `"|" Option`,
-	"Option":      `Repetition+`,
-	"Repetition":  `Element Cardinality?  ! The default cardinality is one.`,
-	"Element": `
+		"Quantified":  `"{" number Limit? "}"`,
+		"Limit":       `".." number?  ! The limit of a range of numbers is inclusive.`,
+		"Expression":  `lowercase ":" Pattern note? newline+`,
+		"Pattern":     `Option Alternative*`,
+		"Alternative": `"|" Option`,
+		"Option":      `Repetition+`,
+		"Repetition":  `Element Cardinality?  ! The default cardinality is one.`,
+		"Element": `
   - Group
   - Filter
   - Text`,
-	"Group":  `"(" Pattern ")"`,
-	"Filter": `excluded? "[" Character+ "]"`,
-	"Character": `
+		"Group":  `"(" Pattern ")"`,
+		"Filter": `excluded? "[" Character+ "]"`,
+		"Character": `
   - Explicit
   - intrinsic`,
-	"Explicit": `glyph Extent?`,
-	"Extent":   `".." glyph  ! The extent of a range of glyphs is inclusive.`,
-	"Text": `
+		"Explicit": `glyph Extent?`,
+		"Extent":   `".." glyph  ! The extent of a range of glyphs is inclusive.`,
+		"Text": `
   - intrinsic
   - glyph
   - literal
   - lowercase`,
-}
+	},
+)

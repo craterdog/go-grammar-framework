@@ -13,6 +13,7 @@
 package generator
 
 import (
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -75,7 +76,7 @@ func (v *validator_) GenerateValidatorClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = validatorTemplate_
+	implementation = v.getTemplate("validatorClass")
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
@@ -97,11 +98,11 @@ func (v *validator_) generateTokenValidators() string {
 			continue
 		}
 		var isPlural = v.analyzer_.IsPlural(tokenName)
-		var parameters = validateTokenParameterTemplate_
+		var parameters = v.getTemplate("tokenParameter")
 		if isPlural {
-			parameters = validateTokenParametersTemplate_
+			parameters = v.getTemplate("tokenParameters")
 		}
-		var tokenValidator = validateTokenTemplate_
+		var tokenValidator = v.getTemplate("validateToken")
 		tokenValidator = replaceAll(tokenValidator, "parameters", parameters)
 		tokenValidator = replaceAll(tokenValidator, "tokenName", tokenName)
 		tokenValidators += tokenValidator
@@ -109,21 +110,29 @@ func (v *validator_) generateTokenValidators() string {
 	return tokenValidators
 }
 
-const validateTokenTemplate_ = `
+func (v *validator_) getTemplate(name string) string {
+	var template = validatorTemplates_.GetValue(name)
+	return template
+}
+
+// PRIVATE GLOBALS
+
+// Constants
+
+var validatorTemplates_ = col.Catalog[string, string](
+	map[string]string{
+		"validateToken": `
 func (v *validator_) Process<TokenName>(<parameters>) {
 	v.ValidateToken(<tokenName_>, <TokenName>Token)
 }
-`
-
-const validateTokenParameterTemplate_ = `<tokenName_> string`
-
-const validateTokenParametersTemplate_ = `
+`,
+		"tokenParameter": `<tokenName_> string`,
+		"tokenParameters": `
 	<tokenName_> string,
 	index uint,
 	size uint,
-`
-
-const validatorTemplate_ = `<Notice>
+`,
+		"validatorClass": `<Notice>
 
 package grammar
 
@@ -217,4 +226,6 @@ func (v *validator_) ValidateToken(
 func (v *validator_) Validate<Name>(<name> ast.<Name>Like) {
 	v.visitor_.Visit<Name>(<name>)
 }
-`
+`,
+	},
+)

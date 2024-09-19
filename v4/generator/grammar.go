@@ -13,6 +13,7 @@
 package generator
 
 import (
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -76,7 +77,9 @@ func (v *grammar_) GenerateGrammarModel(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = grammarTemplate_
+	var header = v.getTemplate("packageHeader")
+	implementation = v.getTemplate("grammarModel")
+	implementation = replaceAll(implementation, "header", header)
 	implementation = replaceAll(implementation, "module", module)
 	implementation = replaceAll(implementation, "wiki", wiki)
 	var notice = v.analyzer_.GetNotice()
@@ -155,8 +158,18 @@ func (v *grammar_) generateTokenTypes() string {
 	return tokenTypes
 }
 
-const grammarTemplate_ = `<Notice>
+func (v *grammar_) getTemplate(name string) string {
+	var template = grammarTemplates_.GetValue(name)
+	return template
+}
 
+// PRIVATE GLOBALS
+
+// Constants
+
+var grammarTemplates_ = col.Catalog[string, string](
+	map[string]string{
+		"packageHeader": `
 /*
 Package "grammar" provides the following grammar classes that operate on the
 abstract syntax tree (AST) for this module:
@@ -179,7 +192,9 @@ Additional concrete implementations of the classes defined by this package can
 be developed and used seamlessly since the interface definitions only depend on
 other interfaces and intrinsic types—and the class implementations only depend
 on interfaces, not on each other.
-*/
+*/`,
+		"grammarModel": `<Notice>
+<Header>
 package grammar
 
 import (
@@ -434,4 +449,6 @@ Methodical defines the set of method signatures that must be supported
 by all methodical processors.
 */
 type Methodical interface {<ProcessTokens><ProcessRules>}
-`
+`,
+	},
+)

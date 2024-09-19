@@ -234,6 +234,12 @@ expressionLoop:
 
 // Public
 
+func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
+	v.rules_ = col.Catalog[string, ast.DefinitionLike]()
+	v.expressions_ = col.Catalog[string, ast.PatternLike]()
+	v.visitor_.VisitSyntax(syntax)
+}
+
 func (v *validator_) ValidateToken(
 	tokenValue string,
 	tokenType TokenType,
@@ -246,10 +252,4 @@ func (v *validator_) ValidateToken(
 		)
 		panic(message)
 	}
-}
-
-func (v *validator_) ValidateSyntax(syntax ast.SyntaxLike) {
-	v.rules_ = col.Catalog[string, ast.DefinitionLike]()
-	v.expressions_ = col.Catalog[string, ast.PatternLike]()
-	v.visitor_.VisitSyntax(syntax)
 }

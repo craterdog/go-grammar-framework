@@ -209,17 +209,17 @@ func (v *analyzer_) PostprocessGroup(group ast.GroupLike) {
 	v.regexp_ += ")"
 }
 
-func (v *analyzer_) PostprocessInline(inline ast.InlineLike) {
-	var note = inline.GetOptionalNote()
-	if col.IsDefined(note) {
-		v.syntaxMap_ += "  " + note
-	}
-}
-
 func (v *analyzer_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 	var name = identifier.GetAny().(string)
 	if Scanner().MatchesType(name, LowercaseToken) {
 		v.tokenNames_.AddValue(name)
+	}
+}
+
+func (v *analyzer_) PostprocessInline(inline ast.InlineLike) {
+	var note = inline.GetOptionalNote()
+	if col.IsDefined(note) {
+		v.syntaxMap_ += "  " + note
 	}
 }
 
@@ -313,7 +313,7 @@ func (v *analyzer_) PreprocessRule(
 		var identifiers = col.List[ast.IdentifierLike]()
 		v.identifiers_.SetValue(ruleName, identifiers)
 	}
-	v.syntaxMap_ += "\t\"" + ruleName + "\": `"
+	v.syntaxMap_ += "\n\t\t\"" + ruleName + "\": `"
 }
 
 func (v *analyzer_) PostprocessRule(
@@ -327,12 +327,11 @@ func (v *analyzer_) PostprocessRule(
 	if v.hasLiteral_ {
 		v.delimited_.AddValue(ruleName)
 	}
-	v.syntaxMap_ += "`,\n"
+	v.syntaxMap_ += "`,"
 }
 
 func (v *analyzer_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.isGreedy_ = true // The default is "greedy" scanning.
-	v.syntaxMap_ = "\n"
 	v.syntaxName_ = v.extractSyntaxName(syntax)
 	v.notice_ = v.extractNotice(syntax)
 	v.ruleNames_ = col.Set[string]()

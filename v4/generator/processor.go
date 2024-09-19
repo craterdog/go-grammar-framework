@@ -13,6 +13,7 @@
 package generator
 
 import (
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -75,7 +76,7 @@ func (v *processor_) GenerateProcessorClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = processorTemplate_
+	implementation = v.getTemplate("processorClass")
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
@@ -96,11 +97,11 @@ func (v *processor_) generateRuleProcessors() string {
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
 		var isPlural = v.analyzer_.IsPlural(ruleName)
-		var parameters = processRuleParameterTemplate_
+		var parameters = v.getTemplate("ruleParameter")
 		if isPlural {
-			parameters = processRuleParametersTemplate_
+			parameters = v.getTemplate("ruleParameters")
 		}
-		var ruleProcessor = processRuleTemplate_
+		var ruleProcessor = v.getTemplate("processRule")
 		ruleProcessor = replaceAll(ruleProcessor, "parameters", parameters)
 		ruleProcessor = replaceAll(ruleProcessor, "ruleName", ruleName)
 		ruleProcessors += ruleProcessor
@@ -117,11 +118,11 @@ func (v *processor_) generateTokenProcessors() string {
 			continue
 		}
 		var isPlural = v.analyzer_.IsPlural(tokenName)
-		var parameters = processTokenParameterTemplate_
+		var parameters = v.getTemplate("tokenParameter")
 		if isPlural {
-			parameters = processTokenParametersTemplate_
+			parameters = v.getTemplate("tokenParameters")
 		}
-		var tokenProcessor = processTokenTemplate_
+		var tokenProcessor = v.getTemplate("processToken")
 		tokenProcessor = replaceAll(tokenProcessor, "parameters", parameters)
 		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
 		tokenProcessors += tokenProcessor
@@ -129,36 +130,41 @@ func (v *processor_) generateTokenProcessors() string {
 	return tokenProcessors
 }
 
-const processRuleTemplate_ = `
+func (v *processor_) getTemplate(name string) string {
+	var template = processorTemplates_.GetValue(name)
+	return template
+}
+
+// PRIVATE GLOBALS
+
+// Constants
+
+var processorTemplates_ = col.Catalog[string, string](
+	map[string]string{
+		"processRule": `
 func (v *processor_) Preprocess<RuleName>(<parameters>) {
 }
 
 func (v *processor_) Postprocess<RuleName>(<parameters>) {
 }
-`
-
-const processRuleParameterTemplate_ = `<ruleName_> ast.<RuleName>Like`
-
-const processRuleParametersTemplate_ = `
+`,
+		"ruleParameter": `<ruleName_> ast.<RuleName>Like`,
+		"ruleParameters": `
 	<ruleName_> ast.<RuleName>Like,
 	index uint,
 	size uint,
-`
-
-const processTokenTemplate_ = `
+`,
+		"processToken": `
 func (v *processor_) Process<TokenName>(<parameters>) {
 }
-`
-
-const processTokenParameterTemplate_ = `<tokenName_> string`
-
-const processTokenParametersTemplate_ = `
+`,
+		"tokenParameter": `<tokenName_> string`,
+		"tokenParameters": `
 	<tokenName_> string,
 	index uint,
 	size uint,
-`
-
-const processorTemplate_ = `<Notice>
+`,
+		"processorClass": `<Notice>
 
 package grammar
 
@@ -214,4 +220,6 @@ func (v *processor_) GetClass() ProcessorClassLike {
 }
 
 // Methodical
-<TokenProcessors><RuleProcessors>`
+<TokenProcessors><RuleProcessors>`,
+	},
+)

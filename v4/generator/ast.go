@@ -100,7 +100,8 @@ func (v *ast_) GenerateAstModel(
 // Private
 
 func (v *ast_) generateClassDeclaration(name string) mod.DeclarationLike {
-	var comment = replaceAll(classCommentTemplate_, "className", name)
+	var comment = v.getTemplate("classComment")
+	comment = replaceAll(comment, "className", name)
 	var declaration = mod.Declaration(
 		comment,
 		makeUpperCase(name)+"ClassLike",
@@ -130,7 +131,8 @@ func (v *ast_) generateClasses() mod.ClassesLike {
 }
 
 func (v *ast_) generateHeader(wiki string) mod.HeaderLike {
-	var comment = replaceAll(packageHeaderTemplate_, "wiki", wiki)
+	var comment = v.getTemplate("packageHeader")
+	comment = replaceAll(comment, "wiki", wiki)
 	var header = mod.Header(comment, "ast")
 	return header
 }
@@ -231,7 +233,8 @@ func (v *ast_) generateInlineParameters(name string) mod.ParametersLike {
 }
 
 func (v *ast_) generateInstanceDeclaration(name string) mod.DeclarationLike {
-	var comment = replaceAll(instanceCommentTemplate_, "className", name)
+	var comment = v.getTemplate("instanceComment")
+	comment = replaceAll(comment, "className", name)
 	var declaration = mod.Declaration(
 		comment,
 		makeUpperCase(name)+"Like",
@@ -345,6 +348,11 @@ func (v *ast_) generateVariableTypes(
 	return variableTypes
 }
 
+func (v *ast_) getTemplate(name string) string {
+	var template = astTemplates_.GetValue(name)
+	return template
+}
+
 func (v *ast_) pluralizeType(abstraction mod.AbstractionLike) mod.AbstractionLike {
 	// Add the collections module to the imports list.
 	var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
@@ -367,23 +375,13 @@ func (v *ast_) pluralizeType(abstraction mod.AbstractionLike) mod.AbstractionLik
 	return abstraction
 }
 
-// Templates
+// PRIVATE GLOBALS
 
-const classCommentTemplate_ = `/*
-<ClassName>ClassLike is a class interface that defines the complete set of
-class constants, constructors and functions that must be supported by each
-concrete <class-name>-like class.
-*/
-`
+// Constants
 
-const instanceCommentTemplate_ = `/*
-<ClassName>Like is an instance interface that defines the complete set of
-instance attributes, abstractions and methods that must be supported by each
-instance of a concrete <class-name>-like class.
-*/
-`
-
-const packageHeaderTemplate_ = `/*
+var astTemplates_ = col.Catalog[string, string](
+	map[string]string{
+		"packageHeader": `/*
 Package "ast" provides the abstract syntax tree (AST) classes for this module.
 Each AST class manages the attributes associated with the rule definition found
 in the syntax grammar with the same rule name as the class.
@@ -400,4 +398,18 @@ be developed and used seamlessly since the interface definitions only depend on
 other interfaces and intrinsic types—and the class implementations only depend
 on interfaces, not on each other.
 */
-`
+`,
+		"classComment": `/*
+<ClassName>ClassLike is a class interface that defines the complete set of
+class constants, constructors and functions that must be supported by each
+concrete <class-name>-like class.
+*/
+`,
+		"instanceComment": `/*
+<ClassName>Like is an instance interface that defines the complete set of
+instance attributes, abstractions and methods that must be supported by each
+instance of a concrete <class-name>-like class.
+*/
+`,
+	},
+)

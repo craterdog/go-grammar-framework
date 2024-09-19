@@ -66,10 +66,6 @@ func (v *visitor_) GetClass() VisitorClassLike {
 	return v.class_
 }
 
-func (v *visitor_) GetProcessor() Methodical {
-	return v.processor_
-}
-
 // Public
 
 func (v *visitor_) VisitSyntax(syntax ast.SyntaxLike) {

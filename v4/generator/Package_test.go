@@ -450,8 +450,6 @@ func (v *parser_) ParseSource(source string) ast.DocumentLike {
 
 // Private
 
-const unlimited = 4294967295 // Default to a reasonable value.
-
 func (v *parser_) parseAdditionalComponent() (
 	additionalComponent ast.AdditionalComponentLike,
 	token TokenLike,
@@ -801,10 +799,14 @@ func (v *parser_) formatError(token TokenLike, ruleName string) string {
 		message += fmt.Sprintf(
 			"  \033[32m%v: \033[33m%v\033[0m\n\n",
 			ruleName,
-			syntax_[ruleName],
+			v.getDefinition(ruleName),
 		)
 	}
 	return message
+}
+
+func (v *parser_) getDefinition(ruleName string) string {
+	return syntax_.GetValue(ruleName)
 }
 
 func (v *parser_) getNextToken() TokenLike {
@@ -833,18 +835,26 @@ func (v *parser_) putBack(token TokenLike) {
 	v.next_.AddValue(token)
 }
 
-var syntax_ = map[string]string{
-	"Document": ` + "`" + `Component newline+` + "`" + `,
-	"Component": ` + "`" + `
+// PRIVATE GLOBALS
+
+// Constants
+
+const unlimited = 4294967295 // Default to a reasonable value.
+
+var syntax_ = col.Catalog[string, string](
+	map[string]string{
+		"Document": ` + "`" + `Component newline+` + "`" + `,
+		"Component": ` + "`" + `
   - Intrinsic
   - List` + "`" + `,
-	"Intrinsic": ` + "`" + `
+		"Intrinsic": ` + "`" + `
   - integer
   - rune
   - text` + "`" + `,
-	"List": ` + "`" + `"[" Component AdditionalComponent* "]"` + "`" + `,
-	"AdditionalComponent": ` + "`" + `"," Component Component` + "`" + `,
-}
+		"List": ` + "`" + `"[" Component AdditionalComponent* "]"` + "`" + `,
+		"AdditionalComponent": ` + "`" + `"," Component Component` + "`" + `,
+	},
+)
 `
 
 const scannerClass = `/*
@@ -1501,10 +1511,6 @@ type visitor_ struct {
 
 func (v *visitor_) GetClass() VisitorClassLike {
 	return v.class_
-}
-
-func (v *visitor_) GetProcessor() Methodical {
-	return v.processor_
 }
 
 // Public

@@ -77,13 +77,23 @@ func (v *syntax_) GenerateSyntaxNotation(
 ) (
 	implementation string,
 ) {
-	implementation = replaceAll(syntaxTemplate_, "syntax", syntax)
+	var template = v.getTemplate("syntaxModel")
+	implementation = replaceAll(template, "syntax", syntax)
 	copyright = expandCopyright(copyright)
 	implementation = replaceAll(implementation, "copyright", copyright)
 	return implementation
 }
 
 // Private
+
+func (v *syntax_) getTemplate(name string) string {
+	var template = syntaxTemplates_.GetValue(name)
+	return template
+}
+
+// PRIVATE GLOBALS
+
+// Functions
 
 func expandCopyright(copyright string) string {
 	var limit = 78
@@ -168,6 +178,10 @@ func generateVariableNames(
 	return variableNames
 }
 
+func isReserved(name string) bool {
+	return reserved_.ContainsValue(name)
+}
+
 func makeAllCaps(mixedCase string) string {
 	var allCaps sts.Builder
 	for _, r := range mixedCase {
@@ -243,7 +257,7 @@ func replaceAll(template string, name string, value string) string {
 	// <variableName> -> variableValue[_]
 	var variableName = makeLowerCase(name) + "_"
 	var variableValue = makeLowerCase(value)
-	if reserved_[variableValue] {
+	if isReserved(variableValue) {
 		variableValue += "_"
 	}
 	template = sts.ReplaceAll(template, "<"+variableName+">", variableValue)
@@ -271,31 +285,37 @@ func replaceAll(template string, name string, value string) string {
 	return template
 }
 
-var reserved_ = map[string]bool{
-	"any":       true,
-	"byte":      true,
-	"case":      true,
-	"complex":   true,
-	"copy":      true,
-	"default":   true,
-	"error":     true,
-	"false":     true,
-	"import":    true,
-	"interface": true,
-	"map":       true,
-	"nil":       true,
-	"package":   true,
-	"range":     true,
-	"real":      true,
-	"return":    true,
-	"rune":      true,
-	"string":    true,
-	"switch":    true,
-	"true":      true,
-	"type":      true,
-}
+// Constants
 
-const syntaxTemplate_ = `!>
+var reserved_ = col.Set[string](
+	[]string{
+		"any",
+		"byte",
+		"case",
+		"complex",
+		"copy",
+		"default",
+		"error",
+		"false",
+		"import",
+		"interface",
+		"map",
+		"nil",
+		"package",
+		"range",
+		"real",
+		"return",
+		"rune",
+		"string",
+		"switch",
+		"true",
+		"type",
+	},
+)
+
+var syntaxTemplates_ = col.Catalog[string, string](
+	map[string]string{
+		"syntaxModel": `!>
 ................................................................................
 <Copyright>
 ................................................................................
@@ -380,4 +400,6 @@ rune: "'" ~[CONTROL] "'"  ! Any single printable unicode character.
 
 text: '"' ~['"' CONTROL]+ '"'
 
-`
+`,
+	},
+)

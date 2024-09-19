@@ -15,6 +15,7 @@ package generator
 // CLASS ACCESS
 
 import (
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -75,13 +76,25 @@ func (v *token_) GenerateTokenClass(
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
 	var notice = v.analyzer_.GetNotice()
-	implementation = replaceAll(tokenTemplate_, "notice", notice)
+	var template = v.getTemplate("tokenClass")
+	implementation = replaceAll(template, "notice", notice)
 	return implementation
 }
 
 // Private
 
-const tokenTemplate_ = `<Notice>
+func (v *token_) getTemplate(name string) string {
+	var template = tokenTemplates_.GetValue(name)
+	return template
+}
+
+// PRIVATE GLOBALS
+
+// Constants
+
+var tokenTemplates_ = col.Catalog[string, string](
+	map[string]string{
+		"tokenClass": `<Notice>
 
 package grammar
 
@@ -159,4 +172,6 @@ func (v *token_) GetType() TokenType {
 func (v *token_) GetValue() string {
 	return v.value_
 }
-`
+`,
+	},
+)

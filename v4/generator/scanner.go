@@ -13,6 +13,7 @@
 package generator
 
 import (
+	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
@@ -75,7 +76,7 @@ func (v *scanner_) GenerateScannerClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = scannerTemplate_
+	implementation = v.getTemplate("scannerClass")
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
 	var tokenNames = v.generateTokenNames()
@@ -150,7 +151,18 @@ func (v *scanner_) generateTokenNames() string {
 	return tokenNames
 }
 
-const scannerTemplate_ = `<Notice>
+func (v *scanner_) getTemplate(name string) string {
+	var template = scannerTemplates_.GetValue(name)
+	return template
+}
+
+// PRIVATE GLOBALS
+
+// Constants
+
+var scannerTemplates_ = col.Catalog[string, string](
+	map[string]string{
+		"scannerClass": `<Notice>
 
 package grammar
 
@@ -363,4 +375,6 @@ loop:
 	}
 	v.tokens_.CloseQueue()
 }
-`
+`,
+	},
+)
