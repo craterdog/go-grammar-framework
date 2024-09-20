@@ -76,7 +76,7 @@ func (v *visitor_) GenerateVisitorClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = v.getTemplate("visitorClass")
+	implementation = v.getTemplate(classTemplate)
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
@@ -102,7 +102,7 @@ func (v *visitor_) generateInlineMethod(
 		var reference = references.GetNext()
 		implementation += v.generateInlineReference(variableName, reference)
 	}
-	var method = v.getTemplate("visitRuleMethod")
+	var method = v.getTemplate(visitRuleMethod)
 	method = replaceAll(method, "implementation", implementation)
 	return method
 }
@@ -131,13 +131,13 @@ func (v *visitor_) generateInlineRule(
 ) {
 	switch v.generatePlurality(reference) {
 	case "singular":
-		implementation = v.getTemplate("visitSingularRule")
+		implementation = v.getTemplate(visitSingularRule)
 	case "optional":
-		implementation = v.getTemplate("visitOptionalRule")
+		implementation = v.getTemplate(visitOptionalRule)
 	case "repeated":
-		implementation = v.getTemplate("visitRepeatedRule")
+		implementation = v.getTemplate(visitRepeatedRule)
 	default:
-		implementation = v.getTemplate("visitRule")
+		implementation = v.getTemplate(visitRule)
 	}
 	implementation = replaceAll(implementation, "variableName", variableName)
 	var ruleName = reference.GetIdentifier().GetAny().(string)
@@ -153,13 +153,13 @@ func (v *visitor_) generateInlineToken(
 ) {
 	switch v.generatePlurality(reference) {
 	case "singular":
-		implementation = v.getTemplate("visitSingularToken")
+		implementation = v.getTemplate(visitSingularToken)
 	case "optional":
-		implementation = v.getTemplate("visitOptionalToken")
+		implementation = v.getTemplate(visitOptionalToken)
 	case "repeated":
-		implementation = v.getTemplate("visitRepeatedToken")
+		implementation = v.getTemplate(visitRepeatedToken)
 	default:
-		implementation = v.getTemplate("visitToken")
+		implementation = v.getTemplate(visitToken)
 	}
 	implementation = replaceAll(implementation, "variableName", variableName)
 	var tokenName = reference.GetIdentifier().GetAny().(string)
@@ -204,10 +204,10 @@ func (v *visitor_) generateMultilineMethod(
 			ruleCases += v.generateMultilineRule(name)
 		}
 	}
-	var implementation = v.getTemplate("visitCases")
+	var implementation = v.getTemplate(visitCases)
 	implementation = replaceAll(implementation, "ruleCases", ruleCases)
 	implementation = replaceAll(implementation, "tokenCases", tokenCases)
-	method = v.getTemplate("visitRuleMethod")
+	method = v.getTemplate(visitRuleMethod)
 	method = replaceAll(method, "implementation", implementation)
 	return method
 }
@@ -217,9 +217,9 @@ func (v *visitor_) generateMultilineRule(
 ) (
 	implementation string,
 ) {
-	implementation = v.getTemplate("ruleCase")
+	implementation = v.getTemplate(visitRuleCase)
 	if v.analyzer_.IsPlural(ruleName) {
-		implementation = v.getTemplate("singularRuleCase")
+		implementation = v.getTemplate(visitSingularRuleCase)
 	}
 	implementation = replaceAll(implementation, "ruleName", ruleName)
 	return implementation
@@ -230,9 +230,9 @@ func (v *visitor_) generateMultilineToken(
 ) (
 	implementation string,
 ) {
-	implementation = v.getTemplate("tokenCase")
+	implementation = v.getTemplate(visitTokenCase)
 	if v.analyzer_.IsPlural(tokenName) {
-		implementation = v.getTemplate("singularRuleCase")
+		implementation = v.getTemplate(visitSingularRuleCase)
 	}
 	implementation = replaceAll(implementation, "tokenName", tokenName)
 	return implementation
@@ -277,26 +277,43 @@ func (v *visitor_) getTemplate(name string) string {
 
 // Constants
 
+const (
+	visitRuleMethod        = "visitRuleMethod"
+	visitRule              = "visitRule"
+	visitSingularRule      = "visitSingularRule"
+	visitOptionalRule      = "visitOptionalRule"
+	visitRepeatedRule      = "visitRepeatedRule"
+	visitToken             = "visitToken"
+	visitSingularToken     = "visitSingularToken"
+	visitOptionalToken     = "visitOptionalToken"
+	visitRepeatedToken     = "visitRepeatedToken"
+	visitCases             = "visitCases"
+	visitRuleCase          = "visitRuleCase"
+	visitSingularRuleCase  = "visitSingularRuleCase"
+	visitSingularTokenCase = "visitSingularTokenCase"
+	visitTokenCase         = "visitTokenCase"
+)
+
 var visitorTemplates_ = col.Catalog[string, string](
 	map[string]string{
-		"visitRuleMethod": `
+		visitRuleMethod: `
 func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 `,
-		"visitRule": `
+		visitRule: `
 	// Visit the <ruleName> rule.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	v.processor_.Preprocess<RuleName>(<variableName_>)
 	v.visit<RuleName>(<variableName_>)
 	v.processor_.Postprocess<RuleName>(<variableName_>)
 `,
-		"visitSingularRule": `
+		visitSingularRule: `
 	// Visit the <ruleName> rule.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	v.processor_.Preprocess<RuleName>(<variableName_>, 1, 1)
 	v.visit<RuleName>(<variableName_>)
 	v.processor_.Postprocess<RuleName>(<variableName_>, 1, 1)
 `,
-		"visitOptionalRule": `
+		visitOptionalRule: `
 	// Visit the optional <ruleName> rule.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	if col.IsDefined(<variableName_>) {
@@ -305,7 +322,7 @@ func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 		v.processor_.Postprocess<RuleName>(<variableName_>)
 	}
 `,
-		"visitRepeatedRule": `
+		visitRepeatedRule: `
 	// Visit each <ruleName> rule.
 	var <ruleName>Index uint
 	var <variableName_> = <rule_>.Get<VariableName>().GetIterator()
@@ -326,24 +343,24 @@ func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 		)
 	}
 `,
-		"visitToken": `
+		visitToken: `
 	// Visit the <tokenName> token.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	v.processor_.Process<TokenName>(<variableName_>)
 `,
-		"visitSingularToken": `
+		visitSingularToken: `
 	// Visit the <tokenName> token.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	v.processor_.Process<TokenName>(<variableName_>, 1, 1)
 `,
-		"visitOptionalToken": `
+		visitOptionalToken: `
 	// Visit the optional <tokenName> token.
 	var <variableName_> = <rule_>.Get<VariableName>()
 	if col.IsDefined(<variableName_>) {
 		v.processor_.Process<TokenName>(<variableName_>)
 	}
 `,
-		"visitRepeatedToken": `
+		visitRepeatedToken: `
 	// Visit each <tokenName> token.
 	var <tokenName>Index uint
 	var <variableName_> = <rule_>.Get<VariableName>().GetIterator()
@@ -358,7 +375,7 @@ func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 		)
 	}
 `,
-		"visitCases": `
+		visitCases: `
 	// Visit the possible <rule> types.
 	switch actual := <rule_>.GetAny().(type) {<RuleCases>
 	case string:
@@ -370,23 +387,23 @@ func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 		panic(fmt.Sprintf("Invalid rule type: %T", actual))
 	}
 `,
-		"ruleCase": `
+		visitRuleCase: `
 	case ast.<RuleName>Like:
 		v.processor_.Preprocess<RuleName>(actual)
 		v.visit<RuleName>(actual)
 		v.processor_.Postprocess<RuleName>(actual)`,
-		"singularRuleCase": `
+		visitSingularRuleCase: `
 	case ast.<RuleName>Like:
 		v.processor_.Preprocess<RuleName>(actual, 1, 1)
 		v.visit<RuleName>(actual)
 		v.processor_.Postprocess<RuleName>(actual, 1, 1)`,
-		"singularTokenCase": `
+		visitSingularTokenCase: `
 		case Scanner().MatchesType(actual, <TokenName>Token):
 			v.processor_.Process<TokenName>(actual, 1, 1)`,
-		"tokenCase": `
+		visitTokenCase: `
 		case Scanner().MatchesType(actual, <TokenName>Token):
 			v.processor_.Process<TokenName>(actual)`,
-		"visitorClass": `<Notice>
+		classTemplate: `<Notice>
 
 package grammar
 

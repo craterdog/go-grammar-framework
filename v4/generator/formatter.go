@@ -76,7 +76,7 @@ func (v *formatter_) GenerateFormatterClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = v.getTemplate("formatterClass")
+	implementation = v.getTemplate(classTemplate)
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
@@ -97,11 +97,11 @@ func (v *formatter_) generateRuleFormatters() string {
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
 		var isPlural = v.analyzer_.IsPlural(ruleName)
-		var parameters = v.getTemplate("ruleParameter")
+		var parameters = v.getTemplate(ruleParameter)
 		if isPlural {
-			parameters = v.getTemplate("ruleParameters")
+			parameters = v.getTemplate(ruleParameters)
 		}
-		var ruleFormatter = v.getTemplate("formatRule")
+		var ruleFormatter = v.getTemplate(formatRule)
 		ruleFormatter = replaceAll(ruleFormatter, "parameters", parameters)
 		ruleFormatter = replaceAll(ruleFormatter, "ruleName", ruleName)
 		ruleFormatters += ruleFormatter
@@ -118,11 +118,11 @@ func (v *formatter_) generateTokenFormatters() string {
 			continue
 		}
 		var isPlural = v.analyzer_.IsPlural(tokenName)
-		var parameters = v.getTemplate("tokenParameter")
+		var parameters = v.getTemplate(tokenParameter)
 		if isPlural {
-			parameters = v.getTemplate("tokenParameters")
+			parameters = v.getTemplate(tokenParameters)
 		}
-		var tokenFormatter = v.getTemplate("formatToken")
+		var tokenFormatter = v.getTemplate(formatToken)
 		tokenFormatter = replaceAll(tokenFormatter, "parameters", parameters)
 		tokenFormatter = replaceAll(tokenFormatter, "tokenName", tokenName)
 		tokenFormatters += tokenFormatter
@@ -139,9 +139,14 @@ func (v *formatter_) getTemplate(name string) string {
 
 // Constants
 
+const (
+	formatRule  = "formatRule"
+	formatToken = "formatToken"
+)
+
 var formatterTemplates_ = col.Catalog[string, string](
 	map[string]string{
-		"formatRule": `
+		formatRule: `
 func (v *formatter_) Preprocess<RuleName>(<parameters>) {
 	// TBD - Add formatting of the delimited rule.
 }
@@ -150,24 +155,24 @@ func (v *formatter_) Postprocess<RuleName>(<parameters>) {
 	// TBD - Add formatting of the delimited rule.
 }
 `,
-		"ruleParameter": `<ruleName_> ast.<RuleName>Like`,
-		"ruleParameters": `
+		ruleParameter: `<ruleName_> ast.<RuleName>Like`,
+		ruleParameters: `
 	<ruleName_> ast.<RuleName>Like,
 	index uint,
 	size uint,
 `,
-		"formatToken": `
+		formatToken: `
 func (v *formatter_) Process<TokenName>(<parameters>) {
 	v.appendString(<tokenName_>)
 }
 `,
-		"tokenParameter": `<tokenName_> string`,
-		"tokenParameters": `
+		tokenParameter: `<tokenName_> string`,
+		tokenParameters: `
 	<tokenName_> string,
 	index uint,
 	size uint,
 `,
-		"formatterClass": `<Notice>
+		classTemplate: `<Notice>
 
 package grammar
 

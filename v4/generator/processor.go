@@ -76,7 +76,7 @@ func (v *processor_) GenerateProcessorClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = v.getTemplate("processorClass")
+	implementation = v.getTemplate(classTemplate)
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
@@ -97,11 +97,11 @@ func (v *processor_) generateRuleProcessors() string {
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
 		var isPlural = v.analyzer_.IsPlural(ruleName)
-		var parameters = v.getTemplate("ruleParameter")
+		var parameters = v.getTemplate(ruleParameter)
 		if isPlural {
-			parameters = v.getTemplate("ruleParameters")
+			parameters = v.getTemplate(ruleParameters)
 		}
-		var ruleProcessor = v.getTemplate("processRule")
+		var ruleProcessor = v.getTemplate(processRule)
 		ruleProcessor = replaceAll(ruleProcessor, "parameters", parameters)
 		ruleProcessor = replaceAll(ruleProcessor, "ruleName", ruleName)
 		ruleProcessors += ruleProcessor
@@ -118,11 +118,11 @@ func (v *processor_) generateTokenProcessors() string {
 			continue
 		}
 		var isPlural = v.analyzer_.IsPlural(tokenName)
-		var parameters = v.getTemplate("tokenParameter")
+		var parameters = v.getTemplate(tokenParameter)
 		if isPlural {
-			parameters = v.getTemplate("tokenParameters")
+			parameters = v.getTemplate(tokenParameters)
 		}
-		var tokenProcessor = v.getTemplate("processToken")
+		var tokenProcessor = v.getTemplate(processToken)
 		tokenProcessor = replaceAll(tokenProcessor, "parameters", parameters)
 		tokenProcessor = replaceAll(tokenProcessor, "tokenName", tokenName)
 		tokenProcessors += tokenProcessor
@@ -139,32 +139,41 @@ func (v *processor_) getTemplate(name string) string {
 
 // Constants
 
+const (
+	processRule     = "processRule"
+	ruleParameter   = "ruleParameter"
+	ruleParameters  = "ruleParameters"
+	processToken    = "processToken"
+	tokenParameter  = "tokenParameter"
+	tokenParameters = "tokenParameters"
+)
+
 var processorTemplates_ = col.Catalog[string, string](
 	map[string]string{
-		"processRule": `
+		processRule: `
 func (v *processor_) Preprocess<RuleName>(<parameters>) {
 }
 
 func (v *processor_) Postprocess<RuleName>(<parameters>) {
 }
 `,
-		"ruleParameter": `<ruleName_> ast.<RuleName>Like`,
-		"ruleParameters": `
+		ruleParameter: `<ruleName_> ast.<RuleName>Like`,
+		ruleParameters: `
 	<ruleName_> ast.<RuleName>Like,
 	index uint,
 	size uint,
 `,
-		"processToken": `
+		processToken: `
 func (v *processor_) Process<TokenName>(<parameters>) {
 }
 `,
-		"tokenParameter": `<tokenName_> string`,
-		"tokenParameters": `
+		tokenParameter: `<tokenName_> string`,
+		tokenParameters: `
 	<tokenName_> string,
 	index uint,
 	size uint,
 `,
-		"processorClass": `<Notice>
+		classTemplate: `<Notice>
 
 package grammar
 

@@ -76,7 +76,7 @@ func (v *validator_) GenerateValidatorClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = v.getTemplate("validatorClass")
+	implementation = v.getTemplate(classTemplate)
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
@@ -98,11 +98,11 @@ func (v *validator_) generateTokenValidators() string {
 			continue
 		}
 		var isPlural = v.analyzer_.IsPlural(tokenName)
-		var parameters = v.getTemplate("tokenParameter")
+		var parameters = v.getTemplate(tokenParameter)
 		if isPlural {
-			parameters = v.getTemplate("tokenParameters")
+			parameters = v.getTemplate(tokenParameters)
 		}
-		var tokenValidator = v.getTemplate("validateToken")
+		var tokenValidator = v.getTemplate(validateToken)
 		tokenValidator = replaceAll(tokenValidator, "parameters", parameters)
 		tokenValidator = replaceAll(tokenValidator, "tokenName", tokenName)
 		tokenValidators += tokenValidator
@@ -119,20 +119,24 @@ func (v *validator_) getTemplate(name string) string {
 
 // Constants
 
+const (
+	validateToken = "validateToken"
+)
+
 var validatorTemplates_ = col.Catalog[string, string](
 	map[string]string{
-		"validateToken": `
+		validateToken: `
 func (v *validator_) Process<TokenName>(<parameters>) {
 	v.ValidateToken(<tokenName_>, <TokenName>Token)
 }
 `,
-		"tokenParameter": `<tokenName_> string`,
-		"tokenParameters": `
+		tokenParameter: `<tokenName_> string`,
+		tokenParameters: `
 	<tokenName_> string,
 	index uint,
 	size uint,
 `,
-		"validatorClass": `<Notice>
+		classTemplate: `<Notice>
 
 package grammar
 

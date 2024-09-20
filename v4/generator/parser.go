@@ -77,7 +77,7 @@ func (v *parser_) GenerateParserClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = v.getTemplate("parserClass")
+	implementation = v.getTemplate(classTemplate)
 	implementation = replaceAll(implementation, "module", module)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
@@ -106,14 +106,14 @@ func (v *parser_) generateArguments(
 		arguments += "\n\t\t"
 	}
 	var argument = variableNames.GetNext()
-	var template = v.getTemplate("argument")
+	var template = v.getTemplate(argumentTemplate)
 	arguments += replaceAll(template, "argument", argument)
 
 	// Define any additional arguments.
 	for variableNames.HasNext() {
 		arguments += ",\n\t\t"
 		argument = variableNames.GetNext()
-		template = v.getTemplate("argument")
+		template = v.getTemplate(argumentTemplate)
 		arguments += replaceAll(template, "argument", argument)
 	}
 	if variableNames.GetSize() > 1 {
@@ -130,9 +130,9 @@ func (v *parser_) generateInlineRule(
 ) (
 	implementation string,
 ) {
-	var optionalRuleTemplate = v.getTemplate("parseOptionalRule")
-	var repeatedRuleTemplate = v.getTemplate("parseRepeatedRule")
-	implementation = v.getTemplate("parseRule")
+	var optionalRuleTemplate = v.getTemplate(parseOptionalRule)
+	var repeatedRuleTemplate = v.getTemplate(parseRepeatedRule)
+	implementation = v.getTemplate(parseRule)
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		implementation = v.generateInlineCardinality(
@@ -155,9 +155,9 @@ func (v *parser_) generateInlineToken(
 ) (
 	implementation string,
 ) {
-	var optionalTokenTemplate = v.getTemplate("parseOptionalToken")
-	var repeatedTokenTemplate = v.getTemplate("parseRepeatedToken")
-	implementation = v.getTemplate("parseToken")
+	var optionalTokenTemplate = v.getTemplate(parseOptionalToken)
+	var repeatedTokenTemplate = v.getTemplate(parseRepeatedToken)
+	implementation = v.getTemplate(parseToken)
 	var cardinality = reference.GetOptionalCardinality()
 	if col.IsDefined(cardinality) {
 		implementation = v.generateInlineCardinality(
@@ -240,9 +240,9 @@ func (v *parser_) generateInlineMethod(
 
 	}
 	var arguments = v.generateArguments(rule)
-	var ruleFoundTemplate = v.getTemplate("ruleFound")
+	var ruleFoundTemplate = v.getTemplate(ruleFound)
 	implementation += replaceAll(ruleFoundTemplate, "arguments", arguments)
-	var methodTemplate = v.getTemplate("inlineRuleMethod")
+	var methodTemplate = v.getTemplate(inlineRuleMethod)
 	method = replaceAll(methodTemplate, "implementation", implementation)
 	method = replaceAll(method, "rule", rule)
 	return method
@@ -257,7 +257,7 @@ func (v *parser_) generateInlineLiteral(
 	if err != nil {
 		panic(err)
 	}
-	implementation = v.getTemplate("parseDelimiter")
+	implementation = v.getTemplate(parseDelimiter)
 	implementation = replaceAll(implementation, "delimiter", delimiter)
 	return implementation
 }
@@ -298,13 +298,13 @@ func (v *parser_) generateMultilineMethod(
 			ruleCases += v.generateMultilineRule(name)
 		}
 	}
-	var implementation = v.getTemplate("multilineCases")
+	var implementation = v.getTemplate(multilineCases)
 	implementation = replaceAll(implementation, "ruleCases", ruleCases)
 	implementation = replaceAll(implementation, "tokenCases", tokenCases)
-	var defaultCase = v.getTemplate("defaultCase")
-	implementation = replaceAll(implementation, "defaultCase", defaultCase)
+	var defaultCaseTemplate = v.getTemplate(defaultCase)
+	implementation = replaceAll(implementation, defaultCase, defaultCaseTemplate)
 	implementation = replaceAll(implementation, "rule", rule)
-	var methodTemplate = v.getTemplate("multilineRuleMethod")
+	var methodTemplate = v.getTemplate(multilineRuleMethod)
 	method = replaceAll(methodTemplate, "implementation", implementation)
 	return method
 }
@@ -314,9 +314,9 @@ func (v *parser_) generateMultilineRule(
 ) (
 	implementation string,
 ) {
-	implementation = v.getTemplate("parseRuleCase")
+	implementation = v.getTemplate(parseRuleCase)
 	if v.analyzer_.IsPlural(ruleName) {
-		implementation = v.getTemplate("parseSingularRuleCase")
+		implementation = v.getTemplate(parseSingularRuleCase)
 	}
 	implementation = replaceAll(implementation, "ruleName", ruleName)
 	return implementation
@@ -327,9 +327,9 @@ func (v *parser_) generateMultilineToken(
 ) (
 	implementation string,
 ) {
-	implementation = v.getTemplate("parseTokenCase")
+	implementation = v.getTemplate(parseTokenCase)
 	if v.analyzer_.IsPlural(tokenName) {
-		implementation = v.getTemplate("parseSingularTokenCase")
+		implementation = v.getTemplate(parseSingularTokenCase)
 	}
 	implementation = replaceAll(implementation, "tokenName", tokenName)
 	return implementation
@@ -360,11 +360,31 @@ func (v *parser_) getTemplate(name string) string {
 
 // Constants
 
+const (
+	inlineRuleMethod       = "inlineRuleMethod"
+	parseDelimiter         = "parseDelimiter"
+	parseRule              = "parseRule"
+	parseOptionalRule      = "parseOptionalRule"
+	parseRepeatedRule      = "parseRepeatedRule"
+	parseToken             = "parseToken"
+	parseOptionalToken     = "parseOptionalToken"
+	parseRepeatedToken     = "parseRepeatedToken"
+	multilineRuleMethod    = "multilineRuleMethod"
+	multilineCases         = "multilineCases"
+	parseSingularRuleCase  = "parseSingularRuleCase"
+	parseRuleCase          = "parseRuleCase"
+	parseSingularTokenCase = "parseSingularTokenCase"
+	parseTokenCase         = "parseTokenCase"
+	defaultCase            = "defaultCase"
+	ruleFound              = "ruleFound"
+	argumentTemplate       = "argumentTemplate"
+)
+
 var parserTemplates_ = col.Catalog[string, string](
 	map[string]string{
-		"multilineCases": `<RuleCases><TokenCases><DefaultCase>`,
-		"argument":       `<argument_>`,
-		"parseOptionalRule": `
+		multilineCases:   `<RuleCases><TokenCases><DefaultCase>`,
+		argumentTemplate: `<argument_>`,
+		parseOptionalRule: `
 	// Attempt to parse an optional <ruleName> rule.
 	var <variableName_> ast.<RuleName>Like
 	<variableName_>, _, ok = v.parse<RuleName>()
@@ -372,7 +392,7 @@ var parserTemplates_ = col.Catalog[string, string](
 		v.ruleFound_ = true
 	}
 `,
-		"parseRepeatedRule": `
+		parseRepeatedRule: `
 	// Attempt to parse <first> to <last> <ruleName> rules.
 	var <variableName> = col.List[ast.<RuleName>Like]()
 <variableName>Loop:
@@ -402,7 +422,7 @@ var parserTemplates_ = col.Catalog[string, string](
 		<variableName_>.AppendValue(<ruleName_>)
 	}
 `,
-		"parseOptionalToken": `
+		parseOptionalToken: `
 	// Attempt to parse an optional <tokenName> token.
 	var <variableName_> string
 	<variableName_>, _, ok = v.parseToken(<TokenName>Token)
@@ -410,7 +430,7 @@ var parserTemplates_ = col.Catalog[string, string](
 		v.ruleFound_ = true
 	}
 `,
-		"parseRepeatedToken": `
+		parseRepeatedToken: `
 	// Attempt to parse <first> to <last> <tokenName> tokens.
 	var <variableName_> = col.List[string]()
 <variableName>Loop:
@@ -440,16 +460,16 @@ var parserTemplates_ = col.Catalog[string, string](
 		<variableName_>.AppendValue(<tokenName_>)
 	}
 `,
-		"ruleFound": `
+		ruleFound: `
 	// Found a single <rule> rule.
 	<rule_> = ast.<Rule>().Make(<arguments>)
 	return <rule_>, token, true
 `,
-		"defaultCase": `
+		defaultCase: `
 	// This is not a single <rule> rule.
 	return <rule_>, token, false
 `,
-		"inlineRuleMethod": `
+		inlineRuleMethod: `
 func (v *parser_) parse<Rule>() (
 	<rule_> ast.<Rule>Like,
 	token TokenLike,
@@ -459,7 +479,7 @@ func (v *parser_) parse<Rule>() (
 <Implementation>
 }
 `,
-		"multilineRuleMethod": `
+		multilineRuleMethod: `
 func (v *parser_) parse<Rule>() (
 	<rule_> ast.<Rule>Like,
 	token TokenLike,
@@ -467,7 +487,7 @@ func (v *parser_) parse<Rule>() (
 ) {<Implementation>
 }
 `,
-		"parseDelimiter": `
+		parseDelimiter: `
 	// Attempt to parse a single "<delimiter>" delimiter.
 	_, token, ok = v.parseDelimiter("<delimiter>")
 	if !ok {
@@ -482,7 +502,7 @@ func (v *parser_) parse<Rule>() (
 	}
 	v.ruleFound_ = true
 `,
-		"parseRuleCase": `
+		parseRuleCase: `
 	// Attempt to parse a single <ruleName> rule.
 	var <ruleName_> ast.<RuleName>Like
 	<ruleName_>, token, ok = v.parse<RuleName>()
@@ -492,7 +512,7 @@ func (v *parser_) parse<Rule>() (
 		return <rule_>, token, true
 	}
 `,
-		"parseTokenCase": `
+		parseTokenCase: `
 	// Attempt to parse a single <tokenName> token.
 	var <tokenName_> string
 	<tokenName_>, token, ok = v.parseToken(<TokenName>Token)
@@ -502,7 +522,7 @@ func (v *parser_) parse<Rule>() (
 		return <rule_>, token, true
 	}
 `,
-		"parseSingularRuleCase": `
+		parseSingularRuleCase: `
 	// Attempt to parse a single <ruleName> rule.
 	var <ruleName_> ast.<RuleName>Like
 	<ruleName_>, token, ok = v.parse<RuleName>()
@@ -512,7 +532,7 @@ func (v *parser_) parse<Rule>() (
 		return <rule_>, token, true
 	}
 `,
-		"parseSingularTokenCase": `
+		parseSingularTokenCase: `
 	// Attempt to parse a single <tokenName> token.
 	var <tokenName_> string
 	<tokenName_>, token, ok = v.parse<TokenName>()
@@ -522,7 +542,7 @@ func (v *parser_) parse<Rule>() (
 		return <rule_>, token, true
 	}
 `,
-		"parseRule": `
+		parseRule: `
 	// Attempt to parse a single <ruleName> rule.
 	var <variableName_> ast.<RuleName>Like
 	<variableName_>, token, ok = v.parse<RuleName>()
@@ -538,7 +558,7 @@ func (v *parser_) parse<Rule>() (
 	}
 	v.ruleFound_ = true
 `,
-		"parseToken": `
+		parseToken: `
 	// Attempt to parse a single <tokenName> token.
 	var <variableName_> string
 	<variableName_>, token, ok = v.parseToken(<TokenName>Token)
@@ -554,7 +574,7 @@ func (v *parser_) parse<Rule>() (
 	}
 	v.ruleFound_ = true
 `,
-		"parserClass": `<Notice>
+		classTemplate: `<Notice>
 
 package grammar
 

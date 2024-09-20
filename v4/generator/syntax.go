@@ -77,7 +77,7 @@ func (v *syntax_) GenerateSyntaxNotation(
 ) (
 	implementation string,
 ) {
-	var template = v.getTemplate("syntaxModel")
+	var template = v.getTemplate(syntaxTemplate)
 	implementation = replaceAll(template, "syntax", syntax)
 	copyright = expandCopyright(copyright)
 	implementation = replaceAll(implementation, "copyright", copyright)
@@ -313,9 +313,13 @@ var reserved_ = col.Set[string](
 	},
 )
 
+const (
+	syntaxTemplate = "syntaxTemplate"
+)
+
 var syntaxTemplates_ = col.Catalog[string, string](
 	map[string]string{
-		"syntaxModel": `!>
+		syntaxTemplate: `!>
 ................................................................................
 <Copyright>
 ................................................................................

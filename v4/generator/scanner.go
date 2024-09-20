@@ -76,7 +76,7 @@ func (v *scanner_) GenerateScannerClass(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	implementation = v.getTemplate("scannerClass")
+	implementation = v.getTemplate(classTemplate)
 	var notice = v.analyzer_.GetNotice()
 	implementation = replaceAll(implementation, "notice", notice)
 	var tokenNames = v.generateTokenNames()
@@ -162,7 +162,7 @@ func (v *scanner_) getTemplate(name string) string {
 
 var scannerTemplates_ = col.Catalog[string, string](
 	map[string]string{
-		"scannerClass": `<Notice>
+		classTemplate: `<Notice>
 
 package grammar
 

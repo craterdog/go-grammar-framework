@@ -77,8 +77,8 @@ func (v *grammar_) GenerateGrammarModel(
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	var header = v.getTemplate("packageHeader")
-	implementation = v.getTemplate("grammarModel")
+	var header = v.getTemplate(packageHeader)
+	implementation = v.getTemplate(modelTemplate)
 	implementation = replaceAll(implementation, "header", header)
 	implementation = replaceAll(implementation, "module", module)
 	implementation = replaceAll(implementation, "wiki", wiki)
@@ -167,9 +167,13 @@ func (v *grammar_) getTemplate(name string) string {
 
 // Constants
 
+const (
+	modelTemplate = "modelTemplate"
+)
+
 var grammarTemplates_ = col.Catalog[string, string](
 	map[string]string{
-		"packageHeader": `
+		packageHeader: `
 /*
 Package "grammar" provides the following grammar classes that operate on the
 abstract syntax tree (AST) for this module:
@@ -193,7 +197,7 @@ be developed and used seamlessly since the interface definitions only depend on
 other interfaces and intrinsic types—and the class implementations only depend
 on interfaces, not on each other.
 */`,
-		"grammarModel": `<Notice>
+		modelTemplate: `<Notice>
 <Header>
 package grammar
 

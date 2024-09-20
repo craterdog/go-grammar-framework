@@ -76,7 +76,7 @@ func (v *token_) GenerateTokenClass(
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
 	var notice = v.analyzer_.GetNotice()
-	var template = v.getTemplate("tokenClass")
+	var template = v.getTemplate(classTemplate)
 	implementation = replaceAll(template, "notice", notice)
 	return implementation
 }
@@ -92,9 +92,13 @@ func (v *token_) getTemplate(name string) string {
 
 // Constants
 
+const (
+	classTemplate = "classTemplate"
+)
+
 var tokenTemplates_ = col.Catalog[string, string](
 	map[string]string{
-		"tokenClass": `<Notice>
+		classTemplate: `<Notice>
 
 package grammar
 
