@@ -15,7 +15,6 @@ package generator
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
-	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
 
 // CLASS ACCESS
@@ -46,7 +45,7 @@ func (c *grammarClass_) Make() GrammarLike {
 	var grammar = &grammar_{
 		// Initialize the instance attributes.
 		class_:    c,
-		analyzer_: gra.Analyzer().Make(),
+		analyzer_: Analyzer().Make(),
 	}
 	return grammar
 }
@@ -58,7 +57,7 @@ func (c *grammarClass_) Make() GrammarLike {
 type grammar_ struct {
 	// Define the instance attributes.
 	class_    GrammarClassLike
-	analyzer_ gra.AnalyzerLike
+	analyzer_ AnalyzerLike
 }
 
 // Attributes
@@ -221,15 +220,6 @@ const (
 // Classes
 
 /*
-AnalyzerClassLike defines the set of class constants, constructors and
-functions that must be supported by all analyzer-class-like classes.
-*/
-type AnalyzerClassLike interface {
-	// Constructors
-	Make() AnalyzerLike
-}
-
-/*
 FormatterClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete formatter-like class.
@@ -322,34 +312,6 @@ type VisitorClassLike interface {
 }
 
 // Instances
-
-/*
-AnalyzerLike defines the set of aspects and methods that must be supported by
-all analyzer-like instances.
-*/
-type AnalyzerLike interface {
-	// Attributes
-	GetClass() AnalyzerClassLike
-
-	// Abstractions
-	Methodical
-
-	// Methods
-	AnalyzeSyntax(syntax ast.SyntaxLike)
-	GetExpressions() abs.Sequential[abs.AssociationLike[string, string]]
-	GetIdentifiers(ruleName string) abs.Sequential[ast.IdentifierLike]
-	GetIgnored() abs.Sequential[string]
-	GetNotice() string
-	GetReferences(ruleName string) abs.Sequential[ast.ReferenceLike]
-	GetRuleNames() abs.Sequential[string]
-	GetSyntaxMap() string
-	GetSyntaxName() string
-	GetTerms(ruleName string) abs.Sequential[ast.TermLike]
-	GetTokenNames() abs.Sequential[string]
-	IsDelimited(ruleName string) bool
-	IsIgnored(tokenName string) bool
-	IsPlural(name string) bool
-}
 
 /*
 FormatterLike is an instance interface that defines the complete set of

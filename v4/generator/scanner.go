@@ -15,7 +15,6 @@ package generator
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
-	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
 
 // CLASS ACCESS
@@ -46,7 +45,7 @@ func (c *scannerClass_) Make() ScannerLike {
 	var scanner = &scanner_{
 		// Initialize the instance attributes.
 		class_:    c,
-		analyzer_: gra.Analyzer().Make(),
+		analyzer_: Analyzer().Make(),
 	}
 	return scanner
 }
@@ -58,7 +57,7 @@ func (c *scannerClass_) Make() ScannerLike {
 type scanner_ struct {
 	// Define the instance attributes.
 	class_    ScannerClassLike
-	analyzer_ gra.AnalyzerLike
+	analyzer_ AnalyzerLike
 }
 
 // Attributes

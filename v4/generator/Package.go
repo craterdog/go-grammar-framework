@@ -31,10 +31,21 @@ on interfaces, not on each other.
 package generator
 
 import (
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
 
 // Classes
+
+/*
+AnalyzerClassLike defines the set of class constants, constructors and
+functions that must be supported by all analyzer-class-like classes.
+*/
+type AnalyzerClassLike interface {
+	// Constructors
+	Make() AnalyzerLike
+}
 
 /*
 FormatterClassLike defines the set of class constants, constructors and
@@ -127,6 +138,34 @@ type VisitorClassLike interface {
 }
 
 // Instances
+
+/*
+AnalyzerLike defines the set of aspects and methods that must be supported by
+all analyzer-like instances.
+*/
+type AnalyzerLike interface {
+	// Attributes
+	GetClass() AnalyzerClassLike
+
+	// Abstractions
+	gra.Methodical
+
+	// Methods
+	AnalyzeSyntax(syntax ast.SyntaxLike)
+	GetExpressions() abs.Sequential[abs.AssociationLike[string, string]]
+	GetIdentifiers(ruleName string) abs.Sequential[ast.IdentifierLike]
+	GetIgnored() abs.Sequential[string]
+	GetNotice() string
+	GetReferences(ruleName string) abs.Sequential[ast.ReferenceLike]
+	GetRuleNames() abs.Sequential[string]
+	GetSyntaxMap() string
+	GetSyntaxName() string
+	GetTerms(ruleName string) abs.Sequential[ast.TermLike]
+	GetTokenNames() abs.Sequential[string]
+	IsDelimited(ruleName string) bool
+	IsIgnored(tokenName string) bool
+	IsPlural(name string) bool
+}
 
 /*
 FormatterLike defines the set of aspects and methods that must be supported by

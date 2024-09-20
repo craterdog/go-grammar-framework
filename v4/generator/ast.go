@@ -48,7 +48,7 @@ func (c *astClass_) Make() AstLike {
 	var ast = &ast_{
 		// Initialize the instance attributes.
 		class_:    c,
-		analyzer_: gra.Analyzer().Make(),
+		analyzer_: Analyzer().Make(),
 	}
 	return ast
 }
@@ -60,7 +60,7 @@ func (c *astClass_) Make() AstLike {
 type ast_ struct {
 	// Define the instance attributes.
 	class_    AstClassLike
-	analyzer_ gra.AnalyzerLike
+	analyzer_ AnalyzerLike
 	modules_  abs.CatalogLike[string, string]
 }
 

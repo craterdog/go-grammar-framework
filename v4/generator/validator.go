@@ -15,7 +15,6 @@ package generator
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
-	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
 
 // CLASS ACCESS
@@ -46,7 +45,7 @@ func (c *validatorClass_) Make() ValidatorLike {
 	var validator = &validator_{
 		// Initialize the instance attributes.
 		class_:    c,
-		analyzer_: gra.Analyzer().Make(),
+		analyzer_: Analyzer().Make(),
 	}
 	return validator
 }
@@ -58,7 +57,7 @@ func (c *validatorClass_) Make() ValidatorLike {
 type validator_ struct {
 	// Define the instance attributes.
 	class_    ValidatorClassLike
-	analyzer_ gra.AnalyzerLike
+	analyzer_ AnalyzerLike
 }
 
 // Attributes

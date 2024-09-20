@@ -17,7 +17,6 @@ package generator
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
-	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
 
 // Reference
@@ -46,7 +45,7 @@ func (c *tokenClass_) Make() TokenLike {
 	return &token_{
 		// Initialize the instance attributes.
 		class_:    c,
-		analyzer_: gra.Analyzer().Make(),
+		analyzer_: Analyzer().Make(),
 	}
 }
 
@@ -57,7 +56,7 @@ func (c *tokenClass_) Make() TokenLike {
 type token_ struct {
 	// Define the instance attributes.
 	class_    TokenClassLike
-	analyzer_ gra.AnalyzerLike
+	analyzer_ AnalyzerLike
 }
 
 // Attributes

@@ -15,7 +15,6 @@ package generator
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
-	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 )
 
 // CLASS ACCESS
@@ -46,7 +45,7 @@ func (c *formatterClass_) Make() FormatterLike {
 	var formatter = &formatter_{
 		// Initialize the instance attributes.
 		class_:    c,
-		analyzer_: gra.Analyzer().Make(),
+		analyzer_: Analyzer().Make(),
 	}
 	return formatter
 }
@@ -58,7 +57,7 @@ func (c *formatterClass_) Make() FormatterLike {
 type formatter_ struct {
 	// Define the instance attributes.
 	class_    FormatterClassLike
-	analyzer_ gra.AnalyzerLike
+	analyzer_ AnalyzerLike
 }
 
 // Attributes

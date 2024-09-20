@@ -10,12 +10,13 @@
 ................................................................................
 */
 
-package grammar
+package generator
 
 import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	stc "strconv"
 	sts "strings"
 )
@@ -50,9 +51,9 @@ func (c *analyzerClass_) Make() AnalyzerLike {
 		class_: c,
 
 		// Initialize the inherited aspects.
-		Methodical: Processor().Make(),
+		Methodical: gra.Processor().Make(),
 	}
-	analyzer.visitor_ = Visitor().Make(analyzer)
+	analyzer.visitor_ = gra.Visitor().Make(analyzer)
 	return analyzer
 }
 
@@ -63,7 +64,7 @@ func (c *analyzerClass_) Make() AnalyzerLike {
 type analyzer_ struct {
 	// Define the instance attributes.
 	class_        AnalyzerClassLike
-	visitor_      VisitorLike
+	visitor_      gra.VisitorLike
 	isGreedy_     bool
 	inDefinition_ bool
 	inPattern_    bool
@@ -85,7 +86,7 @@ type analyzer_ struct {
 	identifiers_  abs.CatalogLike[string, abs.ListLike[ast.IdentifierLike]]
 
 	// Define the inherited aspects.
-	Methodical
+	gra.Methodical
 }
 
 // Attributes
@@ -211,7 +212,7 @@ func (v *analyzer_) PostprocessGroup(group ast.GroupLike) {
 
 func (v *analyzer_) PreprocessIdentifier(identifier ast.IdentifierLike) {
 	var name = identifier.GetAny().(string)
-	if Scanner().MatchesType(name, LowercaseToken) {
+	if gra.Scanner().MatchesType(name, gra.LowercaseToken) {
 		v.tokenNames_.AddValue(name)
 	}
 }
