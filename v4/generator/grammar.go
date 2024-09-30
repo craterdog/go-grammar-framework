@@ -56,17 +56,15 @@ func (c *grammarClass_) Make() GrammarLike {
 
 type grammar_ struct {
 	// Define the instance attributes.
-	class_    GrammarClassLike
+	class_    *grammarClass_
 	analyzer_ AnalyzerLike
 }
 
-// Attributes
+// Public
 
 func (v *grammar_) GetClass() GrammarClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *grammar_) GenerateGrammarModel(
 	module string,
@@ -103,19 +101,19 @@ func (v *grammar_) generateProcessRules() string {
 	for iterator.HasNext() {
 		var ruleName = iterator.GetNext()
 		var parameterName = makeLowerCase(ruleName)
+		if isReserved(parameterName) {
+			parameterName += "_"
+		}
 		var className = makeUpperCase(ruleName)
-		var isPlural = v.analyzer_.IsPlural(ruleName)
-		var parameters = "("
-		if isPlural {
-			parameters += "\n\t\t"
+		var parameters = "(\n\t\t"
+		parameters += parameterName + " ast." + className + "Like,"
+		if v.analyzer_.IsPlural(ruleName) {
+			parameters += "\n\t\tindex uint,"
+			parameters += "\n\t\tsize uint,"
 		}
-		parameters += parameterName + " ast." + className + "Like"
-		if isPlural {
-			parameters += ",\n\t\tindex uint"
-			parameters += ",\n\t\tsize uint,\n\t"
-		}
-		parameters += ")"
+		parameters += "\n\t)"
 		processRules += "\n\tPreprocess" + className + parameters
+		processRules += "\n\tProcess" + className + "Slot(\n\t\tslot uint,\n\t)"
 		processRules += "\n\tPostprocess" + className + parameters
 	}
 	processRules += "\n"
@@ -127,20 +125,20 @@ func (v *grammar_) generateProcessTokens() string {
 	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var name = iterator.GetNext()
-		if v.analyzer_.IsIgnored(name) || name == "delimiter" {
+		if name == "delimiter" {
 			continue
 		}
-		var isPlural = v.analyzer_.IsPlural(name)
-		var parameters = "("
-		if isPlural {
-			parameters += "\n\t\t"
+		var parameters = "(\n\t\t"
+		var parameter = name
+		if isReserved(parameter) {
+			parameter += "_"
 		}
-		parameters += name + " string"
-		if isPlural {
-			parameters += ",\n\t\tindex uint"
-			parameters += ",\n\t\tsize uint,\n\t"
+		parameters += parameter + " string,"
+		if v.analyzer_.IsPlural(name) {
+			parameters += "\n\t\tindex uint,"
+			parameters += "\n\t\tsize uint,"
 		}
-		parameters += ")"
+		parameters += "\n\t)"
 		processTokens += "\n\tProcess" + makeUpperCase(name) + parameters
 	}
 	return processTokens
@@ -165,10 +163,6 @@ func (v *grammar_) getTemplate(name string) string {
 // PRIVATE GLOBALS
 
 // Constants
-
-const (
-	modelTemplate = "modelTemplate"
-)
 
 var grammarTemplates_ = col.Catalog[string, string](
 	map[string]string{
@@ -225,7 +219,7 @@ class constants, constructors and functions that must be supported by each
 concrete formatter-like class.
 */
 type FormatterClassLike interface {
-	// Constructors
+	// Constructor
 	Make() FormatterLike
 }
 
@@ -235,7 +229,7 @@ class constants, constructors and functions that must be supported by each
 concrete parser-like class.
 */
 type ParserClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ParserLike
 }
 
@@ -245,7 +239,7 @@ class constants, constructors and functions that must be supported by each
 concrete processor-like class.
 */
 type ProcessorClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ProcessorLike
 }
 
@@ -261,15 +255,19 @@ FormatType() returns the string version of the token type.
 MatchesType() determines whether or not a token value is of a specified type.
 */
 type ScannerClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		source string,
 		tokens abs.QueueLike[TokenLike],
 	) ScannerLike
 
-	// Functions
-	FormatToken(token TokenLike) string
-	FormatType(tokenType TokenType) string
+	// Function
+	FormatToken(
+		token TokenLike,
+	) string
+	FormatType(
+		tokenType TokenType,
+	) string
 	MatchesType(
 		tokenValue string,
 		tokenType TokenType,
@@ -282,7 +280,7 @@ class constants, constructors and functions that must be supported by each
 concrete token-like class.
 */
 type TokenClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		line uint,
 		position uint,
@@ -297,7 +295,7 @@ class constants, constructors and functions that must be supported by each
 concrete validator-like class.
 */
 type ValidatorClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ValidatorLike
 }
 
@@ -307,8 +305,10 @@ class constants, constructors and functions that must be supported by each
 concrete visitor-like class.
 */
 type VisitorClassLike interface {
-	// Constructors
-	Make(processor Methodical) VisitorLike
+	// Constructor
+	Make(
+		processor Methodical,
+	) VisitorLike
 }
 
 // Instances
@@ -319,14 +319,14 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete formatter-like class.
 */
 type FormatterLike interface {
-	// Attributes
+	// Public
 	GetClass() FormatterClassLike
+	Format<Name>(
+		<parameter> ast.<Name>Like,
+	) string
 
-	// Abstractions
+	// Aspect
 	Methodical
-
-	// Methods
-	Format<Name>(<parameter> ast.<Name>Like) string
 }
 
 /*
@@ -335,11 +335,11 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete parser-like class.
 */
 type ParserLike interface {
-	// Attributes
+	// Public
 	GetClass() ParserClassLike
-
-	// Methods
-	ParseSource(source string) ast.<Name>Like
+	ParseSource(
+		source string,
+	) ast.<Name>Like
 }
 
 /*
@@ -348,10 +348,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete processor-like class.
 */
 type ProcessorLike interface {
-	// Attributes
+	// Public
 	GetClass() ProcessorClassLike
 
-	// Abstractions
+	// Aspect
 	Methodical
 }
 
@@ -361,7 +361,7 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete scanner-like class.
 */
 type ScannerLike interface {
-	// Attributes
+	// Public
 	GetClass() ScannerClassLike
 }
 
@@ -371,8 +371,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete token-like class.
 */
 type TokenLike interface {
-	// Attributes
+	// Public
 	GetClass() TokenClassLike
+
+	// Attribute
 	GetLine() uint
 	GetPosition() uint
 	GetType() TokenType
@@ -385,14 +387,14 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete validator-like class.
 */
 type ValidatorLike interface {
-	// Attributes
+	// Public
 	GetClass() ValidatorClassLike
+	Validate<Name>(
+		<parameter> ast.<Name>Like,
+	)
 
-	// Abstractions
+	// Aspect
 	Methodical
-
-	// Methods
-	Validate<Name>(<parameter> ast.<Name>Like)
 }
 
 /*
@@ -401,11 +403,11 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete visitor-like class.
 */
 type VisitorLike interface {
-	// Attributes
+	// Public
 	GetClass() VisitorClassLike
-
-	// Methods
-	Visit<Name>(<parameter> ast.<Name>Like)
+	Visit<Name>(
+		<parameter> ast.<Name>Like,
+	)
 }
 
 // Aspects

@@ -19,6 +19,7 @@ import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
+	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
 	stc "strconv"
 	sts "strings"
 	tim "time"
@@ -60,16 +61,14 @@ func (c *syntaxClass_) Make() SyntaxLike {
 
 type syntax_ struct {
 	// Define the instance attributes.
-	class_ SyntaxClassLike
+	class_ *syntaxClass_
 }
 
-// Attributes
+// Public
 
 func (v *syntax_) GetClass() SyntaxClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *syntax_) GenerateSyntaxNotation(
 	syntax string,
@@ -176,6 +175,21 @@ func generateVariableNames(
 	}
 
 	return variableNames
+}
+
+func generateVariableType(
+	reference ast.ReferenceLike,
+) (
+	variableType string,
+) {
+	var identifier = reference.GetIdentifier().GetAny().(string)
+	switch {
+	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
+		variableType = "string"
+	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
+		variableType = makeUpperCase(identifier) + "Like"
+	}
+	return variableType
 }
 
 func isReserved(name string) bool {

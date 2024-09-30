@@ -41,8 +41,10 @@ class constants, constructors and functions that must be supported by each
 concrete alternative-like class.
 */
 type AlternativeClassLike interface {
-	// Constructors
-	Make(option OptionLike) AlternativeLike
+	// Constructor
+	Make(
+		option OptionLike,
+	) AlternativeLike
 }
 
 /*
@@ -51,8 +53,10 @@ class constants, constructors and functions that must be supported by each
 concrete cardinality-like class.
 */
 type CardinalityClassLike interface {
-	// Constructors
-	Make(any_ any) CardinalityLike
+	// Constructor
+	Make(
+		any_ any,
+	) CardinalityLike
 }
 
 /*
@@ -61,8 +65,10 @@ class constants, constructors and functions that must be supported by each
 concrete character-like class.
 */
 type CharacterClassLike interface {
-	// Constructors
-	Make(any_ any) CharacterLike
+	// Constructor
+	Make(
+		any_ any,
+	) CharacterLike
 }
 
 /*
@@ -71,8 +77,10 @@ class constants, constructors and functions that must be supported by each
 concrete constrained-like class.
 */
 type ConstrainedClassLike interface {
-	// Constructors
-	Make(any_ any) ConstrainedLike
+	// Constructor
+	Make(
+		any_ any,
+	) ConstrainedLike
 }
 
 /*
@@ -81,8 +89,10 @@ class constants, constructors and functions that must be supported by each
 concrete definition-like class.
 */
 type DefinitionClassLike interface {
-	// Constructors
-	Make(any_ any) DefinitionLike
+	// Constructor
+	Make(
+		any_ any,
+	) DefinitionLike
 }
 
 /*
@@ -91,8 +101,10 @@ class constants, constructors and functions that must be supported by each
 concrete element-like class.
 */
 type ElementClassLike interface {
-	// Constructors
-	Make(any_ any) ElementLike
+	// Constructor
+	Make(
+		any_ any,
+	) ElementLike
 }
 
 /*
@@ -101,7 +113,7 @@ class constants, constructors and functions that must be supported by each
 concrete explicit-like class.
 */
 type ExplicitClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		glyph string,
 		optionalExtent ExtentLike,
@@ -114,7 +126,7 @@ class constants, constructors and functions that must be supported by each
 concrete expression-like class.
 */
 type ExpressionClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		lowercase string,
 		pattern PatternLike,
@@ -129,8 +141,10 @@ class constants, constructors and functions that must be supported by each
 concrete extent-like class.
 */
 type ExtentClassLike interface {
-	// Constructors
-	Make(glyph string) ExtentLike
+	// Constructor
+	Make(
+		glyph string,
+	) ExtentLike
 }
 
 /*
@@ -139,7 +153,7 @@ class constants, constructors and functions that must be supported by each
 concrete filter-like class.
 */
 type FilterClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		optionalExcluded string,
 		characters abs.Sequential[CharacterLike],
@@ -152,8 +166,10 @@ class constants, constructors and functions that must be supported by each
 concrete group-like class.
 */
 type GroupClassLike interface {
-	// Constructors
-	Make(pattern PatternLike) GroupLike
+	// Constructor
+	Make(
+		pattern PatternLike,
+	) GroupLike
 }
 
 /*
@@ -162,8 +178,10 @@ class constants, constructors and functions that must be supported by each
 concrete identifier-like class.
 */
 type IdentifierClassLike interface {
-	// Constructors
-	Make(any_ any) IdentifierLike
+	// Constructor
+	Make(
+		any_ any,
+	) IdentifierLike
 }
 
 /*
@@ -172,7 +190,7 @@ class constants, constructors and functions that must be supported by each
 concrete inline-like class.
 */
 type InlineClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		terms abs.Sequential[TermLike],
 		optionalNote string,
@@ -185,8 +203,10 @@ class constants, constructors and functions that must be supported by each
 concrete limit-like class.
 */
 type LimitClassLike interface {
-	// Constructors
-	Make(optionalNumber string) LimitLike
+	// Constructor
+	Make(
+		optionalNumber string,
+	) LimitLike
 }
 
 /*
@@ -195,7 +215,7 @@ class constants, constructors and functions that must be supported by each
 concrete line-like class.
 */
 type LineClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		identifier IdentifierLike,
 		optionalNote string,
@@ -209,7 +229,7 @@ class constants, constructors and functions that must be supported by each
 concrete multiline-like class.
 */
 type MultilineClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		newline string,
 		lines abs.Sequential[LineLike],
@@ -222,7 +242,7 @@ class constants, constructors and functions that must be supported by each
 concrete notice-like class.
 */
 type NoticeClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		comment string,
 		newline string,
@@ -235,8 +255,10 @@ class constants, constructors and functions that must be supported by each
 concrete option-like class.
 */
 type OptionClassLike interface {
-	// Constructors
-	Make(repetitions abs.Sequential[RepetitionLike]) OptionLike
+	// Constructor
+	Make(
+		repetitions abs.Sequential[RepetitionLike],
+	) OptionLike
 }
 
 /*
@@ -245,7 +267,7 @@ class constants, constructors and functions that must be supported by each
 concrete pattern-like class.
 */
 type PatternClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		option OptionLike,
 		alternatives abs.Sequential[AlternativeLike],
@@ -258,7 +280,7 @@ class constants, constructors and functions that must be supported by each
 concrete quantified-like class.
 */
 type QuantifiedClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		number string,
 		optionalLimit LimitLike,
@@ -271,7 +293,7 @@ class constants, constructors and functions that must be supported by each
 concrete reference-like class.
 */
 type ReferenceClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		identifier IdentifierLike,
 		optionalCardinality CardinalityLike,
@@ -284,7 +306,7 @@ class constants, constructors and functions that must be supported by each
 concrete repetition-like class.
 */
 type RepetitionClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		element ElementLike,
 		optionalCardinality CardinalityLike,
@@ -297,7 +319,7 @@ class constants, constructors and functions that must be supported by each
 concrete rule-like class.
 */
 type RuleClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		uppercase string,
 		definition DefinitionLike,
@@ -311,7 +333,7 @@ class constants, constructors and functions that must be supported by each
 concrete syntax-like class.
 */
 type SyntaxClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		notice NoticeLike,
 		comment1 string,
@@ -327,8 +349,10 @@ class constants, constructors and functions that must be supported by each
 concrete term-like class.
 */
 type TermClassLike interface {
-	// Constructors
-	Make(any_ any) TermLike
+	// Constructor
+	Make(
+		any_ any,
+	) TermLike
 }
 
 /*
@@ -337,8 +361,10 @@ class constants, constructors and functions that must be supported by each
 concrete text-like class.
 */
 type TextClassLike interface {
-	// Constructors
-	Make(any_ any) TextLike
+	// Constructor
+	Make(
+		any_ any,
+	) TextLike
 }
 
 // Instances
@@ -349,8 +375,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete alternative-like class.
 */
 type AlternativeLike interface {
-	// Attributes
+	// Public
 	GetClass() AlternativeClassLike
+
+	// Attribute
 	GetOption() OptionLike
 }
 
@@ -360,8 +388,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete cardinality-like class.
 */
 type CardinalityLike interface {
-	// Attributes
+	// Public
 	GetClass() CardinalityClassLike
+
+	// Attribute
 	GetAny() any
 }
 
@@ -371,8 +401,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete character-like class.
 */
 type CharacterLike interface {
-	// Attributes
+	// Public
 	GetClass() CharacterClassLike
+
+	// Attribute
 	GetAny() any
 }
 
@@ -382,8 +414,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete constrained-like class.
 */
 type ConstrainedLike interface {
-	// Attributes
+	// Public
 	GetClass() ConstrainedClassLike
+
+	// Attribute
 	GetAny() any
 }
 
@@ -393,8 +427,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete definition-like class.
 */
 type DefinitionLike interface {
-	// Attributes
+	// Public
 	GetClass() DefinitionClassLike
+
+	// Attribute
 	GetAny() any
 }
 
@@ -404,8 +440,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete element-like class.
 */
 type ElementLike interface {
-	// Attributes
+	// Public
 	GetClass() ElementClassLike
+
+	// Attribute
 	GetAny() any
 }
 
@@ -415,8 +453,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete explicit-like class.
 */
 type ExplicitLike interface {
-	// Attributes
+	// Public
 	GetClass() ExplicitClassLike
+
+	// Attribute
 	GetGlyph() string
 	GetOptionalExtent() ExtentLike
 }
@@ -427,8 +467,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete expression-like class.
 */
 type ExpressionLike interface {
-	// Attributes
+	// Public
 	GetClass() ExpressionClassLike
+
+	// Attribute
 	GetLowercase() string
 	GetPattern() PatternLike
 	GetOptionalNote() string
@@ -441,8 +483,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete extent-like class.
 */
 type ExtentLike interface {
-	// Attributes
+	// Public
 	GetClass() ExtentClassLike
+
+	// Attribute
 	GetGlyph() string
 }
 
@@ -452,8 +496,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete filter-like class.
 */
 type FilterLike interface {
-	// Attributes
+	// Public
 	GetClass() FilterClassLike
+
+	// Attribute
 	GetOptionalExcluded() string
 	GetCharacters() abs.Sequential[CharacterLike]
 }
@@ -464,8 +510,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete group-like class.
 */
 type GroupLike interface {
-	// Attributes
+	// Public
 	GetClass() GroupClassLike
+
+	// Attribute
 	GetPattern() PatternLike
 }
 
@@ -475,8 +523,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete identifier-like class.
 */
 type IdentifierLike interface {
-	// Attributes
+	// Public
 	GetClass() IdentifierClassLike
+
+	// Attribute
 	GetAny() any
 }
 
@@ -486,8 +536,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete inline-like class.
 */
 type InlineLike interface {
-	// Attributes
+	// Public
 	GetClass() InlineClassLike
+
+	// Attribute
 	GetTerms() abs.Sequential[TermLike]
 	GetOptionalNote() string
 }
@@ -498,8 +550,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete limit-like class.
 */
 type LimitLike interface {
-	// Attributes
+	// Public
 	GetClass() LimitClassLike
+
+	// Attribute
 	GetOptionalNumber() string
 }
 
@@ -509,8 +563,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete line-like class.
 */
 type LineLike interface {
-	// Attributes
+	// Public
 	GetClass() LineClassLike
+
+	// Attribute
 	GetIdentifier() IdentifierLike
 	GetOptionalNote() string
 	GetNewline() string
@@ -522,8 +578,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete multiline-like class.
 */
 type MultilineLike interface {
-	// Attributes
+	// Public
 	GetClass() MultilineClassLike
+
+	// Attribute
 	GetNewline() string
 	GetLines() abs.Sequential[LineLike]
 }
@@ -534,8 +592,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete notice-like class.
 */
 type NoticeLike interface {
-	// Attributes
+	// Public
 	GetClass() NoticeClassLike
+
+	// Attribute
 	GetComment() string
 	GetNewline() string
 }
@@ -546,8 +606,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete option-like class.
 */
 type OptionLike interface {
-	// Attributes
+	// Public
 	GetClass() OptionClassLike
+
+	// Attribute
 	GetRepetitions() abs.Sequential[RepetitionLike]
 }
 
@@ -557,8 +619,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete pattern-like class.
 */
 type PatternLike interface {
-	// Attributes
+	// Public
 	GetClass() PatternClassLike
+
+	// Attribute
 	GetOption() OptionLike
 	GetAlternatives() abs.Sequential[AlternativeLike]
 }
@@ -569,8 +633,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete quantified-like class.
 */
 type QuantifiedLike interface {
-	// Attributes
+	// Public
 	GetClass() QuantifiedClassLike
+
+	// Attribute
 	GetNumber() string
 	GetOptionalLimit() LimitLike
 }
@@ -581,8 +647,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete reference-like class.
 */
 type ReferenceLike interface {
-	// Attributes
+	// Public
 	GetClass() ReferenceClassLike
+
+	// Attribute
 	GetIdentifier() IdentifierLike
 	GetOptionalCardinality() CardinalityLike
 }
@@ -593,8 +661,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete repetition-like class.
 */
 type RepetitionLike interface {
-	// Attributes
+	// Public
 	GetClass() RepetitionClassLike
+
+	// Attribute
 	GetElement() ElementLike
 	GetOptionalCardinality() CardinalityLike
 }
@@ -605,8 +675,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete rule-like class.
 */
 type RuleLike interface {
-	// Attributes
+	// Public
 	GetClass() RuleClassLike
+
+	// Attribute
 	GetUppercase() string
 	GetDefinition() DefinitionLike
 	GetNewlines() abs.Sequential[string]
@@ -618,8 +690,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete syntax-like class.
 */
 type SyntaxLike interface {
-	// Attributes
+	// Public
 	GetClass() SyntaxClassLike
+
+	// Attribute
 	GetNotice() NoticeLike
 	GetComment1() string
 	GetRules() abs.Sequential[RuleLike]
@@ -633,8 +707,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete term-like class.
 */
 type TermLike interface {
-	// Attributes
+	// Public
 	GetClass() TermClassLike
+
+	// Attribute
 	GetAny() any
 }
 
@@ -644,7 +720,9 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete text-like class.
 */
 type TextLike interface {
-	// Attributes
+	// Public
 	GetClass() TextClassLike
+
+	// Attribute
 	GetAny() any
 }

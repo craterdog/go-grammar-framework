@@ -1092,14 +1092,13 @@ func ValidateSyntax(syntax SyntaxLike) {
 // Generator
 
 func GenerateAstModel(
-	module string,
 	wiki string,
 	syntax SyntaxLike,
 ) (
 	implementation string,
 ) {
 	var generator = gen.Ast().Make()
-	implementation = generator.GenerateAstModel(module, wiki, syntax)
+	implementation = generator.GenerateAstModel(wiki, syntax)
 	return implementation
 }
 

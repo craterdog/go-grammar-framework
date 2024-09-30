@@ -16,6 +16,7 @@ import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
+	stc "strconv"
 )
 
 // CLASS ACCESS
@@ -57,17 +58,15 @@ func (c *visitorClass_) Make() VisitorLike {
 
 type visitor_ struct {
 	// Define the instance attributes.
-	class_    VisitorClassLike
+	class_    *visitorClass_
 	analyzer_ AnalyzerLike
 }
 
-// Attributes
+// Public
 
 func (v *visitor_) GetClass() VisitorClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *visitor_) GenerateVisitorClass(
 	module string,
@@ -90,14 +89,18 @@ func (v *visitor_) GenerateVisitorClass(
 // Private
 
 func (v *visitor_) generateInlineMethod(
-	rule string,
+	ruleName string,
 ) (
 	implementation string,
 ) {
-	var sequence = v.analyzer_.GetReferences(rule)
+	var sequence = v.analyzer_.GetReferences(ruleName)
 	var variableNames = generateVariableNames(sequence).GetIterator()
 	var references = sequence.GetIterator()
 	for references.HasNext() && variableNames.HasNext() {
+		var slot uint = uint(variableNames.GetSlot())
+		if slot > 0 {
+			implementation += v.generateInlineSlot(ruleName, slot)
+		}
 		var variableName = variableNames.GetNext()
 		var reference = references.GetNext()
 		implementation += v.generateInlineReference(variableName, reference)
@@ -120,6 +123,18 @@ func (v *visitor_) generateInlineReference(
 	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
 		implementation = v.generateInlineRule(variableName, reference)
 	}
+	return implementation
+}
+
+func (v *visitor_) generateInlineSlot(
+	ruleName string,
+	slot uint,
+) (
+	implementation string,
+) {
+	implementation = v.getTemplate(visitSlot)
+	implementation = replaceAll(implementation, "ruleName", ruleName)
+	implementation = replaceAll(implementation, "slot", stc.Itoa(int(slot)))
 	return implementation
 }
 
@@ -188,12 +203,12 @@ func (v *visitor_) generateMethods() (
 }
 
 func (v *visitor_) generateMultilineMethod(
-	rule string,
+	ruleName string,
 ) (
 	method string,
 ) {
 	var tokenCases, ruleCases string
-	var identifiers = v.analyzer_.GetIdentifiers(rule).GetIterator()
+	var identifiers = v.analyzer_.GetIdentifiers(ruleName).GetIterator()
 	for identifiers.HasNext() {
 		var identifier = identifiers.GetNext()
 		var name = identifier.GetAny().(string)
@@ -257,6 +272,9 @@ func (v *visitor_) generatePlurality(
 		switch {
 		case gra.Scanner().MatchesType(token, gra.OptionalToken):
 			plurality = "optional"
+			if v.analyzer_.IsPlural(name) {
+				plurality = "singular"
+			}
 		case gra.Scanner().MatchesType(token, gra.RepeatedToken):
 			plurality = "repeated"
 		}
@@ -287,6 +305,7 @@ const (
 	visitSingularToken     = "visitSingularToken"
 	visitOptionalToken     = "visitOptionalToken"
 	visitRepeatedToken     = "visitRepeatedToken"
+	visitSlot              = "visitSlot"
 	visitCases             = "visitCases"
 	visitRuleCase          = "visitRuleCase"
 	visitSingularRuleCase  = "visitSingularRuleCase"
@@ -309,9 +328,11 @@ func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 		visitSingularRule: `
 	// Visit the <ruleName> rule.
 	var <variableName_> = <rule_>.Get<VariableName>()
-	v.processor_.Preprocess<RuleName>(<variableName_>, 1, 1)
-	v.visit<RuleName>(<variableName_>)
-	v.processor_.Postprocess<RuleName>(<variableName_>, 1, 1)
+	if col.IsDefined(<variableName_>) {
+		v.processor_.Preprocess<RuleName>(<variableName_>, 1, 1)
+		v.visit<RuleName>(<variableName_>)
+		v.processor_.Postprocess<RuleName>(<variableName_>, 1, 1)
+	}
 `,
 		visitOptionalRule: `
 	// Visit the optional <ruleName> rule.
@@ -351,7 +372,9 @@ func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 		visitSingularToken: `
 	// Visit the <tokenName> token.
 	var <variableName_> = <rule_>.Get<VariableName>()
-	v.processor_.Process<TokenName>(<variableName_>, 1, 1)
+	if col.IsDefined(<variableName_>) {
+		v.processor_.Process<TokenName>(<variableName_>, 1, 1)
+	}
 `,
 		visitOptionalToken: `
 	// Visit the optional <tokenName> token.
@@ -374,6 +397,10 @@ func (v *visitor_) visit<Rule>(<rule_> ast.<Rule>Like) {<Implementation>}
 			<variableName>Size,
 		)
 	}
+`,
+		visitSlot: `
+	// Visit slot <slot> between references.
+	v.processor_.Process<RuleName>Slot(<slot>)
 `,
 		visitCases: `
 	// Visit the possible <rule> types.
@@ -451,17 +478,15 @@ func (c *visitorClass_) Make(processor Methodical) VisitorLike {
 
 type visitor_ struct {
 	// Define the instance attributes.
-	class_     VisitorClassLike
+	class_     *visitorClass_
 	processor_ Methodical
 }
 
-// Attributes
+// Public
 
 func (v *visitor_) GetClass() VisitorClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *visitor_) Visit<SyntaxName>(<syntaxName> ast.<SyntaxName>Like) {
 	// Visit the <syntaxName> syntax.

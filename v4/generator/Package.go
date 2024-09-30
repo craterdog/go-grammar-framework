@@ -43,7 +43,7 @@ AnalyzerClassLike defines the set of class constants, constructors and
 functions that must be supported by all analyzer-class-like classes.
 */
 type AnalyzerClassLike interface {
-	// Constructors
+	// Constructor
 	Make() AnalyzerLike
 }
 
@@ -52,7 +52,7 @@ FormatterClassLike defines the set of class constants, constructors and
 functions that must be supported by all formatter-class-like classes.
 */
 type FormatterClassLike interface {
-	// Constructors
+	// Constructor
 	Make() FormatterLike
 }
 
@@ -61,7 +61,7 @@ GrammarClassLike defines the set of class constants, constructors and
 functions that must be supported by all grammar-class-like classes.
 */
 type GrammarClassLike interface {
-	// Constructors
+	// Constructor
 	Make() GrammarLike
 }
 
@@ -70,7 +70,7 @@ AstClassLike defines the set of class constants, constructors and
 functions that must be supported by all ast-class-like classes.
 */
 type AstClassLike interface {
-	// Constructors
+	// Constructor
 	Make() AstLike
 }
 
@@ -79,7 +79,7 @@ ParserClassLike defines the set of class constants, constructors and
 functions that must be supported by all parser-class-like classes.
 */
 type ParserClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ParserLike
 }
 
@@ -88,7 +88,7 @@ ProcessorClassLike defines the set of class constants, constructors and
 functions that must be supported by all processor-class-like classes.
 */
 type ProcessorClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ProcessorLike
 }
 
@@ -97,7 +97,7 @@ ScannerClassLike defines the set of class constants, constructors and
 functions that must be supported by all scanner-class-like classes.
 */
 type ScannerClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ScannerLike
 }
 
@@ -106,7 +106,7 @@ SyntaxClassLike defines the set of class constants, constructors and
 functions that must be supported by all syntax-class-like classes.
 */
 type SyntaxClassLike interface {
-	// Constructors
+	// Constructor
 	Make() SyntaxLike
 }
 
@@ -115,7 +115,7 @@ TokenClassLike defines the set of class constants, constructors and
 functions that must be supported by all token-class-like classes.
 */
 type TokenClassLike interface {
-	// Constructors
+	// Constructor
 	Make() TokenLike
 }
 
@@ -124,7 +124,7 @@ ValidatorClassLike defines the set of class constants, constructors and
 functions that must be supported by all validator-class-like classes.
 */
 type ValidatorClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ValidatorLike
 }
 
@@ -133,7 +133,7 @@ VisitorClassLike defines the set of class constants, constructors and
 functions that must be supported by all visitor-class-like classes.
 */
 type VisitorClassLike interface {
-	// Constructors
+	// Constructor
 	Make() VisitorLike
 }
 
@@ -144,17 +144,11 @@ AnalyzerLike defines the set of aspects and methods that must be supported by
 all analyzer-like instances.
 */
 type AnalyzerLike interface {
-	// Attributes
+	// Public
 	GetClass() AnalyzerClassLike
-
-	// Abstractions
-	gra.Methodical
-
-	// Methods
 	AnalyzeSyntax(syntax ast.SyntaxLike)
 	GetExpressions() abs.Sequential[abs.AssociationLike[string, string]]
 	GetIdentifiers(ruleName string) abs.Sequential[ast.IdentifierLike]
-	GetIgnored() abs.Sequential[string]
 	GetNotice() string
 	GetReferences(ruleName string) abs.Sequential[ast.ReferenceLike]
 	GetRuleNames() abs.Sequential[string]
@@ -163,8 +157,10 @@ type AnalyzerLike interface {
 	GetTerms(ruleName string) abs.Sequential[ast.TermLike]
 	GetTokenNames() abs.Sequential[string]
 	IsDelimited(ruleName string) bool
-	IsIgnored(tokenName string) bool
 	IsPlural(name string) bool
+
+	// Aspect
+	gra.Methodical
 }
 
 /*
@@ -172,10 +168,8 @@ FormatterLike defines the set of aspects and methods that must be supported by
 all formatter-like instances.
 */
 type FormatterLike interface {
-	// Attributes
+	// Public
 	GetClass() FormatterClassLike
-
-	// Methods
 	GenerateFormatterClass(
 		module string,
 		syntax ast.SyntaxLike,
@@ -189,10 +183,8 @@ GrammarLike defines the set of aspects and methods that must be supported by
 all grammar-like instances.
 */
 type GrammarLike interface {
-	// Attributes
+	// Public
 	GetClass() GrammarClassLike
-
-	// Methods
 	GenerateGrammarModel(
 		module string,
 		wiki string,
@@ -207,12 +199,9 @@ AstLike defines the set of aspects and methods that must be supported by
 all ast-like instances.
 */
 type AstLike interface {
-	// Attributes
+	// Public
 	GetClass() AstClassLike
-
-	// Methods
 	GenerateAstModel(
-		module string,
 		wiki string,
 		syntax ast.SyntaxLike,
 	) (
@@ -225,10 +214,8 @@ ParserLike defines the set of aspects and methods that must be supported by
 all parser-like instances.
 */
 type ParserLike interface {
-	// Attributes
+	// Public
 	GetClass() ParserClassLike
-
-	// Methods
 	GenerateParserClass(
 		module string,
 		syntax ast.SyntaxLike,
@@ -242,10 +229,8 @@ ProcessorLike defines the set of aspects and methods that must be supported by
 all processor-like instances.
 */
 type ProcessorLike interface {
-	// Attributes
+	// Public
 	GetClass() ProcessorClassLike
-
-	// Methods
 	GenerateProcessorClass(
 		module string,
 		syntax ast.SyntaxLike,
@@ -259,10 +244,8 @@ ScannerLike defines the set of aspects and methods that must be supported by
 all scanner-like instances.
 */
 type ScannerLike interface {
-	// Attributes
+	// Public
 	GetClass() ScannerClassLike
-
-	// Methods
 	GenerateScannerClass(
 		module string,
 		syntax ast.SyntaxLike,
@@ -276,10 +259,8 @@ SyntaxLike defines the set of aspects and methods that must be supported by
 all syntax-like instances.
 */
 type SyntaxLike interface {
-	// Attributes
+	// Public
 	GetClass() SyntaxClassLike
-
-	// Methods
 	GenerateSyntaxNotation(
 		syntax string,
 		copyright string,
@@ -293,10 +274,8 @@ TokenLike defines the set of aspects and methods that must be supported by
 all token-like instances.
 */
 type TokenLike interface {
-	// Attributes
+	// Public
 	GetClass() TokenClassLike
-
-	// Methods
 	GenerateTokenClass(
 		module string,
 		syntax ast.SyntaxLike,
@@ -310,10 +289,8 @@ ValidatorLike defines the set of aspects and methods that must be supported by
 all validator-like instances.
 */
 type ValidatorLike interface {
-	// Attributes
+	// Public
 	GetClass() ValidatorClassLike
-
-	// Methods
 	GenerateValidatorClass(
 		module string,
 		syntax ast.SyntaxLike,
@@ -327,10 +304,8 @@ VisitorLike defines the set of aspects and methods that must be supported by
 all visitor-like instances.
 */
 type VisitorLike interface {
-	// Attributes
+	// Public
 	GetClass() VisitorClassLike
-
-	// Methods
 	GenerateVisitorClass(
 		module string,
 		syntax ast.SyntaxLike,

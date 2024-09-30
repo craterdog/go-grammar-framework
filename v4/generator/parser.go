@@ -58,17 +58,15 @@ func (c *parserClass_) Make() ParserLike {
 
 type parser_ struct {
 	// Define the instance attributes.
-	class_    ParserClassLike
+	class_    *parserClass_
 	analyzer_ AnalyzerLike
 }
 
-// Attributes
+// Public
 
 func (v *parser_) GetClass() ParserClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *parser_) GenerateParserClass(
 	module string,
@@ -99,21 +97,24 @@ func (v *parser_) generateArguments(
 ) {
 	var references = v.analyzer_.GetReferences(rule)
 	var variableNames = generateVariableNames(references).GetIterator()
+	if variableNames.IsEmpty() {
+		return arguments
+	}
 
 	// Define the first argument.
 	if variableNames.GetSize() > 1 {
 		// Use the multiline argument style.
 		arguments += "\n\t\t"
 	}
-	var argument = variableNames.GetNext()
 	var template = v.getTemplate(argumentTemplate)
+	var argument = variableNames.GetNext()
 	arguments += replaceAll(template, "argument", argument)
 
 	// Define any additional arguments.
 	for variableNames.HasNext() {
 		arguments += ",\n\t\t"
-		argument = variableNames.GetNext()
 		template = v.getTemplate(argumentTemplate)
+		argument = variableNames.GetNext()
 		arguments += replaceAll(template, "argument", argument)
 	}
 	if variableNames.GetSize() > 1 {
@@ -142,8 +143,6 @@ func (v *parser_) generateInlineRule(
 		)
 	}
 	implementation = replaceAll(implementation, "variableName", variableName)
-	var pluralName = makePlural(variableName)
-	implementation = replaceAll(implementation, "pluralName", pluralName)
 	var ruleName = reference.GetIdentifier().GetAny().(string)
 	implementation = replaceAll(implementation, "ruleName", ruleName)
 	return implementation
@@ -167,8 +166,6 @@ func (v *parser_) generateInlineToken(
 		)
 	}
 	implementation = replaceAll(implementation, "variableName", variableName)
-	var pluralName = makePlural(variableName)
-	implementation = replaceAll(implementation, "pluralName", pluralName)
 	var tokenName = reference.GetIdentifier().GetAny().(string)
 	implementation = replaceAll(implementation, "tokenName", tokenName)
 	return implementation
@@ -389,31 +386,26 @@ var parserTemplates_ = col.Catalog[string, string](
 	var <variableName_> ast.<RuleName>Like
 	<variableName_>, _, ok = v.parse<RuleName>()
 	if ok {
-		v.ruleFound_ = true
+		ruleFound_ = true
 	}
 `,
 		parseRepeatedRule: `
 	// Attempt to parse <first> to <last> <ruleName> rules.
 	var <variableName> = col.List[ast.<RuleName>Like]()
 <variableName>Loop:
-	for i := 0; i < <last>; i++ {
+	for numberFound_ := 0; numberFound_ < <last>; numberFound_++ {
 		var <ruleName_> ast.<RuleName>Like
 		<ruleName_>, token, ok = v.parse<RuleName>()
 		if !ok {
 			switch {
-			case i < <first>:
-				if !v.ruleFound_ {
+			case numberFound_ < <first>:
+				if !ruleFound_ {
 					// This is not a single <rule> rule.
 					return <rule_>, token, false
 				}
 				// Found a syntax error.
 				var message = v.formatError(token, "<Rule>")
-				message += "Too few <ruleName> rules found."
-				panic(message)
-			case i > <last>:
-				// Found a syntax error.
-				var message = v.formatError(token, "<Rule>")
-				message += "Too many <ruleName> rules found."
+				message += "The number of <ruleName> rules must be at least <first>."
 				panic(message)
 			default:
 				break <variableName>Loop
@@ -427,7 +419,7 @@ var parserTemplates_ = col.Catalog[string, string](
 	var <variableName_> string
 	<variableName_>, _, ok = v.parseToken(<TokenName>Token)
 	if ok {
-		v.ruleFound_ = true
+		ruleFound_ = true
 	}
 `,
 		parseRepeatedToken: `
@@ -440,7 +432,7 @@ var parserTemplates_ = col.Catalog[string, string](
 		if !ok {
 			switch {
 			case i < <first>:
-				if !v.ruleFound_ {
+				if !ruleFound_ {
 					// This is not a single <rule> rule.
 					return <rule_>, token, false
 				}
@@ -462,8 +454,9 @@ var parserTemplates_ = col.Catalog[string, string](
 `,
 		ruleFound: `
 	// Found a single <rule> rule.
+	ruleFound_ = true
 	<rule_> = ast.<Rule>().Make(<arguments>)
-	return <rule_>, token, true
+	return <rule_>, token, ruleFound_
 `,
 		defaultCase: `
 	// This is not a single <rule> rule.
@@ -475,9 +468,8 @@ func (v *parser_) parse<Rule>() (
 	token TokenLike,
 	ok bool,
 ) {
-	v.ruleFound_ = false
-<Implementation>
-}
+	var ruleFound_ bool
+<Implementation>}
 `,
 		multilineRuleMethod: `
 func (v *parser_) parse<Rule>() (
@@ -491,7 +483,7 @@ func (v *parser_) parse<Rule>() (
 	// Attempt to parse a single "<delimiter>" delimiter.
 	_, token, ok = v.parseDelimiter("<delimiter>")
 	if !ok {
-		if v.ruleFound_ {
+		if ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"<Rule>")
 			panic(message)
@@ -500,7 +492,7 @@ func (v *parser_) parse<Rule>() (
 			return <rule_>, token, false
 		}
 	}
-	v.ruleFound_ = true
+	ruleFound_ = true
 `,
 		parseRuleCase: `
 	// Attempt to parse a single <ruleName> rule.
@@ -547,7 +539,7 @@ func (v *parser_) parse<Rule>() (
 	var <variableName_> ast.<RuleName>Like
 	<variableName_>, token, ok = v.parse<RuleName>()
 	if !ok {
-		if v.ruleFound_ {
+		if ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"<Rule>")
 			panic(message)
@@ -556,14 +548,14 @@ func (v *parser_) parse<Rule>() (
 			return <rule_>, token, false
 		}
 	}
-	v.ruleFound_ = true
+	ruleFound_ = true
 `,
 		parseToken: `
 	// Attempt to parse a single <tokenName> token.
 	var <variableName_> string
 	<variableName_>, token, ok = v.parseToken(<TokenName>Token)
 	if !ok {
-		if v.ruleFound_ {
+		if ruleFound_ {
 			// Found a syntax error.
 			var message = v.formatError(token,"<Rule>")
 			panic(message)
@@ -572,7 +564,7 @@ func (v *parser_) parse<Rule>() (
 			return <rule_>, token, false
 		}
 	}
-	v.ruleFound_ = true
+	ruleFound_ = true
 `,
 		classTemplate: `<Notice>
 
@@ -627,20 +619,17 @@ func (c *parserClass_) Make() ParserLike {
 
 type parser_ struct {
 	// Define the instance attributes.
-	class_     ParserClassLike
-	ruleFound_ bool
+	class_     *parserClass_
 	source_    string                   // The original source code.
 	tokens_    abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
 	next_      abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
 }
 
-// Attributes
+// Public
 
 func (v *parser_) GetClass() ParserClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *parser_) ParseSource(source string) ast.<SyntaxName>Like {
 	v.source_ = source
@@ -687,20 +676,26 @@ func (v *parser_) parseToken(tokenType TokenType) (
 	token TokenLike,
 	ok bool,
 ) {
-	// Attempt to parse a specific token.
+	// Attempt to parse a specific token type.
 	token = v.getNextToken()
-	if token == nil {
-		// We are at the end-of-file marker.
-		return value, token, false
-	}
-	if token.GetType() == tokenType {
-		// Found the right token type.
-		value = token.GetValue()
-		return value, token, true
+	for token != nil {
+		// Check the token type.
+		switch token.GetType() {
+		case tokenType:
+			// Found the right token type.
+			value = token.GetValue()
+			return value, token, true
+		case SpaceToken, NewlineToken:
+			// Ignore any unspecified whitespace.
+			token = v.getNextToken()
+		default:
+			// This is not the right token type.
+			v.putBack(token)
+			return value, token, false
+		}
 	}
 
-	// This is not the right token type.
-	v.putBack(token)
+	// We are at the end-of-file marker.
 	return value, token, false
 }
 

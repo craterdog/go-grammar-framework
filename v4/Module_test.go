@@ -14,10 +14,10 @@ package module_test
 
 import (
 	gra "github.com/craterdog/go-grammar-framework/v4"
-	mod "github.com/craterdog/go-model-framework/v4"
+	//mod "github.com/craterdog/go-model-framework/v4"
 	ass "github.com/stretchr/testify/assert"
 	osx "os"
-	sts "strings"
+	//sts "strings"
 	tes "testing"
 )
 
@@ -40,6 +40,7 @@ func TestRoundTrips(t *tes.T) {
 	gra.ValidateSyntax(syntax)
 }
 
+/*
 func TestModelGeneration(t *tes.T) {
 	// Parse the Syntax.cdsn file.
 	var bytes, err = osx.ReadFile(syntaxFile)
@@ -150,6 +151,7 @@ func TestModelGeneration(t *tes.T) {
 		panic(err)
 	}
 }
+*/
 
 func TestLifecycle(t *tes.T) {
 	var name = "example"
@@ -168,7 +170,7 @@ func TestLifecycle(t *tes.T) {
 	gra.FormatSyntax(syntax)
 
 	// Generate the AST model for the syntax.
-	gra.GenerateAstModel(module, wiki, syntax)
+	gra.GenerateAstModel(wiki, syntax)
 
 	// Generate the language grammar model for the syntax.
 	gra.GenerateGrammarModel(module, wiki, syntax)

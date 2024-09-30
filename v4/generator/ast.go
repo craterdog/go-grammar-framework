@@ -16,8 +16,6 @@ import (
 	col "github.com/craterdog/go-collection-framework/v4"
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "github.com/craterdog/go-grammar-framework/v4/ast"
-	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
-	mod "github.com/craterdog/go-model-framework/v4"
 )
 
 // CLASS ACCESS
@@ -49,6 +47,7 @@ func (c *astClass_) Make() AstLike {
 		// Initialize the instance attributes.
 		class_:    c,
 		analyzer_: Analyzer().Make(),
+		modules_:  col.Catalog[string, string](),
 	}
 	return ast
 }
@@ -59,293 +58,209 @@ func (c *astClass_) Make() AstLike {
 
 type ast_ struct {
 	// Define the instance attributes.
-	class_    AstClassLike
+	class_    *astClass_
 	analyzer_ AnalyzerLike
 	modules_  abs.CatalogLike[string, string]
 }
 
-// Attributes
+// Public
 
 func (v *ast_) GetClass() AstClassLike {
 	return v.class_
 }
 
-// Public
-
 func (v *ast_) GenerateAstModel(
-	module string,
 	wiki string,
 	syntax ast.SyntaxLike,
 ) (
 	implementation string,
 ) {
 	v.analyzer_.AnalyzeSyntax(syntax)
-	v.modules_ = col.Catalog[string, string]()
-	var notice = mod.Notice(v.analyzer_.GetNotice() + "\n")
+	implementation = v.getTemplate(modelTemplate)
+	var notice = v.generateNotice()
+	implementation = replaceAll(implementation, "notice", notice)
 	var header = v.generateHeader(wiki)
+	implementation = replaceAll(implementation, "header", header)
+	var imports = v.generateImports()
+	implementation = replaceAll(implementation, "imports", imports)
 	var classes = v.generateClasses()
+	implementation = replaceAll(implementation, "classes", classes)
 	var instances = v.generateInstances()
-	var imports = v.generateImports(module) // This must be last.
-	var model = mod.Model(
-		notice,
-		header,
-		imports,
-		classes,
-		instances,
-	)
-	implementation = mod.Formatter().FormatModel(model)
+	implementation = replaceAll(implementation, "instances", instances)
 	return implementation
 }
 
 // Private
 
-func (v *ast_) generateClassDeclaration(name string) mod.DeclarationLike {
-	var comment = v.getTemplate(classComment)
-	comment = replaceAll(comment, "className", name)
-	var declaration = mod.Declaration(
-		comment,
-		makeUpperCase(name)+"ClassLike",
-	)
-	return declaration
+func (v *ast_) generateParameter(
+	isPlural bool,
+	attributeName string,
+	attributeType string,
+) (
+	parameter string,
+) {
+	parameter = v.getTemplate(singularRuleParameter)
+	if attributeType == "string" {
+		parameter = v.getTemplate(singularTokenParameter)
+		if isPlural {
+			parameter = v.getTemplate(pluralTokenParameter)
+		}
+	} else {
+		if isPlural {
+			parameter = v.getTemplate(pluralRuleParameter)
+		}
+	}
+	parameter = replaceAll(parameter, "attributeName", attributeName)
+	parameter = replaceAll(parameter, "attributeType", attributeType)
+	return parameter
 }
 
-func (v *ast_) generateClasses() mod.ClassesLike {
-	var classes = col.List[mod.ClassLike]()
+func (v *ast_) generateClass(
+	className string,
+) (
+	class string,
+) {
+	var parameters string
+	var attributes = v.analyzer_.GetReferences(className)
+	if col.IsDefined(attributes) {
+		// This class represents an inline rule.
+		var references = attributes.GetIterator()
+		for references.HasNext() {
+			var reference = references.GetNext()
+			var isPlural = v.isPlural(reference)
+			var attributeName = generateVariableName(reference)
+			var attributeType = generateVariableType(reference)
+			parameters += v.generateParameter(isPlural, attributeName, attributeType)
+		}
+		if attributes.GetSize() > 0 {
+			parameters += "\n\t"
+		}
+	} else {
+		// This class represents a multiline rule.
+		parameters += "\n\t\tany_ any,\n\t"
+	}
+	class = v.getTemplate(classDeclaration)
+	class = replaceAll(class, "parameters", parameters)
+	class = replaceAll(class, "className", className)
+	return class
+}
+
+func (v *ast_) generateClasses() (
+	classes string,
+) {
 	var rules = v.analyzer_.GetRuleNames().GetIterator()
 	for rules.HasNext() {
-		var rule = rules.GetNext()
-		var declaration = v.generateClassDeclaration(rule)
-		var constructor mod.ConstructorLike
-		if col.IsDefined(v.analyzer_.GetIdentifiers(rule)) {
-			constructor = v.generateMultilineConstructor(rule)
-		} else {
-			constructor = v.generateInlineConstructor(rule)
-		}
-		var list = col.List[mod.ConstructorLike]()
-		list.AppendValue(constructor)
-		var constructors = mod.Constructors(list)
-		var class = mod.Class(declaration, constructors)
-		classes.AppendValue(class)
+		var className = rules.GetNext()
+		classes += v.generateClass(className)
 	}
-	return mod.Classes(classes)
+	return classes
 }
 
-func (v *ast_) generateHeader(wiki string) mod.HeaderLike {
-	var comment = v.getTemplate(packageHeader)
-	comment = replaceAll(comment, "wiki", wiki)
-	var header = mod.Header(comment, "ast")
+func (v *ast_) generateGetter(
+	isPlural bool,
+	attributeName string,
+	attributeType string,
+) (
+	getter string,
+) {
+	if isPlural {
+		// Add the collections module to the imports list.
+		var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
+		var alias = "abs"
+		v.modules_.SetValue(path, alias) // Modules are sorted by path.
+	}
+	getter = v.getTemplate(ruleGetterMethod)
+	if attributeType == "string" {
+		getter = v.getTemplate(tokenGetterMethod)
+		if isPlural {
+			getter = v.getTemplate(pluralTokenGetterMethod)
+		}
+	} else {
+		if isPlural {
+			getter = v.getTemplate(pluralRuleGetterMethod)
+		}
+	}
+	getter = replaceAll(getter, "attributeName", attributeName)
+	getter = replaceAll(getter, "attributeType", attributeType)
+	return getter
+}
+
+func (v *ast_) generateHeader(
+	wiki string,
+) (
+	header string,
+) {
+	header = v.getTemplate(packageHeader)
+	header = replaceAll(header, "wiki", wiki)
 	return header
 }
 
-func (v *ast_) generateImports(module string) mod.ImportsLike {
-	var imports mod.ImportsLike
+func (v *ast_) generateImports() (
+	imports string,
+) {
 	if v.modules_.IsEmpty() {
 		// There are no modules that are imported.
 		return imports
 	}
 	v.modules_.SortValues() // Modules are sorted by path, not by alias.
-	var list = col.List[mod.ModuleLike]()
 	var iterator = v.modules_.GetIterator()
 	for iterator.HasNext() {
 		var association = iterator.GetNext()
 		var alias = association.GetValue()
 		var path = association.GetKey()
-		var module = mod.Module(alias, path)
-		list.AppendValue(module)
+		imports += "\n\t" + alias + " " + path
 	}
-	var modules = mod.Modules(list)
-	imports = mod.Imports(modules)
+	imports += "\n"
 	return imports
 }
 
-func (v *ast_) generateInlineAttributes(name string) mod.AttributesLike {
-	// Define the first attribute.
-	var uppercase = makeUpperCase(name)
-	var abstraction = mod.Abstraction(uppercase + "ClassLike")
-	var attribute = mod.Attribute(
-		"GetClass",
-		abstraction,
-	)
-	var attributes = col.List[mod.AttributeLike]()
-	attributes.AppendValue(attribute)
-
-	// Define any additional attributes.
-	var references = v.analyzer_.GetReferences(name)
-	var variableNames = generateVariableNames(references).GetIterator()
-	var variableTypes = v.generateVariableTypes(references).GetIterator()
-	for variableNames.HasNext() && variableTypes.HasNext() {
-		var variableName = variableNames.GetNext()
-		var attributeName = "Get" + makeUpperCase(variableName)
-		var attributeType = variableTypes.GetNext()
-		var attribute = mod.Attribute(
-			attributeName,
-			attributeType,
-		)
-		attributes.AppendValue(attribute)
+func (v *ast_) generateInstance(
+	className string,
+) (
+	instance string,
+) {
+	var getters string
+	var attributes = v.analyzer_.GetReferences(className)
+	if col.IsDefined(attributes) {
+		// This instance represents an inline rule.
+		var references = attributes.GetIterator()
+		for references.HasNext() {
+			var reference = references.GetNext()
+			var isPlural = v.isPlural(reference)
+			var attributeName = generateVariableName(reference)
+			var attributeType = generateVariableType(reference)
+			getters += v.generateGetter(isPlural, attributeName, attributeType)
+		}
+	} else {
+		// This instance represents a multiline rule.
+		getters += "\n\tGetAny() any"
 	}
-
-	return mod.Attributes(attributes)
-}
-
-func (v *ast_) generateInlineConstructor(name string) mod.ConstructorLike {
-	// Define the parameters.
-	var parameters = v.generateInlineParameters(name)
-
-	// Define the return type.
-	var uppercase = makeUpperCase(name)
-	var abstraction = mod.Abstraction(uppercase + "Like")
-
-	var constructor = mod.Constructor(
-		"Make",
-		parameters,
-		abstraction,
-	)
-	return constructor
-}
-
-func (v *ast_) generateInlineParameters(name string) mod.ParametersLike {
-	var references = v.analyzer_.GetReferences(name)
-	var variableNames = generateVariableNames(references).GetIterator()
-	var variableTypes = v.generateVariableTypes(references).GetIterator()
-
-	// Define the first parameter.
-	var variableName = variableNames.GetNext()
-	var variableType = variableTypes.GetNext()
-	var parameter = mod.Parameter(
-		variableName,
-		variableType,
-	)
-
-	// Define any additional parameters.
-	var additionalParameters = col.List[mod.AdditionalParameterLike]()
-	for variableNames.HasNext() && variableTypes.HasNext() {
-		variableName = variableNames.GetNext()
-		variableType = variableTypes.GetNext()
-		var parameter = mod.Parameter(
-			variableName,
-			variableType,
-		)
-		var additionalParameter = mod.AdditionalParameter(parameter)
-		additionalParameters.AppendValue(additionalParameter)
+	instance = v.getTemplate(instanceDeclaration)
+	instance = replaceAll(instance, "publicMethods", v.getTemplate(publicMethods))
+	var template string
+	if col.IsDefined(getters) {
+		template = v.getTemplate(attributeMethods)
+		template = replaceAll(template, "getters", getters)
 	}
-
-	return mod.Parameters(parameter, additionalParameters)
+	instance = replaceAll(instance, "attributeMethods", template)
+	instance = replaceAll(instance, "className", className)
+	return instance
 }
 
-func (v *ast_) generateInstanceDeclaration(name string) mod.DeclarationLike {
-	var comment = v.getTemplate(instanceComment)
-	comment = replaceAll(comment, "className", name)
-	var declaration = mod.Declaration(
-		comment,
-		makeUpperCase(name)+"Like",
-	)
-	return declaration
-}
-
-func (v *ast_) generateInstances() mod.InstancesLike {
-	var instances = col.List[mod.InstanceLike]()
+func (v *ast_) generateInstances() (
+	classes string,
+) {
 	var rules = v.analyzer_.GetRuleNames().GetIterator()
 	for rules.HasNext() {
-		var rule = rules.GetNext()
-		var declaration = v.generateInstanceDeclaration(rule)
-		var attributes mod.AttributesLike
-		if col.IsDefined(v.analyzer_.GetIdentifiers(rule)) {
-			attributes = v.generateMultilineAttributes(rule)
-		} else {
-			attributes = v.generateInlineAttributes(rule)
-		}
-		var instance = mod.Instance(declaration, attributes)
-		instances.AppendValue(instance)
+		var className = rules.GetNext()
+		classes += v.generateInstance(className)
 	}
-	return mod.Instances(instances)
+	return classes
 }
 
-func (v *ast_) generateMultilineAttributes(name string) mod.AttributesLike {
-	// Define the first attribute.
-	var uppercase = makeUpperCase(name)
-	var abstraction = mod.Abstraction(uppercase + "ClassLike")
-	var attribute = mod.Attribute(
-		"GetClass",
-		abstraction,
-	)
-	var attributes = col.List[mod.AttributeLike]()
-	attributes.AppendValue(attribute)
-
-	// Define the second attribute.
-	abstraction = mod.Abstraction("any")
-	attribute = mod.Attribute(
-		"GetAny",
-		abstraction,
-	)
-	attributes.AppendValue(attribute)
-
-	return mod.Attributes(attributes)
-}
-
-func (v *ast_) generateMultilineConstructor(name string) mod.ConstructorLike {
-	// Create the parameter for the constructor.
-	var parameter = mod.Parameter(
-		"any_",
-		mod.Abstraction("any"),
-	)
-	var additionalParameters = col.List[mod.AdditionalParameterLike]()
-	var parameters = mod.Parameters(
-		parameter,
-		additionalParameters.(abs.Sequential[mod.AdditionalParameterLike]),
-	)
-
-	// Create the return type.
-	var uppercase = makeUpperCase(name)
-	var abstraction = mod.Abstraction(uppercase + "Like")
-
-	// Create the constructor.
-	var constructor = mod.Constructor(
-		"Make",
-		parameters,
-		abstraction,
-	)
-	return constructor
-}
-
-func (v *ast_) generateVariableType(
-	reference ast.ReferenceLike,
-) (
-	variableType mod.AbstractionLike,
-) {
-	var identifier = reference.GetIdentifier().GetAny().(string)
-	switch {
-	case gra.Scanner().MatchesType(identifier, gra.LowercaseToken):
-		variableType = mod.Abstraction("string")
-	case gra.Scanner().MatchesType(identifier, gra.UppercaseToken):
-		variableType = mod.Abstraction(makeUpperCase(identifier) + "Like")
-	}
-	var cardinality = reference.GetOptionalCardinality()
-	if col.IsDefined(cardinality) {
-		switch actual := cardinality.GetAny().(type) {
-		case ast.ConstrainedLike:
-			var constrained = actual.GetAny().(string)
-			switch constrained {
-			case "*", "+":
-				variableType = v.pluralizeType(variableType)
-			}
-		case ast.QuantifiedLike:
-			variableType = v.pluralizeType(variableType)
-		}
-	}
-	return variableType
-}
-
-func (v *ast_) generateVariableTypes(
-	references abs.Sequential[ast.ReferenceLike],
-) abs.Sequential[mod.AbstractionLike] {
-	var variableTypes = col.List[mod.AbstractionLike]()
-	var iterator = references.GetIterator()
-	for iterator.HasNext() {
-		var reference = iterator.GetNext()
-		var variableType = v.generateVariableType(reference)
-		variableTypes.AppendValue(variableType)
-	}
-	return variableTypes
+func (v *ast_) generateNotice() string {
+	var notice = v.analyzer_.GetNotice()
+	return notice
 }
 
 func (v *ast_) getTemplate(name string) string {
@@ -353,26 +268,18 @@ func (v *ast_) getTemplate(name string) string {
 	return template
 }
 
-func (v *ast_) pluralizeType(abstraction mod.AbstractionLike) mod.AbstractionLike {
-	// Add the collections module to the imports list.
-	var path = `"github.com/craterdog/go-collection-framework/v4/collection"`
-	var alias = "abs"
-	v.modules_.SetValue(path, alias) // Modules are sorted by path.
-
-	// Create the generic arguments list for the pluralized abstraction.
-	var argument = mod.Argument(abstraction)
-	var additionalArguments = col.List[mod.AdditionalArgumentLike]()
-	var arguments = mod.Arguments(argument, additionalArguments)
-	var name = "Sequential"
-	var genericArguments = mod.GenericArguments(arguments)
-
-	// Create the result type for the pluralized abstraction.
-	abstraction = mod.Abstraction(
-		mod.Alias(alias),
-		name,
-		genericArguments,
-	)
-	return abstraction
+func (v *ast_) isPlural(reference ast.ReferenceLike) bool {
+	var cardinality = reference.GetOptionalCardinality()
+	if col.IsUndefined(cardinality) {
+		return false
+	}
+	switch actual := cardinality.GetAny().(type) {
+	case ast.ConstrainedLike:
+		if actual.GetAny().(string) == "?" {
+			return false
+		}
+	}
+	return true
 }
 
 // PRIVATE GLOBALS
@@ -380,9 +287,20 @@ func (v *ast_) pluralizeType(abstraction mod.AbstractionLike) mod.AbstractionLik
 // Constants
 
 const (
-	packageHeader   = "packageHeader"
-	classComment    = "classComment"
-	instanceComment = "instanceComment"
+	modelTemplate           = "modelTemplate"
+	packageHeader           = "packageHeader"
+	classDeclaration        = "classDeclaration"
+	singularRuleParameter   = "singularRuleParameter"
+	pluralRuleParameter     = "pluralRuleParameter"
+	singularTokenParameter  = "singularTokenParameter"
+	pluralTokenParameter    = "pluralTokenParameter"
+	instanceDeclaration     = "instanceDeclaration"
+	publicMethods           = "publicMethods"
+	attributeMethods        = "attributeMethods"
+	ruleGetterMethod        = "ruleGetterMethod"
+	pluralRuleGetterMethod  = "pluralRuleGetterMethod"
+	tokenGetterMethod       = "tokenGetterMethod"
+	pluralTokenGetterMethod = "pluralTokenGetterMethod"
 )
 
 var astTemplates_ = col.Catalog[string, string](
@@ -403,19 +321,61 @@ Additional concrete implementations of the classes defined by this package can
 be developed and used seamlessly since the interface definitions only depend on
 other interfaces and intrinsic types—and the class implementations only depend
 on interfaces, not on each other.
-*/
-`,
-		classComment: `/*
+*/`,
+		classDeclaration: `
+/*
 <ClassName>ClassLike is a class interface that defines the complete set of
 class constants, constructors and functions that must be supported by each
 concrete <class-name>-like class.
 */
+type <ClassName>ClassLike interface {
+	// Constructor
+	Make(<parameters>) <ClassName>Like
+}
 `,
-		instanceComment: `/*
+		singularRuleParameter: `
+		<attributeName_> <AttributeType>,`,
+		pluralRuleParameter: `
+		<attributeName_> abs.Sequential[<AttributeType>],`,
+		singularTokenParameter: `
+		<attributeName_> string,`,
+		pluralTokenParameter: `
+		<attributeName_> abs.Sequential[string],`,
+		instanceDeclaration: `
+/*
 <ClassName>Like is an instance interface that defines the complete set of
 instance attributes, abstractions and methods that must be supported by each
 instance of a concrete <class-name>-like class.
 */
+type <ClassName>Like interface {<PublicMethods><AttributeMethods>}
 `,
+		publicMethods: `
+	// Public
+	GetClass() <ClassName>ClassLike
+`,
+		attributeMethods: `
+	// Attribute<Getters>
+`,
+		ruleGetterMethod: `
+	Get<AttributeName>() <AttributeType>`,
+		pluralRuleGetterMethod: `
+	Get<AttributeName>() abs.Sequential[<AttributeType>]`,
+		tokenGetterMethod: `
+	Get<AttributeName>() string`,
+		pluralTokenGetterMethod: `
+	Get<AttributeName>() abs.Sequential[string]`,
+		modelTemplate: `<Notice>
+
+<Header>
+package ast
+
+import (
+	abs "github.com/craterdog/go-collection-framework/v4/collection"
+)
+
+// Classes
+<Classes>
+// Instances
+<Instances>`,
 	},
 )

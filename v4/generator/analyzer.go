@@ -63,7 +63,7 @@ func (c *analyzerClass_) Make() AnalyzerLike {
 
 type analyzer_ struct {
 	// Define the instance attributes.
-	class_        AnalyzerClassLike
+	class_        *analyzerClass_
 	visitor_      gra.VisitorLike
 	isGreedy_     bool
 	inDefinition_ bool
@@ -78,7 +78,6 @@ type analyzer_ struct {
 	tokenNames_   abs.SetLike[string]
 	pluralNames_  abs.SetLike[string]
 	delimited_    abs.SetLike[string]
-	ignored_      abs.SetLike[string]
 	delimiters_   abs.SetLike[string]
 	regexps_      abs.CatalogLike[string, string]
 	terms_        abs.CatalogLike[string, abs.ListLike[ast.TermLike]]
@@ -89,10 +88,58 @@ type analyzer_ struct {
 	gra.Methodical
 }
 
-// Attributes
+// Public
 
 func (v *analyzer_) GetClass() AnalyzerClassLike {
 	return v.class_
+}
+
+func (v *analyzer_) AnalyzeSyntax(syntax ast.SyntaxLike) {
+	v.visitor_.VisitSyntax(syntax)
+}
+
+func (v *analyzer_) GetExpressions() abs.Sequential[abs.AssociationLike[string, string]] {
+	return v.regexps_
+}
+
+func (v *analyzer_) GetIdentifiers(ruleName string) abs.Sequential[ast.IdentifierLike] {
+	return v.identifiers_.GetValue(ruleName)
+}
+
+func (v *analyzer_) GetNotice() string {
+	return v.notice_
+}
+
+func (v *analyzer_) GetReferences(ruleName string) abs.Sequential[ast.ReferenceLike] {
+	return v.references_.GetValue(ruleName)
+}
+
+func (v *analyzer_) GetRuleNames() abs.Sequential[string] {
+	return v.ruleNames_
+}
+
+func (v *analyzer_) GetSyntaxMap() string {
+	return v.syntaxMap_
+}
+
+func (v *analyzer_) GetSyntaxName() string {
+	return v.syntaxName_
+}
+
+func (v *analyzer_) GetTerms(ruleName string) abs.Sequential[ast.TermLike] {
+	return v.terms_.GetValue(ruleName)
+}
+
+func (v *analyzer_) GetTokenNames() abs.Sequential[string] {
+	return v.tokenNames_
+}
+
+func (v *analyzer_) IsDelimited(ruleName string) bool {
+	return v.delimited_.ContainsValue(ruleName)
+}
+
+func (v *analyzer_) IsPlural(name string) bool {
+	return v.pluralNames_.ContainsValue(name)
 }
 
 // Methodical
@@ -336,12 +383,14 @@ func (v *analyzer_) PreprocessSyntax(syntax ast.SyntaxLike) {
 	v.syntaxName_ = v.extractSyntaxName(syntax)
 	v.notice_ = v.extractNotice(syntax)
 	v.ruleNames_ = col.Set[string]()
-	v.tokenNames_ = col.Set[string]([]string{"delimiter"})
+	v.tokenNames_ = col.Set[string]([]string{"delimiter", "newline", "space"})
 	v.pluralNames_ = col.Set[string]()
 	v.delimited_ = col.Set[string]()
-	v.ignored_ = col.Set[string]([]string{"newline", "space"})
 	v.delimiters_ = col.Set[string]()
-	var implicit = map[string]string{"space": `"(?:[ \\t]+)"`}
+	var implicit = map[string]string{
+		"newline": `"(?:\\r?\\n)"`,
+		"space":   `"(?:[ \\t]+)"`,
+	}
 	v.regexps_ = col.Catalog[string, string](implicit)
 	v.terms_ = col.Catalog[string, abs.ListLike[ast.TermLike]]()
 	v.references_ = col.Catalog[string, abs.ListLike[ast.ReferenceLike]]()
@@ -349,14 +398,13 @@ func (v *analyzer_) PreprocessSyntax(syntax ast.SyntaxLike) {
 }
 
 func (v *analyzer_) PostprocessSyntax(syntax ast.SyntaxLike) {
-	v.ignored_ = v.ignored_.GetClass().Sans(v.ignored_, v.tokenNames_)
-	v.tokenNames_.AddValues(v.ignored_)
 	var delimiters = `"(?:`
 	if !v.delimiters_.IsEmpty() {
 		var iterator = v.delimiters_.GetIterator()
-		delimiters += iterator.GetNext()
-		for iterator.HasNext() {
-			delimiters += "|" + iterator.GetNext()
+		iterator.ToEnd() // These must be assembled in reverse alphabetical order.
+		delimiters += iterator.GetPrevious()
+		for iterator.HasPrevious() {
+			delimiters += "|" + iterator.GetPrevious()
 		}
 	}
 	delimiters += `)"`
@@ -378,64 +426,6 @@ func (v *analyzer_) PreprocessTerm(
 	}
 	var terms = v.terms_.GetValue(v.ruleName_)
 	terms.AppendValue(term)
-}
-
-// Public
-
-func (v *analyzer_) AnalyzeSyntax(syntax ast.SyntaxLike) {
-	v.visitor_.VisitSyntax(syntax)
-}
-
-func (v *analyzer_) GetExpressions() abs.Sequential[abs.AssociationLike[string, string]] {
-	return v.regexps_
-}
-
-func (v *analyzer_) GetIdentifiers(ruleName string) abs.Sequential[ast.IdentifierLike] {
-	return v.identifiers_.GetValue(ruleName)
-}
-
-func (v *analyzer_) GetIgnored() abs.Sequential[string] {
-	return v.ignored_
-}
-
-func (v *analyzer_) GetNotice() string {
-	return v.notice_
-}
-
-func (v *analyzer_) GetReferences(ruleName string) abs.Sequential[ast.ReferenceLike] {
-	return v.references_.GetValue(ruleName)
-}
-
-func (v *analyzer_) GetRuleNames() abs.Sequential[string] {
-	return v.ruleNames_
-}
-
-func (v *analyzer_) GetSyntaxMap() string {
-	return v.syntaxMap_
-}
-
-func (v *analyzer_) GetSyntaxName() string {
-	return v.syntaxName_
-}
-
-func (v *analyzer_) GetTerms(ruleName string) abs.Sequential[ast.TermLike] {
-	return v.terms_.GetValue(ruleName)
-}
-
-func (v *analyzer_) GetTokenNames() abs.Sequential[string] {
-	return v.tokenNames_
-}
-
-func (v *analyzer_) IsDelimited(ruleName string) bool {
-	return v.delimited_.ContainsValue(ruleName)
-}
-
-func (v *analyzer_) IsIgnored(tokenName string) bool {
-	return v.ignored_.ContainsValue(tokenName)
-}
-
-func (v *analyzer_) IsPlural(name string) bool {
-	return v.pluralNames_.ContainsValue(name)
 }
 
 // Private

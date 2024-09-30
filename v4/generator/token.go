@@ -55,17 +55,15 @@ func (c *tokenClass_) Make() TokenLike {
 
 type token_ struct {
 	// Define the instance attributes.
-	class_    TokenClassLike
+	class_    *tokenClass_
 	analyzer_ AnalyzerLike
 }
 
-// Attributes
+// Public
 
 func (v *token_) GetClass() TokenClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *token_) GenerateTokenClass(
 	module string,
@@ -147,18 +145,20 @@ func (c *tokenClass_) Make(
 
 type token_ struct {
 	// Define the instance attributes.
-	class_    TokenClassLike
+	class_    *tokenClass_
 	line_     uint
 	position_ uint
 	type_     TokenType
 	value_    string
 }
 
-// Attributes
+// Public
 
 func (v *token_) GetClass() TokenClassLike {
 	return v.class_
 }
+
+// Attributes
 
 func (v *token_) GetLine() uint {
 	return v.line_

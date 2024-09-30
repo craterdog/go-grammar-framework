@@ -56,17 +56,15 @@ func (c *validatorClass_) Make() ValidatorLike {
 
 type validator_ struct {
 	// Define the instance attributes.
-	class_    ValidatorClassLike
+	class_    *validatorClass_
 	analyzer_ AnalyzerLike
 }
 
-// Attributes
+// Public
 
 func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *validator_) GenerateValidatorClass(
 	module string,
@@ -93,7 +91,7 @@ func (v *validator_) generateTokenValidators() string {
 	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
-		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
+		if tokenName == "delimiter" {
 			continue
 		}
 		var isPlural = v.analyzer_.IsPlural(tokenName)
@@ -141,10 +139,7 @@ package grammar
 
 import (
 	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "<module>/ast"
-	stc "strconv"
 )
 
 // CLASS ACCESS
@@ -189,28 +184,18 @@ func (c *validatorClass_) Make() ValidatorLike {
 
 type validator_ struct {
 	// Define the instance attributes.
-	class_       ValidatorClassLike
+	class_       *validatorClass_
 	visitor_     VisitorLike
 
 	// Define the inherited aspects.
 	Methodical
 }
 
-// Attributes
+// Public
 
 func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
 }
-
-// Methodical
-<TokenValidators>
-func (v *validator_) Preprocess<Name>(<name> ast.<Name>Like) {
-}
-
-func (v *validator_) Postprocess<Name>(<name> ast.<Name>Like) {
-}
-
-// Public
 
 func (v *validator_) ValidateToken(
 	tokenValue string,
@@ -228,6 +213,17 @@ func (v *validator_) ValidateToken(
 
 func (v *validator_) Validate<Name>(<name> ast.<Name>Like) {
 	v.visitor_.Visit<Name>(<name>)
+}
+
+// Methodical
+<TokenValidators>
+func (v *validator_) Preprocess<Name>(<name> ast.<Name>Like) {
+}
+
+func (v *validator_) Process<Name>Slot(slot uint) {
+}
+
+func (v *validator_) Postprocess<Name>(<name> ast.<Name>Like) {
 }
 `,
 	},

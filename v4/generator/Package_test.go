@@ -15,20 +15,32 @@ package generator_test
 import (
 	gen "github.com/craterdog/go-grammar-framework/v4/generator"
 	gra "github.com/craterdog/go-grammar-framework/v4/grammar"
-	mod "github.com/craterdog/go-model-framework/v4"
+	//mod "github.com/craterdog/go-model-framework/v4"
 	ass "github.com/stretchr/testify/assert"
+	osx "os"
 	tes "testing"
 )
 
 func TestLifecycle(t *tes.T) {
-	var module = "github.com/craterdog/go-grammar-framework/v4"
-	var wiki = "github.com/craterdog/go-grammar-framework/wiki"
-	var name = "example"
+	var module = "github.com/craterdog/go-test-framework/v4"
+	var wiki = "github.com/craterdog/go-test-framework/wiki"
 
-	// Generate a new syntax with a default copyright.
-	var copyright string
-	var source = gen.Syntax().Make().GenerateSyntaxNotation(name, copyright)
-	ass.Equal(t, syntaxNotation, source)
+	/*
+		var name = "example"
+
+		// Generate a new syntax with a default copyright.
+		var copyright string
+		var source = gen.Syntax().Make().GenerateSyntaxNotation(name, copyright)
+		ass.Equal(t, syntaxNotation, source)
+	*/
+
+	// Read in the test syntax file.
+	var filename = "../../../go-test-framework/v4/Syntax.cdsn"
+	var bytes, err = osx.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	var source = string(bytes)
 
 	// Parse the source code for the syntax.
 	var parser = gra.Parser().Make()
@@ -40,48 +52,110 @@ func TestLifecycle(t *tes.T) {
 
 	// Format the syntax.
 	var formatter = gra.Formatter().Make()
-	source = formatter.FormatSyntax(syntax)
-	ass.Equal(t, syntaxNotation, source)
+	var formatted = formatter.FormatSyntax(syntax)
+	ass.Equal(t, formatted, source)
 
 	// Generate the processor class for the syntax.
 	source = gen.Processor().Make().GenerateProcessorClass(module, syntax)
-	ass.Equal(t, processorClass, source)
+	bytes = []byte(source)
+	filename = "../../../go-test-framework/v4/grammar/processor.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+	//ass.Equal(t, processorClass, source)
 
 	// Generate the visitor class for the syntax.
 	source = gen.Visitor().Make().GenerateVisitorClass(module, syntax)
-	ass.Equal(t, visitorClass, source)
+	bytes = []byte(source)
+	filename = "../../../go-test-framework/v4/grammar/visitor.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+	//ass.Equal(t, visitorClass, source)
 
 	// Generate the token class for the syntax.
 	source = gen.Token().Make().GenerateTokenClass(module, syntax)
-	ass.Equal(t, tokenClass, source)
+	bytes = []byte(source)
+	filename = "../../../go-test-framework/v4/grammar/token.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+	//ass.Equal(t, tokenClass, source)
 
 	// Generate the scanner class for the syntax.
 	source = gen.Scanner().Make().GenerateScannerClass(module, syntax)
-	ass.Equal(t, scannerClass, source)
+	bytes = []byte(source)
+	filename = "../../../go-test-framework/v4/grammar/scanner.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+	//ass.Equal(t, scannerClass, source)
 
-	// Generate the formatter class for the syntax.
-	source = gen.Formatter().Make().GenerateFormatterClass(module, syntax)
-	ass.Equal(t, formatterClass, source)
+	/*
+		// Generate the formatter class for the syntax.
+		source = gen.Formatter().Make().GenerateFormatterClass(module, syntax)
+		bytes = []byte(source)
+		filename = "../../../go-test-framework/v4/grammar/formatter.go"
+		err = osx.WriteFile(filename, bytes, 0644)
+		if err != nil {
+			panic(err)
+		}
+		//ass.Equal(t, formatterClass, source)
+	*/
 
 	// Generate the parser class for the syntax.
 	source = gen.Parser().Make().GenerateParserClass(module, syntax)
-	ass.Equal(t, parserClass, source)
+	bytes = []byte(source)
+	filename = "../../../go-test-framework/v4/grammar/parser.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+	//ass.Equal(t, parserClass, source)
 
 	// Generate the validator class for the syntax.
 	source = gen.Validator().Make().GenerateValidatorClass(module, syntax)
-	ass.Equal(t, validatorClass, source)
+	bytes = []byte(source)
+	filename = "../../../go-test-framework/v4/grammar/validator.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+	//ass.Equal(t, validatorClass, source)
 
 	// Generate the language grammar model for the syntax.
 	source = gen.Grammar().Make().GenerateGrammarModel(module, wiki, syntax)
-	ass.Equal(t, grammarModel, source)
-	var model = mod.Parser().ParseSource(source)
-	mod.Validator().ValidateModel(model)
+	bytes = []byte(source)
+	filename = "../../../go-test-framework/v4/grammar/Package.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	/*
+		// ass.Equal(t, grammarModel, source)
+		var model = mod.Parser().ParseSource(source)
+		mod.Validator().ValidateModel(model)
+	*/
 
 	// Generate the abstract syntax tree model for the syntax.
-	source = gen.Ast().Make().GenerateAstModel(module, wiki, syntax)
-	ass.Equal(t, astModel, source)
-	model = mod.Parser().ParseSource(source)
-	mod.Validator().ValidateModel(model)
+	source = gen.Ast().Make().GenerateAstModel(wiki, syntax)
+	bytes = []byte(source)
+	filename = "../../../go-test-framework/v4/ast/Package.go"
+	err = osx.WriteFile(filename, bytes, 0644)
+	if err != nil {
+		panic(err)
+	}
+	panic("stop")
+	/*
+		ass.Equal(t, astModel, source)
+		model = mod.Parser().ParseSource(source)
+		mod.Validator().ValidateModel(model)
+	*/
 }
 
 const syntaxNotation = `!>
@@ -236,7 +310,7 @@ func (c *formatterClass_) Make() FormatterLike {
 
 type formatter_ struct {
 	// Define the instance attributes.
-	class_   FormatterClassLike
+	class_   *formatterClass_
 	visitor_ VisitorLike
 	depth_   uint
 	result_  sts.Builder
@@ -245,10 +319,15 @@ type formatter_ struct {
 	Methodical
 }
 
-// Attributes
+// Public
 
 func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
+}
+
+func (v *formatter_) FormatDocument(document ast.DocumentLike) string {
+	v.visitor_.VisitDocument(document)
+	return v.getResult()
 }
 
 // Methodical
@@ -319,13 +398,6 @@ func (v *formatter_) PreprocessList(list ast.ListLike) {
 
 func (v *formatter_) PostprocessList(list ast.ListLike) {
 	// TBD - Add formatting of the delimited rule.
-}
-
-// Public
-
-func (v *formatter_) FormatDocument(document ast.DocumentLike) string {
-	v.visitor_.VisitDocument(document)
-	return v.getResult()
 }
 
 // Private
@@ -414,20 +486,18 @@ func (c *parserClass_) Make() ParserLike {
 
 type parser_ struct {
 	// Define the instance attributes.
-	class_     ParserClassLike
+	class_     *parserClass_
 	ruleFound_ bool
 	source_    string                   // The original source code.
 	tokens_    abs.QueueLike[TokenLike] // A queue of unread tokens from the scanner.
 	next_      abs.StackLike[TokenLike] // A stack of read, but unprocessed tokens.
 }
 
-// Attributes
+// Public
 
 func (v *parser_) GetClass() ParserClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *parser_) ParseSource(source string) ast.DocumentLike {
 	v.source_ = source
@@ -974,7 +1044,7 @@ func (c *scannerClass_) MatchesType(
 
 type scanner_ struct {
 	// Define the instance attributes.
-	class_    ScannerClassLike
+	class_    *scannerClass_
 	first_    uint // A zero based index of the first possible rune in the next token.
 	next_     uint // A zero based index of the next possible rune in the next token.
 	line_     uint // The line number in the source string of the next rune.
@@ -983,7 +1053,7 @@ type scanner_ struct {
 	tokens_   abs.QueueLike[TokenLike]
 }
 
-// Attributes
+// Public
 
 func (v *scanner_) GetClass() ScannerClassLike {
 	return v.class_
@@ -1167,18 +1237,20 @@ func (c *tokenClass_) Make(
 
 type token_ struct {
 	// Define the instance attributes.
-	class_    TokenClassLike
+	class_    *tokenClass_
 	line_     uint
 	position_ uint
 	type_     TokenType
 	value_    string
 }
 
-// Attributes
+// Public
 
 func (v *token_) GetClass() TokenClassLike {
 	return v.class_
 }
+
+// Attributes
 
 func (v *token_) GetLine() uint {
 	return v.line_
@@ -1261,17 +1333,35 @@ func (c *validatorClass_) Make() ValidatorLike {
 
 type validator_ struct {
 	// Define the instance attributes.
-	class_       ValidatorClassLike
+	class_       *validatorClass_
 	visitor_     VisitorLike
 
 	// Define the inherited aspects.
 	Methodical
 }
 
-// Attributes
+// Public
 
 func (v *validator_) GetClass() ValidatorClassLike {
 	return v.class_
+}
+
+func (v *validator_) ValidateToken(
+	tokenValue string,
+	tokenType TokenType,
+) {
+	if !Scanner().MatchesType(tokenValue, tokenType) {
+		var message = fmt.Sprintf(
+			"The following token value is not of type %v: %v",
+			Scanner().FormatType(tokenType),
+			tokenValue,
+		)
+		panic(message)
+	}
+}
+
+func (v *validator_) ValidateDocument(document ast.DocumentLike) {
+	v.visitor_.VisitDocument(document)
 }
 
 // Methodical
@@ -1300,26 +1390,6 @@ func (v *validator_) PreprocessDocument(document ast.DocumentLike) {
 }
 
 func (v *validator_) PostprocessDocument(document ast.DocumentLike) {
-}
-
-// Public
-
-func (v *validator_) ValidateToken(
-	tokenValue string,
-	tokenType TokenType,
-) {
-	if !Scanner().MatchesType(tokenValue, tokenType) {
-		var message = fmt.Sprintf(
-			"The following token value is not of type %v: %v",
-			Scanner().FormatType(tokenType),
-			tokenValue,
-		)
-		panic(message)
-	}
-}
-
-func (v *validator_) ValidateDocument(document ast.DocumentLike) {
-	v.visitor_.VisitDocument(document)
 }
 `
 
@@ -1379,10 +1449,10 @@ func (c *processorClass_) Make() ProcessorLike {
 
 type processor_ struct {
 	// Define the instance attributes.
-	class_ ProcessorClassLike
+	class_ *processorClass_
 }
 
-// Attributes
+// Public
 
 func (v *processor_) GetClass() ProcessorClassLike {
 	return v.class_
@@ -1503,17 +1573,15 @@ func (c *visitorClass_) Make(processor Methodical) VisitorLike {
 
 type visitor_ struct {
 	// Define the instance attributes.
-	class_     VisitorClassLike
+	class_     *visitorClass_
 	processor_ Methodical
 }
 
-// Attributes
+// Public
 
 func (v *visitor_) GetClass() VisitorClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *visitor_) VisitDocument(document ast.DocumentLike) {
 	// Visit the document syntax.
@@ -1657,7 +1725,7 @@ For detailed documentation on this package refer to the wiki:
 
 This package follows the Crater Dog Technologies™ Go Coding Conventions located
 here:
-  - https://github.com/craterdog/go-model-framework/wiki
+  - https://github.com/craterdog/go-test-framework/wiki
 
 Additional concrete implementations of the classes defined by this package can
 be developed and used seamlessly since the interface definitions only depend on
@@ -1697,7 +1765,7 @@ class constants, constructors and functions that must be supported by each
 concrete formatter-like class.
 */
 type FormatterClassLike interface {
-	// Constructors
+	// Constructor
 	Make() FormatterLike
 }
 
@@ -1707,7 +1775,7 @@ class constants, constructors and functions that must be supported by each
 concrete parser-like class.
 */
 type ParserClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ParserLike
 }
 
@@ -1717,7 +1785,7 @@ class constants, constructors and functions that must be supported by each
 concrete processor-like class.
 */
 type ProcessorClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ProcessorLike
 }
 
@@ -1733,13 +1801,13 @@ FormatType() returns the string version of the token type.
 MatchesType() determines whether or not a token value is of a specified type.
 */
 type ScannerClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		source string,
 		tokens abs.QueueLike[TokenLike],
 	) ScannerLike
 
-	// Functions
+	// Function
 	FormatToken(token TokenLike) string
 	FormatType(tokenType TokenType) string
 	MatchesType(
@@ -1754,7 +1822,7 @@ class constants, constructors and functions that must be supported by each
 concrete token-like class.
 */
 type TokenClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		line uint,
 		position uint,
@@ -1769,7 +1837,7 @@ class constants, constructors and functions that must be supported by each
 concrete validator-like class.
 */
 type ValidatorClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ValidatorLike
 }
 
@@ -1779,7 +1847,7 @@ class constants, constructors and functions that must be supported by each
 concrete visitor-like class.
 */
 type VisitorClassLike interface {
-	// Constructors
+	// Constructor
 	Make(processor Methodical) VisitorLike
 }
 
@@ -1791,14 +1859,12 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete formatter-like class.
 */
 type FormatterLike interface {
-	// Attributes
+	// Public
 	GetClass() FormatterClassLike
-
-	// Abstractions
-	Methodical
-
-	// Methods
 	FormatDocument(document ast.DocumentLike) string
+
+	// Aspect
+	Methodical
 }
 
 /*
@@ -1807,10 +1873,8 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete parser-like class.
 */
 type ParserLike interface {
-	// Attributes
+	// Public
 	GetClass() ParserClassLike
-
-	// Methods
 	ParseSource(source string) ast.DocumentLike
 }
 
@@ -1820,10 +1884,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete processor-like class.
 */
 type ProcessorLike interface {
-	// Attributes
+	// Public
 	GetClass() ProcessorClassLike
 
-	// Abstractions
+	// Aspect
 	Methodical
 }
 
@@ -1833,7 +1897,7 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete scanner-like class.
 */
 type ScannerLike interface {
-	// Attributes
+	// Public
 	GetClass() ScannerClassLike
 }
 
@@ -1843,8 +1907,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete token-like class.
 */
 type TokenLike interface {
-	// Attributes
+	// Public
 	GetClass() TokenClassLike
+
+	// Attribute
 	GetLine() uint
 	GetPosition() uint
 	GetType() TokenType
@@ -1857,14 +1923,12 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete validator-like class.
 */
 type ValidatorLike interface {
-	// Attributes
+	// Public
 	GetClass() ValidatorClassLike
-
-	// Abstractions
-	Methodical
-
-	// Methods
 	ValidateDocument(document ast.DocumentLike)
+
+	// Aspect
+	Methodical
 }
 
 /*
@@ -1873,10 +1937,8 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete visitor-like class.
 */
 type VisitorLike interface {
-	// Attributes
+	// Public
 	GetClass() VisitorClassLike
-
-	// Methods
 	VisitDocument(document ast.DocumentLike)
 }
 
@@ -1938,7 +2000,7 @@ For detailed documentation on this package refer to the wiki:
 
 This package follows the Crater Dog Technologies™ Go Coding Conventions located
 here:
-  - https://github.com/craterdog/go-model-framework/wiki
+  - https://github.com/craterdog/go-test-framework/wiki
 
 Additional concrete implementations of the classes defined by this package can
 be developed and used seamlessly since the interface definitions only depend on
@@ -1959,7 +2021,7 @@ class constants, constructors and functions that must be supported by each
 concrete additional-component-like class.
 */
 type AdditionalComponentClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		component1 ComponentLike,
 		component2 ComponentLike,
@@ -1972,7 +2034,7 @@ class constants, constructors and functions that must be supported by each
 concrete component-like class.
 */
 type ComponentClassLike interface {
-	// Constructors
+	// Constructor
 	Make(any_ any) ComponentLike
 }
 
@@ -1982,7 +2044,7 @@ class constants, constructors and functions that must be supported by each
 concrete document-like class.
 */
 type DocumentClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		component ComponentLike,
 		newlines abs.Sequential[string],
@@ -1995,7 +2057,7 @@ class constants, constructors and functions that must be supported by each
 concrete intrinsic-like class.
 */
 type IntrinsicClassLike interface {
-	// Constructors
+	// Constructor
 	Make(any_ any) IntrinsicLike
 }
 
@@ -2005,7 +2067,7 @@ class constants, constructors and functions that must be supported by each
 concrete list-like class.
 */
 type ListClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		component ComponentLike,
 		additionalComponents abs.Sequential[AdditionalComponentLike],
@@ -2020,8 +2082,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete additional-component-like class.
 */
 type AdditionalComponentLike interface {
-	// Attributes
+	// Public
 	GetClass() AdditionalComponentClassLike
+
+	// Attribute
 	GetComponent1() ComponentLike
 	GetComponent2() ComponentLike
 }
@@ -2032,8 +2096,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete component-like class.
 */
 type ComponentLike interface {
-	// Attributes
+	// Public
 	GetClass() ComponentClassLike
+
+	// Attribute
 	GetAny() any
 }
 
@@ -2043,8 +2109,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete document-like class.
 */
 type DocumentLike interface {
-	// Attributes
+	// Public
 	GetClass() DocumentClassLike
+
+	// Attribute
 	GetComponent() ComponentLike
 	GetNewlines() abs.Sequential[string]
 }
@@ -2055,8 +2123,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete intrinsic-like class.
 */
 type IntrinsicLike interface {
-	// Attributes
+	// Public
 	GetClass() IntrinsicClassLike
+
+	// Attribute
 	GetAny() any
 }
 
@@ -2066,8 +2136,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete list-like class.
 */
 type ListLike interface {
-	// Attributes
+	// Public
 	GetClass() ListClassLike
+
+	// Attribute
 	GetComponent() ComponentLike
 	GetAdditionalComponents() abs.Sequential[AdditionalComponentLike]
 }

@@ -56,17 +56,15 @@ func (c *formatterClass_) Make() FormatterLike {
 
 type formatter_ struct {
 	// Define the instance attributes.
-	class_    FormatterClassLike
+	class_    *formatterClass_
 	analyzer_ AnalyzerLike
 }
 
-// Attributes
+// Public
 
 func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *formatter_) GenerateFormatterClass(
 	module string,
@@ -113,7 +111,7 @@ func (v *formatter_) generateTokenFormatters() string {
 	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
-		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
+		if tokenName == "delimiter" {
 			continue
 		}
 		var isPlural = v.analyzer_.IsPlural(tokenName)
@@ -150,6 +148,10 @@ func (v *formatter_) Preprocess<RuleName>(<parameters>) {
 	// TBD - Add formatting of the delimited rule.
 }
 
+func (v *formatter_) Process<RuleName>Slot(slot uint) {
+	// TBD - Add formatting of the delimited rule.
+}
+
 func (v *formatter_) Postprocess<RuleName>(<parameters>) {
 	// TBD - Add formatting of the delimited rule.
 }
@@ -176,11 +178,7 @@ func (v *formatter_) Process<TokenName>(<parameters>) {
 package grammar
 
 import (
-	fmt "fmt"
-	col "github.com/craterdog/go-collection-framework/v4"
-	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	ast "<module>/ast"
-	stc "strconv"
 	sts "strings"
 )
 
@@ -226,7 +224,7 @@ func (c *formatterClass_) Make() FormatterLike {
 
 type formatter_ struct {
 	// Define the instance attributes.
-	class_   FormatterClassLike
+	class_   *formatterClass_
 	visitor_ VisitorLike
 	depth_   uint
 	result_  sts.Builder
@@ -235,26 +233,25 @@ type formatter_ struct {
 	Methodical
 }
 
-// Attributes
+// Public
 
 func (v *formatter_) GetClass() FormatterClassLike {
 	return v.class_
 }
-
-// Methodical
-<TokenFormatters><RuleFormatters>
-// Public
 
 func (v *formatter_) Format<Name>(<name> ast.<Name>Like) string {
 	v.visitor_.Visit<Name>(<name>)
 	return v.getResult()
 }
 
+// Methodical
+<TokenFormatters><RuleFormatters>
+
 // Private
 
 func (v *formatter_) appendNewline() {
 	var newline = "\n"
-	var indentation = "    "
+	var indentation = "\t"
 	var level uint
 	for ; level < v.depth_; level++ {
 		newline += indentation

@@ -74,7 +74,7 @@ class constants, constructors and functions that must be supported by each
 concrete formatter-like class.
 */
 type FormatterClassLike interface {
-	// Constructors
+	// Constructor
 	Make() FormatterLike
 }
 
@@ -84,7 +84,7 @@ class constants, constructors and functions that must be supported by each
 concrete parser-like class.
 */
 type ParserClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ParserLike
 }
 
@@ -94,7 +94,7 @@ class constants, constructors and functions that must be supported by each
 concrete processor-like class.
 */
 type ProcessorClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ProcessorLike
 }
 
@@ -110,15 +110,19 @@ FormatType() returns the string version of the token type.
 MatchesType() determines whether or not a token value is of a specified type.
 */
 type ScannerClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		source string,
 		tokens abs.QueueLike[TokenLike],
 	) ScannerLike
 
-	// Functions
-	FormatToken(token TokenLike) string
-	FormatType(tokenType TokenType) string
+	// Function
+	FormatToken(
+		token TokenLike,
+	) string
+	FormatType(
+		tokenType TokenType,
+	) string
 	MatchesType(
 		tokenValue string,
 		tokenType TokenType,
@@ -131,7 +135,7 @@ class constants, constructors and functions that must be supported by each
 concrete token-like class.
 */
 type TokenClassLike interface {
-	// Constructors
+	// Constructor
 	Make(
 		line uint,
 		position uint,
@@ -146,7 +150,7 @@ class constants, constructors and functions that must be supported by each
 concrete validator-like class.
 */
 type ValidatorClassLike interface {
-	// Constructors
+	// Constructor
 	Make() ValidatorLike
 }
 
@@ -156,8 +160,10 @@ class constants, constructors and functions that must be supported by each
 concrete visitor-like class.
 */
 type VisitorClassLike interface {
-	// Constructors
-	Make(processor Methodical) VisitorLike
+	// Constructor
+	Make(
+		processor Methodical,
+	) VisitorLike
 }
 
 // Instances
@@ -168,14 +174,14 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete formatter-like class.
 */
 type FormatterLike interface {
-	// Attributes
+	// Public
 	GetClass() FormatterClassLike
+	FormatSyntax(
+		syntax ast.SyntaxLike,
+	) string
 
-	// Abstractions
+	// Aspect
 	Methodical
-
-	// Methods
-	FormatSyntax(syntax ast.SyntaxLike) string
 }
 
 /*
@@ -184,11 +190,11 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete parser-like class.
 */
 type ParserLike interface {
-	// Attributes
+	// Public
 	GetClass() ParserClassLike
-
-	// Methods
-	ParseSource(source string) ast.SyntaxLike
+	ParseSource(
+		source string,
+	) ast.SyntaxLike
 }
 
 /*
@@ -197,10 +203,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete processor-like class.
 */
 type ProcessorLike interface {
-	// Attributes
+	// Public
 	GetClass() ProcessorClassLike
 
-	// Abstractions
+	// Aspect
 	Methodical
 }
 
@@ -210,7 +216,7 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete scanner-like class.
 */
 type ScannerLike interface {
-	// Attributes
+	// Public
 	GetClass() ScannerClassLike
 }
 
@@ -220,8 +226,10 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete token-like class.
 */
 type TokenLike interface {
-	// Attributes
+	// Public
 	GetClass() TokenClassLike
+
+	// Attribute
 	GetLine() uint
 	GetPosition() uint
 	GetType() TokenType
@@ -234,14 +242,14 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete validator-like class.
 */
 type ValidatorLike interface {
-	// Attributes
+	// Public
 	GetClass() ValidatorClassLike
+	ValidateSyntax(
+		syntax ast.SyntaxLike,
+	)
 
-	// Abstractions
+	// Aspect
 	Methodical
-
-	// Methods
-	ValidateSyntax(syntax ast.SyntaxLike)
 }
 
 /*
@@ -250,11 +258,11 @@ instance attributes, abstractions and methods that must be supported by each
 instance of a concrete visitor-like class.
 */
 type VisitorLike interface {
-	// Attributes
+	// Public
 	GetClass() VisitorClassLike
-
-	// Methods
-	VisitSyntax(syntax ast.SyntaxLike)
+	VisitSyntax(
+		syntax ast.SyntaxLike,
+	)
 }
 
 // Aspects
@@ -264,100 +272,259 @@ Methodical defines the set of method signatures that must be supported
 by all methodical processors.
 */
 type Methodical interface {
-	ProcessComment(comment string)
-	ProcessExcluded(excluded string)
-	ProcessGlyph(glyph string)
-	ProcessIntrinsic(intrinsic string)
-	ProcessLiteral(literal string)
-	ProcessLowercase(lowercase string)
+	ProcessComment(
+		comment string,
+	)
+	ProcessExcluded(
+		excluded string,
+	)
+	ProcessGlyph(
+		glyph string,
+	)
+	ProcessIntrinsic(
+		intrinsic string,
+	)
+	ProcessLiteral(
+		literal string,
+	)
+	ProcessLowercase(
+		lowercase string,
+	)
 	ProcessNewline(
 		newline string,
 		index uint,
 		size uint,
 	)
-	ProcessNote(note string)
-	ProcessNumber(number string)
-	ProcessOptional(optional string)
-	ProcessRepeated(repeated string)
-	ProcessUppercase(uppercase string)
+	ProcessNote(
+		note string,
+	)
+	ProcessNumber(
+		number string,
+	)
+	ProcessOptional(
+		optional string,
+	)
+	ProcessRepeated(
+		repeated string,
+	)
+	ProcessSpace(
+		space string,
+	)
+	ProcessUppercase(
+		uppercase string,
+	)
 	PreprocessAlternative(
 		alternative ast.AlternativeLike,
 		index uint,
 		size uint,
+	)
+	ProcessAlternativeSlot(
+		slot uint,
 	)
 	PostprocessAlternative(
 		alternative ast.AlternativeLike,
 		index uint,
 		size uint,
 	)
-	PreprocessCardinality(cardinality ast.CardinalityLike)
-	PostprocessCardinality(cardinality ast.CardinalityLike)
+	PreprocessCardinality(
+		cardinality ast.CardinalityLike,
+	)
+	ProcessCardinalitySlot(
+		slot uint,
+	)
+	PostprocessCardinality(
+		cardinality ast.CardinalityLike,
+	)
 	PreprocessCharacter(
 		character ast.CharacterLike,
 		index uint,
 		size uint,
+	)
+	ProcessCharacterSlot(
+		slot uint,
 	)
 	PostprocessCharacter(
 		character ast.CharacterLike,
 		index uint,
 		size uint,
 	)
-	PreprocessConstrained(constrained ast.ConstrainedLike)
-	PostprocessConstrained(constrained ast.ConstrainedLike)
-	PreprocessDefinition(definition ast.DefinitionLike)
-	PostprocessDefinition(definition ast.DefinitionLike)
-	PreprocessElement(element ast.ElementLike)
-	PostprocessElement(element ast.ElementLike)
-	PreprocessExplicit(explicit ast.ExplicitLike)
-	PostprocessExplicit(explicit ast.ExplicitLike)
+	PreprocessConstrained(
+		constrained ast.ConstrainedLike,
+	)
+	ProcessConstrainedSlot(
+		slot uint,
+	)
+	PostprocessConstrained(
+		constrained ast.ConstrainedLike,
+	)
+	PreprocessDefinition(
+		definition ast.DefinitionLike,
+	)
+	ProcessDefinitionSlot(
+		slot uint,
+	)
+	PostprocessDefinition(
+		definition ast.DefinitionLike,
+	)
+	PreprocessElement(
+		element ast.ElementLike,
+	)
+	ProcessElementSlot(
+		slot uint,
+	)
+	PostprocessElement(
+		element ast.ElementLike,
+	)
+	PreprocessExplicit(
+		explicit ast.ExplicitLike,
+	)
+	ProcessExplicitSlot(
+		slot uint,
+	)
+	PostprocessExplicit(
+		explicit ast.ExplicitLike,
+	)
 	PreprocessExpression(
 		expression ast.ExpressionLike,
 		index uint,
 		size uint,
+	)
+	ProcessExpressionSlot(
+		slot uint,
 	)
 	PostprocessExpression(
 		expression ast.ExpressionLike,
 		index uint,
 		size uint,
 	)
-	PreprocessExtent(extent ast.ExtentLike)
-	PostprocessExtent(extent ast.ExtentLike)
-	PreprocessFilter(filter ast.FilterLike)
-	PostprocessFilter(filter ast.FilterLike)
-	PreprocessGroup(group ast.GroupLike)
-	PostprocessGroup(group ast.GroupLike)
-	PreprocessIdentifier(identifier ast.IdentifierLike)
-	PostprocessIdentifier(identifier ast.IdentifierLike)
-	PreprocessInline(inline ast.InlineLike)
-	PostprocessInline(inline ast.InlineLike)
-	PreprocessLimit(limit ast.LimitLike)
-	PostprocessLimit(limit ast.LimitLike)
+	PreprocessExtent(
+		extent ast.ExtentLike,
+	)
+	ProcessExtentSlot(
+		slot uint,
+	)
+	PostprocessExtent(
+		extent ast.ExtentLike,
+	)
+	PreprocessFilter(
+		filter ast.FilterLike,
+	)
+	ProcessFilterSlot(
+		slot uint,
+	)
+	PostprocessFilter(
+		filter ast.FilterLike,
+	)
+	PreprocessGroup(
+		group ast.GroupLike,
+	)
+	ProcessGroupSlot(
+		slot uint,
+	)
+	PostprocessGroup(
+		group ast.GroupLike,
+	)
+	PreprocessIdentifier(
+		identifier ast.IdentifierLike,
+	)
+	ProcessIdentifierSlot(
+		slot uint,
+	)
+	PostprocessIdentifier(
+		identifier ast.IdentifierLike,
+	)
+	PreprocessInline(
+		inline ast.InlineLike,
+	)
+	ProcessInlineSlot(
+		slot uint,
+	)
+	PostprocessInline(
+		inline ast.InlineLike,
+	)
+	PreprocessLimit(
+		limit ast.LimitLike,
+	)
+	ProcessLimitSlot(
+		slot uint,
+	)
+	PostprocessLimit(
+		limit ast.LimitLike,
+	)
 	PreprocessLine(
 		line ast.LineLike,
 		index uint,
 		size uint,
+	)
+	ProcessLineSlot(
+		slot uint,
 	)
 	PostprocessLine(
 		line ast.LineLike,
 		index uint,
 		size uint,
 	)
-	PreprocessMultiline(multiline ast.MultilineLike)
-	PostprocessMultiline(multiline ast.MultilineLike)
-	PreprocessNotice(notice ast.NoticeLike)
-	PostprocessNotice(notice ast.NoticeLike)
-	PreprocessOption(option ast.OptionLike)
-	PostprocessOption(option ast.OptionLike)
-	PreprocessPattern(pattern ast.PatternLike)
-	PostprocessPattern(pattern ast.PatternLike)
-	PreprocessQuantified(quantified ast.QuantifiedLike)
-	PostprocessQuantified(quantified ast.QuantifiedLike)
-	PreprocessReference(reference ast.ReferenceLike)
-	PostprocessReference(reference ast.ReferenceLike)
+	PreprocessMultiline(
+		multiline ast.MultilineLike,
+	)
+	ProcessMultilineSlot(
+		slot uint,
+	)
+	PostprocessMultiline(
+		multiline ast.MultilineLike,
+	)
+	PreprocessNotice(
+		notice ast.NoticeLike,
+	)
+	ProcessNoticeSlot(
+		slot uint,
+	)
+	PostprocessNotice(
+		notice ast.NoticeLike,
+	)
+	PreprocessOption(
+		option ast.OptionLike,
+	)
+	ProcessOptionSlot(
+		slot uint,
+	)
+	PostprocessOption(
+		option ast.OptionLike,
+	)
+	PreprocessPattern(
+		pattern ast.PatternLike,
+	)
+	ProcessPatternSlot(
+		slot uint,
+	)
+	PostprocessPattern(
+		pattern ast.PatternLike,
+	)
+	PreprocessQuantified(
+		quantified ast.QuantifiedLike,
+	)
+	ProcessQuantifiedSlot(
+		slot uint,
+	)
+	PostprocessQuantified(
+		quantified ast.QuantifiedLike,
+	)
+	PreprocessReference(
+		reference ast.ReferenceLike,
+	)
+	ProcessReferenceSlot(
+		slot uint,
+	)
+	PostprocessReference(
+		reference ast.ReferenceLike,
+	)
 	PreprocessRepetition(
 		repetition ast.RepetitionLike,
 		index uint,
 		size uint,
+	)
+	ProcessRepetitionSlot(
+		slot uint,
 	)
 	PostprocessRepetition(
 		repetition ast.RepetitionLike,
@@ -369,23 +536,43 @@ type Methodical interface {
 		index uint,
 		size uint,
 	)
+	ProcessRuleSlot(
+		slot uint,
+	)
 	PostprocessRule(
 		rule ast.RuleLike,
 		index uint,
 		size uint,
 	)
-	PreprocessSyntax(syntax ast.SyntaxLike)
-	PostprocessSyntax(syntax ast.SyntaxLike)
+	PreprocessSyntax(
+		syntax ast.SyntaxLike,
+	)
+	ProcessSyntaxSlot(
+		slot uint,
+	)
+	PostprocessSyntax(
+		syntax ast.SyntaxLike,
+	)
 	PreprocessTerm(
 		term ast.TermLike,
 		index uint,
 		size uint,
+	)
+	ProcessTermSlot(
+		slot uint,
 	)
 	PostprocessTerm(
 		term ast.TermLike,
 		index uint,
 		size uint,
 	)
-	PreprocessText(text ast.TextLike)
-	PostprocessText(text ast.TextLike)
+	PreprocessText(
+		text ast.TextLike,
+	)
+	ProcessTextSlot(
+		slot uint,
+	)
+	PostprocessText(
+		text ast.TextLike,
+	)
 }

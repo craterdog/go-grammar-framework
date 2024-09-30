@@ -56,17 +56,15 @@ func (c *visitorClass_) Make(processor Methodical) VisitorLike {
 
 type visitor_ struct {
 	// Define the instance attributes.
-	class_     VisitorClassLike
+	class_     *visitorClass_
 	processor_ Methodical
 }
 
-// Attributes
+// Public
 
 func (v *visitor_) GetClass() VisitorClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *visitor_) VisitSyntax(syntax ast.SyntaxLike) {
 	// Visit the syntax syntax.
@@ -193,6 +191,9 @@ func (v *visitor_) visitExplicit(explicit ast.ExplicitLike) {
 	var glyph = explicit.GetGlyph()
 	v.processor_.ProcessGlyph(glyph)
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessExplicitSlot(1)
+
 	// Visit the optional extent rule.
 	var optionalExtent = explicit.GetOptionalExtent()
 	if col.IsDefined(optionalExtent) {
@@ -207,17 +208,26 @@ func (v *visitor_) visitExpression(expression ast.ExpressionLike) {
 	var lowercase = expression.GetLowercase()
 	v.processor_.ProcessLowercase(lowercase)
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessExpressionSlot(1)
+
 	// Visit the pattern rule.
 	var pattern = expression.GetPattern()
 	v.processor_.PreprocessPattern(pattern)
 	v.visitPattern(pattern)
 	v.processor_.PostprocessPattern(pattern)
 
+	// Visit slot 2 between references.
+	v.processor_.ProcessExpressionSlot(2)
+
 	// Visit the optional note token.
 	var optionalNote = expression.GetOptionalNote()
 	if col.IsDefined(optionalNote) {
 		v.processor_.ProcessNote(optionalNote)
 	}
+
+	// Visit slot 3 between references.
+	v.processor_.ProcessExpressionSlot(3)
 
 	// Visit each newline token.
 	var newlineIndex uint
@@ -246,6 +256,9 @@ func (v *visitor_) visitFilter(filter ast.FilterLike) {
 	if col.IsDefined(optionalExcluded) {
 		v.processor_.ProcessExcluded(optionalExcluded)
 	}
+
+	// Visit slot 1 between references.
+	v.processor_.ProcessFilterSlot(1)
 
 	// Visit each character rule.
 	var characterIndex uint
@@ -314,6 +327,9 @@ func (v *visitor_) visitInline(inline ast.InlineLike) {
 		)
 	}
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessInlineSlot(1)
+
 	// Visit the optional note token.
 	var optionalNote = inline.GetOptionalNote()
 	if col.IsDefined(optionalNote) {
@@ -336,21 +352,34 @@ func (v *visitor_) visitLine(line ast.LineLike) {
 	v.visitIdentifier(identifier)
 	v.processor_.PostprocessIdentifier(identifier)
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessLineSlot(1)
+
 	// Visit the optional note token.
 	var optionalNote = line.GetOptionalNote()
 	if col.IsDefined(optionalNote) {
 		v.processor_.ProcessNote(optionalNote)
 	}
 
+	// Visit slot 2 between references.
+	v.processor_.ProcessLineSlot(2)
+
 	// Visit the newline token.
 	var newline = line.GetNewline()
-	v.processor_.ProcessNewline(newline, 1, 1)
+	if col.IsDefined(newline) {
+		v.processor_.ProcessNewline(newline, 1, 1)
+	}
 }
 
 func (v *visitor_) visitMultiline(multiline ast.MultilineLike) {
 	// Visit the newline token.
 	var newline = multiline.GetNewline()
-	v.processor_.ProcessNewline(newline, 1, 1)
+	if col.IsDefined(newline) {
+		v.processor_.ProcessNewline(newline, 1, 1)
+	}
+
+	// Visit slot 1 between references.
+	v.processor_.ProcessMultilineSlot(1)
 
 	// Visit each line rule.
 	var lineIndex uint
@@ -378,9 +407,14 @@ func (v *visitor_) visitNotice(notice ast.NoticeLike) {
 	var comment = notice.GetComment()
 	v.processor_.ProcessComment(comment)
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessNoticeSlot(1)
+
 	// Visit the newline token.
 	var newline = notice.GetNewline()
-	v.processor_.ProcessNewline(newline, 1, 1)
+	if col.IsDefined(newline) {
+		v.processor_.ProcessNewline(newline, 1, 1)
+	}
 }
 
 func (v *visitor_) visitOption(option ast.OptionLike) {
@@ -412,6 +446,9 @@ func (v *visitor_) visitPattern(pattern ast.PatternLike) {
 	v.visitOption(option)
 	v.processor_.PostprocessOption(option)
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessPatternSlot(1)
+
 	// Visit each alternative rule.
 	var alternativeIndex uint
 	var alternatives = pattern.GetAlternatives().GetIterator()
@@ -438,6 +475,9 @@ func (v *visitor_) visitQuantified(quantified ast.QuantifiedLike) {
 	var number = quantified.GetNumber()
 	v.processor_.ProcessNumber(number)
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessQuantifiedSlot(1)
+
 	// Visit the optional limit rule.
 	var optionalLimit = quantified.GetOptionalLimit()
 	if col.IsDefined(optionalLimit) {
@@ -453,6 +493,9 @@ func (v *visitor_) visitReference(reference ast.ReferenceLike) {
 	v.processor_.PreprocessIdentifier(identifier)
 	v.visitIdentifier(identifier)
 	v.processor_.PostprocessIdentifier(identifier)
+
+	// Visit slot 1 between references.
+	v.processor_.ProcessReferenceSlot(1)
 
 	// Visit the optional cardinality rule.
 	var optionalCardinality = reference.GetOptionalCardinality()
@@ -470,6 +513,9 @@ func (v *visitor_) visitRepetition(repetition ast.RepetitionLike) {
 	v.visitElement(element)
 	v.processor_.PostprocessElement(element)
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessRepetitionSlot(1)
+
 	// Visit the optional cardinality rule.
 	var optionalCardinality = repetition.GetOptionalCardinality()
 	if col.IsDefined(optionalCardinality) {
@@ -484,11 +530,17 @@ func (v *visitor_) visitRule(rule ast.RuleLike) {
 	var uppercase = rule.GetUppercase()
 	v.processor_.ProcessUppercase(uppercase)
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessRuleSlot(1)
+
 	// Visit the definition rule.
 	var definition = rule.GetDefinition()
 	v.processor_.PreprocessDefinition(definition)
 	v.visitDefinition(definition)
 	v.processor_.PostprocessDefinition(definition)
+
+	// Visit slot 2 between references.
+	v.processor_.ProcessRuleSlot(2)
 
 	// Visit each newline token.
 	var newlineIndex uint
@@ -512,9 +564,15 @@ func (v *visitor_) visitSyntax(syntax ast.SyntaxLike) {
 	v.visitNotice(notice)
 	v.processor_.PostprocessNotice(notice)
 
+	// Visit slot 1 between references.
+	v.processor_.ProcessSyntaxSlot(1)
+
 	// Visit the comment token.
 	var comment1 = syntax.GetComment1()
 	v.processor_.ProcessComment(comment1)
+
+	// Visit slot 2 between references.
+	v.processor_.ProcessSyntaxSlot(2)
 
 	// Visit each rule rule.
 	var ruleIndex uint
@@ -536,9 +594,15 @@ func (v *visitor_) visitSyntax(syntax ast.SyntaxLike) {
 		)
 	}
 
+	// Visit slot 3 between references.
+	v.processor_.ProcessSyntaxSlot(3)
+
 	// Visit the comment token.
 	var comment2 = syntax.GetComment2()
 	v.processor_.ProcessComment(comment2)
+
+	// Visit slot 4 between references.
+	v.processor_.ProcessSyntaxSlot(4)
 
 	// Visit each expression rule.
 	var expressionIndex uint

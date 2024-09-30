@@ -56,17 +56,15 @@ func (c *processorClass_) Make() ProcessorLike {
 
 type processor_ struct {
 	// Define the instance attributes.
-	class_    ProcessorClassLike
+	class_    *processorClass_
 	analyzer_ AnalyzerLike
 }
 
-// Attributes
+// Public
 
 func (v *processor_) GetClass() ProcessorClassLike {
 	return v.class_
 }
-
-// Public
 
 func (v *processor_) GenerateProcessorClass(
 	module string,
@@ -113,7 +111,7 @@ func (v *processor_) generateTokenProcessors() string {
 	var iterator = v.analyzer_.GetTokenNames().GetIterator()
 	for iterator.HasNext() {
 		var tokenName = iterator.GetNext()
-		if v.analyzer_.IsIgnored(tokenName) || tokenName == "delimiter" {
+		if tokenName == "delimiter" {
 			continue
 		}
 		var isPlural = v.analyzer_.IsPlural(tokenName)
@@ -151,6 +149,9 @@ var processorTemplates_ = col.Catalog[string, string](
 	map[string]string{
 		processRule: `
 func (v *processor_) Preprocess<RuleName>(<parameters>) {
+}
+
+func (v *processor_) Process<RuleName>Slot(slot uint) {
 }
 
 func (v *processor_) Postprocess<RuleName>(<parameters>) {
@@ -218,10 +219,10 @@ func (c *processorClass_) Make() ProcessorLike {
 
 type processor_ struct {
 	// Define the instance attributes.
-	class_ ProcessorClassLike
+	class_ *processorClass_
 }
 
-// Attributes
+// Public
 
 func (v *processor_) GetClass() ProcessorClassLike {
 	return v.class_

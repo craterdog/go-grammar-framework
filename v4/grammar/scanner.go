@@ -17,6 +17,7 @@ import (
 	abs "github.com/craterdog/go-collection-framework/v4/collection"
 	reg "regexp"
 	sts "strings"
+	uni "unicode"
 )
 
 // CLASS ACCESS
@@ -131,7 +132,7 @@ func (c *scannerClass_) MatchesType(
 
 type scanner_ struct {
 	// Define the instance attributes.
-	class_    ScannerClassLike
+	class_    *scannerClass_
 	first_    uint // A zero based index of the first possible rune in the next token.
 	next_     uint // A zero based index of the next possible rune in the next token.
 	line_     uint // The line number in the source string of the next rune.
@@ -140,7 +141,7 @@ type scanner_ struct {
 	tokens_   abs.QueueLike[TokenLike]
 }
 
-// Attributes
+// Public
 
 func (v *scanner_) GetClass() ScannerClassLike {
 	return v.class_
@@ -168,7 +169,7 @@ const (
 	// Define the regular expression patterns for each token type.
 	base16_    = "(?:[0-9a-f])"
 	comment_   = "(?:!>" + eol_ + "(" + any_ + "|" + eol_ + ")*?" + eol_ + "<!" + eol_ + ")"
-	delimiter_ = "(?:-|:|\\(|\\)|\\.\\.|\\[|\\]|\\{|\\||\\})"
+	delimiter_ = "(?:\\}|\\||\\{|\\]|\\[|\\.\\.|\\)|\\(|:|-)"
 	escape_    = "(?:\\\\((?:" + unicode_ + ")|[abfnrtv\"\\\\]))"
 	excluded_  = "(?:~)"
 	glyph_     = "(?:'[^" + control_ + "]')"
@@ -186,11 +187,6 @@ const (
 )
 
 func (v *scanner_) emitToken(tokenType TokenType) {
-	switch v.GetClass().FormatType(tokenType) {
-	// Ignore the implicit token types.
-	case "space":
-		return
-	}
 	var value = string(v.runes_[v.first_:v.next_])
 	switch value {
 	case "\x00":
@@ -203,8 +199,6 @@ func (v *scanner_) emitToken(tokenType TokenType) {
 		value = "<HTAB>"
 	case "\f":
 		value = "<FMFD>"
-	case "\n":
-		value = "<EOLN>"
 	case "\r":
 		value = "<CRTN>"
 	case "\v":
@@ -221,29 +215,38 @@ func (v *scanner_) foundError() {
 }
 
 func (v *scanner_) foundToken(tokenType TokenType) bool {
+	// Attempt to match the specified token type.
 	var text = string(v.runes_[v.next_:])
 	var matcher = scannerClass.matchers_[tokenType]
 	var match = matcher.FindString(text)
-	if len(match) > 0 {
-		var token = []rune(match)
-		var length = uint(len(token))
-
-		// Found the requested token type.
-		v.next_ += length
-		v.emitToken(tokenType)
-		var count = uint(sts.Count(match, "\n"))
-		if count > 0 {
-			v.line_ += count
-			v.position_ = v.indexOfLastEol(token)
-		} else {
-			v.position_ += v.next_ - v.first_
-		}
-		v.first_ = v.next_
-		return true
+	if len(match) == 0 {
+		return false
 	}
 
-	// The next token is not the requested token type.
-	return false
+	// Check for false delimiter matches.
+	var token = []rune(match)
+	var length = uint(len(token))
+	var previous = token[length-1]
+	if tokenType == DelimiterToken && uint(len(v.runes_)) > v.next_+length {
+		var next = v.runes_[v.next_+length]
+		if (uni.IsLetter(previous) || uni.IsNumber(previous)) &&
+			(uni.IsLetter(next) || uni.IsNumber(next) || next == '_') {
+			return false
+		}
+	}
+
+	// Found the requested token type.
+	v.next_ += length
+	v.emitToken(tokenType)
+	var count = uint(sts.Count(match, "\n"))
+	if count > 0 {
+		v.line_ += count
+		v.position_ = v.indexOfLastEol(token)
+	} else {
+		v.position_ += v.next_ - v.first_
+	}
+	v.first_ = v.next_
+	return true
 }
 
 func (v *scanner_) indexOfLastEol(runes []rune) uint {
